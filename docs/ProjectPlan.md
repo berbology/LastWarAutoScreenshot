@@ -11,11 +11,19 @@
       - [x] Define P/Invoke signatures for `IsIconic` (check if minimized)
       - [x] Create `WindowEnumeration_TypeDefinition.ps1` in `private/` folder
       - [x] Add proper error handling for P/Invoke calls
-   2. [ ] Implement window enumeration function
-      - [ ] Create private function `Get-EnumeratedWindows` with comment-based help
-      - [ ] Implement enumeration logic using Win32 API callbacks
-      - [ ] Return collection of window objects with properties: ProcessName, WindowTitle, WindowHandle, PID, WindowState (Visible/Minimized)
-      - [ ] Ensure function is modular and testable via Pester
+   2. [x] Implement window enumeration function
+      - [x] Create private function `Get-EnumeratedWindows` with comment-based help
+      - [x] Implement enumeration logic using Win32 API callbacks
+      - [x] Return collection of window objects with properties: ProcessName, WindowTitle, WindowHandle, PID, WindowState (Visible/Minimized)
+      - [x] Ensure function is modular and testable via Pester
+      - [x] Add optional filtering parameters: -ProcessName, -ExcludeMinimized, -VisibleOnly
+      - [x] Implement ForEach-Object -Parallel optimization for Get-Process calls (ThrottleLimit 16)
+      - [x] Handle process termination between enumeration and Get-Process gracefully
+      - [x] Return both raw IntPtr handle and serializable string/int64 formats
+      - [x] Filter out empty/null window titles and hidden system processes
+      - [x] Collect enumeration errors for Event Log reporting
+      - [x] Add comprehensive verbose output at each processing stage
+      - [x] Create Pester unit tests with mock helper function New-MockWindowData
    3. [ ] Implement window filtering logic
       - [ ] Filter out windows with empty or null titles
       - [ ] Filter out system windows and background processes
@@ -70,7 +78,7 @@
 
 1. [ ] Implement mouse movement and click logic using Windows API or System.Windows.Forms with window-relative coordinate system
 2. [ ] Develop human-like mouse movement with:
-   - Randomized delays and variable timing to mimic human behavior
+   - Randomized delays and variable timing to mimic human behaviour
    - Curved paths (not straight lines) to avoid bot detection
    - Configurable speed ranges and randomness factors
    - Variable duration between mouse-up and mouse-down events

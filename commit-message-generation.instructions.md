@@ -8,14 +8,15 @@ These instructions define how commit messages should be generated for this proje
    1. Be extremely detailed with file changes and reasons for changes
    2. Use lots of emojis.
    3. Use conventional commit format: type(scope): description
-   4. Include relevant issue numbers using 'Fixes #123' or 'Closes #456' format
+   4. Include relevant issue numbers using 'Fixes #123' or 'Closes #456' format, but only if they correspond to real issues or tasks in the project's tracker. Do not use placeholder numbers.
 2. **Imperative Mood**: Use the imperative mood (e.g., "Add feature" instead of "Added feature").
 3. **Structure**:
    - **Header**: A single line summarizing the change (max 50 characters).
      - Use types: feat, fix, docs, style, refactor, perf, test, chore, ci, move
      - Include scope when relevant (e.g., api, ui, auth)
-   - **Body** (optional): A detailed explanation of the change, if necessary.
-     - List key changes as bullet points for easy scanning
+    - **Body** (optional): A detailed explanation of the change, if necessary.
+       - **List every key change as a bullet point. Bullet points are required for each detail line in the body.**
+       - Bullet points make scanning and reviewing changes much easier and are mandatory for all commit messages in this project.
    - **Footer** (optional): Any references to issues, pull requests, or breaking changes.
 4. **Examples**:
    - `Fix bug in screenshot similarity detection`

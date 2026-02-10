@@ -68,7 +68,7 @@ This project is a PowerShell 7+ module designed to automate human-like mouse mov
 
 ## Roadmap
 
-See [docs/HighLevelPlan.md](docs/HighLevelPlan.md) for the full project plan and upcoming features.
+See [docs/ProjectPlan.md](docs/ProjectPlan.md) for the full project plan and upcoming features.
 
 ## License
 
