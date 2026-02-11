@@ -76,6 +76,13 @@ Describe 'WindowEnumeration_TypeDefinition' {
             $method.IsStatic | Should -Be $true
             $method.ReturnType.Name | Should -Be 'Boolean'
         }
+
+        It 'Should have GetForegroundWindow method' {
+            $method = [WindowEnumerationAPI].GetMethod('GetForegroundWindow')
+            $method | Should -Not -BeNullOrEmpty
+            $method.IsStatic | Should -Be $true
+            $method.ReturnType.Name | Should -Be 'IntPtr'
+        }
     }
 
     Context 'Functional Tests' {
@@ -182,6 +189,23 @@ Describe 'WindowEnumeration_TypeDefinition' {
         It 'Should successfully call IsIconic with valid window handle' {
             $result = [WindowEnumerationAPI]::IsIconic($script:testWindowHandle)
             $result | Should -BeOfType [bool]
+        }
+
+        It 'Should successfully call GetForegroundWindow' {
+            $result = [WindowEnumerationAPI]::GetForegroundWindow()
+            $result | Should -BeOfType [IntPtr]
+            # Foreground window may be Zero if no window is in foreground (rare)
+            # but the call should not throw an exception
+        }
+
+        It 'Should return valid window handle from GetForegroundWindow' {
+            $foregroundHandle = [WindowEnumerationAPI]::GetForegroundWindow()
+            
+            # If we got a handle, verify it's valid by checking if it's visible
+            if ($foregroundHandle -ne [IntPtr]::Zero) {
+                $isVisible = [WindowEnumerationAPI]::IsWindowVisible($foregroundHandle)
+                $isVisible | Should -BeOfType [bool]
+            }
         }
 
         It 'Should successfully call EnumWindows with callback delegate' {

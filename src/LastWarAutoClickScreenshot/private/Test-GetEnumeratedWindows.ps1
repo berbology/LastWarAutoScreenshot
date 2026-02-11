@@ -9,7 +9,7 @@
 $windows = Get-EnumeratedWindows -Verbose
 
 # Display a summary table
-$windows | Select-Object ProcessName, WindowTitle, WindowHandleString, PID, WindowState | Format-Table -AutoSize
+$windows | Select-Object ProcessName, WindowTitle, WindowHandleString, ProcessID, WindowState | Format-Table -AutoSize
 
 # Show count
 "Total windows found: $($windows.Count)"

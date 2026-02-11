@@ -9,6 +9,7 @@
       - [x] Define P/Invoke signatures for `IsWindowVisible`
       - [x] Define P/Invoke signatures for `GetWindowThreadProcessId`
       - [x] Define P/Invoke signatures for `IsIconic` (check if minimized)
+      - [x] Define P/Invoke signatures for `GetForegroundWindow` (detect active window)
       - [x] Create `WindowEnumeration_TypeDefinition.ps1` in `private/` folder
       - [x] Add proper error handling for P/Invoke calls
    2. [x] Implement window enumeration function
@@ -24,34 +25,37 @@
       - [x] Collect enumeration errors for Event Log reporting
       - [x] Add comprehensive verbose output at each processing stage
       - [x] Create Pester unit tests with mock helper function New-MockWindowData
-   3. [ ] Implement window filtering logic
-      - [ ] Filter out windows with empty or null titles
-      - [ ] Filter out system windows and background processes
-      - [ ] Only include windows that would appear in main taskbar area
-      - [ ] Log filtered window count in verbose mode
-   4. [ ] Implement console-based menu for user selection
-      - [ ] Create private function `Select-TargetWindowFromMenu` with comment-based help
-      - [ ] Display numbered list showing ProcessName, WindowTitle, WindowState
-      - [ ] Accept user input (number) for window selection
-      - [ ] Validate user input and handle invalid selections
-      - [ ] Allow user to cancel selection (e.g., 'q' or '0')
-      - [ ] Keep code modular for future GUI integration
-   5. [ ] Implement configuration persistence
+   3. [x] Implement console-based menu for user selection
+      - [x] Create private function `Select-TargetWindowFromMenu` with comment-based help
+      - [x] Display numbered list showing Process, Application (WindowTitle), Minimised status, Active indicator
+      - [x] Accept user input (number) for window selection
+      - [x] Validate user input and handle invalid selections
+      - [x] Allow user to cancel selection (press 'x' to exit)
+      - [x] Keep code modular for future GUI integration
+      - [x] Implement arrow key navigation with scroll mode and blue text highlighting
+      - [x] Support sorting by Process (P), Application (A), or Minimised (M) with ascending/descending toggle
+      - [x] Implement simple and detailed view modes (toggle with D key)
+      - [x] Add refresh capability (R key) for internally enumerated windows
+      - [x] Display help menu (H key) below window list
+      - [x] Detect and mark active (foreground) window with asterisk
+      - [x] Use ANSI escape codes for colors and underlined header text
+      - [x] Create comprehensive Pester unit tests in `Select-TargetWindowFromMenu.Tests.ps1`
+   4. [ ] Implement configuration persistence
       - [ ] Check if existing configuration file exists
       - [ ] Prompt user to save current config before overwriting (if exists)
       - [ ] Create function to save selected window target to configuration
       - [ ] Store ProcessName, WindowTitle, WindowHandle in config
-   6. [ ] Implement error handling for all scenarios
+   5. [ ] Implement error handling for all scenarios
       - [ ] Handle case: no windows found after filtering (log error, quit gracefully)
       - [ ] Handle case: user cancels selection (log info, close gracefully with message)
       - [ ] Handle case: selected window closes before action starts (log error, show error popup)
       - [ ] Add try-catch blocks around all Win32 API calls
-   7. [ ] Add Windows Event Logging
+   6. [ ] Add Windows Event Logging
       - [ ] Log verbose details: PID, WindowHandle, WindowState, ProcessName, WindowTitle
       - [ ] Log info: user selection, filtered window count
       - [ ] Log errors: no windows found, invalid selection, window closed
       - [ ] Log warnings: config file overwrite prompts
-   8. [ ] Create Pester unit tests
+   7. [ ] Create Pester unit tests
       - [ ] Create `WindowEnumeration.Tests.ps1` in appropriate test folder
       - [ ] Mock Win32 API calls for enumeration function tests
       - [ ] Test filtering logic with various window states
@@ -59,7 +63,7 @@
       - [ ] Test configuration save/load logic
       - [ ] Test error handling scenarios
       - [ ] Achieve minimum 80% code coverage
-   9. [ ] Update README.md
+   8. [ ] Update README.md
       - [ ] Document new exported functions (if any made public)
       - [ ] Update "Features" section to reflect window enumeration capabilities
       - [ ] Add usage examples for window selection workflow

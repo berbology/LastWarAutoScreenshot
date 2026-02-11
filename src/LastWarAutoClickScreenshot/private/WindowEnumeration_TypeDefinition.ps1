@@ -122,6 +122,13 @@ public class WindowEnumerationAPI {
     /// <returns>True if window is minimized, false otherwise</returns>
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool IsIconic(IntPtr hWnd);
+    
+    /// <summary>
+    /// Retrieves a handle to the foreground window (the window with which the user is currently working)
+    /// </summary>
+    /// <returns>Handle to the foreground window, or IntPtr.Zero if no foreground window exists</returns>
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr GetForegroundWindow();
 }
 '@ -ErrorAction Stop
 }

@@ -8,8 +8,10 @@ This project is a PowerShell 7+ module designed to automate human-like mouse mov
 
 ## Features
 
-- **Window Management:** Enumerate all open windows (including minimized/background), select target window, automatically bring to front and restore if minimized
-  - Uses Win32 API (`EnumWindows`, `GetWindowText`, `IsWindowVisible`, `IsIconic`) via P/Invoke for reliable window enumeration
+- **Window Management:** Enumerate all open windows (including minimized/background), select target window via interactive console menu, automatically bring to front and restore if minimized
+  - Uses Win32 API (`EnumWindows`, `GetWindowText`, `IsWindowVisible`, `IsIconic`, `GetForegroundWindow`) via P/Invoke for reliable window enumeration and selection
+  - Interactive menu supports sorting, filtering, and arrow-key navigation
+  - Active window detection to highlight the currently focused application
   - Proper memory management with delegate lifetime handling to prevent garbage collection issues
 - **Emergency Stop:** Configurable hotkey combination (default: Ctrl+Shift+Esc) or hold both mouse buttons for 3 seconds to immediately abort automation
 - **Window-Relative Coordinates:** All mouse positions are relative to the target window for consistency across different screen configurations

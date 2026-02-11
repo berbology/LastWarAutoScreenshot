@@ -14,9 +14,10 @@ These instructions define how commit messages should be generated for this proje
    - **Header**: A single line summarizing the change (max 50 characters).
      - Use types: feat, fix, docs, style, refactor, perf, test, chore, ci, move
      - Include scope when relevant (e.g., api, ui, auth)
-    - **Body** (optional): A detailed explanation of the change, if necessary.
+     - Leave an empty line between header and body
+   - **Body** (optional): A detailed explanation of the change, if necessary.
        - **List every key change as a bullet point. Bullet points are required for each detail line in the body.**
-       - Bullet points make scanning and reviewing changes much easier and are mandatory for all commit messages in this project.
+       - Bullet points make scanning and reviewing changes much easier and are mandatory for all commit messages in this project. Use asterisks (*).
    - **Footer** (optional): Any references to issues, pull requests, or breaking changes.
 4. **Examples**:
    - `Fix bug in screenshot similarity detection`

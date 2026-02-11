@@ -6,7 +6,7 @@ function Get-EnumeratedWindows {
     .DESCRIPTION
         Uses Win32 API to enumerate all top-level windows that are visible and have a presence
         in the Windows taskbar. Returns detailed information including process name, window title,
-        handle, PID, and window state.
+        handle, ProcessID, and window state.
         
         This function filters out system, hidden, and background processes, focusing only on
         user-facing application windows suitable for automation targeting.
@@ -31,7 +31,7 @@ function Get-EnumeratedWindows {
         - WindowHandle (IntPtr): Raw window handle for Win32 API calls
         - WindowHandleString (string): String representation of handle for serialization
         - WindowHandleInt (int64): Numeric representation of handle
-        - PID (uint32): Process identifier
+        - ProcessID (uint32): Process identifier
         - WindowState (string): "Visible", "Minimized", or "Hidden"
 
     .EXAMPLE
@@ -152,7 +152,7 @@ function Get-EnumeratedWindows {
                     WindowHandle        = $hwnd
                     WindowHandleString  = $hwnd.ToString()
                     WindowHandleInt     = [int64]$hwnd
-                    PID                 = $processId
+                    ProcessID           = $processId
                     WindowState         = $windowState
                 }
 
@@ -207,7 +207,7 @@ function Get-EnumeratedWindows {
                 
                 try {
                     # Attempt to get process information
-                    $process = Get-Process -Id $window.PID -ErrorAction Stop
+                    $process = Get-Process -Id $window.ProcessID -ErrorAction Stop
                     $window.ProcessName = $process.ProcessName
                 }
                 catch {
