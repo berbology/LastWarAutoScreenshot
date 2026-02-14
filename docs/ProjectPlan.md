@@ -40,11 +40,13 @@
       - [x] Detect and mark active (foreground) window with asterisk
       - [x] Use ANSI escape codes for colors and underlined header text
       - [x] Create comprehensive Pester unit tests in `Select-TargetWindowFromMenu.Tests.ps1`
-   4. [ ] Implement configuration persistence
-      - [ ] Check if existing configuration file exists
-      - [ ] Prompt user to save current config before overwriting (if exists)
-      - [ ] Create function to save selected window target to configuration
-      - [ ] Store ProcessName, WindowTitle, WindowHandle in config
+   4. [x] Implement configuration persistence
+      - [x] Check if existing configuration file exists (Test-ModuleConfigurationExists)
+      - [x] Prompt user to save current config before overwriting (ShouldProcess with -Force parameter)
+      - [x] Create function to save selected window target to configuration (Save-ModuleConfiguration)
+      - [x] Store ProcessName, WindowTitle, WindowHandle, ProcessID, WindowState, and metadata in config
+      - [x] Create function to load configuration from file (Get-ModuleConfiguration)
+      - [x] Create comprehensive Pester unit tests in `ModuleConfiguration.Tests.ps1` (26 tests, all passing)
    5. [ ] Implement error handling for all scenarios
       - [ ] Handle case: no windows found after filtering (log error, quit gracefully)
       - [ ] Handle case: user cancels selection (log info, close gracefully with message)

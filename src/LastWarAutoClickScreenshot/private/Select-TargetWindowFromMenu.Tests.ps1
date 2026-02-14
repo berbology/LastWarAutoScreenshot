@@ -232,20 +232,15 @@ Describe 'Get-SortedWindows' {
         It 'Should sort ascending by ProcessName' {
             $script:currentSort = 'ProcessName'
             $script:sortAscending = $true
-            
-            $result = Get-SortedWindows
-            
+            $result = Get-SortedWindows -Windows $script:windows
             $result[0].ProcessName | Should -Be 'alpha'
             $result[1].ProcessName | Should -Be 'beta'
             $result[2].ProcessName | Should -Be 'zebra'
         }
-        
         It 'Should sort descending by ProcessName' {
             $script:currentSort = 'ProcessName'
             $script:sortAscending = $false
-            
-            $result = Get-SortedWindows
-            
+            $result = Get-SortedWindows -Windows $script:windows
             $result[0].ProcessName | Should -Be 'zebra'
             $result[1].ProcessName | Should -Be 'beta'
             $result[2].ProcessName | Should -Be 'alpha'
@@ -256,20 +251,15 @@ Describe 'Get-SortedWindows' {
         It 'Should sort ascending by WindowTitle' {
             $script:currentSort = 'WindowTitle'
             $script:sortAscending = $true
-            
-            $result = Get-SortedWindows
-            
+            $result = Get-SortedWindows -Windows $script:windows
             $result[0].WindowTitle | Should -Be 'ABC Window'
             $result[1].WindowTitle | Should -Be 'MNO Window'
             $result[2].WindowTitle | Should -Be 'XYZ Window'
         }
-        
         It 'Should sort descending by WindowTitle' {
             $script:currentSort = 'WindowTitle'
             $script:sortAscending = $false
-            
-            $result = Get-SortedWindows
-            
+            $result = Get-SortedWindows -Windows $script:windows
             $result[0].WindowTitle | Should -Be 'XYZ Window'
             $result[1].WindowTitle | Should -Be 'MNO Window'
             $result[2].WindowTitle | Should -Be 'ABC Window'
@@ -280,19 +270,14 @@ Describe 'Get-SortedWindows' {
         It 'Should sort ascending by WindowState' {
             $script:currentSort = 'WindowState'
             $script:sortAscending = $true
-            
-            $result = Get-SortedWindows
-            
+            $result = Get-SortedWindows -Windows $script:windows
             $result[0].WindowState | Should -Be 'Minimized'
             $result[2].WindowState | Should -Be 'Visible'
         }
-        
         It 'Should sort descending by WindowState' {
             $script:currentSort = 'WindowState'
             $script:sortAscending = $false
-            
-            $result = Get-SortedWindows
-            
+            $result = Get-SortedWindows -Windows $script:windows
             $result[0].WindowState | Should -Be 'Visible'
         }
     }
@@ -302,27 +287,27 @@ Describe 'Test-WindowExists' {
     BeforeAll {
         . $PSScriptRoot/Select-TargetWindowFromMenu.ps1
     }
-    
+
     Context 'When validating window handles' {
         It 'Should return true for valid window handle' {
-            Mock -CommandName 'Invoke-Expression' -MockWith {
-                return 10  # Mock window text length
+            Mock -CommandName 'Get-WindowTextLength' -MockWith {
+                return 10  # Simulate valid window handle
             }
-            
+
             $handle = [IntPtr]123456
             $result = Test-WindowExists -WindowHandle $handle
-            
+
             $result | Should -Be $true
         }
-        
+
         It 'Should return false when window handle is invalid' {
-            Mock -CommandName 'Invoke-Expression' -MockWith {
-                throw "Invalid window handle"
+            Mock -CommandName 'Get-WindowTextLength' -MockWith {
+                return 0  # Simulate invalid window handle
             }
-            
+
             $handle = [IntPtr]0
             $result = Test-WindowExists -WindowHandle $handle
-            
+
             $result | Should -Be $false
         }
     }
@@ -369,7 +354,7 @@ Describe 'Integration tests' {
                 $Windows.Count | Should -Be 2
                 return $localMockWindows[0]
             } -ModuleName $null
-            $result = Select-TargetWindowFromMenu -InputObject $localMockWindows
+            $result = Select-TargetWindowFromMenu -WindowList $localMockWindows
             $result | Should -Not -BeNullOrEmpty
         }
     }

@@ -1,3 +1,4 @@
+
 <#
 .SYNOPSIS
     Displays an interactive console menu for selecting a target window from enumerated windows.
@@ -5,10 +6,11 @@
 .DESCRIPTION
     Presents an interactive menu allowing users to select a window from a list of enumerated windows.
     Supports multiple selection methods (direct number entry or arrow key navigation), sorting options,
-    and view modes. Can accept piped window objects or enumerate windows internally with optional filters.
+    and view modes. Can accept window objects via the WindowList parameter (direct argument or pipeline),
+    or enumerate windows internally with optional filters.
 
-.PARAMETER InputObject
-    Array of window objects from Get-EnumeratedWindows. Accepts pipeline input.
+.PARAMETER WindowList
+    Array of window objects from Get-EnumeratedWindows. Accepts pipeline input or direct parameter.
 
 .PARAMETER ProcessName
     Optional process name filter when enumerating windows internally (not used with pipeline input).
@@ -30,15 +32,21 @@
     Returns the selected window object with properties: ProcessName, WindowTitle, WindowHandle, 
     WindowHandleString, WindowHandleInt64, ProcessID, WindowState. Returns $null if user exits without selection.
 
+
 .EXAMPLE
     Get-EnumeratedWindows | Select-TargetWindowFromMenu
     
-    Displays interactive menu with all enumerated windows, allowing user to select a target.
+    Displays interactive menu with all enumerated windows, allowing user to select a target (pipeline input).
+
+.EXAMPLE
+    Select-TargetWindowFromMenu -WindowList (Get-EnumeratedWindows)
+    
+    Displays menu with all enumerated windows, allowing user to select a target (direct parameter).
 
 .EXAMPLE
     Get-EnumeratedWindows -ProcessName 'LastWar' | Select-TargetWindowFromMenu -DetailedView
     
-    Displays menu with LastWar windows in detailed view mode.
+    Displays menu with LastWar windows in detailed view mode (pipeline input).
 
 .EXAMPLE
     Select-TargetWindowFromMenu -ProcessName 'chrome' -VisibleOnly
@@ -66,11 +74,12 @@
     - Help displayed below window list
 #>
 
+
 function Select-TargetWindowFromMenu {
     [CmdletBinding()]
     param(
         [Parameter(ValueFromPipeline = $true)]
-        [PSCustomObject[]]$InputObject,
+        [PSCustomObject[]]$WindowList,
 
         [Parameter()]
         [string]$ProcessName,
@@ -89,6 +98,7 @@ function Select-TargetWindowFromMenu {
         [switch]$DetailedView
     )
 
+
     begin {
         # Always clear script:windows to prevent cross-test accumulation
         $script:windows = @()
@@ -101,7 +111,7 @@ function Select-TargetWindowFromMenu {
         $script:AnsiNoUnderline = "`e[24m"
         
         # State variables (use local variable for windows)
-                $windows = @()  # Always initialize as array for each invocation
+        $windows = @()  # Always initialize as array for each invocation
         $script:useInternalEnumeration = $false
         $script:enumerationParams = @{}
         $script:receivedInput = $false
@@ -121,7 +131,7 @@ function Select-TargetWindowFromMenu {
         }
         
         # Check if we should use internal enumeration
-        if (-not $PSBoundParameters.ContainsKey('InputObject')) {
+        if (-not $PSBoundParameters.ContainsKey('WindowList')) {
             $script:useInternalEnumeration = $true
             
             # Build enumeration parameters
@@ -140,11 +150,11 @@ function Select-TargetWindowFromMenu {
     }
 
     process {
-        if ($InputObject) {
+        if ($WindowList) {
             # Always treat as array, overwrite for each pipeline call to avoid accumulation
-            $windows = @($InputObject)
+            $windows = @($WindowList)
             $script:receivedInput = $true
-            Write-Verbose "Received $($windows.Count) window(s) from pipeline (overwriting previous)"
+            Write-Verbose "Received $($windows.Count) window(s) from pipeline or parameter (overwriting previous)"
         }
     }
 
@@ -566,6 +576,17 @@ function Get-UserSelection {
     }
 }
 
+function Get-WindowTextLength {
+    <#
+    .SYNOPSIS
+        Wrapper for [WindowEnumerationAPI]::GetWindowTextLength for testability.
+    #>
+    param(
+        [IntPtr]$WindowHandle
+    )
+    return [WindowEnumerationAPI]::GetWindowTextLength($WindowHandle)
+}
+
 function Test-WindowExists {
     <#
     .SYNOPSIS
@@ -574,10 +595,9 @@ function Test-WindowExists {
     param(
         [IntPtr]$WindowHandle
     )
-    
     try {
         # Try to get window text length as a validation check
-        $length = [WindowEnumerationAPI]::GetWindowTextLength($WindowHandle)
+        $length = Get-WindowTextLength -WindowHandle $WindowHandle
         if ($length -eq 0) {
             Write-Verbose "Window handle $WindowHandle is invalid or closed (length=0)"
             return $false

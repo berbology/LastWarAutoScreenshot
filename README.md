@@ -113,6 +113,29 @@ All error and diagnostic logging is performed via Windows Event Logging, viewabl
 - All emergency stops are logged for audit purposes
 
 ## Configuration
+### Saving and Retrieving Window Configuration
+
+The module automatically saves and loads the selected window configuration (such as process name, window title, and handle) to a configuration file for later use. By default, this file is stored at:
+
+  $env:APPDATA\LastWarAutoScreenshot\WindowConfig.json
+
+This location follows Windows and PowerShell best practices for user-specific configuration data. The file is created automatically when you save a window configuration using the provided functions or GUI.
+
+#### Custom Configuration Path
+
+If you wish to save or load the configuration from a different location, you can specify a custom path using the `-ConfigurationPath` parameter with the relevant commands (e.g., `Save-ModuleConfiguration`, `Get-ModuleConfiguration`, or `Test-ModuleConfigurationExists`).
+
+**Example:**
+
+```powershell
+$window = Get-EnumeratedWindows | Select-TargetWindowFromMenu
+Save-ModuleConfiguration -WindowObject $window -ConfigurationPath "C:\MyConfigs\CustomWindowConfig.json"
+
+# Later, to load from the same custom path:
+$config = Get-ModuleConfiguration -ConfigurationPath "C:\MyConfigs\CustomWindowConfig.json"
+```
+
+If no path is specified, the default location in `$env:APPDATA` is always used.
 
 The module supports both JSON and YAML configuration files. Configuration files are automatically generated after recording actions via the GUI and can be manually edited, saved, or imported.
 
