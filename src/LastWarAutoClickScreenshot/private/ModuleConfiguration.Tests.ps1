@@ -1,5 +1,6 @@
 BeforeAll {
     # Import functions under test
+    . $PSScriptRoot/Write-LastWarLog.ps1
     . $PSScriptRoot/Save-ModuleConfiguration.ps1
     . $PSScriptRoot/Get-ModuleConfiguration.ps1
     . $PSScriptRoot/Test-ModuleConfigurationExists.ps1

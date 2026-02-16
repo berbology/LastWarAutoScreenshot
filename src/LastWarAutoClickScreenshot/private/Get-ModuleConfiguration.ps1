@@ -51,6 +51,8 @@ function Get-ModuleConfiguration {
 
     begin {
         Write-Verbose "Starting window configuration load process"
+        # Import Write-LastWarLog for logging
+        . "$PSScriptRoot/Write-LastWarLog.ps1"
         
         # Set default configuration path if not specified
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
@@ -68,7 +70,8 @@ function Get-ModuleConfiguration {
             # Check if configuration file exists
             if (-not (Test-Path -Path $ConfigurationPath -PathType Leaf)) {
                 Write-Verbose "Configuration file not found at: $ConfigurationPath"
-                Write-Warning "No saved window configuration found at: $ConfigurationPath"
+                Write-Warning "Warning: No saved window configuration found at: $ConfigurationPath"
+                Write-LastWarLog -Message "No saved window configuration found at: $ConfigurationPath" -Level Warning -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath"
                 return $null
             }
 
@@ -78,7 +81,8 @@ function Get-ModuleConfiguration {
             $jsonContent = Get-Content -Path $ConfigurationPath -Raw -ErrorAction Stop
             
             if ([string]::IsNullOrWhiteSpace($jsonContent)) {
-                Write-Error "Configuration file is empty: $ConfigurationPath"
+                Write-Error "Error: Configuration file is empty: $ConfigurationPath"
+                Write-LastWarLog -Message "Configuration file is empty: $ConfigurationPath" -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
                 return $null
             }
 
@@ -93,7 +97,8 @@ function Get-ModuleConfiguration {
             
             if ($missingProperties.Count -gt 0) {
                 $errorMsg = "Configuration file is missing required properties: $($missingProperties -join ', ')"
-                Write-Error $errorMsg
+                Write-Error "Error: $errorMsg"
+                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
                 throw $errorMsg
             }
 
@@ -105,17 +110,20 @@ function Get-ModuleConfiguration {
         }
         catch [System.IO.IOException] {
             $errorMsg = "Failed to read configuration file: $_"
-            Write-Error $errorMsg
+            Write-Error "Error: $errorMsg"
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
             throw
         }
         catch [System.ArgumentException] {
             $errorMsg = "Invalid JSON format in configuration file: $_"
-            Write-Error $errorMsg
+            Write-Error "Error: $errorMsg"
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
             throw
         }
         catch {
             $errorMsg = "Unexpected error loading window configuration: $_"
-            Write-Error $errorMsg
+            Write-Error "Error: $errorMsg"
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
             throw
         }
     }

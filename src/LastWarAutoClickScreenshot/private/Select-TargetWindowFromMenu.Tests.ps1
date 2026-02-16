@@ -155,12 +155,12 @@ Describe 'Select-TargetWindowFromMenu' {
                 return @()
             }
             
-            Mock -CommandName 'Write-Host' -MockWith {}
+            Mock -CommandName 'Write-Information' -MockWith {}
             
             $result = Select-TargetWindowFromMenu
             
-            Should -Invoke Write-Host -ParameterFilter {
-                $Object -match 'No windows found'
+            Should -Invoke Write-Information -ParameterFilter {
+                $MessageData -match 'No windows found'
             }
         }
     }
@@ -350,7 +350,7 @@ Describe 'Integration tests' {
             )
             Mock -CommandName 'Show-MenuLoop' -MockWith {
                 param($Windows)
-                Write-Host "DEBUG: Windows passed to Show-MenuLoop: $($Windows | ForEach-Object { $_.ProcessName + ':' + $_.WindowTitle + ':' + $_.WindowState })"
+                Write-Information "DEBUG: Windows passed to Show-MenuLoop: $($Windows | ForEach-Object { $_.ProcessName + ':' + $_.WindowTitle + ':' + $_.WindowState })"
                 $Windows.Count | Should -Be 2
                 return $localMockWindows[0]
             } -ModuleName $null

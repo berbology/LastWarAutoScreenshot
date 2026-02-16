@@ -1,10 +1,16 @@
 # LastWar Auto Mouse Control & Screenshot Module
 
+
+## Logging
+
+For all details on error, diagnostic, and event logging—including log destinations, verbosity levels, configuration, and log format—see [docs/Logging.md](docs/Logging.md).
+
 ## Overview
 
 This project is a PowerShell 7+ module designed to automate human-like mouse movements, clicks, drags, and screen captures within Windows applications—primarily targeting the game Last War: Survival (`LastWar.exe`). The module uses window-relative coordinates for reliable automation across different display configurations and is extensible for other games or applications.
 
 **Note:** This module is designed for Windows 11 (64-bit) where the target game is supported. Only one instance can run at a time since the game supports single-instance execution only.
+
 
 ## Features
 
@@ -87,30 +93,10 @@ This tool is intended for personal automation and testing purposes. Use responsi
 
 Unit testing is performed using the Pester framework. Continuous Integration/Continuous Deployment (CI/CD) setup is under consideration and will be documented once finalized.
 
-## Error Handling & Logging
 
-### Logging
+## Error Handling
 
-All error and diagnostic logging is performed via Windows Event Logging, viewable in Windows Event Viewer. During development, the module runs in Verbose mode with high verbosity, logging all operations for troubleshooting.
-
-**Logging Configuration:**
-
-- Verbosity level configurable via command-line parameters or GUI "Logging" tab
-- Debug mode includes all relevant variables in error log events
-- Specific logging levels and events will be documented as features are developed
-
-### Error Recovery
-
-- **Mid-Sequence Failures:** All failures are logged with full context; configurable retry logic available via GUI
-- **Window Crashes/Closes:** Detected and logged; sequence aborts gracefully with error event
-- **Upload Failures:** Exponential backoff with jitter for retry attempts (configurable max attempts)
-- **Storage Limits:** User prompted with actionable suggestions (increase limit or cleanup drive)
-
-### Emergency Stop
-
-- **Hotkey:** Press configurable key combination (default: Ctrl+Shift+Esc) to immediately abort
-- **Mouse Gesture:** Hold both mouse buttons simultaneously for 3 seconds to trigger emergency stop
-- All emergency stops are logged for audit purposes
+See [docs/Logging.md](docs/Logging.md) for all error and logging details, including error recovery and emergency stop logging.
 
 ## Configuration
 ### Saving and Retrieving Window Configuration

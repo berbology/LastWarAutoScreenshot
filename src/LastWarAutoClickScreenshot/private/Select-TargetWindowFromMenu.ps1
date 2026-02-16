@@ -74,6 +74,9 @@
     - Help displayed below window list
 #>
 
+# Dot-source logging helper
+. "$PSScriptRoot/Write-LastWarLog.ps1"
+
 
 function Select-TargetWindowFromMenu {
     [CmdletBinding()]
@@ -180,10 +183,9 @@ function Select-TargetWindowFromMenu {
             $windowsCount = 1
         }
         if ($windowsCount -eq 0) {
-            Write-Host "`n═══════════════════════════════════════════════════════════════════════════════"
-            Write-Host "  No windows found matching the specified criteria."
-            Write-Host "═══════════════════════════════════════════════════════════════════════════════`n"
-            Write-Verbose "No windows to display, exiting"
+            Write-Information "No windows found matching the specified criteria."
+            Write-LastWarLog -Message "No windows found after filtering in Select-TargetWindowFromMenu" -Level Error -FunctionName 'Select-TargetWindowFromMenu' -Context ($script:enumerationParams | ConvertTo-Json -Compress)
+            Write-Verbose "No windows to display, exiting. Error logged."
             return $null
         }
         
@@ -244,19 +246,20 @@ function Show-MenuLoop {
                         return $selectedWindow
                     }
                     else {
-                        Write-Host "`n$($script:AnsiReset)Error: Selected window has closed. Please select another window.`n" -ForegroundColor Red
+                        Write-Host "Error: Selected window has closed. Please select another window." -ForegroundColor Red
+                        Write-LastWarLog -Message "Selected window closed before action" -Level Error -FunctionName 'Show-MenuLoop' -Context "WindowHandle: $($selectedWindow.WindowHandle)"
                         Start-Sleep -Seconds 2
                     }
                 }
                 else {
-                    Write-Host "`n$($script:AnsiReset)Error: Invalid selection '$($selection.Value)'. Please enter a number between 1 and $($sortedWindows.Count).`n" -ForegroundColor Red
+                    Write-Host "Error: Invalid selection '$($selection.Value)'. Please enter a number between 1 and $($sortedWindows.Count)." -ForegroundColor Red
+                    Write-LastWarLog -Message "Invalid selection in Show-MenuLoop" -Level Warning -FunctionName 'Show-MenuLoop' -Context "Selection: $($selection.Value), Count: $($sortedWindows.Count)"
                     Start-Sleep -Seconds 2
                 }
             }
             'Exit' {
-                Write-Host "`n═══════════════════════════════════════════════════════════════════════════════"
-                Write-Host "  Exiting..."
-                Write-Host "═══════════════════════════════════════════════════════════════════════════════`n"
+                Write-Host "Info: Exiting window selection." -ForegroundColor Yellow
+                Write-LastWarLog -Message "User cancelled window selection" -Level Info -FunctionName 'Show-MenuLoop'
                 return $null
             }
             'ToggleDetail' {
@@ -274,16 +277,16 @@ function Show-MenuLoop {
                     $script:scrollMode = $false
                     $script:selectedIndex = 0
                     if (-not $refreshed -or $refreshed.Count -eq 0) {
-                        Write-Host "`n═══════════════════════════════════════════════════════════════════════════════"
-                        Write-Host "  No windows found after refresh."
-                        Write-Host "═══════════════════════════════════════════════════════════════════════════════`n"
+                        Write-Host "Warning: No windows found after refresh." -ForegroundColor Yellow
+                        Write-LastWarLog -Message "No windows found after refresh in Show-MenuLoop" -Level Warning -FunctionName 'Show-MenuLoop' -Context ($script:enumerationParams | ConvertTo-Json -Compress)
                         return $null
                     }
                     $Windows = $refreshed
                     continue
                 }
                 else {
-                    Write-Host "`n$($script:AnsiReset)Cannot refresh piped input. Re-run Get-EnumeratedWindows | Select-TargetWindowFromMenu`n" -ForegroundColor Yellow
+                    Write-Host "Warning: Cannot refresh piped input. Re-run Get-EnumeratedWindows | Select-TargetWindowFromMenu" -ForegroundColor Yellow
+                    Write-LastWarLog -Message "Cannot refresh piped input in Show-MenuLoop" -Level Info -FunctionName 'Show-MenuLoop'
                     Start-Sleep -Seconds 2
                 }
             }
@@ -576,6 +579,13 @@ function Get-UserSelection {
     }
 }
 
+function Get-WindowTextLengthInternal {
+    param(
+        [IntPtr]$WindowHandle
+    )
+    return [WindowEnumerationAPI]::GetWindowTextLength($WindowHandle)
+}
+
 function Get-WindowTextLength {
     <#
     .SYNOPSIS
@@ -584,7 +594,13 @@ function Get-WindowTextLength {
     param(
         [IntPtr]$WindowHandle
     )
-    return [WindowEnumerationAPI]::GetWindowTextLength($WindowHandle)
+    try {
+        return Get-WindowTextLengthInternal -WindowHandle $WindowHandle
+    }
+    catch {
+        Write-LastWarLog -Message "Win32 API GetWindowTextLength failed for handle ${WindowHandle}: $_" -Level Error
+        throw "Failed to get window text length for handle ${WindowHandle}. See log for details."
+    }
 }
 
 function Test-WindowExists {

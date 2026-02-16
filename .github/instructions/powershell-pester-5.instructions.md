@@ -195,3 +195,12 @@ Invoke-Pester -Configuration $config
 ```
 
 **Key Sections**: Run (Path, Exit), Filter (Tag, ExcludeTag), Output (Verbosity), TestResult (Enabled, OutputFormat), CodeCoverage (Enabled, Path), Should (ErrorAction), Debug
+
+## Important
+
+- Full Suite Requirement: Always run the entire, unfiltered Pester test suite (all test files, no tag or path filters) before marking any task as complete or updating documentation.
+- No Partial Validation: Never rely on single-file, tag-filtered, or partial test runs for final validation. All test files must be included in the final check.
+- Test Count Baseline: Explicitly check and report the total number of tests discovered and run, and compare to the known project baseline. If the count drops unexpectedly, halt and investigate before proceeding.
+- Reset Filters and Mocks: After writing or focusing on new tests, always reset any mocks, tags, or filters before the final test run.
+- Result Summary: Summarize the test results (pass, fail, pending) and highlight any discrepancies before proceeding with project plan or codebase updates.
+- No Task Completion Without Full Pass: Never mark a task as complete or update the project plan unless the full suite has been run and the results match or exceed the previous baseline (except for known pending/integration tests).

@@ -7,10 +7,11 @@
 . "$PSScriptRoot\src\LastWarAutoClickScreenshot\private\WindowEnumeration_TypeDefinition.ps1"
 
 # Enumerate all windows and launch the menu
+$InformationPreference = 'Continue'
 $selected = Get-EnumeratedWindows | Select-TargetWindowFromMenu
 
 if ($selected) {
-    Write-Host "You selected: $($selected.ProcessName) - $($selected.WindowTitle) (Handle: $($selected.WindowHandleInt64))"
+    Write-Information "Info: You selected: $($selected.ProcessName) - $($selected.WindowTitle) (Handle: $($selected.WindowHandleInt64))"
 } else {
-    Write-Host "No window selected or operation cancelled."
+    Write-Warning "Warning: No window selected or operation cancelled."
 }

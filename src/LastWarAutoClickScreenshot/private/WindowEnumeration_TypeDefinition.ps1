@@ -157,10 +157,14 @@ public class WindowEnumerationAPI {
         $result = [WindowEnumerationAPI]::EnumWindows($callback, [IntPtr]::Zero)
         if (-not $result) {
             $errorCode = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
-            throw "EnumWindows failed with error code: $errorCode"
+            $msg = "EnumWindows failed with error code: $errorCode"
+            Write-Error "Error: $msg"
+            Write-LastWarLog -Message $msg -Level Error -FunctionName 'WindowEnumeration_TypeDefinition' -Context 'EnumWindows'
+            throw $msg
         }
     }
     catch {
-        Write-Error "Failed to enumerate windows: $_"
+        Write-Error "Error: Failed to enumerate windows: $_"
+        Write-LastWarLog -Message "Failed to enumerate windows: $_" -Level Error -FunctionName 'WindowEnumeration_TypeDefinition' -Context 'EnumWindows' -StackTrace $_
     }
 #>

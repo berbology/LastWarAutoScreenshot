@@ -76,7 +76,8 @@ function Get-EnumeratedWindows {
         # Verify type definitions are loaded
         if (-not ([System.Management.Automation.PSTypeName]'WindowEnumerationAPI').Type) {
             $errorMsg = "WindowEnumerationAPI type not loaded. Ensure WindowEnumeration_TypeDefinition.ps1 is dot-sourced."
-            Write-Error $errorMsg
+            Write-Error "Error: $errorMsg"
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-EnumeratedWindows'
             throw $errorMsg
         }
 
@@ -162,7 +163,8 @@ function Get-EnumeratedWindows {
                 return $true  # Continue enumeration
             }
             catch {
-                $script:enumerationErrors.Add("Error processing window $hwnd : $_")
+                    Write-LastWarLog -Message "Error processing window $hwnd : $_" -Level Error -FunctionName 'Get-EnumeratedWindows' -Context "Window handle: $hwnd" -StackTrace $_
+                    $script:enumerationErrors.Add("Error processing window $hwnd : $_")
                 return $true  # Continue enumeration despite error
             }
         }
@@ -183,19 +185,17 @@ function Get-EnumeratedWindows {
             Write-Verbose "Windows collected for further processing: $($script:windowList.Count)"
         }
         catch {
-            Write-Error "Failed to enumerate windows: $_"
+            Write-LastWarLog -Message "Failed to enumerate windows: $_" -Level Error -FunctionName 'Get-EnumeratedWindows' -Context "EnumWindows API call" -StackTrace $_
+            Write-Error "Error: Failed to enumerate windows: $_"
             throw
         }
 
         # Log enumeration errors to Event Log if any occurred
         if ($script:enumerationErrors.Count -gt 0) {
-            $errorSummary = "Window enumeration encountered $($script:enumerationErrors.Count) error(s):`n" + 
-                           ($script:enumerationErrors -join "`n")
-            
-            Write-Warning $errorSummary
-            
+            $errorSummary = "Window enumeration encountered $($script:enumerationErrors.Count) error(s):`n" + ($script:enumerationErrors -join "`n")
+            Write-Warning "Warning: $errorSummary"
+            Write-LastWarLog -Message $errorSummary -Level Warning -FunctionName 'Get-EnumeratedWindows'
             # TODO: Write to Windows Event Log when logging infrastructure is implemented
-            # Write-EventLog -LogName "Application" -Source "LastWarAutoScreenshot" -EventId 1001 -EntryType Warning -Message $errorSummary
         }
 
         # Retrieve process names using parallel processing for performance

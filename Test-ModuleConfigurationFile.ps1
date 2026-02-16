@@ -15,43 +15,48 @@ $privatePath = "src/LastWarAutoClickScreenshot/private"
 . "$privatePath/Get-ModuleConfiguration.ps1"
 
 
-Write-Host "Enumerating windows..."
+$InformationPreference = 'Continue'
+Write-Information "Info: Enumerating windows..."
 $windows = Get-EnumeratedWindows
 
 if (-not $windows) {
-    Write-Host "No windows found. Exiting."
+    Write-Error "Error: No windows found. Exiting."
     exit 1
 }
 
-Write-Host "Invoking Select-TargetWindowFromMenu..."
+$InformationPreference = 'Continue'
+Write-Information "Info: Invoking Select-TargetWindowFromMenu..."
 $selected = $windows | Select-TargetWindowFromMenu
 
-Write-Host "Selected window:"
+Write-Information "Info: Selected window:"
 $selected | Format-List
 
 # Test saving configuration to default location
-Write-Host "Saving selected window configuration to default location..."
+$InformationPreference = 'Continue'
+Write-Information "Info: Saving selected window configuration to default location..."
 $saveResult = Save-ModuleConfiguration -WindowObject $selected -Force
 if ($saveResult) {
-    Write-Host "Configuration saved: $($saveResult.FullName)"
+    Write-Information "Info: Configuration saved: $($saveResult.FullName)"
 } else {
-    Write-Host "Failed to save configuration. Exiting."
+    Write-Error "Error: Failed to save configuration. Exiting."
     exit 2
 }
 
 # Test retrieving configuration from default location
-Write-Host "Retrieving configuration from default location..."
+$InformationPreference = 'Continue'
+Write-Information "Info: Retrieving configuration from default location..."
 $retrievedConfig = Get-ModuleConfiguration
 if ($retrievedConfig) {
-    Write-Host "Configuration retrieved from file:"
+    Write-Information "Info: Configuration retrieved from file:"
     $retrievedConfig | Format-List
 } else {
-    Write-Host "Failed to retrieve configuration. Exiting."
+    Write-Error "Error: Failed to retrieve configuration. Exiting."
     exit 3
 }
 
 # Compare selected and retrieved config (basic check)
-Write-Host "Verifying round-trip integrity..."
+$InformationPreference = 'Continue'
+Write-Information "Info: Verifying round-trip integrity..."
 $propsToCheck = @('ProcessName','WindowTitle','WindowHandleString','WindowHandleInt64','ProcessID','WindowState')
 $selectedForCompare = [PSCustomObject]@{
     ProcessName = $selected.ProcessName
@@ -72,9 +77,9 @@ $retrievedForCompare = [PSCustomObject]@{
 
 $diff = Compare-Object -ReferenceObject $selectedForCompare -DifferenceObject $retrievedForCompare -Property $propsToCheck
 if ($diff) {
-    Write-Host "Round-trip test FAILED. Differences detected:" -ForegroundColor Red
+    Write-Error "Error: Round-trip test FAILED. Differences detected:"
     $diff | Format-Table
     exit 4
 } else {
-    Write-Host "Round-trip test PASSED. Saved and loaded configuration match." -ForegroundColor Green
+    Write-Information "Info: Round-trip test PASSED. Saved and loaded configuration match."
 }

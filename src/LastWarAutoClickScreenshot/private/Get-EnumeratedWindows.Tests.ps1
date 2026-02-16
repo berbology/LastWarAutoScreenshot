@@ -94,7 +94,7 @@ BeforeAll {
     }
 }
 
-Describe "Get-EnumeratedWindows (some pending)" -Tag "Unit" {
+Describe "Get-EnumeratedWindows" -Tag "Unit" {
     
     Context "Basic functionality" {
         
@@ -295,26 +295,16 @@ Describe "Get-EnumeratedWindows (some pending)" -Tag "Unit" {
     
     Context "Error handling" {
         
-        It "Should throw error if WindowEnumerationAPI type is not loaded (Pending)" {
-            # This test would need to unload the type, which is complex
-            # Placeholder for future implementation
-            Set-ItResult -Pending -Because "Type unloading in tests is complex to implement safely"
+        It "Should throw error if WindowEnumerationAPI type is not loaded (Type unloading in tests is complex to implement safely)" {
+            Set-ItResult -Skipped -Because "Pending: Type unloading in tests is complex to implement safely"
         }
-        
-        It "Should handle process termination gracefully (Pending)" {
-            Mock -CommandName Get-Process -MockWith {
-                throw "Process not found"
-            }
-            
-            # In actual implementation, terminated processes should be filtered out
-            # This would be tested with full integration test
-            Set-ItResult -Pending -Because "Requires full integration test with EnumWindows callback"
+
+        It "Should handle process termination gracefully (Requires full integration test with EnumWindows callback)" {
+            Set-ItResult -Skipped -Because "Pending: Requires full integration test with EnumWindows callback"
         }
-        
-        It "Should collect and report enumeration errors (Pending)" {
-            # This would test the $script:enumerationErrors collection
-            # Requires mocking Win32 API callback behaviour
-            Set-ItResult -Pending -Because "Requires complex Win32 API callback mocking"
+
+        It "Should collect and report enumeration errors (Requires complex Win32 API callback mocking)" {
+            Set-ItResult -Skipped -Because "Pending: Requires complex Win32 API callback mocking"
         }
     }
     
@@ -334,9 +324,9 @@ Describe "Get-EnumeratedWindows (some pending)" -Tag "Unit" {
     
     Context "Verbose output" {
         
-        It "Should output verbose messages when -Verbose is specified (Pending)" {
+        It "Should output verbose messages when -Verbose is specified" {
+            Set-ItResult -Skipped -Because "Pending: Requires integration test to capture verbose stream"
             # This would be tested in integration tests
-            Set-ItResult -Pending -Because "Requires integration test to capture verbose stream"
         }
     }
 }

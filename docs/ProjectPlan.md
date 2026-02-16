@@ -47,11 +47,49 @@
       - [x] Store ProcessName, WindowTitle, WindowHandle, ProcessID, WindowState, and metadata in config
       - [x] Create function to load configuration from file (Get-ModuleConfiguration)
       - [x] Create comprehensive Pester unit tests in `ModuleConfiguration.Tests.ps1` (26 tests, all passing)
-   5. [ ] Implement error handling for all scenarios
-      - [ ] Handle case: no windows found after filtering (log error, quit gracefully)
-      - [ ] Handle case: user cancels selection (log info, close gracefully with message)
-      - [ ] Handle case: selected window closes before action starts (log error, show error popup)
-      - [ ] Add try-catch blocks around all Win32 API calls
+   5. [x] Implement error handling for all scenarios
+        - [x] 1.5.1: No Windows Found After Filtering
+           - [x] Add check after window enumeration and filtering for empty result.
+           - [x] Log an error event (to file or event log).
+           - [x] Display a clear, user-friendly message and exit gracefully.
+           - [x] Write a Pester test for this scenario.
+        - [x] 1.5.2: User Cancels Selection
+           - [x] Detect user cancellation (e.g., 'x' key or cancel input).
+           - [x] Log an informational event.
+           - [x] Display a confirmation message and exit gracefully.
+           - [x] Write a Pester test for this scenario.
+        - [x] 1.5.3: Selected Window Closes Before Action
+           - [x] Before performing any action on the selected window, check if the window still exists.
+           - [x] If not, log an error event.
+           - [x] Show an error popup or message to the user.
+           - [x] Ensure the workflow aborts cleanly.
+           - [x] Write a Pester test for this scenario.
+        - [x] 1.5.4: Add Try-Catch to All Win32 API Calls
+           - [x] Review all Win32 API calls in enumeration and selection logic.
+           - [x] Wrap each call in a try-catch block.
+           - [x] On exception, log error details (including exception message and stack trace).
+           - [x] Display a user-friendly error message.
+           - [x] Write a Pester test that simulates a Win32 API failure.
+        - [ ] 1.5.5: General Error Logging Consistency
+            - [x] 1.5.5.1: Define standard logging format
+               - [x] Specify required fields (function name, error type, context, timestamp, etc.)
+               - [x] Document the format and update logging helper functions
+            - [x] 1.5.5.2: Audit all error paths
+               - [x] Review all functions for error/exception paths
+               - [x] Ensure each path logs using the standardized format
+               - [x] Add/modify log statements as needed
+               - [x] Create/Amend tests for error logging
+            - [x] 1.5.5.3: User feedback consistency
+               - [x] Ensure every error log is paired with clear user-facing feedback
+               - [x] Standardize user messages for common error types
+            - [x] 1.5.5.4: Update/refactor logging functions
+               - [x] Refactor or create logging functions to enforce the standard
+               - [x] Add unit tests for these helpers
+            - [x] 1.5.5.5: Pester tests for logging
+               - [x] Mock logging/event functions
+               - [x] Write tests to verify correct log output for each error scenario
+            - [x] 1.5.5.6: Documentation
+               - [x] Document the logging standard and usage in the codebase
    6. [ ] Add Windows Event Logging
       - [ ] Log verbose details: PID, WindowHandle, WindowState, ProcessName, WindowTitle
       - [ ] Log info: user selection, filtered window count
