@@ -25,7 +25,7 @@ describe 'Write-LastWarLog' {
             Write-LastWarLog -Message 'Test error' -Level 'Error' -FunctionName 'TestFunc' -Context 'UnitTest' -LogStackTrace 'Stack info' -ForceLog -BackendNames File
             Write-LastWarLog -Message 'First' -Level 'Info' -FunctionName 'Func1' -ForceLog -BackendNames File
             Write-LastWarLog -Message 'Second' -Level 'Warning' -FunctionName 'Func2' -ForceLog -BackendNames File
-            $logs = Get-Content $script:logFilePath | ForEach-Object { $_ | ConvertFrom-Json }
+            $logs = Get-Content $script:logFilePath | Where-Object { $_.Trim() -ne '' } | ForEach-Object { $_ | ConvertFrom-Json }
             $logs.Count | Should -BeGreaterThan 1
             $logs[0].Message | Should -Be 'Test error'
             $logs[1].Message | Should -Be 'First'

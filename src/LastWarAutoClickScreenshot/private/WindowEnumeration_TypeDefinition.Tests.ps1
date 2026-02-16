@@ -1,3 +1,5 @@
+# Ensure base class is loaded
+. (Join-Path $PSScriptRoot 'LastWarLogBackend.ps1')
 <#
 .SYNOPSIS
     Pester tests for WindowEnumeration_TypeDefinition.ps1

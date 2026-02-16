@@ -1,3 +1,94 @@
+    Context 'Logging integration' {
+        BeforeEach {
+            Mock -CommandName Write-LastWarLog -MockWith {}
+        }
+
+        It 'Should log error when no windows found after filtering' {
+            Mock -CommandName 'Get-EnumeratedWindows' -MockWith { return @() }
+            Select-TargetWindowFromMenu -ProcessName 'none' | Out-Null
+            Should -Invoke Write-LastWarLog -ParameterFilter {
+                $Level -eq 'Error' -and $FunctionName -eq 'Select-TargetWindowFromMenu'
+            } -Exactly 1
+        }
+
+        It 'Should log error when selected window closed before action' {
+            $mockWindows = @(New-MockWindowData)
+            Mock -CommandName 'Test-WindowExists' -MockWith { return $false }
+            $script:closedCallCount = 0
+            Mock -CommandName 'Get-UserSelection' -MockWith {
+                $script:closedCallCount++
+                if ($script:closedCallCount -eq 1) { @{ Command = 'Select'; Value = 1 } }
+                else { @{ Command = 'Exit'; Value = $null } }
+            }
+            Mock -CommandName 'Show-Menu' -MockWith {}
+            Mock -CommandName 'Get-SortedWindows' -MockWith { $mockWindows }
+            Show-MenuLoop -Windows $mockWindows | Out-Null
+            Should -Invoke Write-LastWarLog -ParameterFilter {
+                $Level -eq 'Error' -and $FunctionName -eq 'Show-MenuLoop' -and $Message -like '*closed before action*'
+            }
+        }
+
+        It 'Should log warning for invalid selection' {
+            $mockWindows = @(New-MockWindowData)
+            $script:invalidCallCount = 0
+            Mock -CommandName 'Get-UserSelection' -MockWith {
+                $script:invalidCallCount++
+                if ($script:invalidCallCount -eq 1) { @{ Command = 'Select'; Value = 99 } }
+                else { @{ Command = 'Exit'; Value = $null } }
+            }
+            Mock -CommandName 'Show-Menu' -MockWith {}
+            Mock -CommandName 'Get-SortedWindows' -MockWith { $mockWindows }
+            Show-MenuLoop -Windows $mockWindows | Out-Null
+            Should -Invoke Write-LastWarLog -ParameterFilter {
+                $Level -eq 'Warning' -and $FunctionName -eq 'Show-MenuLoop' -and $Message -like '*Invalid selection*'
+            }
+        }
+
+        It 'Should log info when user cancels selection' {
+            $mockWindows = @(New-MockWindowData)
+            Mock -CommandName 'Get-UserSelection' -MockWith { @{ Command = 'Exit'; Value = $null } }
+            Mock -CommandName 'Show-Menu' -MockWith {}
+            Mock -CommandName 'Get-SortedWindows' -MockWith { $mockWindows }
+            Show-MenuLoop -Windows $mockWindows | Out-Null
+            Should -Invoke Write-LastWarLog -ParameterFilter {
+                $Level -eq 'Info' -and $FunctionName -eq 'Show-MenuLoop' -and $Message -like '*cancelled*'
+            }
+        }
+
+        It 'Should log warning when no windows found after refresh' {
+            $mockWindows = @(New-MockWindowData)
+            $script:refreshCallCount = 0
+            Mock -CommandName 'Get-UserSelection' -MockWith {
+                $script:refreshCallCount++
+                if ($script:refreshCallCount -eq 1) { @{ Command = 'Refresh'; Value = $null } }
+                else { @{ Command = 'Exit'; Value = $null } }
+            }
+            Mock -CommandName 'Show-Menu' -MockWith {}
+            Mock -CommandName 'Get-SortedWindows' -MockWith { $mockWindows }
+            Mock -CommandName 'Get-EnumeratedWindows' -MockWith { return @() }
+            Show-MenuLoop -Windows $mockWindows | Out-Null
+            Should -Invoke Write-LastWarLog -ParameterFilter {
+                $Level -eq 'Warning' -and $FunctionName -eq 'Show-MenuLoop' -and $Message -like '*after refresh*'
+            }
+        }
+
+        It 'Should log info when refresh attempted on piped input' {
+            $mockWindows = @(New-MockWindowData)
+            $script:refreshPipeCallCount = 0
+            Mock -CommandName 'Get-UserSelection' -MockWith {
+                $script:refreshPipeCallCount++
+                if ($script:refreshPipeCallCount -eq 1) { @{ Command = 'Refresh'; Value = $null } }
+                else { @{ Command = 'Exit'; Value = $null } }
+            }
+            Mock -CommandName 'Show-Menu' -MockWith {}
+            Mock -CommandName 'Get-SortedWindows' -MockWith { $mockWindows }
+            $script:useInternalEnumeration = $false
+            Show-MenuLoop -Windows $mockWindows | Out-Null
+            Should -Invoke Write-LastWarLog -ParameterFilter {
+                $Level -eq 'Info' -and $FunctionName -eq 'Show-MenuLoop' -and $Message -like '*Cannot refresh piped input*'
+            }
+        }
+    }
 BeforeAll {
     # Import the function under test
     . $PSScriptRoot/Select-TargetWindowFromMenu.ps1
@@ -350,7 +441,6 @@ Describe 'Integration tests' {
             )
             Mock -CommandName 'Show-MenuLoop' -MockWith {
                 param($Windows)
-                Write-Information "DEBUG: Windows passed to Show-MenuLoop: $($Windows | ForEach-Object { $_.ProcessName + ':' + $_.WindowTitle + ':' + $_.WindowState })"
                 $Windows.Count | Should -Be 2
                 return $localMockWindows[0]
             } -ModuleName $null

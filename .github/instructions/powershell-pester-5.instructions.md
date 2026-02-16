@@ -21,7 +21,7 @@ BeforeAll { # Import tested functions }
 Describe 'FunctionName' {
     Context 'When condition' {
         BeforeAll { # Setup for context }
-        It 'Should behavior' { # Individual test }
+        It 'Should behaviour' { # Individual test }
         AfterAll { # Cleanup for context }
     }
 }
@@ -48,15 +48,16 @@ Describe 'FunctionName' {
 
 - **Basic Comparisons**: `-Be`, `-BeExactly`, `-Not -Be`
 - **Collections**: `-Contain`, `-BeIn`, `-HaveCount`
-- **Numeric**: `-BeGreaterThan`, `-BeLessThan`, `-BeGreaterOrEqual`
+- **Numeric**: `-BeGreaterThan`, `-BeLessThan`, `-BeGreaterOrEqual`, `-BeLessOrEqual`
 - **Strings**: `-Match`, `-Like`, `-BeNullOrEmpty`
 - **Types**: `-BeOfType`, `-BeTrue`, `-BeFalse`
 - **Files**: `-Exist`, `-FileContentMatch`
 - **Exceptions**: `-Throw`, `-Not -Throw`
+- **IMPORTANT**: ALWAYS use correct assertion names as listed here as you have caused many bugs in the past by using incorrect assertion param names
 
 ## Mocking
 
-- **`Mock CommandName { ScriptBlock }`**: Replace command behavior
+- **`Mock CommandName { ScriptBlock }`**: Replace command behaviour
 - **`-ParameterFilter`**: Mock only when parameters match condition
 - **`-Verifiable`**: Mark mock as requiring verification
 - **`Should -Invoke`**: Verify mock was called specific number of times
@@ -135,7 +136,7 @@ Context 'Integration tests' -Skip { }
 
 ## Best Practices
 
-- **Descriptive Names**: Use clear test descriptions that explain behavior
+- **Descriptive Names**: Use clear test descriptions that explain behaviour
 - **AAA Pattern**: Arrange (setup), Act (execute), Assert (verify)
 - **Isolated Tests**: Each test should be independent
 - **Avoid Aliases**: Use full cmdlet names (`Where-Object` not `?`)
@@ -181,7 +182,7 @@ Describe 'Get-UserInfo' {
 
 ## Configuration
 
-Configuration is defined **outside** test files when calling `Invoke-Pester` to control execution behavior.
+Configuration is defined **outside** test files when calling `Invoke-Pester` to control execution behaviour.
 
 ```powershell
 # Create configuration (Pester 5.2+)

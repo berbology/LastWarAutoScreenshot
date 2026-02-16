@@ -58,7 +58,7 @@ function Write-LastWarLog {
     $backendNames = if ($null -ne $BackendNames) { $BackendNames } else { Get-LoggingBackendConfig }
     $backends = @()
     if ($backendNames -contains 'File') {
-        $logFilePath = Join-Path $privatePath 'LastWarAutoClickScreenshot.log'
+        $logFilePath = Join-Path $PSScriptRoot 'LastWarAutoClickScreenshot.log'
         $backends += [FileLogBackend]::new($logFilePath)
     }
     if ($backendNames -contains 'EventLog') {

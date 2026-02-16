@@ -1,5 +1,11 @@
 {
 	"Logging": {
-		"Backend": "File,EventLog"
+		"Backend": "File,EventLog",
+		"FileBackend": {
+			"MaxSizeMB": 50,
+			"MaxFileCount": 50,
+			"MaxAgeDays": 30,
+			"RetentionFileCount": 500
+		}
 	}
 }

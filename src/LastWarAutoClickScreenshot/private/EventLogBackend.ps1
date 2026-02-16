@@ -1,4 +1,7 @@
+
 # Windows Event Log backend for LastWarAutoScreenshot
+# Ensure base class is loaded
+. (Join-Path $PSScriptRoot 'LastWarLogBackend.ps1')
 
 class EventLogBackend : LastWarLogBackend {
     [string] $Source
@@ -21,12 +24,12 @@ class EventLogBackend : LastWarLogBackend {
         }
         if (-not $this.CreateSourceFn) {
             . (Join-Path $PSScriptRoot 'EventLogHelpers.ps1')
-            $this.CreateSourceFn = { param($src, $log) Create-EventLogSource $src $log }
+            $this.CreateSourceFn = { param($src, $log) Add-EventLogSource $src $log }
         }
         # Register event source if needed
         if (-not (& $this.TestSourceExistsFn $this.Source)) {
             try {
-                & $this.CreateSourceFn $this.Source $this.LogName
+                    & $this.CreateSourceFn $this.Source $this.LogName
             } catch {
                 Write-Warning "Failed to register custom event log source '$($this.Source)'."
                 Write-Host "\nEvent log source registration requires administrator privileges."
@@ -87,6 +90,7 @@ class EventLogBackend : LastWarLogBackend {
             # Fallback to file logging if event log write fails
             try {
                 $privatePath = $PSScriptRoot
+                # Ensure FileLogBackend is loaded
                 . (Join-Path $privatePath 'LastWarLogBackend.ps1')
                 $logFilePath = Join-Path $privatePath 'LastWarAutoClickScreenshot.log'
                 $fileBackend = [FileLogBackend]::new($logFilePath)

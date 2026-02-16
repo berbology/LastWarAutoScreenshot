@@ -70,7 +70,7 @@
            - [x] On exception, log error details (including exception message and stack trace).
            - [x] Display a user-friendly error message.
            - [x] Write a Pester test that simulates a Win32 API failure.
-        - [ ] 1.5.5: General Error Logging Consistency
+        - [x] 1.5.5: General Error Logging Consistency
             - [x] 1.5.5.1: Define standard logging format
                - [x] Specify required fields (function name, error type, context, timestamp, etc.)
                - [x] Document the format and update logging helper functions
@@ -90,7 +90,7 @@
                - [x] Write tests to verify correct log output for each error scenario
             - [x] 1.5.5.6: Documentation
                - [x] Document the logging standard and usage in the codebase
-   6. [ ] Add Windows Event Logging
+   6. [x] Add Windows Event Logging
       1. [x] Design Logging Backend Abstraction
          - [x] 1.6.1.1: Define interface/contract for logging backends (event log, file, etc.)
          - [x] 1.6.1.2: Update logging helper functions to use backend abstraction
@@ -104,21 +104,32 @@
          - [x] 1.6.2.4: Ensure all log fields (PID, WindowHandle, etc.) are included in event details
          - [x] 1.6.2.5: Add logic to handle permission errors (e.g., fallback to Application log or prompt user)
          - [x] 1.6.2.6: Create unit tests for event log backend, including source registration, event writing, error handling, and field coverage
-      3. [ ] Implement Local File Logging Backend Enhancements
-         - [ ] 1.6.3.1: Add log file rollover (by size, count, or age; configurable)
-         - [ ] 1.6.3.2: Implement cleanup of old log files based on retention policy
-         - [ ] 1.6.3.3: Ensure log format matches documented standard
-         - [ ] 1.6.3.4: Create unit tests for file logging enhancements, including rollover, cleanup, and format validation
-      4. [ ] Update Logging Calls Throughout Codebase
-         - [ ] 1.6.4.1: Refactor all logging calls to use new abstraction
-         - [ ] 1.6.4.2: Ensure all loggable events (verbose, info, warning, error) are covered
-         - [ ] 1.6.4.3: Update or add tests for all logging scenarios to ensure correct backend is used and all event types are logged as expected
-      5. [ ] Documentation
-         - [ ] 1.6.5.1: Document new logging backend options and configuration
-         - [ ] 1.6.5.2: Update usage examples and troubleshooting in README
-         - [ ] 1.6.5.3: Document event log source registration and permissions
+      3. [x] Implement Local File Logging Backend Enhancements
+         - [x] 1.6.3.1: Add log file rollover (by size, count, or age; configurable)
+         - [x] 1.6.3.2: Implement cleanup of old log files based on retention policy
+         - [x] 1.6.3.3: Ensure log format matches documented standard
+         - [x] 1.6.3.4: Make rollover and retention settings configurable in module configuration
+         - [x] 1.6.3.5: Create unit tests for file logging enhancements, including rollover, cleanup, and format validation
+      4. [x] Update Logging Calls Throughout Codebase
+          - [x] 1.6.4.1: Audit all existing logging calls and document locations/functions needing update
+          - [x] 1.6.4.2: Refactor logging in each file (incremental, mark each as complete after tests pass):
+             - [x] 1.6.4.2.1: Refactor logging in public functions (file-by-file)
+             - [x] 1.6.4.2.2: Refactor logging in private/helper functions (file-by-file)
+             - [x] 1.6.4.2.3: Refactor logging in error handling paths (file-by-file)
+          - [x] 1.6.4.3: Review and ensure all event types (verbose, info, warning, error) are used appropriately in each function
+          - [x] 1.6.4.4: Add/Update Pester tests for each logging scenario and backend (success and failure/error for each backend)
+          - [x] 1.6.4.5: Validate test coverage for logging (aim for 100% of loggable paths)
+      5. [x] Documentation
+         - [x] 1.6.5.1: Document new logging backend options and configuration keys in Logging.md
+         - [x] 1.6.5.2: Add PowerShell command-line usage examples for configuring and using logging backends (Logging.md)
+         - [x] 1.6.5.3: Add troubleshooting section to Logging.md covering:
+             - Permissions errors (file and event log)
+             - Log file locations
+             - Backend selection issues
+         - [x] 1.6.5.4: Document event log source registration and permissions for both user and admin install scenarios (Logging.md)
+         - [x] 1.6.5.5: Add screenshots, diagrams, and step-by-step walkthroughs for logging configuration and troubleshooting, following best practices and examples from popular projects (Logging.md)
+         - [x] 1.6.5.6: Ensure all documentation is clear and targeted at gamers who are also developers
    7. [ ] Create Pester unit tests
-      - [ ] Create `WindowEnumeration.Tests.ps1` in appropriate test folder
       - [ ] Mock Win32 API calls for enumeration function tests
       - [ ] Test filtering logic with various window states
       - [ ] Test console menu input validation (valid, invalid, cancel)
