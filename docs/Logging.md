@@ -6,6 +6,7 @@
 - **Windows Event Logging:** Critical errors and diagnostic events may also be written to the Windows Event Log (requires admin privileges). Viewable in Windows Event Viewer.
 - **Console Output:** User-facing errors and warnings are displayed in plain text for immediate feedback.
 
+
 ## Logging Levels and Configuration
 
 - **Verbosity Levels:**
@@ -17,7 +18,28 @@
   - Debug mode includes all relevant variables and context in error log events.
 - **Configuration:**
   - Verbosity level is configurable via command-line parameters or the GUI "Logging" tab.
-  - Logging destination (file, event log, console) is determined by context and severity.
+  - **Logging backend selection is controlled by the module configuration file** (`ModuleConfig.json`).
+  - The `Logging.Backend` property determines which backends are used. Supported values: `File`, `EventLog`, or both (comma-separated).
+
+### Example: ModuleConfig.json
+
+```json
+{
+  "Logging": {
+    "Backend": "File,EventLog"
+  }
+}
+```
+
+- To log only to file:
+  ```json
+  { "Logging": { "Backend": "File" } }
+  ```
+- To log only to Windows Event Log:
+  ```json
+  { "Logging": { "Backend": "EventLog" } }
+  ```
+- If the config or property is missing/invalid, file logging is used by default.
 
 ## What Gets Logged
 

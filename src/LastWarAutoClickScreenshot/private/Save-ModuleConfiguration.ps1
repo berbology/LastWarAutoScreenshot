@@ -81,7 +81,7 @@ function Save-ModuleConfiguration {
             if ($missingProperties.Count -gt 0) {
                 $errorMsg = "WindowObject is missing required properties: $($missingProperties -join ', ')"
                 Write-Error "Error: $errorMsg"
-                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
                 throw $errorMsg
             }
 
@@ -96,7 +96,7 @@ function Save-ModuleConfiguration {
                 $shouldProcessMessage = "Overwrite existing configuration file at '$ConfigurationPath'"
                 if (-not $Force -and -not $PSCmdlet.ShouldProcess($ConfigurationPath, $shouldProcessMessage)) {
                     Write-Warning "Warning: Configuration save cancelled by user."
-                    Write-LastWarLog -Message "Configuration save cancelled by user" -Level Warning -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+                    Write-LastWarLog -Message "Configuration save cancelled by user" -Level Warning -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
                     return
                 }
                 Write-Verbose "Overwriting existing configuration file"
@@ -143,19 +143,19 @@ function Save-ModuleConfiguration {
         catch [System.IO.IOException] {
             $errorMsg = "Failed to write configuration file: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
             throw
         }
         catch [System.UnauthorizedAccessException] {
             $errorMsg = "Access denied writing to configuration path '$ConfigurationPath'. Check permissions."
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
             throw
         }
         catch {
             $errorMsg = "Unexpected error saving window configuration: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Save-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
             throw
         }
     }

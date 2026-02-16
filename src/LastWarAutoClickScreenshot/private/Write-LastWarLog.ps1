@@ -1,10 +1,10 @@
 function Write-LastWarLog {
     <#
     .SYNOPSIS
-        Writes a structured log entry to the module log file in JSON format.
+        Writes a structured log entry to the configured logging backend(s).
     .DESCRIPTION
         Logs error, warning, or info events in a standard format as defined in docs/Logging.md.
-        Only logs if -ForceLog, -Verbose, or -Debug is set.
+        Supports file and Windows Event Log backends via class-based abstraction.
     .PARAMETER Message
         The main error or event message.
     .PARAMETER Level
@@ -13,12 +13,13 @@ function Write-LastWarLog {
         Name of the function generating the log.
     .PARAMETER Context
         Key context info (parameters, state, etc.).
-    .PARAMETER StackTrace
-        Stack trace if error.
+    .PARAMETER LogStackTrace
+        Stack trace if error (LogStackTrace avoids conflict with PowerShell's automatic variable).
     .PARAMETER ForceLog
         Forces log entry regardless of verbosity settings.
     #>
     [CmdletBinding()]
+
     param(
         [Parameter(Mandatory)]
         [string]$Message,
@@ -30,9 +31,11 @@ function Write-LastWarLog {
         [Parameter()]
         [string]$Context = $null,
         [Parameter()]
-        [string]$StackTrace = $null,
+        [string]$LogStackTrace = $null,
         [Parameter()]
-        [switch]$ForceLog
+        [switch]$ForceLog,
+        [Parameter()]
+        [string[]]$BackendNames = $null
     )
 
     # Determine if logging should occur
@@ -46,25 +49,32 @@ function Write-LastWarLog {
     }
     if (-not $shouldLog) { return }
 
-    # Build log entry as an ordered hashtable for JSON output
-    $logEntry = [ordered]@{
-        Timestamp    = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ') # ISO 8601 UTC
-        FunctionName = $FunctionName
-        ErrorType    = $Level
-        Message      = $Message
-        Context      = $Context
-        StackTrace   = $StackTrace
+    # Import backend classes and config loader
+    $privatePath = $PSScriptRoot
+    . (Join-Path $privatePath 'LastWarLogBackend.ps1')
+    . (Join-Path $privatePath 'EventLogBackend.ps1')
+    . (Join-Path $privatePath 'Get-LoggingBackendConfig.ps1')
+
+    $backendNames = if ($null -ne $BackendNames) { $BackendNames } else { Get-LoggingBackendConfig }
+    $backends = @()
+    if ($backendNames -contains 'File') {
+        $logFilePath = Join-Path $privatePath 'LastWarAutoClickScreenshot.log'
+        $backends += [FileLogBackend]::new($logFilePath)
+    }
+    if ($backendNames -contains 'EventLog') {
+        $backends += [EventLogBackend]::new('LastWarAutoScreenshot', 'Application', $null, $null)
+    }
+    if ($backends.Count -eq 0) {
+        # Fallback to file backend if config is invalid
+        $logFilePath = Join-Path $privatePath 'LastWarAutoClickScreenshot.log'
+        $backends += [FileLogBackend]::new($logFilePath)
     }
 
-    try {
-        # Write as JSON (preferred for file logs)
-        $logMsg = $logEntry | ConvertTo-Json -Compress
-        $logPath = Join-Path -Path $PSScriptRoot -ChildPath 'LastWarAutoClickScreenshot.log'
-        Add-Content -Path $logPath -Value $logMsg
-        # Log format fields are defined in docs/Logging.md
-    } catch {
-        # If logging fails, write to host as a fallback
-        Write-Warning "Failed to write log entry: $_"
-        Write-Warning "Log message: $($logMsg)"
+    foreach ($backend in $backends) {
+        try {
+            $backend.Log($Message, $Level, $FunctionName, $Context, $LogStackTrace)
+        } catch {
+            Write-Warning "Failed to write log entry via backend $($backend.GetType().Name): $_"
+        }
     }
 }

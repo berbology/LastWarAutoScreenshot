@@ -91,10 +91,32 @@
             - [x] 1.5.5.6: Documentation
                - [x] Document the logging standard and usage in the codebase
    6. [ ] Add Windows Event Logging
-      - [ ] Log verbose details: PID, WindowHandle, WindowState, ProcessName, WindowTitle
-      - [ ] Log info: user selection, filtered window count
-      - [ ] Log errors: no windows found, invalid selection, window closed
-      - [ ] Log warnings: config file overwrite prompts
+      1. [x] Design Logging Backend Abstraction
+         - [x] 1.6.1.1: Define interface/contract for logging backends (event log, file, etc.)
+         - [x] 1.6.1.2: Update logging helper functions to use backend abstraction
+         - [x] 1.6.1.3: Add configuration option to select logging backend (event log, file, both)
+         - [x] 1.6.1.4: Document backend selection in module configuration schema
+         - [x] 1.6.1.5: Create unit tests for backend abstraction and configuration logic
+      2. [x] Implement Windows Event Log Backend
+         - [x] 1.6.2.1: Register custom event log source ("LastWarAutoScreenshot") if not present
+         - [x] 1.6.2.2: Implement event log writing using Write-EventLog (with fallback/error handling)
+         - [x] 1.6.2.3: Define event types and IDs for verbose, info, warning, error
+         - [x] 1.6.2.4: Ensure all log fields (PID, WindowHandle, etc.) are included in event details
+         - [x] 1.6.2.5: Add logic to handle permission errors (e.g., fallback to Application log or prompt user)
+         - [x] 1.6.2.6: Create unit tests for event log backend, including source registration, event writing, error handling, and field coverage
+      3. [ ] Implement Local File Logging Backend Enhancements
+         - [ ] 1.6.3.1: Add log file rollover (by size, count, or age; configurable)
+         - [ ] 1.6.3.2: Implement cleanup of old log files based on retention policy
+         - [ ] 1.6.3.3: Ensure log format matches documented standard
+         - [ ] 1.6.3.4: Create unit tests for file logging enhancements, including rollover, cleanup, and format validation
+      4. [ ] Update Logging Calls Throughout Codebase
+         - [ ] 1.6.4.1: Refactor all logging calls to use new abstraction
+         - [ ] 1.6.4.2: Ensure all loggable events (verbose, info, warning, error) are covered
+         - [ ] 1.6.4.3: Update or add tests for all logging scenarios to ensure correct backend is used and all event types are logged as expected
+      5. [ ] Documentation
+         - [ ] 1.6.5.1: Document new logging backend options and configuration
+         - [ ] 1.6.5.2: Update usage examples and troubleshooting in README
+         - [ ] 1.6.5.3: Document event log source registration and permissions
    7. [ ] Create Pester unit tests
       - [ ] Create `WindowEnumeration.Tests.ps1` in appropriate test folder
       - [ ] Mock Win32 API calls for enumeration function tests
@@ -108,12 +130,18 @@
       - [ ] Update "Features" section to reflect window enumeration capabilities
       - [ ] Add usage examples for window selection workflow
       - [ ] Document configuration schema for window target settings
-2. [ ] Implement window state management: bring target window to front, restore if minimized, detect and handle window close/crash events
+2. [ ] Migrate module configuration to YAML format
+   1. [ ] Design YAML schema for module configuration (replace JSON)
+   2. [ ] Update all config read/write functions to support YAML
+   3. [ ] Update documentation and examples to use YAML
+   4. [ ] Add tests for YAML config loading/saving
+   5. [ ] Remove legacy JSON config support (if not needed)
+3. [ ] Implement window state management: bring target window to front, restore if minimized, detect and handle window close/crash events
    1. [ ] Extend PowerShell Type Definitions for window state management
       - [ ] Add P/Invoke signature for `ShowWindow` (restore/minimize window)
       - [ ] Add P/Invoke signature for `SetForegroundWindow` (bring window to front)
       - [ ] Update `WindowEnumeration_TypeDefinition.ps1` accordingly
-3. [ ] Implement emergency stop mechanisms:
+4. [ ] Implement emergency stop mechanisms:
    - Configurable hotkey combination (default: Ctrl+Shift+Esc)
    - Mouse gesture: hold both mouse buttons simultaneously for 3 seconds
    - Log all emergency stop events

@@ -82,7 +82,7 @@ function Get-ModuleConfiguration {
             
             if ([string]::IsNullOrWhiteSpace($jsonContent)) {
                 Write-Error "Error: Configuration file is empty: $ConfigurationPath"
-                Write-LastWarLog -Message "Configuration file is empty: $ConfigurationPath" -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+                Write-LastWarLog -Message "Configuration file is empty: $ConfigurationPath" -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
                 return $null
             }
 
@@ -98,7 +98,7 @@ function Get-ModuleConfiguration {
             if ($missingProperties.Count -gt 0) {
                 $errorMsg = "Configuration file is missing required properties: $($missingProperties -join ', ')"
                 Write-Error "Error: $errorMsg"
-                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
                 throw $errorMsg
             }
 
@@ -111,19 +111,19 @@ function Get-ModuleConfiguration {
         catch [System.IO.IOException] {
             $errorMsg = "Failed to read configuration file: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
             throw
         }
         catch [System.ArgumentException] {
             $errorMsg = "Invalid JSON format in configuration file: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
             throw
         }
         catch {
             $errorMsg = "Unexpected error loading window configuration: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -StackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
             throw
         }
     }
