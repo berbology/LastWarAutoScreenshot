@@ -1,0 +1,12 @@
+{
+	"Logging": {
+		"Backend": "File,EventLog",
+		"MinimumLogLevel": "Info",
+		"FileBackend": {
+			"MaxSizeMB": 50,
+			"MaxFileCount": 50,
+			"MaxAgeDays": 30,
+			"RetentionFileCount": 500
+		}
+	}
+}

@@ -147,34 +147,45 @@ Context 'Integration tests' -Skip { }
 
 ```powershell
 BeforeAll {
-    . $PSScriptRoot/Get-UserInfo.ps1
+    $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'ADModuleName.psd1'
+    Import-Module $moduleManifest -Force
 }
 
 Describe 'Get-UserInfo' {
     Context 'When user exists' {
         BeforeAll {
-            Mock Get-ADUser { @{ Name = 'TestUser'; Enabled = $true } }
+            InModuleScope ADModuleName {
+                Mock Get-ADUser { @{ Name = 'TestUser'; Enabled = $true } }
+            }
         }
 
         It 'Should return user object' {
-            $result = Get-UserInfo -Username 'TestUser'
-            $result | Should -Not -BeNullOrEmpty
-            $result.Name | Should -Be 'TestUser'
+            InModuleScope ADModuleName {
+                $result = Get-UserInfo -Username 'TestUser'
+                $result | Should -Not -BeNullOrEmpty
+                $result.Name | Should -Be 'TestUser'
+            }
         }
 
         It 'Should call Get-ADUser once' {
-            Get-UserInfo -Username 'TestUser'
-            Should -Invoke Get-ADUser -Exactly 1
+            InModuleScope ADModuleName {
+                Get-UserInfo -Username 'TestUser'
+                Should -Invoke Get-ADUser -Exactly 1
+            }
         }
     }
 
     Context 'When user does not exist' {
         BeforeAll {
-            Mock Get-ADUser { throw "User not found" }
+            InModuleScope ADModuleName {
+                Mock Get-ADUser { throw "User not found" }
+            }
         }
 
         It 'Should throw exception' {
-            { Get-UserInfo -Username 'NonExistent' } | Should -Throw "*not found*"
+            InModuleScope ADModuleName {
+                { Get-UserInfo -Username 'NonExistent' } | Should -Throw "*not found*"
+            }
         }
     }
 }

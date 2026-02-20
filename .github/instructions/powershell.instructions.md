@@ -26,6 +26,62 @@ This guide provides PowerShell-specific instructions to help GitHub Copilot gene
   - Use camelCase for private variables
   - Avoid abbreviations
   - Use meaningful names
+  - When naming variables it is crucial you avoid using any automatic variable names in the following list:
+    - $? – Contains the execution status of the last command ($true if successful, $false if failed).
+    - $^ – Contains the first token in the last line received by the session.
+    - $_ – Same as $PSItem; contains the current object in a pipeline.
+    - $args – Contains an array of values for undeclared parameters passed to a function, script, or script block.
+    - $ConsoleFileName – Contains the path of the most recently used console file (.psc1).
+    - $EnabledExperimentalFeatures – Contains a list of enabled experimental features.
+    - $Error – Contains an array of the most recent error objects (most recent first).
+    - $Event – Contains a PSEventArgs object representing the current event being processed.
+    - $EventArgs – Contains the first event argument derived from EventArgs.
+    - $EventSubscriber – Contains a PSEventSubscriber object representing the event subscriber.
+    - $ExecutionContext – Contains an EngineIntrinsics object representing the execution context.
+    - $false – Represents the Boolean value False.
+    - $foreach – Contains the enumerator of a foreach loop (exists only during loop execution).
+    - $HOME – Contains the full path to the user’s home directory.
+    - $Host – Contains an object representing the current host application (e.g., console, ISE).
+    - $input – Contains an enumerator that enumerates all input passed to a function or script.
+    - $IsCoreCLR – Returns $true if PowerShell is running on .NET Core/PowerShell Core.
+    - $IsLinux – Returns $true if the operating system is Linux.
+    - $IsMacOS – Returns $true if the operating system is macOS.
+    - $IsWindows – Returns $true if the operating system is Windows.
+    - $LASTEXITCODE – Contains the exit code of the last native command (executable).
+    - $Matches – Contains the results of the last regular expression match.
+    - $MyInvocation – Contains information about the current command invocation.
+    - $NestedPromptLevel – Contains the current level of nested prompts.
+    - $null – Represents a null value.
+    - $PID – Contains the process ID of the current PowerShell process.
+    - $PROFILE – Contains the path to the current user’s PowerShell profile script.
+    - $PSBoundParameters – Contains a dictionary of parameters bound to the current function or script.
+    - $PSCmdlet – Contains the current PSCmdlet object used in a cmdlet.
+    - $PSCommandPath – Contains the full path of the current script or command.
+    - $PSCulture – Contains the culture used by the current session.
+    - $PSDebugContext – Contains debugging context information.
+    - $PSEdition – Contains the edition of PowerShell (e.g., Core, Desktop).
+    - $PSHOME – Contains the path to the PowerShell installation directory.
+    - $PSItem – Same as $_; the current pipeline object.
+    - $PSScriptRoot – Contains the directory path of the current script.
+    - $PSSenderInfo – Contains information about the sender of a remote command.
+    - $PSUICulture – Contains the UI culture used by the current session.
+    - $PSVersionTable – Contains a hashtable with detailed version information about PowerShell.
+    - $PWD – Contains the current working directory.
+    - $Sender – Contains the sender of an event.
+    - $ShellId – Contains the unique identifier of the current shell.
+    - $StackTrace – Contains the call stack of the most recent error.
+    - $switch – Contains the current switch statement value during processing.
+    - $this – Refers to the current object in a foreach or switch loop.
+    - $true – Represents the Boolean value True.
+    - $ShellId – Contains the unique identifier of the current shell.
+    - $StackTrace – Contains the call stack of the most recent error.
+    - $switch – Contains the current switch statement value during processing.
+    - $this – Refers to the current object in a foreach or switch loop.
+    - $true – Represents the Boolean value True.
+
+- **Common Mistakes to Avoid**
+  - Never introduce whitespace before the terminating `'@` of a here-string block
+  - `[cmdletbinding()]` directly followed by function parameters should always be the first lines in a function block
 
 ### Example 1
 

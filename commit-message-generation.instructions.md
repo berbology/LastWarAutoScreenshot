@@ -5,10 +5,11 @@ These instructions define how commit messages should be generated for this proje
 ## Guidelines
 
 1. **Concise and Descriptive**:
-   1. Be extremely detailed with file changes and reasons for changes
-   2. Use lots of emojis.
-   3. Use conventional commit format: type(scope): description
-   4. Include relevant issue numbers using 'Fixes #123' or 'Closes #456' format, but only if they correspond to real issues or tasks in the project's tracker. Do not use placeholder numbers.
+   1. Use British English at all times
+   2. Be extremely detailed with file changes and reasons for changes
+   3. Use lots of emojis.
+   4. Use conventional commit format: type(scope): description
+   5. Include relevant issue numbers using 'Fixes #123' or 'Closes #456' format, but ONLY if they correspond to real issues or tasks in the project's tracker. Do not use placeholder numbers.
 2. **Imperative Mood**: Use the imperative mood (e.g., "Add feature" instead of "Added feature").
 3. **Structure**:
    - **Header**: A single line summarizing the change (max 50 characters).
