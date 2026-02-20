@@ -218,7 +218,7 @@
       - `"MouseControl": { "ClickDownDurationRangeMs": [50, 150] }` — full section added in step 2.1
    9. [x] 1.9: Update `LastWarAutoScreenshot/Private/Get-ModuleConfiguration.ps1` and `LastWarAutoScreenshot/Private/Save-ModuleConfiguration.ps1`
       - Handle new `MouseControl` key with defaults; no breaking changes to existing keys
-   10. [ ] 1.10: Create `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1` (skeleton)
+   10. [x] 1.10: Create `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1` (skeleton)
        - `[CmdletBinding()]` parameters: `-WindowHandle [object]` (mandatory), `-RelativeX [double]`, `-RelativeY [double]`
        - Reads config `EmergencyStop.AutoStart`; calls `Start-EmergencyStopMonitor` if `$true`
        - Checks `$script:EmergencyStopRequested` — logs warning and exits cleanly if set before move
