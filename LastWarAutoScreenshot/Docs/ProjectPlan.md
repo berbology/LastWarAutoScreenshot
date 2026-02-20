@@ -228,7 +228,7 @@
        - `finally` block always calls `Stop-EmergencyStopMonitor`
        - Returns `[PSCustomObject]@{Success=[bool]; Message=[string]}`
        - `.NOTES`: documents step 2.6 as the upgrade point for human-like movement
-   11. [ ] 1.11: Update `LastWarAutoScreenshot.psd1`
+   11. [x] 1.11: Update `LastWarAutoScreenshot.psd1`
        - Add `'Start-AutomationSequence'` to `FunctionsToExport`
    12. [ ] 1.12: Create `LastWarAutoScreenshot/Tests/MouseControl_TypeDefinition.Tests.ps1`
        - Verify `[LastWarAutoScreenshot.MouseControlAPI]` type loads without error
