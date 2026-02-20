@@ -91,21 +91,11 @@ function Get-ModuleConfiguration {
             # Deserialize JSON to object
             $configData = $jsonContent | ConvertFrom-Json -ErrorAction Stop
 
-            # MouseControl config defaults
-            $mouseDefaults = @{
-                EasingEnabled = $true
-                OvershootEnabled = $true
-                OvershootFactor = 0.1
-                MicroPausesEnabled = $true
-                MicroPauseChance = 0.2
-                MicroPauseDurationRangeMs = @(20, 80)
-                JitterEnabled = $true
-                JitterRadiusPx = 2
-                BezierControlPointOffsetFactor = 0.3
-                MovementDurationRangeMs = @(200, 600)
-            }
+            # MouseControl minimal config default for ClickDownDurationRangeMs
             if (-not $configData.PSObject.Properties['MouseControl']) {
-                $configData | Add-Member -MemberType NoteProperty -Name MouseControl -Value ([PSCustomObject]$mouseDefaults)
+                $configData | Add-Member -MemberType NoteProperty -Name MouseControl -Value ([PSCustomObject]@{ ClickDownDurationRangeMs = @(50, 150) })
+            } elseif (-not $configData.MouseControl.PSObject.Properties['ClickDownDurationRangeMs']) {
+                $configData.MouseControl | Add-Member -MemberType NoteProperty -Name ClickDownDurationRangeMs -Value @(50, 150)
             }
 
             # Validate required properties exist

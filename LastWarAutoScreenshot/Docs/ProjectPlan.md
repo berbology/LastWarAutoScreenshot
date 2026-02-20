@@ -214,9 +214,9 @@
       - Reads `ClickDownDurationRangeMs` from config (random value within range) when `-DownDurationMs` is omitted
       - Calls `Invoke-SendMouseInput` for `MOUSEEVENTF_LEFTDOWN`, sleeps `DownDurationMs`, calls `Invoke-SendMouseInput` for `MOUSEEVENTF_LEFTUP`
       - Returns $true/$false; error handling + logging
-   8. [ ] 1.8: Add minimal `MouseControl` section to `LastWarAutoScreenshot/Private/ModuleConfig.json`
+   8. [x] 1.8: Add minimal `MouseControl` section to `LastWarAutoScreenshot/Private/ModuleConfig.json`
       - `"MouseControl": { "ClickDownDurationRangeMs": [50, 150] }` — full section added in step 2.1
-   9. [ ] 1.9: Update `LastWarAutoScreenshot/Private/Get-ModuleConfiguration.ps1` and `LastWarAutoScreenshot/Private/Save-ModuleConfiguration.ps1`
+   9. [x] 1.9: Update `LastWarAutoScreenshot/Private/Get-ModuleConfiguration.ps1` and `LastWarAutoScreenshot/Private/Save-ModuleConfiguration.ps1`
       - Handle new `MouseControl` key with defaults; no breaking changes to existing keys
    10. [ ] 1.10: Create `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1` (skeleton)
        - `[CmdletBinding()]` parameters: `-WindowHandle [object]` (mandatory), `-RelativeX [double]`, `-RelativeY [double]`

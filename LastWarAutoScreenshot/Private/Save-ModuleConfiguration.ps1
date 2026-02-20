@@ -110,23 +110,9 @@ function Save-ModuleConfiguration {
             }
 
 
-            # MouseControl config defaults
-            $mouseDefaults = [PSCustomObject]@{
-                EasingEnabled = $true
-                OvershootEnabled = $true
-                OvershootFactor = 0.1
-                MicroPausesEnabled = $true
-                MicroPauseChance = 0.2
-                MicroPauseDurationRangeMs = @(20, 80)
-                JitterEnabled = $true
-                JitterRadiusPx = 2
-                BezierControlPointOffsetFactor = 0.3
-                MovementDurationRangeMs = @(200, 600)
-                ClickDownDurationRangeMs = @(50, 150)
-                ClickPreDelayRangeMs = @(50, 200)
-                ClickPostDelayRangeMs = @(100, 300)
-                PathPointCount = 20
-            }
+
+            # MouseControl minimal config for ClickDownDurationRangeMs only
+            $mouseControlConfig = [PSCustomObject]@{ ClickDownDurationRangeMs = @(50, 150) }
 
             # Prepare configuration object for serialization
             $configData = [PSCustomObject]@{
@@ -139,7 +125,7 @@ function Save-ModuleConfiguration {
                 SavedDate           = Get-Date -Format 'o'  # ISO 8601 format
                 SavedBy             = $env:USERNAME
                 ComputerName        = $env:COMPUTERNAME
-                MouseControl        = $mouseDefaults
+                MouseControl        = $mouseControlConfig
             }
 
             Write-Verbose "Serializing configuration to JSON format"
