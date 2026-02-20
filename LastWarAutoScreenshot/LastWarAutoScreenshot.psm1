@@ -1,7 +1,9 @@
 # Robust C# type loader: check file existence, abort if missing, check for loaded types, abort if loaded, else Add-Type
+
 $logBackendSourcecodePath = "$PSScriptRoot\src\LogBackend.cs"
 $fileLogBackendSourcecodePath = "$PSScriptRoot\src\FileLogBackend.cs"
 $windowEnumerationAPISourcecodePath = "$PSScriptRoot\src\WindowEnumerationAPI.cs"
+$mouseControlAPISourcecodePath = "$PSScriptRoot\src\MouseControlAPI.cs"
 
 $script:ModuleRootPath = $PSScriptRoot
 
@@ -15,7 +17,7 @@ if ($global:LastWarAutoScreenshot_LoggingInitFailed) {
 
 # 1. Check all files exist
 $missingFiles = @()
-foreach ($f in @($logBackendSourcecodePath, $fileLogBackendSourcecodePath, $windowEnumerationAPISourcecodePath)) {
+foreach ($f in @($logBackendSourcecodePath, $fileLogBackendSourcecodePath, $windowEnumerationAPISourcecodePath, $mouseControlAPISourcecodePath)) {
     if (-not (Test-Path $f)) { $missingFiles += $f }
 }
 if ($missingFiles.Count -gt 0) {
@@ -28,14 +30,15 @@ $typeNames = @(
     'LastWarAutoScreenshot.LogBackend',
     'LastWarAutoScreenshot.FileLogBackend',
     'LastWarAutoScreenshot.WindowEnumerationAPI',
-    'LastWarAutoScreenshot.EnumWindowsProc'
+    'LastWarAutoScreenshot.EnumWindowsProc',
+    'LastWarAutoScreenshot.MouseControlAPI'
 )
 $alreadyLoaded = $typeNames | Where-Object { ($_ -as [type]) -ne $null }
 if ($alreadyLoaded.Count -gt 0) {
     Write-Verbose ("C# types already loaded in this session: " + ($alreadyLoaded -join ', ') + ". Skipping Add-Type and reloading functions.")
 } else {
     # 3. Add all types at once
-    Add-Type -Path $logBackendSourcecodePath, $fileLogBackendSourcecodePath, $windowEnumerationAPISourcecodePath
+    Add-Type -Path $logBackendSourcecodePath, $fileLogBackendSourcecodePath, $windowEnumerationAPISourcecodePath, $mouseControlAPISourcecodePath
 }
 
 # Dot-source all public and private functions, handling missing folders gracefully

@@ -109,6 +109,25 @@ function Save-ModuleConfiguration {
                 New-Item -Path $parentDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
             }
 
+
+            # MouseControl config defaults
+            $mouseDefaults = [PSCustomObject]@{
+                EasingEnabled = $true
+                OvershootEnabled = $true
+                OvershootFactor = 0.1
+                MicroPausesEnabled = $true
+                MicroPauseChance = 0.2
+                MicroPauseDurationRangeMs = @(20, 80)
+                JitterEnabled = $true
+                JitterRadiusPx = 2
+                BezierControlPointOffsetFactor = 0.3
+                MovementDurationRangeMs = @(200, 600)
+                ClickDownDurationRangeMs = @(50, 150)
+                ClickPreDelayRangeMs = @(50, 200)
+                ClickPostDelayRangeMs = @(100, 300)
+                PathPointCount = 20
+            }
+
             # Prepare configuration object for serialization
             $configData = [PSCustomObject]@{
                 ProcessName         = $WindowObject.ProcessName
@@ -120,6 +139,7 @@ function Save-ModuleConfiguration {
                 SavedDate           = Get-Date -Format 'o'  # ISO 8601 format
                 SavedBy             = $env:USERNAME
                 ComputerName        = $env:COMPUTERNAME
+                MouseControl        = $mouseDefaults
             }
 
             Write-Verbose "Serializing configuration to JSON format"

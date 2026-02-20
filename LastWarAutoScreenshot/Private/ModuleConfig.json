@@ -8,5 +8,8 @@
 			"MaxAgeDays": 30,
 			"RetentionFileCount": 500
 		}
+	},
+	"MouseControl": {
+		"ClickDownDurationRangeMs": [50, 150]
 	}
 }

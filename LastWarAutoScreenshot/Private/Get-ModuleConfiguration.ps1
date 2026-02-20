@@ -90,11 +90,28 @@ function Get-ModuleConfiguration {
             
             # Deserialize JSON to object
             $configData = $jsonContent | ConvertFrom-Json -ErrorAction Stop
-            
+
+            # MouseControl config defaults
+            $mouseDefaults = @{
+                EasingEnabled = $true
+                OvershootEnabled = $true
+                OvershootFactor = 0.1
+                MicroPausesEnabled = $true
+                MicroPauseChance = 0.2
+                MicroPauseDurationRangeMs = @(20, 80)
+                JitterEnabled = $true
+                JitterRadiusPx = 2
+                BezierControlPointOffsetFactor = 0.3
+                MovementDurationRangeMs = @(200, 600)
+            }
+            if (-not $configData.PSObject.Properties['MouseControl']) {
+                $configData | Add-Member -MemberType NoteProperty -Name MouseControl -Value ([PSCustomObject]$mouseDefaults)
+            }
+
             # Validate required properties exist
             $requiredProperties = @('ProcessName', 'WindowTitle', 'WindowHandleString', 'WindowHandleInt64')
             $missingProperties = $requiredProperties | Where-Object { -not $configData.PSObject.Properties[$_] }
-            
+
             if ($missingProperties.Count -gt 0) {
                 $errorMsg = "Configuration file is missing required properties: $($missingProperties -join ', ')"
                 Write-Error "Error: $errorMsg"
@@ -104,7 +121,7 @@ function Get-ModuleConfiguration {
 
             Write-Verbose "Configuration loaded successfully: ProcessName=$($configData.ProcessName), WindowTitle=$($configData.WindowTitle)"
             Write-Host "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -ForegroundColor Green
-            
+
             # Return configuration object
             return $configData
         }
