@@ -10,7 +10,7 @@
       - [x] Define P/Invoke signatures for `GetWindowThreadProcessId`
       - [x] Define P/Invoke signatures for `IsIconic` (check if minimized)
       - [x] Define P/Invoke signatures for `GetForegroundWindow` (detect active window)
-      - [x] Create `WindowEnumeration_TypeDefinition.ps1` in `private/` folder
+      - [x] Create `WindowEnumeration_TypeDefinition.ps1` in `LastWarAutoScreenshot/private/` folder
       - [x] Add proper error handling for P/Invoke calls
    2. [x] Implement window enumeration function
       - [x] Create private function `Get-EnumeratedWindows` with comment-based help
@@ -182,7 +182,7 @@
 ## Phase 2: Mouse Control & Automation
 
 1. [ ] Implement mouse movement and click logic using `SendInput` Win32 API with window-relative percentage coordinate system
-   1. [x] 1.1: Create `src/MouseControlAPI.cs`
+   1. [x] 1.1: Create `LastWarAutoScreenshot/src/MouseControlAPI.cs`
       - Namespace `LastWarAutoScreenshot`, class `MouseControlAPI`
       - Structs: `POINT`, `RECT`, `MOUSEINPUT`, `INPUT` (FieldOffset union layout for unmanaged interop)
       - Constants: `INPUT_MOUSE`, `MOUSEEVENTF_MOVE`, `MOUSEEVENTF_LEFTDOWN`, `MOUSEEVENTF_LEFTUP`
@@ -192,33 +192,33 @@
    2. [ ] 1.2: Update `LastWarAutoScreenshot.psm1`
       - Add `MouseControlAPI.cs` path to the existing `Add-Type -Path` call
       - Add `'LastWarAutoScreenshot.MouseControlAPI'` to the `$typeNames` guard array (prevents re-adding in the same session)
-   3. [ ] 1.3: Create `Private/MouseControlHelpers.ps1`
+   3. [ ] 1.3: Create `LastWarAutoScreenshot/Private/MouseControlHelpers.ps1`
       - `Invoke-SendMouseInput -DeltaX [int] -DeltaY [int] [-ButtonFlags [uint]]` — thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::SendInput`; logs Win32 error via `Write-LastWarLog` if return value = 0; returns $true/$false
       - `Invoke-GetCursorPosition` — thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetCursorPos`; returns `[PSCustomObject]@{X=[int]; Y=[int]}`
-   4. [ ] 1.4: Create `Private/Get-WindowBounds.ps1`
+   4. [ ] 1.4: Create `LastWarAutoScreenshot/Private/Get-WindowBounds.ps1`
       - `Invoke-GetWindowRect -WindowHandle [IntPtr]` — one-liner thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetWindowRect`
       - `Get-WindowBounds -WindowHandle [object]` — accepts IntPtr, int64, int, string (same handle-conversion pattern as `Set-WindowState`); calls `Invoke-GetWindowRect`; returns `[PSCustomObject]@{Left; Top; Right; Bottom; Width; Height}`; error handling + `Write-LastWarLog`
-   5. [ ] 1.5: Create `Private/ConvertTo-ScreenCoordinates.ps1`
+   5. [ ] 1.5: Create `LastWarAutoScreenshot/Private/ConvertTo-ScreenCoordinates.ps1`
       - `ConvertTo-ScreenCoordinates -WindowHandle [object] -RelativeX [double] -RelativeY [double]`
       - Validates RelativeX and RelativeY are in range [0.0, 1.0]; logs error + returns `$null` if out-of-range
       - Calls `Get-WindowBounds`; computes `AbsoluteX = [int]($Bounds.Left + $RelativeX * $Bounds.Width)` and equivalent for Y
       - Returns `[PSCustomObject]@{X=[int]; Y=[int]}`
-   6. [ ] 1.6: Create `Private/Move-MouseToPoint.ps1` (step 1 placeholder — replaced by `Invoke-MouseMovePath` in step 2)
+   6. [ ] 1.6: Create `LastWarAutoScreenshot/Private/Move-MouseToPoint.ps1` (step 1 placeholder — replaced by `Invoke-MouseMovePath` in step 2)
       - `Move-MouseToPoint -X [int] -Y [int]`
       - Calls `Invoke-GetCursorPosition` to get current position; computes delta to target; calls `Invoke-SendMouseInput` with `MOUSEEVENTF_MOVE`
       - Returns $true/$false; red ANSI footer on failure; logs error via `Write-LastWarLog`
       - `.NOTES`: documents this as a placeholder; replaced by `Invoke-MouseMovePath` in step 2.5
-   7. [ ] 1.7: Create `Private/Invoke-MouseClick.ps1`
+   7. [ ] 1.7: Create `LastWarAutoScreenshot/Private/Invoke-MouseClick.ps1`
       - `Invoke-MouseClick -X [int] -Y [int] [-DownDurationMs [int]]`
       - If X/Y differs from current cursor position, moves to X,Y first via `Move-MouseToPoint`
       - Reads `ClickDownDurationRangeMs` from config (random value within range) when `-DownDurationMs` is omitted
       - Calls `Invoke-SendMouseInput` for `MOUSEEVENTF_LEFTDOWN`, sleeps `DownDurationMs`, calls `Invoke-SendMouseInput` for `MOUSEEVENTF_LEFTUP`
       - Returns $true/$false; error handling + logging
-   8. [ ] 1.8: Add minimal `MouseControl` section to `Private/ModuleConfig.json`
+   8. [ ] 1.8: Add minimal `MouseControl` section to `LastWarAutoScreenshot/Private/ModuleConfig.json`
       - `"MouseControl": { "ClickDownDurationRangeMs": [50, 150] }` — full section added in step 2.1
-   9. [ ] 1.9: Update `Private/Get-ModuleConfiguration.ps1` and `Private/Save-ModuleConfiguration.ps1`
+   9. [ ] 1.9: Update `LastWarAutoScreenshot/Private/Get-ModuleConfiguration.ps1` and `LastWarAutoScreenshot/Private/Save-ModuleConfiguration.ps1`
       - Handle new `MouseControl` key with defaults; no breaking changes to existing keys
-   10. [ ] 1.10: Create `Public/Start-AutomationSequence.ps1` (skeleton)
+   10. [ ] 1.10: Create `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1` (skeleton)
        - `[CmdletBinding()]` parameters: `-WindowHandle [object]` (mandatory), `-RelativeX [double]`, `-RelativeY [double]`
        - Reads config `EmergencyStop.AutoStart`; calls `Start-EmergencyStopMonitor` if `$true`
        - Checks `$script:EmergencyStopRequested` — logs warning and exits cleanly if set before move
@@ -230,17 +230,17 @@
        - `.NOTES`: documents step 2.6 as the upgrade point for human-like movement
    11. [ ] 1.11: Update `LastWarAutoScreenshot.psd1`
        - Add `'Start-AutomationSequence'` to `FunctionsToExport`
-   12. [ ] 1.12: Create `Tests/MouseControl_TypeDefinition.Tests.ps1`
+   12. [ ] 1.12: Create `LastWarAutoScreenshot/Tests/MouseControl_TypeDefinition.Tests.ps1`
        - Verify `[LastWarAutoScreenshot.MouseControlAPI]` type loads without error
        - Verify `SendInput`, `GetCursorPos`, `GetWindowRect` static methods exist with correct signatures
        - Verify `POINT`, `RECT`, `MOUSEINPUT`, `INPUT` nested types exist and have expected public fields
-   13. [ ] 1.13: Create `Tests/MouseCoordinates.Tests.ps1`
+   13. [ ] 1.13: Create `LastWarAutoScreenshot/Tests/MouseCoordinates.Tests.ps1`
        - `Get-WindowBounds`: mock `Invoke-GetWindowRect`; verify PSCustomObject shape; verify `Width = Right - Left`; verify error log + $false on Win32 failure
        - `ConvertTo-ScreenCoordinates`: mock `Get-WindowBounds`; verify correct absolute coordinates for several (x%, y%) values; verify `$null` + error log when input is outside [0.0, 1.0]
-   14. [ ] 1.14: Create `Tests/MouseMovement.Tests.ps1` (step 1 sections)
+   14. [ ] 1.14: Create `LastWarAutoScreenshot/Tests/MouseMovement.Tests.ps1` (step 1 sections)
        - `Move-MouseToPoint`: mock `Invoke-GetCursorPosition` + `Invoke-SendMouseInput`; verify single SendInput call with correct delta; verify $false + error log on SendInput returning 0
        - `Invoke-MouseClick`: mock `Move-MouseToPoint` + `Invoke-SendMouseInput` + `Start-Sleep`; verify LEFTDOWN then LEFTUP calls with sleep between; verify config-derived duration used when `-DownDurationMs` omitted; verify $false + error log on failure
-   15. [ ] 1.15: Create `Tests/Start-AutomationSequence.Tests.ps1` (step 1 sections)
+   15. [ ] 1.15: Create `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1` (step 1 sections)
        - Mock `ConvertTo-ScreenCoordinates`, `Move-MouseToPoint`, `Invoke-MouseClick`, `Start-EmergencyStopMonitor`, `Stop-EmergencyStopMonitor`
        - `EmergencyStop.AutoStart = $true` → `Start-EmergencyStopMonitor` called
        - `$script:EmergencyStopRequested = $true` before move → exits cleanly; `Move-MouseToPoint` not called
@@ -249,7 +249,7 @@
        - Correct PSCustomObject returned on success and failure
    16. [ ] 1.16: Run full Pester suite — all existing + new tests pass
 2. [ ] Develop human-like mouse movement
-   1. [ ] 2.1: Expand `Private/ModuleConfig.json` with full `MouseControl` section (replaces the minimal step 1.8 entry)
+   1. [ ] 2.1: Expand `LastWarAutoScreenshot/Private/ModuleConfig.json` with full `MouseControl` section (replaces the minimal step 1.8 entry)
 
       ```json
       "MouseControl": {
@@ -270,11 +270,11 @@
       }
       ```
 
-   2. [ ] 2.2: Update `Private/Get-ModuleConfiguration.ps1` and `Private/Save-ModuleConfiguration.ps1`
+   2. [ ] 2.2: Update `LastWarAutoScreenshot/Private/Get-ModuleConfiguration.ps1` and `LastWarAutoScreenshot/Private/Save-ModuleConfiguration.ps1`
       - Full `MouseControl` defaults; no breaking changes to existing keys
-   3. [ ] 2.3: Add round-trip tests for all new config keys to `Tests/ModuleConfiguration.Tests.ps1`
+   3. [ ] 2.3: Add round-trip tests for all new config keys to `LastWarAutoScreenshot/Tests/ModuleConfiguration.Tests.ps1`
       - Verify all new defaults present when key is missing from file; verify save/load round-trip
-   4. [ ] 2.4: Create `Private/Get-BezierPoints.ps1`
+   4. [ ] 2.4: Create `LastWarAutoScreenshot/Private/Get-BezierPoints.ps1`
       - `Get-BezierPoints -StartX [int] -StartY [int] -EndX [int] -EndY [int] [-NumPoints [int]] [-ControlPointOffsetFactor [double]] [-JitterRadiusPx [int]]`
       - All parameters default from config when omitted
       - `NumPoints` randomised ±20% before use (eliminates consistent step-interval timing signature)
@@ -283,7 +283,7 @@
       - Jitter: if `JitterEnabled`, add ±`JitterRadiusPx` random noise (integer) to each computed X, Y
       - Returns `[PSCustomObject[]]` each with integer `X` and `Y` properties
       - Pure `[math]` only — no `Add-Type`, no P/Invoke; fully testable
-   5. [ ] 2.5: Create `Private/Invoke-MouseMovePath.ps1`
+   5. [ ] 2.5: Create `LastWarAutoScreenshot/Private/Invoke-MouseMovePath.ps1`
       - `Invoke-MouseMovePath -Points [PSCustomObject[]]`
       - Total move duration: random within `MovementDurationRangeMs` config range
       - Ease-in/out: per-step delay derived from sinusoidal curve so movement is slow at start and end, fast mid-path
@@ -291,11 +291,11 @@
       - Micro-pauses: after each step delay, with probability `MicroPauseChance` add an extra random sleep within `MicroPauseDurationRangeMs`
       - Overshoot: after main path completes, if `OvershootEnabled`, compute a small vector past the final point (scaled by `OvershootFactor × last-step-length`); execute a mini correction path back to the target using a second Bezier (no further overshoot on the correction move)
       - Returns $true/$false; logs any SendInput errors; red ANSI footer on failure
-   6. [ ] 2.6: Update `Public/Start-AutomationSequence.ps1`
+   6. [ ] 2.6: Update `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1`
       - Replace `Move-MouseToPoint` call with: `Invoke-GetCursorPosition` → `Get-BezierPoints` → `Invoke-MouseMovePath`
       - Add `ClickPreDelay` (random sleep within `ClickPreDelayRangeMs`) before `Invoke-MouseClick`
       - Add `ClickPostDelay` (random sleep within `ClickPostDelayRangeMs`) after `Invoke-MouseClick`
-   7. [ ] 2.7: Add step 2 sections to `Tests/MouseMovement.Tests.ps1`
+   7. [ ] 2.7: Add step 2 sections to `LastWarAutoScreenshot/Tests/MouseMovement.Tests.ps1`
       - `Get-BezierPoints`:
         - At least one intermediate point is non-collinear with start/end (confirms curve is not a straight line)
         - Returned count within ±40% of base `NumPoints` (accounts for ±20% randomisation)
@@ -307,47 +307,47 @@
         - `MicroPauseChance = 1.0`: extra `Start-Sleep` calls equal to point count
         - `OvershootEnabled = $true`: `Invoke-SendMouseInput` called beyond point count (extra correction path)
         - SendInput failure: error logged, no unhandled exception
-   8. [ ] 2.8: Add step 2 sections to `Tests/Start-AutomationSequence.Tests.ps1`
+   8. [ ] 2.8: Add step 2 sections to `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1`
       - Verify `Invoke-MouseMovePath` called instead of `Move-MouseToPoint`
       - Verify `ClickPreDelay` and `ClickPostDelay` `Start-Sleep` calls are present
    9. [ ] 2.9: Run full Pester suite — all existing + new tests pass
-   10. [ ] 2.10: Update `Docs/README.md`
+   10. [ ] 2.10: Update `LastWarAutoScreenshot/Docs/README.md`
        - Document all `MouseControl` config keys with types, defaults, and examples
        - Document human-like movement behaviour: Bezier path shaping, ease-in/out, jitter, micro-pauses, overshoot/correction
 3. [ ] Allow user to define bounding box or circle as cursor target; randomly select position within defined area for each action
-   1. [ ] 3.1: Create `Private/Get-RandomTargetPosition.ps1`
+   1. [ ] 3.1: Create `LastWarAutoScreenshot/Private/Get-RandomTargetPosition.ps1`
       - Two `[CmdletBinding()]` parameter sets:
         - **Box**: `-Box [PSCustomObject]` with properties `RelativeX`, `RelativeY`, `RelativeWidth`, `RelativeHeight` (all 0.0–1.0) — uniform random within `[RelativeX, RelativeX+RelativeWidth] × [RelativeY, RelativeY+RelativeHeight]`
         - **Circle**: `-Circle [PSCustomObject]` with `RelativeCentreX`, `RelativeCentreY`, `RelativeRadius` — `angle = 2π × random`, `r = √random × RelativeRadius` (sqrt ensures uniform density, not concentrated at centre), `X = CentreX + r·cos(angle)`, `Y = CentreY + r·sin(angle)`
       - Output clamped to [0.0, 1.0] on both axes
       - Returns `[PSCustomObject]@{RelativeX=[double]; RelativeY=[double]}` or `$null` with error log on invalid input
       - Pure PowerShell — no `Add-Type`
-   2. [ ] 3.2: Create `Tests/Get-RandomTargetPosition.Tests.ps1`
+   2. [ ] 3.2: Create `LastWarAutoScreenshot/Tests/Get-RandomTargetPosition.Tests.ps1`
       - Box: 100-iteration loop — all returned points within `[RelativeX, RelativeX+RelativeWidth]` × `[RelativeY, RelativeY+RelativeHeight]`
       - Circle: 100-iteration loop — all returned points within `RelativeRadius` of centre
       - Circle distribution: mean of 100 points clusters near centre (within 10% of radius on each axis)
       - Invalid input (negative radius, region values outside [0.0, 1.0]) → `$null` returned + error logged
       - Clamp: no returned value is below 0.0 or above 1.0
-   3. [ ] 3.3: Update `Public/Start-AutomationSequence.ps1`
+   3. [ ] 3.3: Update `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1`
       - Add optional `-Region [PSCustomObject]` parameter via parameter sets (mutually exclusive with `-RelativeX`/`-RelativeY`)
       - If `-Region` provided: call `Get-RandomTargetPosition` to obtain `RelativeX`, `RelativeY`
       - If scalar `-RelativeX`/`-RelativeY` provided: use directly
       - Both paths produce a single (RelativeX, RelativeY) pair before `ConvertTo-ScreenCoordinates`; downstream logic unchanged
-   4. [ ] 3.4: Add step 3 sections to `Tests/Start-AutomationSequence.Tests.ps1`
+   4. [ ] 3.4: Add step 3 sections to `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1`
       - Mock `Get-RandomTargetPosition`; verify called when `-Region` is provided
       - Verify `Get-RandomTargetPosition` not called when scalar `-RelativeX`/`-RelativeY` are provided
    5. [ ] 3.5: Run full Pester suite — new test count meets or exceeds the pre-steps-1–3 baseline
-   6. [ ] 3.6: Update `Docs/README.md`
+   6. [ ] 3.6: Update `LastWarAutoScreenshot/Docs/README.md`
       - Document `-Region` parameter with Box and Circle formats, field descriptions, and usage examples
 4. [ ] Implement emergency stop mechanisms (DEFERRED — implement after Mouse Control step 1 is complete):
 
    **Hotkey mechanism**
 
-   4.1. [ ] Add `GetAsyncKeyState` P/Invoke to `src/MouseControlAPI.cs` (created in step 1.1)
+   4.1. [ ] Add `GetAsyncKeyState` P/Invoke to `LastWarAutoScreenshot/src/MouseControlAPI.cs` (created in step 1.1)
       - Add single `GetAsyncKeyState(int vKey)` DllImport method to the existing `LastWarAutoScreenshot.MouseControlAPI` C# class — no new files or types
       - All references to `[Win32.MouseControl]::` in steps 4.3–4.5 use `[LastWarAutoScreenshot.MouseControlAPI]::` to match the established namespace convention
       - Note: the virtual key code for `#` is keyboard-layout-dependent (`VK_OEM_5` = 0xDC on UK layouts; Shift+3 on US layouts) — document this in code comments and README
-      - Pester test for the type definition goes in `Tests/MouseControl_TypeDefinition.Tests.ps1` (created in step 1.12); add a test verifying `GetAsyncKeyState` exists on the type and is callable with a known safe key code (e.g. VK_SHIFT = 0x10)
+      - Pester test for the type definition goes in `LastWarAutoScreenshot/Tests/MouseControl_TypeDefinition.Tests.ps1` (created in step 1.12); add a test verifying `GetAsyncKeyState` exists on the type and is callable with a known safe key code (e.g. VK_SHIFT = 0x10)
 
    4.2. [ ] Add emergency stop settings to module configuration
       - Add `EmergencyStop.HotkeyVKeyCodes` (int array, default: [0x11, 0x10, 0xDC] — Ctrl, Shift, # on UK layout)
