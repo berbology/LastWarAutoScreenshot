@@ -189,26 +189,26 @@
       - P/Invoke: `SendInput(uint nInputs, INPUT[] pInputs, int cbSize)`, `GetCursorPos(out POINT lpPoint)`, `GetWindowRect(IntPtr hWnd, out RECT lpRect)`
       - `SetLastError = true` on every DllImport; `CharSet.Auto` only where a string parameter is present
       - Note: step 4.1's `GetAsyncKeyState` is added to this same class in step 4 — no `CursorControl_TypeDefinitions.ps1` file is needed
-   2. [ ] 1.2: Update `LastWarAutoScreenshot.psm1`
+   2. [x] 1.2: Update `LastWarAutoScreenshot.psm1`
       - Add `MouseControlAPI.cs` path to the existing `Add-Type -Path` call
       - Add `'LastWarAutoScreenshot.MouseControlAPI'` to the `$typeNames` guard array (prevents re-adding in the same session)
-   3. [ ] 1.3: Create `LastWarAutoScreenshot/Private/MouseControlHelpers.ps1`
+   3. [x] 1.3: Create `LastWarAutoScreenshot/Private/MouseControlHelpers.ps1`
       - `Invoke-SendMouseInput -DeltaX [int] -DeltaY [int] [-ButtonFlags [uint]]` — thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::SendInput`; logs Win32 error via `Write-LastWarLog` if return value = 0; returns $true/$false
       - `Invoke-GetCursorPosition` — thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetCursorPos`; returns `[PSCustomObject]@{X=[int]; Y=[int]}`
-   4. [ ] 1.4: Create `LastWarAutoScreenshot/Private/Get-WindowBounds.ps1`
+   4. [x] 1.4: Create `LastWarAutoScreenshot/Private/Get-WindowBounds.ps1`
       - `Invoke-GetWindowRect -WindowHandle [IntPtr]` — one-liner thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetWindowRect`
       - `Get-WindowBounds -WindowHandle [object]` — accepts IntPtr, int64, int, string (same handle-conversion pattern as `Set-WindowState`); calls `Invoke-GetWindowRect`; returns `[PSCustomObject]@{Left; Top; Right; Bottom; Width; Height}`; error handling + `Write-LastWarLog`
-   5. [ ] 1.5: Create `LastWarAutoScreenshot/Private/ConvertTo-ScreenCoordinates.ps1`
+   5. [x] 1.5: Create `LastWarAutoScreenshot/Private/ConvertTo-ScreenCoordinates.ps1`
       - `ConvertTo-ScreenCoordinates -WindowHandle [object] -RelativeX [double] -RelativeY [double]`
       - Validates RelativeX and RelativeY are in range [0.0, 1.0]; logs error + returns `$null` if out-of-range
       - Calls `Get-WindowBounds`; computes `AbsoluteX = [int]($Bounds.Left + $RelativeX * $Bounds.Width)` and equivalent for Y
       - Returns `[PSCustomObject]@{X=[int]; Y=[int]}`
-   6. [ ] 1.6: Create `LastWarAutoScreenshot/Private/Move-MouseToPoint.ps1` (step 1 placeholder — replaced by `Invoke-MouseMovePath` in step 2)
+   6. [x] 1.6: Create `LastWarAutoScreenshot/Private/Move-MouseToPoint.ps1` (step 1 placeholder — replaced by `Invoke-MouseMovePath` in step 2)
       - `Move-MouseToPoint -X [int] -Y [int]`
       - Calls `Invoke-GetCursorPosition` to get current position; computes delta to target; calls `Invoke-SendMouseInput` with `MOUSEEVENTF_MOVE`
       - Returns $true/$false; red ANSI footer on failure; logs error via `Write-LastWarLog`
       - `.NOTES`: documents this as a placeholder; replaced by `Invoke-MouseMovePath` in step 2.5
-   7. [ ] 1.7: Create `LastWarAutoScreenshot/Private/Invoke-MouseClick.ps1`
+   7. [x] 1.7: Create `LastWarAutoScreenshot/Private/Invoke-MouseClick.ps1`
       - `Invoke-MouseClick -X [int] -Y [int] [-DownDurationMs [int]]`
       - If X/Y differs from current cursor position, moves to X,Y first via `Move-MouseToPoint`
       - Reads `ClickDownDurationRangeMs` from config (random value within range) when `-DownDurationMs` is omitted
