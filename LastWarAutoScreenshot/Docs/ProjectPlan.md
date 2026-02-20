@@ -240,7 +240,7 @@
    14. [x] 1.14: Create `LastWarAutoScreenshot/Tests/MouseMovement.Tests.ps1` (step 1 sections)
        - `Move-MouseToPoint`: mock `Invoke-GetCursorPosition` + `Invoke-SendMouseInput`; verify single SendInput call with correct delta; verify $false + error log on SendInput returning 0
        - `Invoke-MouseClick`: mock `Move-MouseToPoint` + `Invoke-SendMouseInput` + `Start-Sleep`; verify LEFTDOWN then LEFTUP calls with sleep between; verify config-derived duration used when `-DownDurationMs` omitted; verify $false + error log on failure
-   15. [ ] 1.15: Create `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1` (step 1 sections)
+   15. [x] 1.15: Create `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1` (step 1 sections)
        - Mock `ConvertTo-ScreenCoordinates`, `Move-MouseToPoint`, `Invoke-MouseClick`, `Start-EmergencyStopMonitor`, `Stop-EmergencyStopMonitor`
        - `EmergencyStop.AutoStart = $true` → `Start-EmergencyStopMonitor` called
        - `$script:EmergencyStopRequested = $true` before move → exits cleanly; `Move-MouseToPoint` not called
