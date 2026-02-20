@@ -234,7 +234,7 @@
        - Verify `[LastWarAutoScreenshot.MouseControlAPI]` type loads without error
        - Verify `SendInput`, `GetCursorPos`, `GetWindowRect` static methods exist with correct signatures
        - Verify `POINT`, `RECT`, `MOUSEINPUT`, `INPUT` nested types exist and have expected public fields
-   13. [ ] 1.13: Create `LastWarAutoScreenshot/Tests/MouseCoordinates.Tests.ps1`
+   13. [x] 1.13: Create `LastWarAutoScreenshot/Tests/MouseCoordinates.Tests.ps1`
        - `Get-WindowBounds`: mock `Invoke-GetWindowRect`; verify PSCustomObject shape; verify `Width = Right - Left`; verify error log + $false on Win32 failure
        - `ConvertTo-ScreenCoordinates`: mock `Get-WindowBounds`; verify correct absolute coordinates for several (x%, y%) values; verify `$null` + error log when input is outside [0.0, 1.0]
    14. [ ] 1.14: Create `LastWarAutoScreenshot/Tests/MouseMovement.Tests.ps1` (step 1 sections)
