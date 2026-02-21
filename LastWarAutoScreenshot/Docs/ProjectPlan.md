@@ -181,7 +181,7 @@
 
 ## Phase 2: Mouse Control & Automation
 
-1. [ ] Implement mouse movement and click logic using `SendInput` Win32 API with window-relative percentage coordinate system
+1. [x] Implement mouse movement and click logic using `SendInput` Win32 API with window-relative percentage coordinate system
    1. [x] 1.1: Create `LastWarAutoScreenshot/src/MouseControlAPI.cs`
       - Namespace `LastWarAutoScreenshot`, class `MouseControlAPI`
       - Structs: `POINT`, `RECT`, `MOUSEINPUT`, `INPUT` (FieldOffset union layout for unmanaged interop)

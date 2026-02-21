@@ -17,7 +17,7 @@ These instructions define how pull request descriptions should be generated for 
      - Why the change was necessary
      - How the change was implemented
      - List key changes as bullet points for easy scanning
-     - Include relevant issue numbers using 'Fixes #123' or 'Closes #456' format
+     - Include relevant issue numbers using 'Fixes #123' or 'Closes #456' format, but only if we have real, valid ones. Don't make them up!
    - **Testing**: A summary of how the changes were tested.
    - **References**: Links to related issues, pull requests, or documentation.
 3. **Examples**:
