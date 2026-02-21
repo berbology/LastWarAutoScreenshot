@@ -11,5 +11,8 @@
 	},
 	"MouseControl": {
 		"ClickDownDurationRangeMs": [50, 150]
+	},
+	"EmergencyStop": {
+		"AutoStart": false
 	}
 }

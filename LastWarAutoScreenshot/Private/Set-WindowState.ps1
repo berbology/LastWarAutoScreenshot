@@ -35,6 +35,7 @@ function Set-WindowState {
     param(
         [Parameter(Mandatory)]
         [Alias('hWnd')]
+        [AllowNull()]
         [object]$WindowHandle,
 
         [Parameter(Mandatory)]
@@ -48,6 +49,11 @@ function Set-WindowState {
         'Maximize' { $SW_MAXIMIZE }
     }
     try {
+        # Reject null outright
+        if ($null -eq $WindowHandle) {
+            Write-LastWarLog -Message "Unsupported WindowHandle type: null" -Level Error -FunctionName 'Set-WindowState' -Context "ParameterValidation"
+            return $false
+        }
         # Convert handle if needed
         if ($WindowHandle -is [array]) {
             Write-LastWarLog -Message "Unsupported WindowHandle type: $($WindowHandle.GetType().FullName)" -Level Error -FunctionName 'Set-WindowState' -Context "ParameterValidation"
@@ -56,6 +62,11 @@ function Set-WindowState {
         $hWnd = if ($WindowHandle -is [IntPtr]) {
             $WindowHandle
         } elseif ($WindowHandle -is [string] -or $WindowHandle -is [int64] -or $WindowHandle -is [int]) {
+            if ($WindowHandle -is [string] -and [string]::IsNullOrWhiteSpace($WindowHandle)) {
+                Write-LastWarLog -Message "Unsupported WindowHandle type: empty string" -Level Error -FunctionName 'Set-WindowState' -Context "ParameterValidation"
+                Write-Host "`e[31mERROR: Unsupported WindowHandle type: empty string`e[0m"
+                return $false
+            }
             [IntPtr]::new([int64]$WindowHandle)
         } else {
             Write-LastWarLog -Message "Unsupported WindowHandle type: $($WindowHandle.GetType().FullName)" -Level Error -FunctionName 'Set-WindowState' -Context "ParameterValidation"

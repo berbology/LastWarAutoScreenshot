@@ -1,3 +1,4 @@
+function Start-AutomationSequence {
 <#
 .SYNOPSIS
     Starts an automation sequence: moves mouse to a window-relative coordinate and clicks.
@@ -20,70 +21,71 @@
 .NOTES
     Human-like movement (Bezier, jitter, etc.) is implemented in Phase 2.6. This is a placeholder for the basic sequence.
 #>
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory)]
-    $WindowHandle,
-    [Parameter(Mandatory)]
-    [double]$RelativeX,
-    [Parameter(Mandatory)]
-    [double]$RelativeY
-)
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        $WindowHandle,
+        [Parameter(Mandatory)]
+        [double]$RelativeX,
+        [Parameter(Mandatory)]
+        [double]$RelativeY
+    )
 
-$Config = Get-ModuleConfiguration
-if ($Config.EmergencyStop.AutoStart) {
-    Start-EmergencyStopMonitor | Out-Null
-}
+    $Config = Get-ModuleConfiguration
+    if ($Config.EmergencyStop.AutoStart) {
+        Start-EmergencyStopMonitor | Out-Null
+    }
 
-try {
-    if ($script:EmergencyStopRequested) {
-        Write-LastWarLog -Level Warning -Message 'Emergency stop requested before mouse move. Aborting sequence.'
+    try {
+        if ($script:EmergencyStopRequested) {
+            Write-LastWarLog -Level Warning -Message 'Emergency stop requested before mouse move. Aborting sequence.'
+            return [PSCustomObject]@{
+                Success = $false
+                Message = 'Aborted: Emergency stop requested before mouse move.'
+            }
+        }
+
+        $coords = ConvertTo-ScreenCoordinates -WindowHandle $WindowHandle -RelativeX $RelativeX -RelativeY $RelativeY
+        if (-not $coords) {
+            Write-LastWarLog -Level Error -Message 'Failed to convert to screen coordinates.'
+            return [PSCustomObject]@{
+                Success = $false
+                Message = 'Failed to convert to screen coordinates.'
+            }
+        }
+
+        $moveResult = Move-MouseToPoint -X $coords.X -Y $coords.Y
+        if (-not $moveResult) {
+            Write-LastWarLog -Level Error -Message 'Failed to move mouse to target point.'
+            return [PSCustomObject]@{
+                Success = $false
+                Message = 'Failed to move mouse to target point.'
+            }
+        }
+
+        if ($script:EmergencyStopRequested) {
+            Write-LastWarLog -Level Warning -Message 'Emergency stop requested after mouse move. Skipping click.'
+            return [PSCustomObject]@{
+                Success = $false
+                Message = 'Aborted: Emergency stop requested after mouse move.'
+            }
+        }
+
+        $clickResult = Invoke-MouseClick -X $coords.X -Y $coords.Y
+        if (-not $clickResult) {
+            Write-LastWarLog -Level Error -Message 'Mouse click failed.'
+            return [PSCustomObject]@{
+                Success = $false
+                Message = 'Mouse click failed.'
+            }
+        }
+
         return [PSCustomObject]@{
-            Success = $false
-            Message = 'Aborted: Emergency stop requested before mouse move.'
+            Success = $true
+            Message = 'Automation sequence completed successfully.'
         }
     }
-
-    $coords = ConvertTo-ScreenCoordinates -WindowHandle $WindowHandle -RelativeX $RelativeX -RelativeY $RelativeY
-    if (-not $coords) {
-        Write-LastWarLog -Level Error -Message 'Failed to convert to screen coordinates.'
-        return [PSCustomObject]@{
-            Success = $false
-            Message = 'Failed to convert to screen coordinates.'
-        }
+    finally {
+        Stop-EmergencyStopMonitor | Out-Null
     }
-
-    $moveResult = Move-MouseToPoint -X $coords.X -Y $coords.Y
-    if (-not $moveResult) {
-        Write-LastWarLog -Level Error -Message 'Failed to move mouse to target point.'
-        return [PSCustomObject]@{
-            Success = $false
-            Message = 'Failed to move mouse to target point.'
-        }
-    }
-
-    if ($script:EmergencyStopRequested) {
-        Write-LastWarLog -Level Warning -Message 'Emergency stop requested after mouse move. Skipping click.'
-        return [PSCustomObject]@{
-            Success = $false
-            Message = 'Aborted: Emergency stop requested after mouse move.'
-        }
-    }
-
-    $clickResult = Invoke-MouseClick -X $coords.X -Y $coords.Y
-    if (-not $clickResult) {
-        Write-LastWarLog -Level Error -Message 'Mouse click failed.'
-        return [PSCustomObject]@{
-            Success = $false
-            Message = 'Mouse click failed.'
-        }
-    }
-
-    return [PSCustomObject]@{
-        Success = $true
-        Message = 'Automation sequence completed successfully.'
-    }
-}
-finally {
-    Stop-EmergencyStopMonitor | Out-Null
 }

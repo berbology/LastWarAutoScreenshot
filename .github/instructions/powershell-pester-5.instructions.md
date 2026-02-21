@@ -11,17 +11,20 @@ This guide provides PowerShell-specific instructions for creating automated test
 
 - **File Convention:** Use `*.Tests.ps1` naming pattern
 - **Placement:** Place test files next to tested code or in dedicated test directories
-- **Import Pattern:** Use `BeforeAll { . $PSScriptRoot/FunctionName.ps1 }` to import tested functions
+- **Import Pattern:** Use `BeforeAll { . $PSScriptRoot/FunctionName.ps1 }` to import tested functions, being very careful to place them at the correct nesting level as per Pester 5.7.1 best practices
+  - InModuleScope should only be used inside It, Context, or (if needed) BeforeAll/BeforeEach, not as a wrapper for multiple Pester lifecycle blocks or as a direct child of Describe
 - **No Direct Code:** Put ALL code inside Pester blocks (`BeforeAll`, `Describe`, `Context`, `It`, etc.)
 
 ## Test Structure Hierarchy
 
 ```powershell
-BeforeAll { # Import tested functions }
+BeforeAll { # Import tested functions using Import-Module (never dot source module scripts directly) }
 Describe 'FunctionName' {
     Context 'When condition' {
         BeforeAll { # Setup for context }
-        It 'Should behaviour' { # Individual test }
+        InModuleScope{
+            It 'Should behaviour' { # Individual test }
+         } # Use -ModuleName ModuleName here where required
         AfterAll { # Cleanup for context }
     }
 }
@@ -210,6 +213,24 @@ Invoke-Pester -Configuration $config
 
 ## Important
 
+- Only use patterns and commands compatible with Pester 5.7.1 and up
+- Mocks must be inside Describe (or deeper) to be scoped correctly
+  - `Assert-MockCalled`/`Assert-MockNotCalled` are deprecated in Pester 5 — the instructions mandate `Should -Invoke`
+  - Never dot source module scripts directly in tests, always use Import-Module
+  - Always use Import-Module in a BeforeAll{} block nested at the top of a Describe{} block
+  - Always import module using the code example below:
+  -
+
+```powershell
+    $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Import-Module $moduleManifest -Force
+```
+
+- In order to ensure correct scoping and visibility ALWAYS add InModuleScope{} with -ModuleName parameter when using module functions
+- Always ensure InModuleScope blocks are placed at the correct nesting level as per Pester 5.7.1 best practices
+- **$script: scope rules — CRITICAL**: `$script:` inside `InModuleScope` resolves to the **module's** script scope, NOT the test file's script scope. These are two completely separate scopes. Never read a `$script:` variable inside `InModuleScope` that was assigned outside it (e.g. in a `BeforeAll`), and vice versa. This is the single most common source of silent null failures.
+- **BeforeEach/AfterEach reset of module state**: When a test sets a module-scope `$script:` variable (e.g. `$script:EmergencyStopRequested`) via `InModuleScope`, you MUST reset it inside `InModuleScope` in `BeforeEach`/`AfterEach` too. Bare assignments outside `InModuleScope` only affect the test script scope and will NOT clean the module's copy, leaving state pollution for subsequent tests.
+- **Do not wrap tests in InModuleScope unless they call module-private code**: Public type definitions (`[Namespace.Type]::Method()`) and Win32 P/Invoke statics loaded by the module are accessible globally. Wrapping such tests in `InModuleScope` serves no purpose and breaks `$script:` variable access set in test-scope `BeforeAll` blocks.
 - Full Suite Requirement: Always run the entire, unfiltered Pester test suite (all test files, no tag or path filters) before marking any task as complete or updating documentation.
 - No Partial Validation: Never rely on single-file, tag-filtered, or partial test runs for final validation. All test files must be included in the final check.
 - Test Count Baseline: Explicitly check and report the total number of tests discovered and run, and compare to the known project baseline. If the count drops unexpectedly, halt and investigate before proceeding.

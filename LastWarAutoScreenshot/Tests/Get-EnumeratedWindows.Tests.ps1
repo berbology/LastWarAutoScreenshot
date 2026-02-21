@@ -18,64 +18,83 @@ Describe "Get-EnumeratedWindows" -Tag "Unit" {
     Context "Parameter validation" {
 
         It "Should throw when ProcessName is an empty string" {
-            { InModuleScope LastWarAutoScreenshot { Get-EnumeratedWindows -ProcessName '' } } | Should -Throw
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                { Get-EnumeratedWindows -ProcessName '' } | Should -Throw
+            }
         }
 
         It "Should not throw when ProcessName is a valid string" {
-            { InModuleScope LastWarAutoScreenshot {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -ProcessName 'NonExistentProcess12345'
-            } } | Should -Not -Throw
+                { Get-EnumeratedWindows -ProcessName 'NonExistentProcess12345' } | Should -Not -Throw
+            }
         }
 
         It "Should not throw when ExcludeMinimized switch is used" {
-            { InModuleScope LastWarAutoScreenshot {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -ExcludeMinimized
-            } } | Should -Not -Throw
+                { Get-EnumeratedWindows -ExcludeMinimized } | Should -Not -Throw
+            }
         }
 
         It "Should not throw when VisibleOnly switch is used" {
-            { InModuleScope LastWarAutoScreenshot {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -VisibleOnly
-            } } | Should -Not -Throw
+                { Get-EnumeratedWindows -VisibleOnly } | Should -Not -Throw
+            }
         }
     }
 
     Context "Return object structure" {
 
-        BeforeAll {
-            $allWindows = InModuleScope LastWarAutoScreenshot {
+        It "Should return at least one window on a running Windows system" {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows
+                $allWindows = Get-EnumeratedWindows
+                $allWindows | Should -Not -BeNullOrEmpty
             }
         }
 
-        It "Should return at least one window on a running Windows system" {
-            $allWindows | Should -Not -BeNullOrEmpty
-        }
-
         It "Should return objects with a non-empty ProcessName" {
-            $allWindows[0].ProcessName | Should -Not -BeNullOrEmpty
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $VerbosePreference = 'SilentlyContinue'
+                $allWindows = Get-EnumeratedWindows
+                $allWindows[0].ProcessName | Should -Not -BeNullOrEmpty
+            }
         }
 
         It "Should return objects with a non-empty WindowTitle" {
-            $allWindows[0].WindowTitle | Should -Not -BeNullOrEmpty
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $VerbosePreference = 'SilentlyContinue'
+                $allWindows = Get-EnumeratedWindows
+                $allWindows[0].WindowTitle | Should -Not -BeNullOrEmpty
+            }
         }
 
         It "Should return objects with a WindowHandleInt greater than zero" {
-            $allWindows[0].WindowHandleInt | Should -BeGreaterThan 0
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $VerbosePreference = 'SilentlyContinue'
+                $allWindows = Get-EnumeratedWindows
+                $allWindows[0].WindowHandleInt | Should -BeGreaterThan 0
+            }
         }
 
         It "Should return objects with a ProcessID greater than zero" {
-            [int64]$allWindows[0].ProcessID | Should -BeGreaterThan 0
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $VerbosePreference = 'SilentlyContinue'
+                $allWindows = Get-EnumeratedWindows
+                [int64]$allWindows[0].ProcessID | Should -BeGreaterThan 0
+            }
         }
 
         It "Should return only valid WindowState values" {
-            $validStates = @('Visible', 'Minimized', 'Hidden')
-            $allWindows | ForEach-Object {
-                $_.WindowState | Should -BeIn $validStates
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $VerbosePreference = 'SilentlyContinue'
+                $allWindows = Get-EnumeratedWindows
+                $validStates = @('Visible', 'Minimized', 'Hidden')
+                $allWindows | ForEach-Object {
+                    $_.WindowState | Should -BeIn $validStates
+                }
             }
         }
     }
@@ -83,24 +102,24 @@ Describe "Get-EnumeratedWindows" -Tag "Unit" {
     Context "ProcessName filtering" {
 
         It "Should return empty result for a non-existent ProcessName" {
-            $result = InModuleScope LastWarAutoScreenshot {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -ProcessName 'NonExistentProcess12345'
+                $result = Get-EnumeratedWindows -ProcessName 'NonExistentProcess12345'
+                $result | Should -BeNullOrEmpty
             }
-            $result | Should -BeNullOrEmpty
         }
 
         It "Should return only windows matching the specified ProcessName" {
-            $result = InModuleScope LastWarAutoScreenshot {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -ProcessName 'explorer'
-            }
-            if ($null -eq $result) {
-                Set-ItResult -Skipped -Because "No titled 'explorer' windows found on this system"
-                return
-            }
-            $result | ForEach-Object {
-                $_.ProcessName | Should -Be 'explorer'
+                $result = Get-EnumeratedWindows -ProcessName 'explorer'
+                if ($null -eq $result) {
+                    Set-ItResult -Skipped -Because "No titled 'explorer' windows found on this system"
+                    return
+                }
+                $result | ForEach-Object {
+                    $_.ProcessName | Should -Be 'explorer'
+                }
             }
         }
     }
@@ -108,22 +127,22 @@ Describe "Get-EnumeratedWindows" -Tag "Unit" {
     Context "Visibility filtering" {
 
         It "Should return only Visible windows when ExcludeMinimized is specified" {
-            $result = InModuleScope LastWarAutoScreenshot {
+            InModuleScope LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -ExcludeMinimized
-            }
-            $result | ForEach-Object {
-                $_.WindowState | Should -Be 'Visible'
+                $result = Get-EnumeratedWindows -ExcludeMinimized
+                $result | ForEach-Object {
+                    $_.WindowState | Should -Be 'Visible'
+                }
             }
         }
 
         It "Should return only Visible windows when VisibleOnly is specified" {
-            $result = InModuleScope LastWarAutoScreenshot {
+            InModuleScope LastWarAutoScreenshot {
                 $VerbosePreference = 'SilentlyContinue'
-                Get-EnumeratedWindows -VisibleOnly
-            }
-            $result | ForEach-Object {
-                $_.WindowState | Should -Be 'Visible'
+                $result = Get-EnumeratedWindows -VisibleOnly
+                $result | ForEach-Object {
+                    $_.WindowState | Should -Be 'Visible'
+                }
             }
         }
     }

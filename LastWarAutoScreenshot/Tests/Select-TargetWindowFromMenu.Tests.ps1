@@ -10,13 +10,13 @@ BeforeAll {
             [string]$WindowState = 'Visible'
         )
         return [PSCustomObject]@{
-            ProcessName = $ProcessName
-            WindowTitle = $WindowTitle
-            WindowHandle = [IntPtr]$WindowHandle
+            ProcessName        = $ProcessName
+            WindowTitle        = $WindowTitle
+            WindowHandle       = [IntPtr]$WindowHandle
             WindowHandleString = $WindowHandle.ToString()
-            WindowHandleInt64 = $WindowHandle
-            ProcessID = $ProcessID
-            WindowState = $WindowState
+            WindowHandleInt64  = $WindowHandle
+            ProcessID          = $ProcessID
+            WindowState        = $WindowState
         }
     }
 }

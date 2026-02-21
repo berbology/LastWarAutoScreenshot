@@ -27,7 +27,7 @@ function Move-MouseToPoint {
     try {
         $current = Invoke-GetCursorPosition
         if ($null -eq $current) {
-            Write-LastWarLog -Type Error -Message "Failed to get current cursor position." -Context "Move-MouseToPoint"
+            Write-LastWarLog -Level Error -Message "Failed to get current cursor position." -FunctionName 'Move-MouseToPoint'
             Write-Host "\e[31mError: Unable to get current cursor position.\e[0m" -NoNewline
             return $false
         }
@@ -36,13 +36,13 @@ function Move-MouseToPoint {
             $moveFlag = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE
             $result = Invoke-SendMouseInput -DeltaX $deltaX -DeltaY $deltaY -ButtonFlags $moveFlag
         if (-not $result) {
-            Write-LastWarLog -Type Error -Message "SendInput failed to move mouse." -Context "Move-MouseToPoint"
+            Write-LastWarLog -Level Error -Message "SendInput failed to move mouse." -FunctionName 'Move-MouseToPoint'
             Write-Host "\e[31mError: Mouse move failed. See log for details.\e[0m" -NoNewline
             return $false
         }
         return $true
     } catch {
-        Write-LastWarLog -Type Error -Message $_.Exception.Message -Context "Move-MouseToPoint"
+        Write-LastWarLog -Level Error -Message $_.Exception.Message -FunctionName 'Move-MouseToPoint'
         Write-Host "\e[31mError: Exception occurred. See log for details.\e[0m" -NoNewline
         return $false
     }

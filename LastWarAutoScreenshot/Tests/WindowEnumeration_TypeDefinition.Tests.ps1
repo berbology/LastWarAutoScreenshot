@@ -22,7 +22,6 @@ Describe 'WindowEnumeration_TypeDefinition' {
         BeforeAll {
             $script:showWindowHandle = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
         }
-
         It 'Should call ShowWindow without throwing' -Tag 'Integration' -Skip:(-not [Environment]::UserInteractive -or [bool]$env:CI -or [bool]$env:TF_BUILD -or [bool]$env:GITHUB_ACTIONS) {
             $hWnd = $script:showWindowHandle
             $SW_MINIMIZE = 2
@@ -33,7 +32,6 @@ Describe 'WindowEnumeration_TypeDefinition' {
             } | Should -Not -Throw
         }
     }
-
     Context 'API Calls With Real Handles' {
         BeforeAll {
             # GetForegroundWindow always returns a valid handle in an active terminal session.
@@ -41,23 +39,19 @@ Describe 'WindowEnumeration_TypeDefinition' {
             $script:testWindowHandle = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
             $script:hasValidHandle = ($script:testWindowHandle -ne [IntPtr]::Zero)
         }
-
         It 'Should have obtained a valid window handle for testing' {
             $script:testWindowHandle | Should -Not -Be ([IntPtr]::Zero)
             $script:hasValidHandle | Should -Be $true
         }
-
         It 'Should successfully call IsWindowVisible with valid window handle' {
             $result = [LastWarAutoScreenshot.WindowEnumerationAPI]::IsWindowVisible($script:testWindowHandle)
             $result | Should -BeOfType [bool]
         }
-
         It 'Should successfully call GetWindowTextLength with valid window handle' {
             $length = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetWindowTextLength($script:testWindowHandle)
             $length | Should -BeOfType [int]
             $length | Should -BeGreaterOrEqual 0
         }
-
         It 'Should successfully call GetWindowText with valid window handle' {
             $length = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetWindowTextLength($script:testWindowHandle)
             if ($length -gt 0) {
@@ -67,7 +61,6 @@ Describe 'WindowEnumeration_TypeDefinition' {
                 $result | Should -BeGreaterOrEqual 0
             }
         }
-
         It 'Should successfully call GetWindowThreadProcessId with valid window handle' {
             $processId = 0
             $threadId = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetWindowThreadProcessId($script:testWindowHandle, [ref]$processId)
@@ -75,19 +68,18 @@ Describe 'WindowEnumeration_TypeDefinition' {
             $processId | Should -BeOfType [uint32]
             $processId | Should -BeGreaterThan 0
         }
-
         It 'Should successfully call IsIconic with valid window handle' {
             $result = [LastWarAutoScreenshot.WindowEnumerationAPI]::IsIconic($script:testWindowHandle)
             $result | Should -BeOfType [bool]
         }
-
         It 'Should successfully call GetForegroundWindow' {
-            $result = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
-            $result | Should -BeOfType [IntPtr]
-            # Foreground window may be Zero if no window is in foreground (rare)
-            # but the call should not throw an exception
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $result = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
+                $result | Should -BeOfType [IntPtr]
+                # Foreground window may be Zero if no window is in foreground (rare)
+                # but the call should not throw an exception
+            }
         }
-
         It 'Should return valid window handle from GetForegroundWindow' {
             $foregroundHandle = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
             

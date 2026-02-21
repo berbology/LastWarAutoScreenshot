@@ -13,6 +13,12 @@ Describe 'Set-WindowState' {
             InModuleScope LastWarAutoScreenshot {
                 Set-WindowState -WindowHandle @() -State Minimize | Should -Be $false
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowState' }
+                Set-WindowState -WindowHandle $null -State Minimize | Should -Be $false
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowState' }
+                Set-WindowState -WindowHandle '' -State Minimize | Should -Be $false
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowState' }
+                Set-WindowState -WindowHandle 0.123 -State Minimize | Should -Be $false
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowState' }
             }
         }
         It 'Accepts IntPtr, int64, and string handles' {
@@ -22,6 +28,7 @@ Describe 'Set-WindowState' {
                 Set-WindowState -WindowHandle $h -State Minimize | Should -Be $true
                 Set-WindowState -WindowHandle 12345 -State Maximize | Should -Be $true
                 Set-WindowState -WindowHandle '12345' -State Minimize | Should -Be $true
+                Set-WindowState -WindowHandle ([int64]12345) -State Minimize | Should -Be $true
             }
         }
     }

@@ -247,7 +247,7 @@
        - `$script:EmergencyStopRequested = $true` after move → `Invoke-MouseClick` not called
        - `Stop-EmergencyStopMonitor` called in `finally` on both success and error paths
        - Correct PSCustomObject returned on success and failure
-   16. [ ] 1.16: Run full Pester suite — all existing + new tests pass
+   16. [x] 1.16: Run full Pester suite — all existing + new tests pass
 2. [ ] Develop human-like mouse movement
    1. [ ] 2.1: Expand `LastWarAutoScreenshot/Private/ModuleConfig.json` with full `MouseControl` section (replaces the minimal step 1.8 entry)
 
