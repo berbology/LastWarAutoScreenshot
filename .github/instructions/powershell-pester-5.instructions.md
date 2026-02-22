@@ -237,3 +237,4 @@ Invoke-Pester -Configuration $config
 - Reset Filters and Mocks: After writing or focusing on new tests, always reset any mocks, tags, or filters before the final test run.
 - Result Summary: Summarize the test results (pass, fail, pending) and highlight any discrepancies before proceeding with project plan or codebase updates.
 - No Task Completion Without Full Pass: Never mark a task as complete or update the project plan unless the full suite has been run and the results match or exceed the previous baseline (except for known pending/integration tests).
+- PSPropertyCollection doesn't support direct .Count access - it evaluates per property instead of counting the total. Wrap it in `@()` to force the collection to be treated as a single array object

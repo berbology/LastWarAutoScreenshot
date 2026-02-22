@@ -1,0 +1,3 @@
+Spectre.Console=0.54.0
+Spectre.Console.Testing=0.54.0
+TFM=net9.0

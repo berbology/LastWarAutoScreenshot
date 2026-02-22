@@ -429,8 +429,8 @@
 
 ---
 
-1. [ ] Acquire, bundle and load `Spectre.Console` DLLs
-   1. [ ] 1.1: Create `LastWarAutoScreenshot/lib/` folder
+1. [x] Acquire, bundle and load `Spectre.Console` DLLs
+   1. [x] 1.1: Create `LastWarAutoScreenshot/lib/` folder
       - Download `Spectre.Console` NuGet package at the latest stable version using:
 
         ```powershell
@@ -451,7 +451,7 @@
         Record the exact version strings here in the plan once known
       - Add `LastWarAutoScreenshot/lib/**/*.dll` to `.gitattributes` with `binary` attribute so git does not diff the DLLs
       - Do NOT add them to `.gitignore` — they must be committed and shipped with the module
-   2. [ ] 1.2: Create `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
+   2. [x] 1.2: Create `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
       - Namespace `LastWarAutoScreenshot`, class `ConsoleAppBridge`
       - References `Spectre.Console.dll`; must be compiled via `Add-Type -Path ... -ReferencedAssemblies`
       - Purpose: expose clean, PowerShell-callable static factory/helper methods that hide Spectre.Console's fluent/generic API from PowerShell callers; keeps PS code readable
@@ -462,7 +462,7 @@
         - `static Panel CreatePanel(string content, string header)` — creates a `Panel` with standard styling
       - `SetLastError = false` — no P/Invoke in this file; it is pure managed .NET
       - Full XML doc comments on all public methods
-   3. [ ] 1.3: Update `LastWarAutoScreenshot.psm1`
+   3. [x] 1.3: Update `LastWarAutoScreenshot.psm1`
       - Add `$spectreConsolePath = "$PSScriptRoot\lib\Spectre.Console.dll"` alongside the existing source path variables
       - Add `$consoleAppBridgePath = "$PSScriptRoot\src\ConsoleAppBridge.cs"` alongside the existing source path variables
       - Add both to the existing `$missingFiles` check loop (fatal if absent)
@@ -470,14 +470,14 @@
       - Load `Spectre.Console.dll` first (before compiling `ConsoleAppBridge.cs`) using `Add-Type -Path $spectreConsolePath`
       - Compile `ConsoleAppBridge.cs` using `Add-Type -Path $consoleAppBridgePath -ReferencedAssemblies $spectreConsolePath`
       - Dot-source all `Private/ConsoleApp/*.ps1` files in the existing private dot-sourcing loop (the loop already covers `Private/` — ensure it uses `-Recurse` so the subfolder is picked up automatically, or add an explicit `Get-ChildItem` call for the subfolder if `-Recurse` causes ordering issues)
-   4. [ ] 1.4: Create `LastWarAutoScreenshot/Tests/ConsoleApp/` folder
+   4. [x] 1.4: Create `LastWarAutoScreenshot/Tests/ConsoleApp/` folder
       - Add a `README.md` placeholder noting this folder holds all Phase 3 tests; to be populated per screen
-   5. [ ] 1.5: Verify the module loads cleanly after steps 1.1–1.4
+   5. [x] 1.5: Verify the module loads cleanly after steps 1.1–1.4
       - Run: `Import-Module .\LastWarAutoScreenshot\LastWarAutoScreenshot.psd1 -Force -Verbose`
       - Confirm `[LastWarAutoScreenshot.ConsoleAppBridge]` type is accessible with no errors
       - Confirm `[Spectre.Console.AnsiConsole]` type is accessible
       - Confirm existing tests still pass (run full Pester suite; count must meet or exceed previous baseline)
-   6. [ ] 1.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
+   6. [x] 1.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
       - `[LastWarAutoScreenshot.ConsoleAppBridge]` type loads without error
       - `CreateConsole()` returns a non-null object
       - `CreateSelectionPrompt(title, choices)` returns a non-null object with `.Title` equal to the supplied title
@@ -485,8 +485,8 @@
       - `CreatePanel(content, header)` returns a non-null `Panel`-typed object
       - Run full Pester suite; confirm count increases
 
-2. [ ] Add config validation schema to `Get-DefaultModuleSettings.ps1`
-   1. [ ] 2.1: Define the validation schema structure
+2. [x] Add config validation schema to `Get-DefaultModuleSettings.ps1`
+   1. [x] 2.1: Define the validation schema structure
       - Add a `$script:ConfigValidationSchema` hashtable to `Get-DefaultModuleSettings.ps1` alongside the existing `Get-DefaultModuleSettings` function (not inside of it — module-scoped constant)
       - Schema format — each entry is keyed by `"Section.Key"` and contains:
 
@@ -524,14 +524,14 @@
         - `'EmergencyStop.AutoStart'` — `bool`
         - `'EmergencyStop.MouseGestureEnabled'` — `bool`
         - `'MouseControl.EasingEnabled'`, `'MouseControl.OvershootEnabled'`, `'MouseControl.MicroPausesEnabled'`, `'MouseControl.JitterEnabled'` — all `bool`
-   2. [ ] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/ConfigValidation.ps1`
+   2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/ConfigValidation.ps1`
       - `Test-ConfigValue -Key [string] -Value [object]`
       - Looks up `$script:ConfigValidationSchema[$Key]` — returns `[PSCustomObject]@{Valid=$true; Message=''}` if key not in schema (unknown keys pass through silently)
       - Validates `Type`, `Min`/`Max` (for numerics and each element of intArray), `AllowedValues` (case-insensitive for stringEnum), `Nullable`
       - For `intArray`: validates element count is exactly 2 and element[0] ≤ element[1]
       - Returns `[PSCustomObject]@{Valid=[bool]; Message=[string]}` — `Message` is the human-readable error shown in the config screen when `Valid = $false`
       - Pure PowerShell; no `Add-Type`; fully testable
-   3. [ ] 2.3: Create `LastWarAutoScreenshot/Tests/ConsoleApp/ConfigValidation.Tests.ps1`
+   3. [x] 2.3: Create `LastWarAutoScreenshot/Tests/ConsoleApp/ConfigValidation.Tests.ps1`
       - `Test-ConfigValue`: valid int within range → `Valid=$true`; int below Min → `Valid=$false` with non-empty message; int above Max → same; stringEnum valid value → `Valid=$true`; invalid value → `Valid=$false`; bool true → `Valid=$true`; intArray with element[0] > element[1] → `Valid=$false`; unknown key not in schema → `Valid=$true`
       - Run full Pester suite; confirm count increases
 
