@@ -15,15 +15,18 @@ function Get-ModuleConfiguration {
     .OUTPUTS
         PSCustomObject
         Returns configuration object with properties:
-        - ProcessName (string): Name of the process
-        - WindowTitle (string): Window title text
-        - WindowHandleString (string): String representation of window handle
-        - WindowHandleInt64 (int64): Numeric representation of window handle
-        - ProcessID (uint32): Process identifier
-        - WindowState (string): Window state at time of save
-        - SavedDate (datetime): When configuration was saved
-        - SavedBy (string): Username who saved the configuration
-        - ComputerName (string): Computer name where configuration was saved
+        - ProcessName (string): Name of the process (present only in a full window-target config)
+        - WindowTitle (string): Window title text (present only in a full window-target config)
+        - WindowHandleString (string): String representation of window handle (present only in a full window-target config)
+        - WindowHandleInt64 (int64): Numeric representation of window handle (present only in a full window-target config)
+        - ProcessID (uint32): Process identifier (present only in a full window-target config)
+        - WindowState (string): Window state at time of save (present only in a full window-target config)
+        - SavedDate (datetime): When configuration was saved (present only in a full window-target config)
+        - SavedBy (string): Username who saved the configuration (present only in a full window-target config)
+        - ComputerName (string): Computer name where configuration was saved (present only in a full window-target config)
+        - MouseControl (PSCustomObject): Mouse control settings with all keys pre-populated from defaults
+        - EmergencyStop (PSCustomObject): Emergency stop settings with all keys pre-populated from defaults
+        - Logging (PSCustomObject): Logging backend settings (present when config exists)
 
     .EXAMPLE
         $config = Get-ModuleConfiguration
@@ -38,7 +41,11 @@ function Get-ModuleConfiguration {
 
     .NOTES
         - Configuration file must be in JSON format as created by Save-ModuleConfiguration
-        - Returns $null if configuration file does not exist
+        - This function NEVER returns $null. If the configuration file does not exist or is empty,
+          it creates one at the specified path containing only the module-settings sections (Logging,
+          MouseControl, EmergencyStop) with all defaults applied, logs an Info message, and
+          returns the defaults object. Required window-property validation is skipped for a
+          freshly-created defaults-only file.
         - WindowHandle values are stored as string and int64 for cross-session compatibility
     #>
     [CmdletBinding()]
@@ -51,8 +58,6 @@ function Get-ModuleConfiguration {
 
     begin {
         Write-Verbose "Starting window configuration load process"
-        # Import Write-LastWarLog for logging
-        . "$PSScriptRoot/Write-LastWarLog.ps1"
         
         # Set default configuration path if not specified
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
@@ -67,34 +72,98 @@ function Get-ModuleConfiguration {
 
     process {
         try {
-            # Check if configuration file exists
-            if (-not (Test-Path -Path $ConfigurationPath -PathType Leaf)) {
-                Write-Verbose "Configuration file not found at: $ConfigurationPath"
-                Write-Warning "Warning: No saved window configuration found at: $ConfigurationPath"
-                Write-LastWarLog -Message "No saved window configuration found at: $ConfigurationPath" -Level Warning -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath"
-                return $null
+            # Check if configuration file exists; if not, create it with module-setting defaults.
+            # This function is the single source of truth for defaults and never returns $null.
+            $fileExists = Test-Path -Path $ConfigurationPath -PathType Leaf
+            $jsonContent = $null
+            $fileIsEmpty = $false
+
+            if ($fileExists) {
+                Write-Verbose "Reading configuration file: $ConfigurationPath"
+                $jsonContent = Get-Content -Path $ConfigurationPath -Raw -ErrorAction Stop
+                $fileIsEmpty = [string]::IsNullOrWhiteSpace($jsonContent)
             }
 
-            Write-Verbose "Reading configuration file: $ConfigurationPath"
-            
-            # Read file content
-            $jsonContent = Get-Content -Path $ConfigurationPath -Raw -ErrorAction Stop
-            
-            if ([string]::IsNullOrWhiteSpace($jsonContent)) {
-                Write-Error "Error: Configuration file is empty: $ConfigurationPath"
-                Write-LastWarLog -Message "Configuration file is empty: $ConfigurationPath" -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
-                return $null
+            # Treat empty config file the same as missing file: recreate with defaults
+            if (-not $fileExists -or $fileIsEmpty) {
+                if ($fileIsEmpty) {
+                    Write-Verbose "Configuration file is empty at: $ConfigurationPath — recreating with module-setting defaults."
+                }
+                else {
+                    Write-Verbose "Configuration file not found at: $ConfigurationPath — creating with module-setting defaults."
+                }
+
+                # Get defaults from single source of truth
+                $defaults = Get-DefaultModuleSettings
+                $defaultConfig = [PSCustomObject]@{
+                    Logging      = $defaults.Logging
+                    MouseControl = $defaults.MouseControl
+                    EmergencyStop = $defaults.EmergencyStop
+                }
+
+                # Ensure the target directory exists before writing.
+                $defaultConfigParent = Split-Path -Path $ConfigurationPath -Parent
+                if ($defaultConfigParent -and -not (Test-Path -Path $defaultConfigParent -PathType Container)) {
+                    New-Item -Path $defaultConfigParent -ItemType Directory -Force -ErrorAction Stop | Out-Null
+                }
+
+                $defaultConfig | ConvertTo-Json -Depth 5 |
+                    Set-Content -Path $ConfigurationPath -Encoding UTF8 -Force -ErrorAction Stop
+
+                Write-LastWarLog -Level Info `
+                    -Message "Default module configuration created at: $ConfigurationPath" `
+                    -FunctionName 'Get-ModuleConfiguration' `
+                    -Context "Path: $ConfigurationPath"
+                Write-Verbose "Default module configuration created at: $ConfigurationPath"
+
+                return $defaultConfig
             }
 
             Write-Verbose "Deserializing JSON content"
             
             # Deserialize JSON to object
             $configData = $jsonContent | ConvertFrom-Json -ErrorAction Stop
-            
+
+            # Get defaults from single source of truth
+            $defaults = Get-DefaultModuleSettings
+
+            # Inject missing MouseControl keys (Phase 2 task 2.2)
+            if (-not $configData.PSObject.Properties['MouseControl']) {
+                $configData | Add-Member -MemberType NoteProperty -Name MouseControl -Value $defaults.MouseControl
+            } else {
+                foreach ($key in $defaults.MouseControl.PSObject.Properties.Name) {
+                    if (-not $configData.MouseControl.PSObject.Properties[$key]) {
+                        $configData.MouseControl | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.MouseControl.$key
+                    }
+                }
+            }
+
+            # Inject missing EmergencyStop keys (Phase 2 task 4.2)
+            if (-not $configData.PSObject.Properties['EmergencyStop']) {
+                $configData | Add-Member -MemberType NoteProperty -Name EmergencyStop -Value $defaults.EmergencyStop
+            } else {
+                foreach ($key in $defaults.EmergencyStop.PSObject.Properties.Name) {
+                    if (-not $configData.EmergencyStop.PSObject.Properties[$key]) {
+                        $configData.EmergencyStop | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.EmergencyStop.$key
+                    }
+                }
+            }
+
+            # Inject missing Logging keys
+            if (-not $configData.PSObject.Properties['Logging']) {
+                $configData | Add-Member -MemberType NoteProperty -Name Logging -Value $defaults.Logging
+            } else {
+                foreach ($key in $defaults.Logging.PSObject.Properties.Name) {
+                    if (-not $configData.Logging.PSObject.Properties[$key]) {
+                        $configData.Logging | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.Logging.$key
+                    }
+                }
+            }
+
             # Validate required properties exist
             $requiredProperties = @('ProcessName', 'WindowTitle', 'WindowHandleString', 'WindowHandleInt64')
             $missingProperties = $requiredProperties | Where-Object { -not $configData.PSObject.Properties[$_] }
-            
+
             if ($missingProperties.Count -gt 0) {
                 $errorMsg = "Configuration file is missing required properties: $($missingProperties -join ', ')"
                 Write-Error "Error: $errorMsg"
@@ -104,7 +173,7 @@ function Get-ModuleConfiguration {
 
             Write-Verbose "Configuration loaded successfully: ProcessName=$($configData.ProcessName), WindowTitle=$($configData.WindowTitle)"
             Write-Host "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -ForegroundColor Green
-            
+
             # Return configuration object
             return $configData
         }

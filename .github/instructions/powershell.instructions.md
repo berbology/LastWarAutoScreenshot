@@ -14,6 +14,13 @@ This guide provides PowerShell-specific instructions to help GitHub Copilot gene
   - Use singular nouns
   - PascalCase for both verb and noun
   - Avoid special characters and spaces
+- **Powershell Version**
+  - Only use Powershell v5.7.1 or higher patterns and commands
+
+```powershell
+    $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Import-Module $moduleManifest -Force
+```
 
 - **Parameter Names:**
   - Use PascalCase

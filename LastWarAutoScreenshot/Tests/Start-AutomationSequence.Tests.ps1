@@ -1,0 +1,194 @@
+
+# Start-AutomationSequence Pester Tests
+#
+# This file implements Phase 2, Task 1.15 and 2.8 from the ProjectPlan.md.
+# Step 2.8: Add tests verifying Invoke-MouseMovePath is called instead of Move-MouseToPoint, and ClickPreDelay/ClickPostDelay Start-Sleep calls are present.
+
+
+Describe 'Start-AutomationSequence' {
+
+    BeforeAll {
+        $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+        Import-Module $moduleManifest -Force
+        Mock ConvertTo-ScreenCoordinates { @{ X = 100; Y = 200 } } -ModuleName LastWarAutoScreenshot
+        Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 0; Y = 0 } } -ModuleName LastWarAutoScreenshot
+        Mock Get-BezierPoints { @([PSCustomObject]@{X=50;Y=50},[PSCustomObject]@{X=100;Y=200}) } -ModuleName LastWarAutoScreenshot
+        Mock Move-MouseToPoint { $true } -ModuleName LastWarAutoScreenshot
+        Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
+        Mock Invoke-MouseClick { $true } -ModuleName LastWarAutoScreenshot
+        Mock Start-EmergencyStopMonitor { @{ Stop = { }; Cleanup = { } } } -ModuleName LastWarAutoScreenshot
+        Mock Stop-EmergencyStopMonitor { } -ModuleName LastWarAutoScreenshot
+        Mock Write-LastWarLog { } -ModuleName LastWarAutoScreenshot
+        Mock Get-ModuleConfiguration {
+            @{ 
+                EmergencyStop = @{ AutoStart = $false }
+                MouseControl = @{ ClickPreDelayRangeMs = @(50, 200); ClickPostDelayRangeMs = @(100, 300) }
+            }
+        } -ModuleName LastWarAutoScreenshot
+    }
+    # === PHASE 2 STEP 2.8 TESTS ===
+    Context 'Phase 2 Step 2.8: Human-like movement integration' {
+        It 'calls Invoke-MouseMovePath instead of Move-MouseToPoint' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                # Arrange: ensure Move-MouseToPoint is not called, but Invoke-MouseMovePath is
+                Mock Move-MouseToPoint { $true } -ModuleName LastWarAutoScreenshot
+                Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
+                Mock Get-ModuleConfiguration {
+                    @{ 
+                        EmergencyStop = @{ AutoStart = $false }
+                        MouseControl = @{ ClickPreDelayRangeMs = @(50, 200); ClickPostDelayRangeMs = @(100, 300) }
+                    }
+                } -ModuleName LastWarAutoScreenshot
+                Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
+                Should -Invoke Invoke-MouseMovePath -Exactly 1
+                Should -Not -Invoke Move-MouseToPoint
+            }
+        }
+
+        It 'calls Start-Sleep for ClickPreDelay and ClickPostDelay' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $sleepCalls = @()
+                Mock Start-Sleep { param($Milliseconds) $script:sleepCalls += $Milliseconds } -ModuleName LastWarAutoScreenshot
+                Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
+                Mock Invoke-MouseClick { $true } -ModuleName LastWarAutoScreenshot
+                Mock Get-ModuleConfiguration {
+                    @{ 
+                        EmergencyStop = @{ AutoStart = $false }
+                        MouseControl = @{ ClickPreDelayRangeMs = @(50, 50); ClickPostDelayRangeMs = @(100, 100) }
+                    }
+                } -ModuleName LastWarAutoScreenshot
+                $script:sleepCalls = @()
+                Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
+                # Should have two sleeps: one for pre-delay (50ms), one for post-delay (100ms)
+                $script:sleepCalls.Count | Should -BeGreaterOrEqual 2
+                $script:sleepCalls | Should -Contain 50
+                $script:sleepCalls | Should -Contain 100
+            }
+        }
+    }
+
+    # === PHASE 2 STEP 3.4 TESTS ===
+    Context 'Phase 2 Step 3.4: Region parameter set routing' {
+
+        It 'calls Get-RandomTargetPosition when -Region Box is provided' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Get-RandomTargetPosition { [PSCustomObject]@{ RelativeX = 0.5; RelativeY = 0.5 } }
+                $boxRegion = [PSCustomObject]@{
+                    RelativeX = 0.1; RelativeY = 0.1; RelativeWidth = 0.3; RelativeHeight = 0.3
+                }
+                Start-AutomationSequence -WindowHandle 123 -Region $boxRegion | Out-Null
+                Should -Invoke Get-RandomTargetPosition -Exactly 1
+            }
+        }
+
+        It 'calls Get-RandomTargetPosition when -Region Circle is provided' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Get-RandomTargetPosition { [PSCustomObject]@{ RelativeX = 0.5; RelativeY = 0.5 } }
+                $circleRegion = [PSCustomObject]@{
+                    RelativeCentreX = 0.5; RelativeCentreY = 0.5; RelativeRadius = 0.2
+                }
+                Start-AutomationSequence -WindowHandle 123 -Region $circleRegion | Out-Null
+                Should -Invoke Get-RandomTargetPosition -Exactly 1
+            }
+        }
+
+        It 'does not call Get-RandomTargetPosition when scalar -RelativeX/-RelativeY are provided' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Get-RandomTargetPosition { [PSCustomObject]@{ RelativeX = 0.5; RelativeY = 0.5 } }
+                Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
+                Should -Not -Invoke Get-RandomTargetPosition
+            }
+        }
+    }
+
+    BeforeEach {
+        # Reset module script variables for each test
+        InModuleScope LastWarAutoScreenshot {
+            $script:EmergencyStopRequested = $false
+            $script:EmergencyStopTimer = $null
+        }
+    }
+
+    AfterEach {
+        # Ensure module script variables are reset after each test
+        InModuleScope LastWarAutoScreenshot {
+            $script:EmergencyStopRequested = $false
+            $script:EmergencyStopTimer = $null
+        }
+    }
+
+    Context 'EmergencyStop.AutoStart = $true' {
+        It 'calls Start-EmergencyStopMonitor' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Get-ModuleConfiguration { @{ EmergencyStop = @{ AutoStart = $true } } }
+                Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
+                Should -Invoke Start-EmergencyStopMonitor -Exactly 1
+            }
+        }
+    }
+
+    Context '$script:EmergencyStopRequested = $true before move' {
+        It 'exits cleanly and does not call Move-MouseToPoint' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $script:EmergencyStopRequested = $true
+                $result = Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5
+                Should -Not -Invoke Move-MouseToPoint
+                $result.Success | Should -BeFalse
+                $result.Message | Should -Match 'emergency stop'
+            }
+        }
+    }
+
+    Context '$script:EmergencyStopRequested = $true after move' {
+        It 'skips Invoke-MouseClick and exits cleanly' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Invoke-MouseMovePath {
+                    $script:EmergencyStopRequested = $true
+                    $true
+                }
+                $result = Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5
+                Should -Not -Invoke Invoke-MouseClick
+                $result.Success | Should -BeFalse
+                $result.Message | Should -Match 'emergency stop'
+            }
+        }
+    }
+
+    Context 'Stop-EmergencyStopMonitor is always called in finally' {
+        It 'calls Stop-EmergencyStopMonitor on success' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
+                Should -Invoke Stop-EmergencyStopMonitor -Exactly 1
+            }
+        }
+        It 'calls Stop-EmergencyStopMonitor on error' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Move-MouseToPoint { throw 'Simulated error' }
+                try {
+                    Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
+                } catch {}
+                Should -Invoke Stop-EmergencyStopMonitor -Exactly 1
+            }
+        }
+    }
+
+    Context 'Return object correctness' {
+        It 'returns [PSCustomObject] with Success=$true on success' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                $result = Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5
+                $result | Should -BeOfType PSCustomObject
+                $result.Success | Should -BeTrue
+                $result.Message | Should -Match 'completed'
+            }
+        }
+        It 'returns [PSCustomObject] with Success=$false on failure' {
+            InModuleScope -ModuleName LastWarAutoScreenshot {
+                Mock Invoke-MouseMovePath { $false }
+                $result = Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5
+                $result | Should -BeOfType PSCustomObject
+                $result.Success | Should -BeFalse
+                $result.Message | Should -Match 'failed'
+            }
+        }
+    }
+}

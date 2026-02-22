@@ -42,6 +42,9 @@ function Save-ModuleConfiguration {
         - The WindowHandle is saved as both string and int64 representations
         - Requires write permissions to the target directory
         - Creates parent directories if they don't exist
+        - When overwriting an existing configuration file, module settings (MouseControl,
+          EmergencyStop, and Logging) are preserved from the existing file. This allows you
+          to save a new window target without losing custom configuration you may have set.
     #>
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
     [OutputType([System.IO.FileInfo])]
@@ -60,6 +63,10 @@ function Save-ModuleConfiguration {
 
     begin {
         Write-Verbose "Starting window configuration save process"
+        
+        # Import helper functions
+        . "$PSScriptRoot/Get-DefaultModuleSettings.ps1"
+        . "$PSScriptRoot/Write-LastWarLog.ps1"
         
         # Set default configuration path if not specified
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
@@ -109,6 +116,42 @@ function Save-ModuleConfiguration {
                 New-Item -Path $parentDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
             }
 
+            # Load existing configuration to preserve module settings (MouseControl, EmergencyStop, Logging)
+            Write-Verbose "Loading existing configuration to preserve module settings"
+            $existingConfig = $null
+            if ($configExists) {
+                try {
+                    $existingConfig = Get-ModuleConfiguration -ConfigurationPath $ConfigurationPath -ErrorAction SilentlyContinue
+                }
+                catch {
+                    Write-Verbose "Could not load existing configuration, will use defaults for module settings"
+                }
+            }
+
+            # Get defaults from single source of truth
+            $defaults = Get-DefaultModuleSettings
+
+            # Use existing Logging settings if available, otherwise use defaults
+            $loggingConfig = if ($existingConfig -and $existingConfig.Logging) {
+                $existingConfig.Logging
+            } else {
+                $defaults.Logging
+            }
+
+            # Use existing MouseControl settings if available, otherwise use defaults
+            $mouseControlConfig = if ($existingConfig -and $existingConfig.MouseControl) {
+                $existingConfig.MouseControl
+            } else {
+                $defaults.MouseControl
+            }
+
+            # Use existing EmergencyStop settings if available, otherwise use defaults
+            $emergencyStopConfig = if ($existingConfig -and $existingConfig.EmergencyStop) {
+                $existingConfig.EmergencyStop
+            } else {
+                $defaults.EmergencyStop
+            }
+
             # Prepare configuration object for serialization
             $configData = [PSCustomObject]@{
                 ProcessName         = $WindowObject.ProcessName
@@ -120,6 +163,9 @@ function Save-ModuleConfiguration {
                 SavedDate           = Get-Date -Format 'o'  # ISO 8601 format
                 SavedBy             = $env:USERNAME
                 ComputerName        = $env:COMPUTERNAME
+                Logging             = $loggingConfig
+                MouseControl        = $mouseControlConfig
+                EmergencyStop       = $emergencyStopConfig
             }
 
             Write-Verbose "Serializing configuration to JSON format"

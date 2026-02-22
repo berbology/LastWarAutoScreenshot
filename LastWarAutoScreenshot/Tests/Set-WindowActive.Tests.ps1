@@ -19,6 +19,15 @@ Describe 'Set-WindowActive' {
                 $result = Set-WindowActive -WindowHandle $unsupported
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowActive' } -Exactly 1
                 $result | Should -Be $false
+                $result = Set-WindowActive -WindowHandle $null
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowActive' }
+                $result | Should -Be $false
+                $result = Set-WindowActive -WindowHandle ''
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowActive' }
+                $result | Should -Be $false
+                $result = Set-WindowActive -WindowHandle 0.123
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*Unsupported WindowHandle type*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowActive' }
+                $result | Should -Be $false
             }
         }
         It 'Accepts IntPtr, int64, and string handles' {
@@ -28,6 +37,7 @@ Describe 'Set-WindowActive' {
                 Set-WindowActive -WindowHandle $h | Should -Be $true
                 Set-WindowActive -WindowHandle 12345 | Should -Be $true
                 Set-WindowActive -WindowHandle '12345' | Should -Be $true
+                Set-WindowActive -WindowHandle ([int64]12345) | Should -Be $true
             }
         }
     }

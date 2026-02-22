@@ -1,3 +1,101 @@
+[MouseControl Configuration]
+
+The module supports detailed configuration for mouse movement to mimic human behaviour. All keys are set in the module config file (JSON/YAML).
+
+**Config Keys:**
+
+| Key                        | Type      | Default           | Description                                |
+|----------------------------|-----------|-------------------|--------------------------------------------|
+| MovementDurationRangeMs    | int[]     | [300, 600]        | Range for total move duration (ms)         |
+| NumPoints                  | int       | 20                | Base number of Bezier points per move      |
+| MicroPauseChance           | float     | 0.15              | Probability of micro-pause after each step |
+| MicroPauseDurationRangeMs  | int[]     | [10, 40]          | Range for micro-pause duration (ms)        |
+| OvershootEnabled           | bool      | true              | Enable overshoot/correction after move     |
+| OvershootFactor            | float     | 0.12              | Scale for overshoot distance               |
+| ClickPreDelayRangeMs       | int[]     | [50, 120]         | Random delay before click (ms)             |
+| ClickPostDelayRangeMs      | int[]     | [60, 150]         | Random delay after click (ms)              |
+
+**Example:**
+
+```yaml
+mouseControl:
+  MovementDurationRangeMs: [300, 600]
+  NumPoints: 20
+  MicroPauseChance: 0.15
+  MicroPauseDurationRangeMs: [10, 40]
+  OvershootEnabled: true
+  OvershootFactor: 0.12
+  ClickPreDelayRangeMs: [50, 120]
+  ClickPostDelayRangeMs: [60, 150]
+```
+
+## Cursor Target Region Parameter
+
+The automation sequence supports defining a cursor target region using the `-Region` parameter. This allows random selection of a position within a user-defined area for each action, supporting both bounding box and circle formats.
+
+### Box Format
+
+Use a PSCustomObject with the following fields (all values between 0.0 and 1.0, relative to window size):
+
+| Field           | Type   | Description                                 |
+|-----------------|--------|---------------------------------------------|
+| RelativeX       | double | Left edge of box (relative X, 0.0–1.0)      |
+| RelativeY       | double | Top edge of box (relative Y, 0.0–1.0)       |
+| RelativeWidth   | double | Width of box (relative, 0.0–1.0)            |
+| RelativeHeight  | double | Height of box (relative, 0.0–1.0)           |
+
+**Example:**
+
+```powershell
+$region = [PSCustomObject]@{
+  RelativeX = 0.2
+  RelativeY = 0.3
+  RelativeWidth = 0.4
+  RelativeHeight = 0.2
+}
+Start-AutomationSequence -WindowHandle $handle -Region $region
+```
+
+### Circle Format
+
+Use a PSCustomObject with the following fields (all values between 0.0 and 1.0, relative to window size):
+
+| Field            | Type   | Description                                 |
+|------------------|--------|---------------------------------------------|
+| RelativeCentreX  | double | X coordinate of circle center (0.0–1.0)     |
+| RelativeCentreY  | double | Y coordinate of circle center (0.0–1.0)     |
+| RelativeRadius   | double | Radius of circle (relative, 0.0–1.0)        |
+
+**Example:**
+
+```powershell
+$region = [PSCustomObject]@{
+  RelativeCentreX = 0.5
+  RelativeCentreY = 0.5
+  RelativeRadius = 0.15
+}
+Start-AutomationSequence -WindowHandle $handle -Region $region
+```
+
+### Usage Notes
+
+- The `-Region` parameter is mutually exclusive with `-RelativeX` and `-RelativeY`.
+- For each action, a random position is selected within the defined region.
+- Values outside [0.0, 1.0] are clamped and invalid input returns `$null` with an error log.
+- See [ProjectPlan.md](ProjectPlan.md) for algorithm details.
+
+[Human-Like Mouse Movement]
+
+Mouse movement is designed to avoid detection and feel natural:
+
+- **Bezier Path Shaping:** Cursor moves along a smooth Bezier curve, not a straight line.
+- **Ease-In/Ease-Out:** Step delays are longer at the start/end, shorter in the middle, creating acceleration and deceleration.
+- **Jitter:** Each step has slight randomization in timing and position.
+- **Micro-Pauses:** Random micro-pauses are inserted after steps, simulating human hesitation.
+- **Overshoot/Correction:** Cursor overshoots the target, then corrects back, mimicking real mouse movement.
+
+These behaviors are fully configurable via the keys above. See [ProjectPlan.md](ProjectPlan.md) for algorithm details.
+
 # LastWar Auto Mouse Control & Screenshot Module
 
 ## Logging
@@ -18,9 +116,9 @@ This project is a PowerShell 7+ module designed to automate human-like mouse mov
   - Active window detection to highlight the currently focused application
   - Proper memory management with delegate lifetime handling to prevent garbage collection issues
   - Window and process monitoring uses polling (`System.Timers.Timer`) rather than Win32 event hooks (`SetWinEventHook`). Hooks were rejected because their callbacks run on .NET thread-pool threads where PowerShell mocks cannot intercept them, making hook-based code untestable with Pester; polling is simpler, fully testable, and sufficient for the detection latency required here
-- **Emergency Stop:** Configurable hotkey combination (default: Ctrl+Shift+Esc) or hold both mouse buttons for 3 seconds to immediately abort automation
+- **Emergency Stop:** Configurable hotkey combination (default: `Ctrl+Shift+#` on UK keyboards) or hold both mouse buttons for 3 seconds to immediately abort automation
 - **Window-Relative Coordinates:** All mouse positions are relative to the target window for consistency across different screen configurations
-- **Human-Like Interaction:** Configurable mouse movement with randomized delays, curved paths, and variable timing to mimic human behavior and avoid detection as automated input
+- **Human-Like Interaction:** Configurable mouse movement with randomized delays, curved paths, and variable timing to mimic human behaviour and avoid detection as automated input
 - **Flexible Target Definition:** Define cursor targets as bounding boxes or circles with randomized selection within the defined area
 - **Interactive Recording:** GUI-based recording of mouse actions (move, click, drag) with automatic generation of user configuration files
 - **Multiple Config Formats:** Support for JSON and YAML configuration files; user settings files created after recording
@@ -136,12 +234,107 @@ The returned object exposes four properties: `Timer`, `ProcessObject`, `Stop` (s
 
 ### Troubleshooting: Window State
 
-| Symptom | Likely cause | Resolution |
-|---|---|---|
-| `Set-WindowActive` returns `$false` with no visible change | Another app holds the foreground lock (e.g., UAC prompt, full-screen exclusive app) | Dismiss the blocking window and retry |
-| `Set-WindowState` returns `$false` with Win32 error code `0` | Handle is stale — window was closed since enumeration | Re-enumerate with `Get-EnumeratedWindows` to obtain a fresh handle |
-| Monitor retry/abort prompt does not appear immediately after game closes | `PollIntervalMs` is set high; prompt fires on the next poll tick | Reduce `PollIntervalMs` or wait for the next tick |
-| Red error text appears in console but no log entry can be found | `Write-EventLog` failed because the event source is not registered | Run the module once as Administrator to register the `LastWarAutoScreenshot` event source; see [Logging.md](Logging.md) for full details |
+| Symptom                                                 | Likely Cause                                          | Resolution                                                                              |
+|:--------------------------------------------------------|:------------------------------------------------------|:----------------------------------------------------------------------------------------|
+| `Set-WindowActive` returns `$false` (no visible change) | Foreground lock held by another app (UAC, fullscreen) | Dismiss blocking window, retry                                                          |
+| `Set-WindowState` returns `$false` (Win32 error 0)      | Handle is stale (window closed since enumeration)     | Re-enumerate with `Get-EnumeratedWindows` for a fresh handle                            |
+| Monitor retry/abort prompt delayed after game closes    | `PollIntervalMs` set high; fires on next poll tick    | Lower `PollIntervalMs` or wait for next tick                                            |
+| Red error in console, no log entry                      | `Write-EventLog` failed (event source not registered) | Run module as Administrator once to register event source; see [Logging.md](Logging.md) |
+
+## Emergency Stop
+
+Two public functions manage the emergency-stop background monitor. The monitor polls for a configurable hotkey combination; when all keys are held simultaneously it sets an internal flag that causes the automation loop to abort cleanly.
+
+### `Start-EmergencyStopMonitor`
+
+Starts a background `System.Timers.Timer` that polls for the configured hotkey combination every `PollIntervalMs` milliseconds.
+
+```powershell
+# Use config defaults (Ctrl+Shift+# at 100 ms polling)
+$monitor = Start-EmergencyStopMonitor
+
+# Override to Ctrl+F12 at 200 ms
+$monitor = Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
+```
+
+**Idempotency:** calling `Start-EmergencyStopMonitor` while the monitor is already running is safe — it logs an Info message and returns `$null` without creating a second timer.
+
+**Re-arming:** `Start-EmergencyStopMonitor` resets `$script:EmergencyStopRequested` to `$false` on every clean start, so a new automation sequence can proceed immediately after calling it.
+
+The returned object exposes two scriptblocks: `Stop` (sets the internal Stopped flag and stops the timer) and `Cleanup` (disposes the timer). Use `Stop-EmergencyStopMonitor` for full clean-up in normal workflows.
+
+### `Stop-EmergencyStopMonitor`
+
+Stops and disposes the background timer. Safe to call when no monitor is active (does not throw).
+
+```powershell
+# Normal pattern — always stop in a finally block
+try {
+    $result = Start-AutomationSequence -WindowHandle $handle -RelativeX 0.5 -RelativeY 0.5
+} finally {
+    Stop-EmergencyStopMonitor
+}
+```
+
+**Important:** `Stop-EmergencyStopMonitor` does **not** reset `$script:EmergencyStopRequested`. After a triggered stop, the flag remains `$true` until the next call to `Start-EmergencyStopMonitor` (which resets it). Any code reading the flag between a stop and a restart will correctly see the previous stop.
+
+### `$script:EmergencyStopRequested` — the stop flag
+
+| Action                                        | Effect on flag        |
+|:----------------------------------------------|:----------------------|
+| `Start-EmergencyStopMonitor` (clean start)    | Reset to `$false`     |
+| Hotkey held → `Invoke-EmergencyStopPoll`      | Set to `$true`        |
+| Mouse gesture held → `Invoke-EmergencyStopPoll` | Set to `$true`      |
+| `Start-AutomationSequence` (checks before/after move) | Reads flag, aborts if `$true` |
+| `Stop-EmergencyStopMonitor`                   | **Not modified**       |
+
+### Default hotkey and keyboard-layout caveat
+
+| Key     | Virtual key code | British value | Notes                                                                 |
+|:--------|:-----------------|:--------------|:----------------------------------------------------------------------|
+| Ctrl    | `0x11` (17)      | ✓             |                                                                       |
+| Shift   | `0x10` (16)      | ✓             |                                                                       |
+| `#`     | `0xDC` (220)     | UK `#` key    | On standard US keyboards `0xDC` maps to `\`. Adjust via config.      |
+
+To change the hotkey, set `EmergencyStop.HotkeyVKeyCodes` in the module configuration file, or pass `-HotkeyVKeyCodes` directly:
+
+```powershell
+# Ctrl + Pause/Break (0x11, 0x13)
+Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x13)
+```
+
+### Emergency Stop configuration keys
+
+| Key                                    | Type    | Default              | Description                                                          |
+|:---------------------------------------|:--------|:---------------------|:---------------------------------------------------------------------|
+| `EmergencyStop.AutoStart`              | bool    | `true`               | Auto-start the monitor when `Start-AutomationSequence` runs          |
+| `EmergencyStop.HotkeyVKeyCodes`        | int[]   | `[17, 16, 220]`      | VKey codes that must all be held simultaneously to trigger stop      |
+| `EmergencyStop.PollIntervalMs`         | int     | `100`                | How often to check key/button state (milliseconds)                   |
+| `EmergencyStop.MouseGestureEnabled`    | bool    | `true`               | Enable the hold-both-buttons gesture as an additional trigger        |
+| `EmergencyStop.MouseGestureHoldDurationMs` | int | `3000`               | Duration in milliseconds both buttons must be held before triggering |
+
+**Example configuration entry (WindowConfig.json):**
+
+```json
+"EmergencyStop": {
+  "AutoStart": true,
+  "HotkeyVKeyCodes": [17, 16, 220],
+  "PollIntervalMs": 100,
+  "MouseGestureEnabled": true,
+  "MouseGestureHoldDurationMs": 3000
+}
+```
+
+### Troubleshooting: Emergency Stop
+
+| Symptom                                        | Likely Cause                                         | Resolution                                                      |
+|:-----------------------------------------------|:-----------------------------------------------------|:----------------------------------------------------------------|
+| Automation does not stop when keys held        | `HotkeyVKeyCodes` mismatch for keyboard layout       | Check your layout; use `GetAsyncKeyState` docs to find VK codes |
+| Mouse gesture does not trigger stop            | `MouseGestureEnabled` is `false` in config           | Set `EmergencyStop.MouseGestureEnabled` to `true`               |
+| Mouse gesture triggers too slowly              | `MouseGestureHoldDurationMs` too high                | Reduce `EmergencyStop.MouseGestureHoldDurationMs` (e.g. 1500)   |
+| Monitor starts but immediately triggers        | One of the configured keys is held at start          | Release all keys before starting automation                     |
+| `Start-AutomationSequence` aborts immediately  | `$script:EmergencyStopRequested` still `$true`       | Call `Start-EmergencyStopMonitor` to reset the flag             |
+| Red message in console, polling feels slow     | `PollIntervalMs` too high                            | Reduce `EmergencyStop.PollIntervalMs` (e.g. to 50 ms)          |
 
 ## Roadmap
 
