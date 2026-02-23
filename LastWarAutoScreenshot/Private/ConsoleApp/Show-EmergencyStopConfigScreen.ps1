@@ -7,7 +7,7 @@ function Show-EmergencyStopConfigScreen {
         Will display and allow editing of all EmergencyStop.* configuration keys using
         Spectre.Console TextPrompt and ConfirmationPrompt components.
 
-        For HotkeyVKeyCodes (int array of variable length): values will be displayd as
+        For HotkeyVKeyCodes (int array of variable length): values will be displayed as
         comma-separated hex strings (e.g. 0x11, 0x10, 0xDC) and accepted as
         comma-separated hex or decimal integers.  An informational note about the '#' key
         VKCode being layout-dependent will be shown on screen.

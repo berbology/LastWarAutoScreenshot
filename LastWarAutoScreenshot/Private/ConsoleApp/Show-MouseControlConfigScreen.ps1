@@ -1,24 +1,55 @@
 function Show-MouseControlConfigScreen {
     <#
     .SYNOPSIS
-        Stub for the Mouse Control configuration screen. To be implemented in Phase 5, task 5.3.
+        Displays and edits all MouseControl configuration settings via Spectre.Console prompts.
 
     .DESCRIPTION
-        Will display and allow editing of all MouseControl.* configuration keys using
-        Spectre.Console TextPrompt and ConfirmationPrompt components.
+        Guides the user through reviewing and optionally updating every MouseControl key that
+        exists in the $script:ConfigValidationSchema.
 
-        For bool keys (EasingEnabled, OvershootEnabled, MicroPausesEnabled, JitterEnabled)
-        a ConfirmationPrompt (yes/no) will be used instead of a TextPrompt.
+        Workflow:
+          1. Loads the current configuration via Get-ModuleConfiguration.
+          2. Renders a Spectre.Console Table showing each MouseControl key with its current
+             value, allowed values or range, and a human-readable description sourced
+             from $script:ConfigValidationSchema.
+          3. Iterates each MouseControl key in order.  The prompt type depends on the key type:
 
-        For intArray keys a pair of prompts will be shown for min and max separately,
-        validated as a unit via Test-ConfigValue after both values are entered.
+             Bool keys (EasingEnabled, OvershootEnabled, MicroPausesEnabled, JitterEnabled):
+               Uses a ConfirmationPrompt (yes/no).  DefaultValue is set to the current value
+               so pressing Enter keeps it unchanged.
 
-        Save/reset/discard options follow the same pattern as Show-LoggingConfigScreen.
+             intArray keys (range pairs — all duration/delay range keys):
+               Shows two separate TextPrompts labelled:
+                 "<Key> minimum (ms) [current: <min>]. Press Enter to keep:"
+                 "<Key> maximum (ms) [current: <max>]. Press Enter to keep:"
+               After both values are entered (or kept), the pair is validated as a unit via
+               Test-ConfigValue.  If invalid (e.g. min > max, out-of-range), the error
+               message is written to $Console in red and BOTH prompts repeat.
+               Entering '[Reset to default]' on either the min or max prompt resets the
+               entire array key to its schema default and moves to the next key.
 
-        Not yet implemented — displays a "Not yet available" panel when called.
+             All other keys (int, double):
+               Uses a TextPrompt (identical pattern to Show-LoggingConfigScreen):
+                 "<Description> [current: <value>] (<constraints>). Press Enter to keep:"
+               Empty input → keep current; '[Reset to default]' → restore default;
+               any other input is validated and re-prompted if invalid.
+
+          4. After all keys, renders a SelectionPrompt "Save changes?" with choices:
+               - 'Yes — save now'                           → calls Save-ModuleSettings; success panel.
+               - 'Reset ALL MouseControl settings to defaults' → replaces entire MouseControl
+                                                                  section with defaults; saves; success panel.
+               - 'Discard changes'                          → returns without saving; info panel.
+
+        MouseControl keys covered (in order):
+          EasingEnabled, OvershootEnabled, OvershootFactor, MicroPausesEnabled,
+          MicroPauseChance, MicroPauseDurationRangeMs, JitterEnabled, JitterRadiusPx,
+          BezierControlPointOffsetFactor, MovementDurationRangeMs, ClickDownDurationRangeMs,
+          ClickPreDelayRangeMs, ClickPostDelayRangeMs, PathPointCount
 
     .PARAMETER Console
-        The Spectre.Console IAnsiConsole instance used for rendering and input.
+        The Spectre.Console IAnsiConsole instance used for all rendering and input.
+        Pass [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole() for production use,
+        or a [Spectre.Console.Testing.TestConsole]::new() instance in Pester tests.
 
     .OUTPUTS
         None
@@ -28,7 +59,22 @@ function Show-MouseControlConfigScreen {
         Show-MouseControlConfigScreen -Console $console
 
     .NOTES
-        Implementation scheduled for Phase 5, task 5.3.
+        The $Console parameter is the testability injection point.  All rendering and input
+        is routed through this interface so Pester tests can inject a TestConsole and assert
+        on its Output property without requiring a live terminal.
+
+        Bool keys use ConfirmationPrompt.  In tests, push 'y' or 'n' explicitly using
+        $tc.Input.PushTextWithEnter('y') / PushTextWithEnter('n') rather than relying on
+        PushKey(Enter), as DefaultValue enforcement for empty input depends on the
+        TestConsole/Spectre.Console version in use.
+
+        intArray '[Reset to default]' sentinel: entering '[Reset to default]' on either
+        the min or max prompt resets the ENTIRE array key to its default — not just one
+        element.  Use 'Reset ALL MouseControl settings to defaults' at the save prompt
+        to restore every key in one operation.
+
+        Type coercion: values entered as strings are converted to int or double before
+        being stored on the config object, matching ConvertFrom-Json behaviour.
     #>
     [CmdletBinding()]
     param(
@@ -36,9 +82,324 @@ function Show-MouseControlConfigScreen {
         [Spectre.Console.IAnsiConsole]$Console
     )
 
-    $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-        'Mouse control configuration is not yet available. This screen will be implemented in Phase 5, task 5.3.',
-        'Mouse Control Settings'
+    # ── Load current configuration ────────────────────────────────────────────
+    $config   = Get-ModuleConfiguration
+    $defaults = Get-DefaultModuleSettings
+
+    # ── Ordered list of MouseControl keys ─────────────────────────────────────
+    # The Type field drives which prompt type is used in the interactive loop:
+    #   'bool'     → ConfirmationPrompt
+    #   'intArray' → two TextPrompts (min then max), validated as a unit
+    #   anything else → TextPrompt (same as Show-LoggingConfigScreen)
+    $mouseControlKeyDefs = @(
+        @{
+            Key    = 'MouseControl.EasingEnabled'
+            Type   = 'bool'
+            Get    = { param($c) $c.MouseControl.EasingEnabled }
+            Set    = { param($c, $v) $c.MouseControl.EasingEnabled = [bool]$v }
+            DefGet = { param($d) $d.MouseControl.EasingEnabled }
+        },
+        @{
+            Key    = 'MouseControl.OvershootEnabled'
+            Type   = 'bool'
+            Get    = { param($c) $c.MouseControl.OvershootEnabled }
+            Set    = { param($c, $v) $c.MouseControl.OvershootEnabled = [bool]$v }
+            DefGet = { param($d) $d.MouseControl.OvershootEnabled }
+        },
+        @{
+            Key    = 'MouseControl.OvershootFactor'
+            Type   = 'double'
+            Get    = { param($c) $c.MouseControl.OvershootFactor }
+            Set    = { param($c, $v) $c.MouseControl.OvershootFactor = [double]$v }
+            DefGet = { param($d) $d.MouseControl.OvershootFactor }
+        },
+        @{
+            Key    = 'MouseControl.MicroPausesEnabled'
+            Type   = 'bool'
+            Get    = { param($c) $c.MouseControl.MicroPausesEnabled }
+            Set    = { param($c, $v) $c.MouseControl.MicroPausesEnabled = [bool]$v }
+            DefGet = { param($d) $d.MouseControl.MicroPausesEnabled }
+        },
+        @{
+            Key    = 'MouseControl.MicroPauseChance'
+            Type   = 'double'
+            Get    = { param($c) $c.MouseControl.MicroPauseChance }
+            Set    = { param($c, $v) $c.MouseControl.MicroPauseChance = [double]$v }
+            DefGet = { param($d) $d.MouseControl.MicroPauseChance }
+        },
+        @{
+            Key    = 'MouseControl.MicroPauseDurationRangeMs'
+            Type   = 'intArray'
+            Get    = { param($c) $c.MouseControl.MicroPauseDurationRangeMs }
+            Set    = { param($c, $v) $c.MouseControl.MicroPauseDurationRangeMs = $v }
+            DefGet = { param($d) $d.MouseControl.MicroPauseDurationRangeMs }
+        },
+        @{
+            Key    = 'MouseControl.JitterEnabled'
+            Type   = 'bool'
+            Get    = { param($c) $c.MouseControl.JitterEnabled }
+            Set    = { param($c, $v) $c.MouseControl.JitterEnabled = [bool]$v }
+            DefGet = { param($d) $d.MouseControl.JitterEnabled }
+        },
+        @{
+            Key    = 'MouseControl.JitterRadiusPx'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.JitterRadiusPx }
+            Set    = { param($c, $v) $c.MouseControl.JitterRadiusPx = [int]$v }
+            DefGet = { param($d) $d.MouseControl.JitterRadiusPx }
+        },
+        @{
+            Key    = 'MouseControl.BezierControlPointOffsetFactor'
+            Type   = 'double'
+            Get    = { param($c) $c.MouseControl.BezierControlPointOffsetFactor }
+            Set    = { param($c, $v) $c.MouseControl.BezierControlPointOffsetFactor = [double]$v }
+            DefGet = { param($d) $d.MouseControl.BezierControlPointOffsetFactor }
+        },
+        @{
+            Key    = 'MouseControl.MovementDurationRangeMs'
+            Type   = 'intArray'
+            Get    = { param($c) $c.MouseControl.MovementDurationRangeMs }
+            Set    = { param($c, $v) $c.MouseControl.MovementDurationRangeMs = $v }
+            DefGet = { param($d) $d.MouseControl.MovementDurationRangeMs }
+        },
+        @{
+            Key    = 'MouseControl.ClickDownDurationRangeMs'
+            Type   = 'intArray'
+            Get    = { param($c) $c.MouseControl.ClickDownDurationRangeMs }
+            Set    = { param($c, $v) $c.MouseControl.ClickDownDurationRangeMs = $v }
+            DefGet = { param($d) $d.MouseControl.ClickDownDurationRangeMs }
+        },
+        @{
+            Key    = 'MouseControl.ClickPreDelayRangeMs'
+            Type   = 'intArray'
+            Get    = { param($c) $c.MouseControl.ClickPreDelayRangeMs }
+            Set    = { param($c, $v) $c.MouseControl.ClickPreDelayRangeMs = $v }
+            DefGet = { param($d) $d.MouseControl.ClickPreDelayRangeMs }
+        },
+        @{
+            Key    = 'MouseControl.ClickPostDelayRangeMs'
+            Type   = 'intArray'
+            Get    = { param($c) $c.MouseControl.ClickPostDelayRangeMs }
+            Set    = { param($c, $v) $c.MouseControl.ClickPostDelayRangeMs = $v }
+            DefGet = { param($d) $d.MouseControl.ClickPostDelayRangeMs }
+        },
+        @{
+            Key    = 'MouseControl.PathPointCount'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.PathPointCount }
+            Set    = { param($c, $v) $c.MouseControl.PathPointCount = [int]$v }
+            DefGet = { param($d) $d.MouseControl.PathPointCount }
+        }
     )
-    $Console.Write($stubPanel)
+
+    # ── Helper: build a human-readable constraint string from a schema rule ───
+    $buildConstraintString = {
+        param($rule)
+        if ($null -eq $rule) { return '' }
+        switch ($rule.Type) {
+            'stringEnum' { return "one of: $($rule.AllowedValues -join ' | ')" }
+            'int' {
+                if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+                    return "integer $($rule.Min)–$($rule.Max)"
+                }
+                return 'integer'
+            }
+            'double' {
+                if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+                    return "decimal $($rule.Min)–$($rule.Max)"
+                }
+                return 'decimal'
+            }
+            'bool'     { return 'yes or no' }
+            'intArray' {
+                if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+                    return "min, max (each $($rule.Min)–$($rule.Max); min ≤ max)"
+                }
+                return 'min, max'
+            }
+            default { return '' }
+        }
+    }
+
+    # ── Step 1: Render summary table of current values ────────────────────────
+    $table = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(
+        @('Setting', 'Current Value', 'Allowed / Range', 'Description')
+    )
+
+    foreach ($def in $mouseControlKeyDefs) {
+        $rule           = $script:ConfigValidationSchema[$def.Key]
+        $currentValue   = & $def.Get $config
+        $constraintStr  = & $buildConstraintString $rule
+        $descriptionStr = if ($rule -and $rule.Description) { $rule.Description } else { '' }
+        $displayValue   = if ($currentValue -is [array]) { $currentValue -join ', ' } else { "$currentValue" }
+
+        [Spectre.Console.TableExtensions]::AddRow(
+            $table,
+            [string[]]@(
+                $def.Key,
+                [Spectre.Console.Markup]::Escape($displayValue),
+                [Spectre.Console.Markup]::Escape($constraintStr),
+                [Spectre.Console.Markup]::Escape($descriptionStr)
+            )
+        ) | Out-Null
+    }
+
+    $Console.Write($table)
+
+    # ── Step 2: Prompt for each MouseControl key in turn ─────────────────────
+    foreach ($def in $mouseControlKeyDefs) {
+        $rule          = $script:ConfigValidationSchema[$def.Key]
+        $description   = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
+        $constraintStr = & $buildConstraintString $rule
+
+        if ($def.Type -eq 'bool') {
+            # ── Bool: ConfirmationPrompt (yes/no) ─────────────────────────────
+            $currentValue  = & $def.Get $config
+            $promptText    = "$description [[current: $currentValue]]:"
+            $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
+            $confirmPrompt.DefaultValue = [bool]$currentValue
+            $newValue = $confirmPrompt.Show($Console)
+            & $def.Set $config $newValue
+        }
+        elseif ($def.Type -eq 'intArray') {
+            # ── intArray: separate min/max TextPrompts, validated as a pair ───
+            # Strip the 'MouseControl.' prefix for the prompt label.
+            $shortKey = $def.Key -replace '^MouseControl\.', ''
+
+            while ($true) {
+                $currentArr = & $def.Get $config
+                $currentMin = $currentArr[0]
+                $currentMax = $currentArr[1]
+
+                # — Min prompt ——————————————————————————————————————————————
+                $minPromptText = "$shortKey minimum (ms) [[current: $currentMin]]. Press Enter to keep:"
+                $minPrompt     = [Spectre.Console.TextPrompt[string]]::new($minPromptText)
+                $minPrompt.AllowEmpty = $true
+                $minAnswer = $minPrompt.Show($Console)
+
+                if ([string]::IsNullOrEmpty($minAnswer)) {
+                    $minAnswer = "$currentMin"
+                }
+                elseif ($minAnswer -ieq '[Reset to default]') {
+                    $defaultValue = & $def.DefGet $defaults
+                    & $def.Set $config $defaultValue
+                    break
+                }
+
+                # — Max prompt ——————————————————————————————————————————————
+                $maxPromptText = "$shortKey maximum (ms) [[current: $currentMax]]. Press Enter to keep:"
+                $maxPrompt     = [Spectre.Console.TextPrompt[string]]::new($maxPromptText)
+                $maxPrompt.AllowEmpty = $true
+                $maxAnswer = $maxPrompt.Show($Console)
+
+                if ([string]::IsNullOrEmpty($maxAnswer)) {
+                    $maxAnswer = "$currentMax"
+                }
+                elseif ($maxAnswer -ieq '[Reset to default]') {
+                    $defaultValue = & $def.DefGet $defaults
+                    & $def.Set $config $defaultValue
+                    break
+                }
+
+                # — Validate as a pair ————————————————————————————————————
+                $pairString = "$minAnswer, $maxAnswer"
+                $validation = Test-ConfigValue -Key $def.Key -Value $pairString
+                if ($validation.Valid) {
+                    & $def.Set $config @([int]$minAnswer, [int]$maxAnswer)
+                    break
+                }
+
+                # Invalid — show error in red and re-prompt both min and max
+                $Console.Write(
+                    [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
+                )
+            }
+        }
+        else {
+            # ── int / double: TextPrompt (identical to Show-LoggingConfigScreen) ──
+            while ($true) {
+                $currentValue = & $def.Get $config
+                $promptText   = "$description [[current: $currentValue]] ($constraintStr). Press Enter to keep:"
+
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    break
+                }
+
+                # Reset sentinel (case-insensitive)
+                if ($answer -ieq '[Reset to default]') {
+                    $defaultValue = & $def.DefGet $defaults
+                    & $def.Set $config $defaultValue
+                    break
+                }
+
+                # Validate entered value
+                $validation = Test-ConfigValue -Key $def.Key -Value $answer
+                if ($validation.Valid) {
+                    & $def.Set $config $answer
+                    break
+                }
+
+                # Invalid — show error in red and re-prompt
+                $Console.Write(
+                    [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
+                )
+            }
+        }
+    }
+
+    # ── Step 3: Save / reset / discard ───────────────────────────────────────
+    $savePrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
+    $savePrompt.Title = 'Save changes?'
+    $savePrompt.AddChoice('Yes — save now')                               | Out-Null
+    $savePrompt.AddChoice('Reset ALL MouseControl settings to defaults')  | Out-Null
+    $savePrompt.AddChoice('Discard changes')                              | Out-Null
+
+    $saveChoice = $savePrompt.Show($Console)
+
+    switch ($saveChoice) {
+
+        'Yes — save now' {
+            Save-ModuleSettings -Config $config
+
+            $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                'Mouse control settings saved successfully.',
+                '[green]Saved[/]'
+            )
+            $Console.Write($successPanel)
+
+            Write-LastWarLog -Level Info `
+                -Message 'MouseControl settings saved by user via configuration screen.' `
+                -FunctionName 'Show-MouseControlConfigScreen'
+        }
+
+        'Reset ALL MouseControl settings to defaults' {
+            $config.MouseControl = $defaults.MouseControl
+
+            Save-ModuleSettings -Config $config
+
+            $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                'All MouseControl settings have been reset to their default values and saved.',
+                '[green]Reset & Saved[/]'
+            )
+            $Console.Write($successPanel)
+
+            Write-LastWarLog -Level Info `
+                -Message 'All MouseControl settings reset to defaults by user via configuration screen.' `
+                -FunctionName 'Show-MouseControlConfigScreen'
+        }
+
+        default {
+            # 'Discard changes'
+            $infoPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                'No changes saved.',
+                'Discarded'
+            )
+            $Console.Write($infoPanel)
+        }
+    }
 }

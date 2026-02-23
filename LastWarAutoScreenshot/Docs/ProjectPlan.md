@@ -648,7 +648,7 @@
       - `'Reset ALL Logging settings to defaults'`: replace all Logging keys with defaults from `Get-DefaultModuleSettings`; save; display success panel; log Info
       - `'Discard changes'`: return without saving; display info panel `"No changes saved."`
       - Full comment-based help; all error paths logged
-   3. [ ] 5.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-MouseControlConfigScreen.ps1`
+   3. [x] 5.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-MouseControlConfigScreen.ps1`
       - `Show-MouseControlConfigScreen -Console [Spectre.Console.IAnsiConsole]`
       - Identical pattern to `Show-LoggingConfigScreen` but for all `MouseControl.*` keys
       - For `bool` keys (`EasingEnabled`, `OvershootEnabled`, `MicroPausesEnabled`, `JitterEnabled`): use `ConfirmationPrompt` (yes/no) instead of `TextPrompt`
@@ -674,7 +674,7 @@
       - Queue `'Reset ALL Logging settings to defaults'` at save prompt → all Logging keys in saved config equal defaults
       - Queue `'Discard changes'` → `Save-ModuleConfiguration` NOT called
       - Run full Pester suite; confirm count increases
-   7. [ ] 5.7: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-MouseControlConfigScreen.Tests.ps1`
+   7. [x] 5.7: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-MouseControlConfigScreen.Tests.ps1`
       - Same pattern as 5.6 but for `MouseControl.*` keys
       - Bool key: queue `'n'` for an enabled bool key → value saved as `$false`
       - intArray: queue min > max → error message appears; pair is not saved; re-prompt
@@ -758,7 +758,7 @@
      - Prompt user to move mouse to top left position of region to click and press Ctrl-Shift-R
      - If possible display a box border outline over the window and allow user to accept or redo
    - For recording click drag
-     - Prompt user to move mouse to centre of region to start click drag and press configurable keyboard shorcut Ctrl-Shift-R
+     - Prompt user to move mouse to centre of region to start click drag and press configurable keyboard shortcut Ctrl-Shift-R
      - Prompt user to drag-click to destination - record start and end point of drag
    - After each action has been recorded with Ctrl-Shift-R prompt user to press Y to commit action, R to redo, Q to quit back to main menu
 
