@@ -112,7 +112,11 @@ if (Test-Path "$privateScriptRoot") {
 
 # Explicitly export Get-MonitorProcess first for testability
 Export-ModuleMember -Function Get-MonitorProcess
-# Export all other public functions except duplicates
+# Explicitly export main entry point (Phase 3)
+Export-ModuleMember -Function Start-LastWarAutoScreenshot
+# Export all other public functions except those already exported above
 Get-ChildItem -Path "$PSScriptRoot\Public" -Filter *.ps1 | ForEach-Object {
-    if ($_.BaseName -ne 'Get-MonitorProcess') { Export-ModuleMember -Function $_.BaseName }
+    if ($_.BaseName -notin @('Get-MonitorProcess', 'Start-LastWarAutoScreenshot')) {
+        Export-ModuleMember -Function $_.BaseName
+    }
 }

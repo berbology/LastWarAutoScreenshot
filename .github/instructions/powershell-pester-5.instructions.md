@@ -7,6 +7,10 @@ description: 'PowerShell Pester testing best practices based on Pester v5 conven
 
 This guide provides PowerShell-specific instructions for creating automated tests using PowerShell Pester v5 module. Follow PowerShell cmdlet development guidelines in [powershell.instructions.md](./powershell.instructions.md) for general PowerShell scripting best practices.
 
+# Running tests
+
+- NEVER run the test yourself. Prompt me to run them manually and give you the output. Otherwise vscode crashes
+
 ## File Naming and Structure
 
 - **File Convention:** Use `*.Tests.ps1` naming pattern
