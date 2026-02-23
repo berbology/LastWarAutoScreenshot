@@ -9,7 +9,7 @@ This guide provides PowerShell-specific instructions for creating automated test
 
 # Running tests
 
-- NEVER run the test yourself. Prompt me to run them manually and give you the output. Otherwise vscode crashes
+- NEVER run the tests yourself. Prompt me to run them manually and give you the output. Otherwise vscode crashes
 
 ## File Naming and Structure
 

@@ -590,8 +590,8 @@
       - Invalid JSON in config file → error panel shown; `Write-LastWarLog` called with `Level = 'Warning'`
    9. [x] 3.9: Run full Pester suite; confirm count increases and all tests pass
 
-4. [ ] Implement the window selection screen
-   1. [ ] 4.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-WindowSelectionScreen.ps1`
+4. [x] Implement the window selection screen
+   1. [x] 4.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-WindowSelectionScreen.ps1`
       - `Show-WindowSelectionScreen -Console [Spectre.Console.IAnsiConsole]`
       - **Step 1 — Sort/filter selection:**
         - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name (A–Z)'`, `'Process name (Z–A)'`, `'Window title (A–Z)'`, `'Window title (Z–A)'`, `'Minimised first'`, `'Minimised last'`
@@ -613,7 +613,7 @@
         - Display success panel `"Window '[bold]<WindowTitle>[/]' selected and saved to configuration."`
         - Return the selected window object
       - Full comment-based help; all error paths log via `Write-LastWarLog`
-   2. [ ] 4.2: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-WindowSelectionScreen.Tests.ps1`
+   2. [x] 4.2: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-WindowSelectionScreen.Tests.ps1`
       - Mock `Get-EnumeratedWindows` returning empty list → error panel shown; `$testConsole.Output` contains "No windows found"; `Write-LastWarLog` called with `Level = 'Error'`; returns `$null`
       - Mock `Get-EnumeratedWindows` returning two mock windows → table and selection prompt rendered; `$testConsole.Output` contains both window titles
       - Queue input selecting `"[Back to main menu]"` → returns `$null`
