@@ -6,13 +6,13 @@ function Show-WindowSelectionScreen {
     .DESCRIPTION
         Guides the user through selecting a target application window in five steps:
 
-        1.  Sort selection — the user chooses how the window list is ordered.
-        2.  Window enumeration and display — all open windows are enumerated and shown
+        1.  Sort selection - the user chooses how the window list is ordered.
+        2.  Window enumeration and display - all open windows are enumerated and shown
             in a Spectre.Console Table with columns: #, Active, Process, Application,
             Minimised. The active (foreground) window is marked with [bold]*[/].
-        3.  Window selection — the user picks a window from a SelectionPrompt or
+        3.  Window selection - the user picks a window from a SelectionPrompt or
             chooses '[Back to main menu]' to cancel.
-        4.  Window validation — Test-WindowHandleValid confirms the window is still
+        4.  Window validation - Test-WindowHandleValid confirms the window is still
             open. If closed, an error panel is shown and the loop restarts from step 2
             (does NOT return to the main menu; the user must select again).
         5.  On a valid selection, the window is saved via Save-ModuleConfiguration, a
@@ -129,7 +129,7 @@ function Show-WindowSelectionScreen {
         $choiceLabels = @()
         for ($i = 0; $i -lt $sortedWindows.Count; $i++) {
             $win         = $sortedWindows[$i]
-            $choiceLabel = "$($i + 1): $([Spectre.Console.Markup]::Escape($win.ProcessName)) — $([Spectre.Console.Markup]::Escape($win.WindowTitle)) ($($win.WindowState))"
+            $choiceLabel = "$($i + 1): $([Spectre.Console.Markup]::Escape($win.ProcessName)) - $([Spectre.Console.Markup]::Escape($win.WindowTitle)) ($($win.WindowState))"
             $choiceLabels += $choiceLabel
             $selectionPrompt.AddChoice($choiceLabel) | Out-Null
         }
@@ -184,3 +184,4 @@ function Show-WindowSelectionScreen {
         return $selectedWindow
     }
 }
+

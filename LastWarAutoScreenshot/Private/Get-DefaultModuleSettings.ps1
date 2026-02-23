@@ -68,7 +68,7 @@ function Get-DefaultModuleSettings {
 }
 
 # ---------------------------------------------------------------------------
-# Config validation schema — module-scoped constant, not inside the function.
+# Config validation schema - module-scoped constant, not inside the function.
 # Each entry is keyed by "Section.Key" (or "Section.SubSection.Key") and
 # describes the constraints used by Test-ConfigValue and the config screens.
 # ---------------------------------------------------------------------------
@@ -91,28 +91,28 @@ $script:ConfigValidationSchema = @{
         Type        = 'int'
         Min         = 1
         Max         = 10240
-        Description = 'Maximum size in MB per log file before rollover is triggered (1–10240)'
+        Description = 'Maximum size in MB per log file before rollover is triggered (1-10240)'
         Nullable    = $false
     }
     'Logging.FileBackend.MaxFileCount'            = @{
         Type        = 'int'
         Min         = 1
         Max         = 10000
-        Description = 'Maximum number of log files to retain per rollover cycle (1–10000)'
+        Description = 'Maximum number of log files to retain per rollover cycle (1-10000)'
         Nullable    = $false
     }
     'Logging.FileBackend.MaxAgeDays'              = @{
         Type        = 'int'
         Min         = 1
         Max         = 3650
-        Description = 'Maximum age in days of log files before they are purged (1–3650)'
+        Description = 'Maximum age in days of log files before they are purged (1-3650)'
         Nullable    = $false
     }
     'Logging.FileBackend.RetentionFileCount'      = @{
         Type        = 'int'
         Min         = 1
         Max         = 100000
-        Description = 'Total number of log files to keep across all rollover archives (1–100000)'
+        Description = 'Total number of log files to keep across all rollover archives (1-100000)'
         Nullable    = $false
     }
 
@@ -143,35 +143,35 @@ $script:ConfigValidationSchema = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 1.0
-        Description = 'Fraction of the last path step used as extra overshoot distance (0.0–1.0)'
+        Description = 'Fraction of the last path step used as extra overshoot distance (0.0-1.0)'
         Nullable    = $false
     }
     'MouseControl.MicroPauseChance'               = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 1.0
-        Description = 'Probability (0.0–1.0) of inserting a micro-pause after each movement step'
+        Description = 'Probability (0.0-1.0) of inserting a micro-pause after each movement step'
         Nullable    = $false
     }
     'MouseControl.JitterRadiusPx'                 = @{
         Type        = 'int'
         Min         = 0
         Max         = 20
-        Description = 'Maximum pixel radius of jitter applied to Bezier path points — 0 disables jitter (0–20)'
+        Description = 'Maximum pixel radius of jitter applied to Bezier path points - 0 disables jitter (0-20)'
         Nullable    = $false
     }
     'MouseControl.BezierControlPointOffsetFactor' = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 2.0
-        Description = 'Multiplier applied to path length when positioning the Bezier control point (0.0–2.0)'
+        Description = 'Multiplier applied to path length when positioning the Bezier control point (0.0-2.0)'
         Nullable    = $false
     }
     'MouseControl.PathPointCount'                 = @{
         Type        = 'int'
         Min         = 5
         Max         = 200
-        Description = 'Base number of intermediate points on each Bezier movement path (5–200)'
+        Description = 'Base number of intermediate points on each Bezier movement path (5-200)'
         Nullable    = $false
     }
 
@@ -180,35 +180,35 @@ $script:ConfigValidationSchema = @{
         Type        = 'intArray'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for micro-pause delays (each element 0–5000, min ≤ max)'
+        Description = 'Duration range [min, max] in ms for micro-pause delays (each element 0-5000, min <= max)'
         Nullable    = $false
     }
     'MouseControl.MovementDurationRangeMs'        = @{
         Type        = 'intArray'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for total mouse movement (each element 0–5000, min ≤ max)'
+        Description = 'Duration range [min, max] in ms for total mouse movement (each element 0-5000, min <= max)'
         Nullable    = $false
     }
     'MouseControl.ClickDownDurationRangeMs'       = @{
         Type        = 'intArray'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for mouse-button hold during click (each element 0–5000, min ≤ max)'
+        Description = 'Duration range [min, max] in ms for mouse-button hold during click (each element 0-5000, min ≤ max)'
         Nullable    = $false
     }
     'MouseControl.ClickPreDelayRangeMs'           = @{
         Type        = 'intArray'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for delay before each mouse click (each element 0–5000, min ≤ max)'
+        Description = 'Duration range [min, max] in ms for delay before each mouse click (each element 0-5000, min ≤ max)'
         Nullable    = $false
     }
     'MouseControl.ClickPostDelayRangeMs'          = @{
         Type        = 'intArray'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for delay after each mouse click (each element 0–5000, min ≤ max)'
+        Description = 'Duration range [min, max] in ms for delay after each mouse click (each element 0-5000, min ≤ max)'
         Nullable    = $false
     }
 
@@ -227,14 +227,15 @@ $script:ConfigValidationSchema = @{
         Type        = 'int'
         Min         = 10
         Max         = 5000
-        Description = 'Interval in ms between emergency stop key-state polls (10–5000)'
+        Description = 'Interval in ms between emergency stop key-state polls (10-5000)'
         Nullable    = $false
     }
     'EmergencyStop.MouseGestureHoldDurationMs'    = @{
         Type        = 'int'
         Min         = 500
         Max         = 30000
-        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop (500–30000)'
+        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop (500-30000)'
         Nullable    = $false
     }
 }
+

@@ -42,3 +42,4 @@ These instructions define how pull request descriptions should be generated for 
 ## Automation
 
 Pull request descriptions may be auto-generated based on the changes made, but they must adhere to the above guidelines. Review and edit auto-generated descriptions as needed to ensure clarity and accuracy.
+

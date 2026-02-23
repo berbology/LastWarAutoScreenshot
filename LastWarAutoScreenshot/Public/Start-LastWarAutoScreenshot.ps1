@@ -7,7 +7,7 @@ function Start-LastWarAutoScreenshot {
         Entry point for the console application.  On startup it:
           1. Validates the saved module configuration (Invoke-StartupConfigValidation) and
              displays any errors or warnings as a Spectre.Console Panel before showing the
-             main menu.  Validation issues do not abort startup — the user must acknowledge
+             main menu.  Validation issues do not abort startup - the user must acknowledge
              them by pressing Enter.
           2. Enters an infinite loop rendering the main menu via Show-MainMenu.
           3. Dispatches each selection to the relevant screen function:
@@ -27,7 +27,7 @@ function Start-LastWarAutoScreenshot {
         assert on its Output property without requiring a live terminal.
 
     .EXAMPLE
-        # Normal production usage — no parameters required.
+        # Normal production usage - no parameters required.
         Start-LastWarAutoScreenshot
 
     .EXAMPLE
@@ -65,12 +65,12 @@ function Start-LastWarAutoScreenshot {
         switch ($choice) {
 
             'SelectWindow' {
-                # Phase 4 — Show-WindowSelectionScreen implemented in task 4.1
+                # Phase 4 - Show-WindowSelectionScreen implemented in task 4.1
                 Show-WindowSelectionScreen -Console $Console
             }
 
             'Configure' {
-                # Phase 5 — Show-ConfigMenuScreen implemented in task 5.1
+                # Phase 5 - Show-ConfigMenuScreen implemented in task 5.1
                 Show-ConfigMenuScreen -Console $Console
             }
 
@@ -84,7 +84,7 @@ function Start-LastWarAutoScreenshot {
             }
 
             'RunMacro' {
-                # Phase 4 placeholder — macro running requires the recording feature first
+                # Phase 4 placeholder - macro running requires the recording feature first
             }
 
             'Exit' {
@@ -93,3 +93,4 @@ function Start-LastWarAutoScreenshot {
         }
     }
 }
+

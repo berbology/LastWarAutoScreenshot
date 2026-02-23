@@ -11,11 +11,11 @@ function Stop-EmergencyStopMonitor {
         Calling this function when no monitor is currently running is safe and does nothing
         (does not throw).
 
-        IMPORTANT — re-arming behaviour:
+        IMPORTANT - re-arming behaviour:
         This function deliberately does NOT reset $script:EmergencyStopRequested.  If an
         emergency stop was triggered, the flag remains $true after this call.  Any code that
         checks the flag (e.g. Start-AutomationSequence) will see the stop and abort cleanly.
-        To re-arm the monitor for a new sequence, call Start-EmergencyStopMonitor — it resets
+        To re-arm the monitor for a new sequence, call Start-EmergencyStopMonitor - it resets
         the flag as part of its own start sequence.
 
     .EXAMPLE
@@ -30,7 +30,7 @@ function Stop-EmergencyStopMonitor {
         }
 
     .NOTES
-        Does NOT reset $script:EmergencyStopRequested — see description above.
+        Does NOT reset $script:EmergencyStopRequested - see description above.
         This is a public function exported from the module.
     #>
     [CmdletBinding()]
@@ -47,3 +47,4 @@ function Stop-EmergencyStopMonitor {
     # If $script:EmergencyStopTimer is already $null, silently do nothing.
     # $script:EmergencyStopRequested is intentionally NOT reset here.
 }
+

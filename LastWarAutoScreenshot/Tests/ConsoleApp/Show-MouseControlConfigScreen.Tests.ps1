@@ -161,7 +161,7 @@ Describe 'Show-MouseControlConfigScreen' {
     # ════════════════════════════════════════════════════════════════════════
     # Context: Accepting all current values calls Save-ModuleSettings
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user accepts all current values and chooses Yes — save now' {
+    Context 'When the user accepts all current values and chooses Yes - save now' {
 
         It 'Calls Save-ModuleSettings exactly once' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
@@ -219,7 +219,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -283,7 +283,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -349,7 +349,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -413,7 +413,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -621,7 +621,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -680,7 +680,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushTextWithEnter('y')          # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MicroPauseChance
                 # MicroPauseDurationRangeMs: invalid pair (500 > 100)
-                $tc.Input.PushTextWithEnter('500')        # min — invalid: 500 > 100
+                $tc.Input.PushTextWithEnter('500')        # min - invalid: 500 > 100
                 $tc.Input.PushTextWithEnter('100')        # max
                 # Re-prompt after error: keep current values (20, 80)
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # min (keep 20)
@@ -767,7 +767,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -840,7 +840,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -914,7 +914,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -987,7 +987,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -1056,7 +1056,7 @@ Describe 'Show-MouseControlConfigScreen' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes — save now
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes - save now
 
                 Show-MouseControlConfigScreen -Console $tc
 
@@ -1342,3 +1342,4 @@ Describe 'Show-MouseControlConfigScreen' {
         }
     }
 }
+

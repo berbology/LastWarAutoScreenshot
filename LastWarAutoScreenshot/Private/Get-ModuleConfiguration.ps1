@@ -87,10 +87,10 @@ function Get-ModuleConfiguration {
             # Treat empty config file the same as missing file: recreate with defaults
             if (-not $fileExists -or $fileIsEmpty) {
                 if ($fileIsEmpty) {
-                    Write-Verbose "Configuration file is empty at: $ConfigurationPath — recreating with module-setting defaults."
+                    Write-Verbose "Configuration file is empty at: $ConfigurationPath - recreating with module-setting defaults."
                 }
                 else {
-                    Write-Verbose "Configuration file not found at: $ConfigurationPath — creating with module-setting defaults."
+                    Write-Verbose "Configuration file not found at: $ConfigurationPath - creating with module-setting defaults."
                 }
 
                 # Get defaults from single source of truth
@@ -201,3 +201,4 @@ function Get-ModuleConfiguration {
         Write-Verbose "Window configuration load process completed"
     }
 }
+

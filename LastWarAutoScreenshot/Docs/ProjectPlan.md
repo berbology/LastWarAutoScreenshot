@@ -188,22 +188,22 @@
       - Constants: `INPUT_MOUSE`, `MOUSEEVENTF_MOVE`, `MOUSEEVENTF_LEFTDOWN`, `MOUSEEVENTF_LEFTUP`
       - P/Invoke: `SendInput(uint nInputs, INPUT[] pInputs, int cbSize)`, `GetCursorPos(out POINT lpPoint)`, `GetWindowRect(IntPtr hWnd, out RECT lpRect)`
       - `SetLastError = true` on every DllImport; `CharSet.Auto` only where a string parameter is present
-      - Note: step 4.1's `GetAsyncKeyState` is added to this same class in step 4 — no `CursorControl_TypeDefinitions.ps1` file is needed
+      - Note: step 4.1's `GetAsyncKeyState` is added to this same class in step 4 - no `CursorControl_TypeDefinitions.ps1` file is needed
    2. [x] 1.2: Update `LastWarAutoScreenshot.psm1`
       - Add `MouseControlAPI.cs` path to the existing `Add-Type -Path` call
       - Add `'LastWarAutoScreenshot.MouseControlAPI'` to the `$typeNames` guard array (prevents re-adding in the same session)
    3. [x] 1.3: Create `LastWarAutoScreenshot/Private/MouseControlHelpers.ps1`
-      - `Invoke-SendMouseInput -DeltaX [int] -DeltaY [int] [-ButtonFlags [uint]]` — thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::SendInput`; logs Win32 error via `Write-LastWarLog` if return value = 0; returns $true/$false
-      - `Invoke-GetCursorPosition` — thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetCursorPos`; returns `[PSCustomObject]@{X=[int]; Y=[int]}`
+      - `Invoke-SendMouseInput -DeltaX [int] -DeltaY [int] [-ButtonFlags [uint]]` - thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::SendInput`; logs Win32 error via `Write-LastWarLog` if return value = 0; returns $true/$false
+      - `Invoke-GetCursorPosition` - thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetCursorPos`; returns `[PSCustomObject]@{X=[int]; Y=[int]}`
    4. [x] 1.4: Create `LastWarAutoScreenshot/Private/Get-WindowBounds.ps1`
-      - `Invoke-GetWindowRect -WindowHandle [IntPtr]` — one-liner thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetWindowRect`
-      - `Get-WindowBounds -WindowHandle [object]` — accepts IntPtr, int64, int, string (same handle-conversion pattern as `Set-WindowState`); calls `Invoke-GetWindowRect`; returns `[PSCustomObject]@{Left; Top; Right; Bottom; Width; Height}`; error handling + `Write-LastWarLog`
+      - `Invoke-GetWindowRect -WindowHandle [IntPtr]` - one-liner thin wrapper calling `[LastWarAutoScreenshot.MouseControlAPI]::GetWindowRect`
+      - `Get-WindowBounds -WindowHandle [object]` - accepts IntPtr, int64, int, string (same handle-conversion pattern as `Set-WindowState`); calls `Invoke-GetWindowRect`; returns `[PSCustomObject]@{Left; Top; Right; Bottom; Width; Height}`; error handling + `Write-LastWarLog`
    5. [x] 1.5: Create `LastWarAutoScreenshot/Private/ConvertTo-ScreenCoordinates.ps1`
       - `ConvertTo-ScreenCoordinates -WindowHandle [object] -RelativeX [double] -RelativeY [double]`
       - Validates RelativeX and RelativeY are in range [0.0, 1.0]; logs error + returns `$null` if out-of-range
       - Calls `Get-WindowBounds`; computes `AbsoluteX = [int]($Bounds.Left + $RelativeX * $Bounds.Width)` and equivalent for Y
       - Returns `[PSCustomObject]@{X=[int]; Y=[int]}`
-   6. [x] 1.6: Create `LastWarAutoScreenshot/Private/Move-MouseToPoint.ps1` (step 1 placeholder — replaced by `Invoke-MouseMovePath` in step 2)
+   6. [x] 1.6: Create `LastWarAutoScreenshot/Private/Move-MouseToPoint.ps1` (step 1 placeholder - replaced by `Invoke-MouseMovePath` in step 2)
       - `Move-MouseToPoint -X [int] -Y [int]`
       - Calls `Invoke-GetCursorPosition` to get current position; computes delta to target; calls `Invoke-SendMouseInput` with `MOUSEEVENTF_MOVE`
       - Returns $true/$false; red ANSI footer on failure; logs error via `Write-LastWarLog`
@@ -215,15 +215,15 @@
       - Calls `Invoke-SendMouseInput` for `MOUSEEVENTF_LEFTDOWN`, sleeps `DownDurationMs`, calls `Invoke-SendMouseInput` for `MOUSEEVENTF_LEFTUP`
       - Returns $true/$false; error handling + logging
    8. [x] 1.8: Add minimal `MouseControl` section to `LastWarAutoScreenshot/Private/ModuleConfig.json`
-      - `"MouseControl": { "ClickDownDurationRangeMs": [50, 150] }` — full section added in step 2.1
+      - `"MouseControl": { "ClickDownDurationRangeMs": [50, 150] }` - full section added in step 2.1
    9. [x] 1.9: Update `LastWarAutoScreenshot/Private/Get-ModuleConfiguration.ps1` and `LastWarAutoScreenshot/Private/Save-ModuleConfiguration.ps1`
       - Handle new `MouseControl` key with defaults; no breaking changes to existing keys
    10. [x] 1.10: Create `LastWarAutoScreenshot/Public/Start-AutomationSequence.ps1` (skeleton)
        - `[CmdletBinding()]` parameters: `-WindowHandle [object]` (mandatory), `-RelativeX [double]`, `-RelativeY [double]`
        - Reads config `EmergencyStop.AutoStart`; calls `Start-EmergencyStopMonitor` if `$true`
-       - Checks `$script:EmergencyStopRequested` — logs warning and exits cleanly if set before move
+       - Checks `$script:EmergencyStopRequested` - logs warning and exits cleanly if set before move
        - Calls `ConvertTo-ScreenCoordinates` → `Move-MouseToPoint` (step 1 placeholder; updated in step 2.6)
-       - Checks `$script:EmergencyStopRequested` again after move — skips click and exits cleanly if set
+       - Checks `$script:EmergencyStopRequested` again after move - skips click and exits cleanly if set
        - Calls `Invoke-MouseClick`
        - `finally` block always calls `Stop-EmergencyStopMonitor`
        - Returns `[PSCustomObject]@{Success=[bool]; Message=[string]}`
@@ -247,7 +247,7 @@
        - `$script:EmergencyStopRequested = $true` after move → `Invoke-MouseClick` not called
        - `Stop-EmergencyStopMonitor` called in `finally` on both success and error paths
        - Correct PSCustomObject returned on success and failure
-   16. [x] 1.16: Run full Pester suite — all existing + new tests pass
+   16. [x] 1.16: Run full Pester suite - all existing + new tests pass
 2. [x] Develop human-like mouse movement
    1. [x] 2.1: Expand `LastWarAutoScreenshot/Private/ModuleConfig.json` with full `MouseControl` section (replaces the minimal step 1.8 entry)
 
@@ -282,7 +282,7 @@
       - Bezier formula: `B(t) = (1−t)²·P₀ + 2(1−t)t·P₁ + t²·P₂` for t = 0..1 across `NumPoints` steps
       - Jitter: if `JitterEnabled`, add ±`JitterRadiusPx` random noise (integer) to each computed X, Y
       - Returns `[PSCustomObject[]]` each with integer `X` and `Y` properties
-      - Pure `[math]` only — no `Add-Type`, no P/Invoke; fully testable
+      - Pure `[math]` only - no `Add-Type`, no P/Invoke; fully testable
    5. [x] 2.5: Create `LastWarAutoScreenshot/Private/Invoke-MouseMovePath.ps1`
       - `Invoke-MouseMovePath -Points [PSCustomObject[]]`
       - Total move duration: random within `MovementDurationRangeMs` config range
@@ -310,21 +310,21 @@
    8. [x] 2.8: Add step 2 sections to `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1`
       - Verify `Invoke-MouseMovePath` called instead of `Move-MouseToPoint`
       - Verify `ClickPreDelay` and `ClickPostDelay` `Start-Sleep` calls are present
-   9. [x] 2.9: Run full Pester suite — all existing + new tests pass
+   9. [x] 2.9: Run full Pester suite - all existing + new tests pass
    10. [x] 2.10: Update `LastWarAutoScreenshot/Docs/README.md`
        - Document all `MouseControl` config keys with types, defaults, and examples
        - Document human-like movement behaviour: Bezier path shaping, ease-in/out, jitter, micro-pauses, overshoot/correction
 3. [x] Allow user to define bounding box or circle as cursor target; randomly select position within defined area for each action
    1. [x] 3.1: Create `LastWarAutoScreenshot/Private/Get-RandomTargetPosition.ps1`
       - Two `[CmdletBinding()]` parameter sets:
-        - **Box**: `-Box [PSCustomObject]` with properties `RelativeX`, `RelativeY`, `RelativeWidth`, `RelativeHeight` (all 0.0–1.0) — uniform random within `[RelativeX, RelativeX+RelativeWidth] × [RelativeY, RelativeY+RelativeHeight]`
-        - **Circle**: `-Circle [PSCustomObject]` with `RelativeCentreX`, `RelativeCentreY`, `RelativeRadius` — `angle = 2π × random`, `r = √random × RelativeRadius` (sqrt ensures uniform density, not concentrated at centre), `X = CentreX + r·cos(angle)`, `Y = CentreY + r·sin(angle)`
+        - **Box**: `-Box [PSCustomObject]` with properties `RelativeX`, `RelativeY`, `RelativeWidth`, `RelativeHeight` (all 0.0-1.0) - uniform random within `[RelativeX, RelativeX+RelativeWidth] × [RelativeY, RelativeY+RelativeHeight]`
+        - **Circle**: `-Circle [PSCustomObject]` with `RelativeCentreX`, `RelativeCentreY`, `RelativeRadius` - `angle = 2π × random`, `r = √random × RelativeRadius` (sqrt ensures uniform density, not concentrated at centre), `X = CentreX + r·cos(angle)`, `Y = CentreY + r·sin(angle)`
       - Output clamped to [0.0, 1.0] on both axes
       - Returns `[PSCustomObject]@{RelativeX=[double]; RelativeY=[double]}` or `$null` with error log on invalid input
-      - Pure PowerShell — no `Add-Type`
+      - Pure PowerShell - no `Add-Type`
    2. [x] 3.2: Create `LastWarAutoScreenshot/Tests/Get-RandomTargetPosition.Tests.ps1`
-      - Box: 100-iteration loop — all returned points within `[RelativeX, RelativeX+RelativeWidth]` × `[RelativeY, RelativeY+RelativeHeight]`
-      - Circle: 100-iteration loop — all returned points within `RelativeRadius` of centre
+      - Box: 100-iteration loop - all returned points within `[RelativeX, RelativeX+RelativeWidth]` × `[RelativeY, RelativeY+RelativeHeight]`
+      - Circle: 100-iteration loop - all returned points within `RelativeRadius` of centre
       - Circle distribution: mean of 100 points clusters near centre (within 10% of radius on each axis)
       - Invalid input (negative radius, region values outside [0.0, 1.0]) → `$null` returned + error logged
       - Clamp: no returned value is below 0.0 or above 1.0
@@ -336,27 +336,27 @@
    4. [x] 3.4: Add step 3 sections to `LastWarAutoScreenshot/Tests/Start-AutomationSequence.Tests.ps1`
       - Mock `Get-RandomTargetPosition`; verify called when `-Region` is provided
       - Verify `Get-RandomTargetPosition` not called when scalar `-RelativeX`/`-RelativeY` are provided
-   5. [x] 3.5: Run full Pester suite — new test count meets or exceeds the pre-steps-1–3 baseline
+   5. [x] 3.5: Run full Pester suite - new test count meets or exceeds the pre-steps-1-3 baseline
    6. [x] 3.6: Update `LastWarAutoScreenshot/Docs/README.md`
       - Document `-Region` parameter with Box and Circle formats, field descriptions, and usage examples
 4. [x] Implement emergency stop mechanisms
    1. [x] Add `GetAsyncKeyState` P/Invoke to `LastWarAutoScreenshot/src/MouseControlAPI.cs` (created in step 1.1)
-      - Add single `GetAsyncKeyState(int vKey)` DllImport method to the existing `LastWarAutoScreenshot.MouseControlAPI` C# class — no new files or types
-      - All references to `[Win32.MouseControl]::` in steps 4.3–4.5 use `[LastWarAutoScreenshot.MouseControlAPI]::` to match the established namespace convention
-      - Note: the virtual key code for `#` is keyboard-layout-dependent (`VK_OEM_5` = 0xDC on UK layouts; Shift+3 on US layouts) — document this in code comments and README
+      - Add single `GetAsyncKeyState(int vKey)` DllImport method to the existing `LastWarAutoScreenshot.MouseControlAPI` C# class - no new files or types
+      - All references to `[Win32.MouseControl]::` in steps 4.3-4.5 use `[LastWarAutoScreenshot.MouseControlAPI]::` to match the established namespace convention
+      - Note: the virtual key code for `#` is keyboard-layout-dependent (`VK_OEM_5` = 0xDC on UK layouts; Shift+3 on US layouts) - document this in code comments and README
       - Pester test for the type definition goes in `LastWarAutoScreenshot/Tests/MouseControl_TypeDefinition.Tests.ps1` (created in step 1.12); add a test verifying `GetAsyncKeyState` exists on the type and is callable with a known safe key code (e.g. VK_SHIFT = 0x10)
    2. [x] Add emergency stop settings to module configuration
-      - Add `EmergencyStop.HotkeyVKeyCodes` (int array, default: [0x11, 0x10, 0xDC] — Ctrl, Shift, # on UK layout)
+      - Add `EmergencyStop.HotkeyVKeyCodes` (int array, default: [0x11, 0x10, 0xDC] - Ctrl, Shift, # on UK layout)
       - Add `EmergencyStop.PollIntervalMs` (int, default: 100)
-      - Add `EmergencyStop.AutoStart` (bool, default: true — monitor auto-starts when the automation sequence starts)
+      - Add `EmergencyStop.AutoStart` (bool, default: true - monitor auto-starts when the automation sequence starts)
       - Update `ModuleConfig.json` with new keys and defaults
       - Update `Get-ModuleConfiguration` and `Save-ModuleConfiguration` to handle new keys (no breaking changes)
       - Update `ModuleConfiguration.Tests.ps1` to cover new config keys (round-trip save/load, defaults)
    3. [x] Implement `Invoke-EmergencyStopPoll` (private)
-      - Same extracted-poll pattern as `Invoke-MonitorPoll` — exists solely to make the timer callback testable without physical keypresses
-      - Parameter: `$State` hashtable with keys: `Stopped` (bool), `Timer` (System.Timers.Timer), `HotkeyVKeyCodes` (int[]), `GetKeyStateFn` (ScriptBlock — injectable mock; defaults to `[LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState($vKey)` when $null)
+      - Same extracted-poll pattern as `Invoke-MonitorPoll` - exists solely to make the timer callback testable without physical keypresses
+      - Parameter: `$State` hashtable with keys: `Stopped` (bool), `Timer` (System.Timers.Timer), `HotkeyVKeyCodes` (int[]), `GetKeyStateFn` (ScriptBlock - injectable mock; defaults to `[LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState($vKey)` when $null)
       - Early-return if `$State.Stopped -eq $true`
-      - Check each VKey code via `GetKeyStateFn`; test the high-order bit (0x8000) — key currently held down, not the "pressed since last call" bit
+      - Check each VKey code via `GetKeyStateFn`; test the high-order bit (0x8000) - key currently held down, not the "pressed since last call" bit
       - If all keys held: set `$script:EmergencyStopRequested = $true`, set `$State.Stopped = $true`, stop timer, log Error via `Write-LastWarLog`, write red ANSI console message advising user to check logs
       - Write Pester tests covering:
          - All keys held → flag set, timer stopped, log called, red console message written
@@ -365,8 +365,8 @@
          - `$State.Stopped` already `$true` → returns immediately, nothing else called
          - `GetKeyStateFn` throws → error logged, no unhandled exception
    4. [x] Implement `Start-EmergencyStopMonitor` (public)
-      - `[CmdletBinding()]` with optional parameters: `-PollIntervalMs` (int), `-HotkeyVKeyCodes` (int[]) — both read from module config when omitted
-      - Idempotent: if `$script:EmergencyStopTimer` is already running, log Info `"Emergency stop monitor is already running — ignoring duplicate start"` and return without starting a second timer
+      - `[CmdletBinding()]` with optional parameters: `-PollIntervalMs` (int), `-HotkeyVKeyCodes` (int[]) - both read from module config when omitted
+      - Idempotent: if `$script:EmergencyStopTimer` is already running, log Info `"Emergency stop monitor is already running - ignoring duplicate start"` and return without starting a second timer
       - On a clean start: reset `$script:EmergencyStopRequested = $false`
       - Build `$State` hashtable; create and start `System.Timers.Timer` with `AutoReset = $true`; store in `$script:EmergencyStopTimer`; Elapsed handler calls `Invoke-EmergencyStopPoll` via `.GetNewClosure()`
       - Return `[PSCustomObject]` with `Stop` and `Cleanup` scriptblocks (same contract as `Start-WindowAndProcessMonitor`)
@@ -378,7 +378,7 @@
          - Returned `Stop` scriptblock sets `$State.Stopped = $true` and stops the timer
    5. [x] Implement `Stop-EmergencyStopMonitor` (public)
       - Stops and disposes `$script:EmergencyStopTimer`; sets `$script:EmergencyStopTimer = $null`
-      - Does NOT reset `$script:EmergencyStopRequested` — document clearly: callers must reset the flag manually before re-arming
+      - Does NOT reset `$script:EmergencyStopRequested` - document clearly: callers must reset the flag manually before re-arming
       - Log Info `"Emergency stop monitor stopped"` via `Write-LastWarLog`
       - Calling when already stopped must not throw
       - Add full comment-based help
@@ -388,11 +388,11 @@
          - Log call verified via mock
          - Calling when monitor is not running does not throw
    6. [x] Implement mouse gesture detection: hold both mouse buttons for 3 seconds
-      - Detect simultaneous left and right mouse button hold using `GetAsyncKeyState` (VK_LBUTTON 0x01, VK_RBUTTON 0x02) — reuse same poll infrastructure from 4.3
+      - Detect simultaneous left and right mouse button hold using `GetAsyncKeyState` (VK_LBUTTON 0x01, VK_RBUTTON 0x02) - reuse same poll infrastructure from 4.3
       - Count consecutive polls where both buttons are held; trigger after 3 seconds worth of poll intervals (3000 / PollIntervalMs ticks)
       - On trigger: same behaviour as hotkey (set `$script:EmergencyStopRequested`, log Error, red console message)
       - Write Pester tests via injected mock with a counter simulating consecutive held polls
-   7. [x] Integration point — implement as part of Mouse Control step 1
+   7. [x] Integration point - implement as part of Mouse Control step 1
       - If `$Config.EmergencyStop.AutoStart -eq $true`, automation sequence start function calls `Start-EmergencyStopMonitor`
       - Each iteration of the automation loop checks `if ($script:EmergencyStopRequested)` and exits gracefully with cleanup if true
       - Automation sequence end/cleanup calls `Stop-EmergencyStopMonitor`
@@ -415,9 +415,9 @@
 - **UI library:** Spectre.Console loaded via `Add-Type` from bundled DLLs in `LastWarAutoScreenshot/lib/`
 - **Bridge pattern:** A thin C# wrapper class `ConsoleAppBridge.cs` in `LastWarAutoScreenshot/src/` exposes PowerShell-friendly static methods over Spectre.Console's fluent API, consistent with the existing `MouseControlAPI.cs` / `WindowEnumerationAPI.cs` pattern
 - **Testability:** Every screen function accepts a `$Console` parameter typed `[Spectre.Console.IAnsiConsole]`; tests inject `[Spectre.Console.Testing.TestConsole]::new()` and assert on `$testConsole.Output`
-- **Entry point:** `Start-LastWarAutoScreenshot` (public, exported) — the single function users call to launch the app
+- **Entry point:** `Start-LastWarAutoScreenshot` (public, exported) - the single function users call to launch the app
 - **Folder layout:** All screen/page functions live in `Private/ConsoleApp/`; tests in `Tests/ConsoleApp/`
-- **Macro storage:** `Private/Macros/yyyyMMdd_HHmmss_<name>.json` — one file per macro; Phase 3 only checks existence; Phase 4 defines the format
+- **Macro storage:** `Private/Macros/yyyyMMdd_HHmmss_<name>.json` - one file per macro; Phase 3 only checks existence; Phase 4 defines the format
 - **DLL versioning:** Bundled at a specific version recorded in `lib/VERSIONS.txt`; never auto-updated
 - **Config validation:** Per-key validation rules co-located with defaults in `Get-DefaultModuleSettings.ps1`; a new `$script:ConfigValidationSchema` hashtable is added alongside the existing defaults object
 
@@ -450,17 +450,17 @@
 
         Record the exact version strings here in the plan once known
       - Add `LastWarAutoScreenshot/lib/**/*.dll` to `.gitattributes` with `binary` attribute so git does not diff the DLLs
-      - Do NOT add them to `.gitignore` — they must be committed and shipped with the module
+      - Do NOT add them to `.gitignore` - they must be committed and shipped with the module
    2. [x] 1.2: Create `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
       - Namespace `LastWarAutoScreenshot`, class `ConsoleAppBridge`
       - References `Spectre.Console.dll`; must be compiled via `Add-Type -Path ... -ReferencedAssemblies`
       - Purpose: expose clean, PowerShell-callable static factory/helper methods that hide Spectre.Console's fluent/generic API from PowerShell callers; keeps PS code readable
       - Initial methods to include (others added per screen as needed):
-        - `static IAnsiConsole CreateConsole()` — returns `AnsiConsole.Console` (the real live console)
-        - `static SelectionPrompt<string> CreateSelectionPrompt(string title, string[] choices)` — creates a standard prompt ready to call `.Show(console)`
-        - `static Table CreateTable(string[] columns)` — creates a `Table` with standard border style used project-wide
-        - `static Panel CreatePanel(string content, string header)` — creates a `Panel` with standard styling
-      - `SetLastError = false` — no P/Invoke in this file; it is pure managed .NET
+        - `static IAnsiConsole CreateConsole()` - returns `AnsiConsole.Console` (the real live console)
+        - `static SelectionPrompt<string> CreateSelectionPrompt(string title, string[] choices)` - creates a standard prompt ready to call `.Show(console)`
+        - `static Table CreateTable(string[] columns)` - creates a `Table` with standard border style used project-wide
+        - `static Panel CreatePanel(string content, string header)` - creates a `Panel` with standard styling
+      - `SetLastError = false` - no P/Invoke in this file; it is pure managed .NET
       - Full XML doc comments on all public methods
    3. [x] 1.3: Update `LastWarAutoScreenshot.psm1`
       - Add `$spectreConsolePath = "$PSScriptRoot\lib\Spectre.Console.dll"` alongside the existing source path variables
@@ -469,10 +469,10 @@
       - Add `'LastWarAutoScreenshot.ConsoleAppBridge'` to the `$typeNames` guard array
       - Load `Spectre.Console.dll` first (before compiling `ConsoleAppBridge.cs`) using `Add-Type -Path $spectreConsolePath`
       - Compile `ConsoleAppBridge.cs` using `Add-Type -Path $consoleAppBridgePath -ReferencedAssemblies $spectreConsolePath`
-      - Dot-source all `Private/ConsoleApp/*.ps1` files in the existing private dot-sourcing loop (the loop already covers `Private/` — ensure it uses `-Recurse` so the subfolder is picked up automatically, or add an explicit `Get-ChildItem` call for the subfolder if `-Recurse` causes ordering issues)
+      - Dot-source all `Private/ConsoleApp/*.ps1` files in the existing private dot-sourcing loop (the loop already covers `Private/` - ensure it uses `-Recurse` so the subfolder is picked up automatically, or add an explicit `Get-ChildItem` call for the subfolder if `-Recurse` causes ordering issues)
    4. [x] 1.4: Create `LastWarAutoScreenshot/Tests/ConsoleApp/` folder
       - Add a `README.md` placeholder noting this folder holds all Phase 3 tests; to be populated per screen
-   5. [x] 1.5: Verify the module loads cleanly after steps 1.1–1.4
+   5. [x] 1.5: Verify the module loads cleanly after steps 1.1-1.4
       - Run: `Import-Module .\LastWarAutoScreenshot\LastWarAutoScreenshot.psd1 -Force -Verbose`
       - Confirm `[LastWarAutoScreenshot.ConsoleAppBridge]` type is accessible with no errors
       - Confirm `[Spectre.Console.AnsiConsole]` type is accessible
@@ -487,8 +487,8 @@
 
 2. [x] Add config validation schema to `Get-DefaultModuleSettings.ps1`
    1. [x] 2.1: Define the validation schema structure
-      - Add a `$script:ConfigValidationSchema` hashtable to `Get-DefaultModuleSettings.ps1` alongside the existing `Get-DefaultModuleSettings` function (not inside of it — module-scoped constant)
-      - Schema format — each entry is keyed by `"Section.Key"` and contains:
+      - Add a `$script:ConfigValidationSchema` hashtable to `Get-DefaultModuleSettings.ps1` alongside the existing `Get-DefaultModuleSettings` function (not inside of it - module-scoped constant)
+      - Schema format - each entry is keyed by `"Section.Key"` and contains:
 
         ```powershell
         @{
@@ -503,33 +503,33 @@
 
       - Populate entries for all keys in `Logging`, `MouseControl`, and `EmergencyStop` sections (every key that a user can change via the config screen)
       - Example entries to include:
-        - `'Logging.MinimumLogLevel'` — `stringEnum`; `AllowedValues = @('Verbose','Info','Warning','Error')`
-        - `'Logging.Backend'` — `stringEnum`; `AllowedValues = @('File','EventLog','File,EventLog')`
-        - `'Logging.FileBackend.MaxSizeMB'` — `int`; `Min = 1`, `Max = 10240`
-        - `'Logging.FileBackend.MaxFileCount'` — `int`; `Min = 1`, `Max = 10000`
-        - `'Logging.FileBackend.MaxAgeDays'` — `int`; `Min = 1`, `Max = 3650`
-        - `'Logging.FileBackend.RetentionFileCount'` — `int`; `Min = 1`, `Max = 100000`
-        - `'MouseControl.OvershootFactor'` — `double`; `Min = 0.0`, `Max = 1.0`
-        - `'MouseControl.MicroPauseChance'` — `double`; `Min = 0.0`, `Max = 1.0`
-        - `'MouseControl.JitterRadiusPx'` — `int`; `Min = 0`, `Max = 20`
-        - `'MouseControl.BezierControlPointOffsetFactor'` — `double`; `Min = 0.0`, `Max = 2.0`
-        - `'MouseControl.MovementDurationRangeMs'` — `intArray`; both elements `Min = 0`, `Max = 5000`; element[0] must be ≤ element[1]
-        - `'MouseControl.ClickDownDurationRangeMs'` — `intArray`; same constraints as above
-        - `'MouseControl.ClickPreDelayRangeMs'` — `intArray`; same
-        - `'MouseControl.ClickPostDelayRangeMs'` — `intArray`; same
-        - `'MouseControl.MicroPauseDurationRangeMs'` — `intArray`; same
-        - `'MouseControl.PathPointCount'` — `int`; `Min = 5`, `Max = 200`
-        - `'EmergencyStop.PollIntervalMs'` — `int`; `Min = 10`, `Max = 5000`
-        - `'EmergencyStop.MouseGestureHoldDurationMs'` — `int`; `Min = 500`, `Max = 30000`
-        - `'EmergencyStop.AutoStart'` — `bool`
-        - `'EmergencyStop.MouseGestureEnabled'` — `bool`
-        - `'MouseControl.EasingEnabled'`, `'MouseControl.OvershootEnabled'`, `'MouseControl.MicroPausesEnabled'`, `'MouseControl.JitterEnabled'` — all `bool`
+        - `'Logging.MinimumLogLevel'` - `stringEnum`; `AllowedValues = @('Verbose','Info','Warning','Error')`
+        - `'Logging.Backend'` - `stringEnum`; `AllowedValues = @('File','EventLog','File,EventLog')`
+        - `'Logging.FileBackend.MaxSizeMB'` - `int`; `Min = 1`, `Max = 10240`
+        - `'Logging.FileBackend.MaxFileCount'` - `int`; `Min = 1`, `Max = 10000`
+        - `'Logging.FileBackend.MaxAgeDays'` - `int`; `Min = 1`, `Max = 3650`
+        - `'Logging.FileBackend.RetentionFileCount'` - `int`; `Min = 1`, `Max = 100000`
+        - `'MouseControl.OvershootFactor'` - `double`; `Min = 0.0`, `Max = 1.0`
+        - `'MouseControl.MicroPauseChance'` - `double`; `Min = 0.0`, `Max = 1.0`
+        - `'MouseControl.JitterRadiusPx'` - `int`; `Min = 0`, `Max = 20`
+        - `'MouseControl.BezierControlPointOffsetFactor'` - `double`; `Min = 0.0`, `Max = 2.0`
+        - `'MouseControl.MovementDurationRangeMs'` - `intArray`; both elements `Min = 0`, `Max = 5000`; element[0] must be ≤ element[1]
+        - `'MouseControl.ClickDownDurationRangeMs'` - `intArray`; same constraints as above
+        - `'MouseControl.ClickPreDelayRangeMs'` - `intArray`; same
+        - `'MouseControl.ClickPostDelayRangeMs'` - `intArray`; same
+        - `'MouseControl.MicroPauseDurationRangeMs'` - `intArray`; same
+        - `'MouseControl.PathPointCount'` - `int`; `Min = 5`, `Max = 200`
+        - `'EmergencyStop.PollIntervalMs'` - `int`; `Min = 10`, `Max = 5000`
+        - `'EmergencyStop.MouseGestureHoldDurationMs'` - `int`; `Min = 500`, `Max = 30000`
+        - `'EmergencyStop.AutoStart'` - `bool`
+        - `'EmergencyStop.MouseGestureEnabled'` - `bool`
+        - `'MouseControl.EasingEnabled'`, `'MouseControl.OvershootEnabled'`, `'MouseControl.MicroPausesEnabled'`, `'MouseControl.JitterEnabled'` - all `bool`
    2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/ConfigValidation.ps1`
       - `Test-ConfigValue -Key [string] -Value [object]`
-      - Looks up `$script:ConfigValidationSchema[$Key]` — returns `[PSCustomObject]@{Valid=$true; Message=''}` if key not in schema (unknown keys pass through silently)
+      - Looks up `$script:ConfigValidationSchema[$Key]` - returns `[PSCustomObject]@{Valid=$true; Message=''}` if key not in schema (unknown keys pass through silently)
       - Validates `Type`, `Min`/`Max` (for numerics and each element of intArray), `AllowedValues` (case-insensitive for stringEnum), `Nullable`
       - For `intArray`: validates element count is exactly 2 and element[0] ≤ element[1]
-      - Returns `[PSCustomObject]@{Valid=[bool]; Message=[string]}` — `Message` is the human-readable error shown in the config screen when `Valid = $false`
+      - Returns `[PSCustomObject]@{Valid=[bool]; Message=[string]}` - `Message` is the human-readable error shown in the config screen when `Valid = $false`
       - Pure PowerShell; no `Add-Type`; fully testable
    3. [x] 2.3: Create `LastWarAutoScreenshot/Tests/ConsoleApp/ConfigValidation.Tests.ps1`
       - `Test-ConfigValue`: valid int within range → `Valid=$true`; int below Min → `Valid=$false` with non-empty message; int above Max → same; stringEnum valid value → `Valid=$true`; invalid value → `Valid=$false`; bool true → `Valid=$true`; intArray with element[0] > element[1] → `Valid=$false`; unknown key not in schema → `Valid=$true`
@@ -541,17 +541,17 @@
       - Displays a `SelectionPrompt` with the following options:
         - `Select target window`
         - `Configure module`
-        - `Record macro` (stub — displays "Not yet available" panel when chosen; returns to main menu)
-        - `Run macro` — greyed out (disabled choice text, different Spectre.Console style) when no `*.json` files exist in the module's `Macros/` folder; shows `SelectionPrompt` of macro filenames (parsed from `yyyyMMdd_HHmmss_<name>.json` filenames) when macros do exist
+        - `Record macro` (stub - displays "Not yet available" panel when chosen; returns to main menu)
+        - `Run macro` - greyed out (disabled choice text, different Spectre.Console style) when no `*.json` files exist in the module's `Macros/` folder; shows `SelectionPrompt` of macro filenames (parsed from `yyyyMMdd_HHmmss_<name>.json` filenames) when macros do exist
         - `Exit`
       - To detect macros: check `Join-Path $script:ModuleRootPath 'Private\Macros\*.json'` using `Get-ChildItem`; if count is 0 the option is rendered as `[grey](No macros recorded)[/]` and is excluded from selectable choices
       - Returns a string matching one of the menu option identifiers: `'SelectWindow'`, `'Configure'`, `'RecordMacro'`, `'RunMacro'`, `'Exit'`
       - Full comment-based help
    2. [x] 3.2: Create `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1`
-      - `[CmdletBinding()]` — no mandatory parameters
+      - `[CmdletBinding()]` - no mandatory parameters
       - Optional `[Spectre.Console.IAnsiConsole]$Console` parameter defaulting to `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()`; this is the testability injection point
       - On startup:
-        1. Validates the config file via `Invoke-StartupConfigValidation` (step 3.3) — displays any errors/warnings as a Spectre.Console `Panel` with red/yellow markup before the main menu appears; does not abort, user must acknowledge with Enter
+        1. Validates the config file via `Invoke-StartupConfigValidation` (step 3.3) - displays any errors/warnings as a Spectre.Console `Panel` with red/yellow markup before the main menu appears; does not abort, user must acknowledge with Enter
         2. Enters an infinite `while ($true)` loop calling `Show-MainMenu -Console $Console`
         3. Dispatches on the returned menu option string via `switch`
         4. `'Exit'` breaks the loop
@@ -559,7 +559,7 @@
       - Full comment-based help with `.NOTES` documenting the `$Console` injection pattern
    3. [x] 3.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Invoke-StartupConfigValidation.ps1`
       - `Invoke-StartupConfigValidation -Console [Spectre.Console.IAnsiConsole]`
-      - Calls `Get-ModuleConfiguration`; if the file does not exist or is empty (both handled by `Get-ModuleConfiguration`'s own defaults path) the function returns immediately with no warnings — a freshly-created default config is always valid
+      - Calls `Get-ModuleConfiguration`; if the file does not exist or is empty (both handled by `Get-ModuleConfiguration`'s own defaults path) the function returns immediately with no warnings - a freshly-created default config is always valid
       - If the file exists but contains invalid JSON: displays an error panel `"Configuration file contains invalid JSON. Default values will be used. Please reconfigure via Configure Module."` via `$Console.Write()`
       - If the file exists and is valid JSON: calls `Test-ConfigValue` for every key in `$script:ConfigValidationSchema`; collects all failures; if any exist, displays a warning panel listing each failing key and the validation message; user presses Enter to continue
       - Logs any discovered issues via `Write-LastWarLog -Level Warning`
@@ -581,7 +581,7 @@
       - Mock `Invoke-StartupConfigValidation` returning `@{HasErrors=$false; Messages=@()}` → no error panel rendered; assert `$testConsole.Output` does not contain error markup
       - Mock `Invoke-StartupConfigValidation` returning `@{HasErrors=$true; Messages=@('Logging.MinimumLogLevel: invalid value')}` → error panel content appears in `$testConsole.Output`
       - Mock `Show-MainMenu` returning `'SelectWindow'` once, then `'Exit'` → window selection screen function called exactly once
-      - `$Console` defaulting to real console when not provided — verify the parameter default is `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()`
+      - `$Console` defaulting to real console when not provided - verify the parameter default is `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()`
    8. [x] 3.8: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Invoke-StartupConfigValidation.Tests.ps1`
       - Config file does not exist → `Get-ModuleConfiguration` creates defaults; function returns `HasErrors=$false`; no output written to `$testConsole`
       - Config file exists, all values valid → returns `HasErrors=$false`; no panel written
@@ -593,22 +593,22 @@
 4. [x] Implement the window selection screen
    1. [x] 4.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-WindowSelectionScreen.ps1`
       - `Show-WindowSelectionScreen -Console [Spectre.Console.IAnsiConsole]`
-      - **Step 1 — Sort/filter selection:**
-        - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name (A–Z)'`, `'Process name (Z–A)'`, `'Window title (A–Z)'`, `'Window title (Z–A)'`, `'Minimised first'`, `'Minimised last'`
+      - **Step 1 - Sort/filter selection:**
+        - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name (A-Z)'`, `'Process name (Z-A)'`, `'Window title (A-Z)'`, `'Window title (Z-A)'`, `'Minimised first'`, `'Minimised last'`
         - Map choice to a sort expression used in step 2
-      - **Step 2 — Enumerate and display windows:**
-        - Call `Get-EnumeratedWindows` (with no filters — same behaviour as current `Select-TargetWindowFromMenu` with no parameters)
+      - **Step 2 - Enumerate and display windows:**
+        - Call `Get-EnumeratedWindows` (with no filters - same behaviour as current `Select-TargetWindowFromMenu` with no parameters)
         - If result is empty: display error `Panel` `"No windows found. Ensure at least one application is open and try again."` using red markup; log via `Write-LastWarLog -Level Error`; return `$null`
         - Sort the results using the sort expression from step 1
         - Build a Spectre.Console `Table` with columns: `#`, `Active`, `Process`, `Application`, `Minimised`; populate with window data; mark the active (foreground) window with `[bold]*[/]` in the Active column
         - Write the table to `$Console`
-      - **Step 3 — Window selection:**
-        - Build a `SelectionPrompt` from the sorted window list; display format per choice: `"<#>: <ProcessName> — <WindowTitle> (<WindowState>)"`; add `"[Back to main menu]"` as the last choice
+      - **Step 3 - Window selection:**
+        - Build a `SelectionPrompt` from the sorted window list; display format per choice: `"<#>: <ProcessName> - <WindowTitle> (<WindowState>)"`; add `"[Back to main menu]"` as the last choice
         - Show the prompt; if user chooses `"[Back to main menu]"` return `$null`
         - Get selected window object by correlating the numbered choice back to the sorted list
-      - **Step 4 — Validate window still exists:**
-        - Call `Test-WindowHandleValid` (existing private function); if window is closed display error panel `"The selected window has closed. Please select another."`, log Error, re-display step 2 (loop back — do not return to main menu)
-      - **Step 5 — Save and return:**
+      - **Step 4 - Validate window still exists:**
+        - Call `Test-WindowHandleValid` (existing private function); if window is closed display error panel `"The selected window has closed. Please select another."`, log Error, re-display step 2 (loop back - do not return to main menu)
+      - **Step 5 - Save and return:**
         - Call `Save-ModuleConfiguration` to persist the selected window
         - Display success panel `"Window '[bold]<WindowTitle>[/]' selected and saved to configuration."`
         - Return the selected window object
@@ -618,7 +618,7 @@
       - Mock `Get-EnumeratedWindows` returning two mock windows → table and selection prompt rendered; `$testConsole.Output` contains both window titles
       - Queue input selecting `"[Back to main menu]"` → returns `$null`
       - Queue input selecting a valid window → `Save-ModuleConfiguration` called; returns selected window object
-      - Mock `Test-WindowHandleValid` returning `$false` → error panel shown; mock `Test-WindowHandleValid` is called again after user re-selects (loop test — use a counter mock that returns `$false` once, then `$true`)
+      - Mock `Test-WindowHandleValid` returning `$false` - error panel shown; mock `Test-WindowHandleValid` is called again after user re-selects (loop test - use a counter mock that returns `$false` once, then `$true`)
       - Sort selection propagated: mock `Get-EnumeratedWindows`; verify the table rows in `$testConsole.Output` appear in the expected sorted order
       - Run full Pester suite; confirm count increases
 
@@ -631,7 +631,7 @@
         - `Emergency stop settings`
         - `Storage & log file info`
         - `[Back to main menu]`
-      - Loops until user selects `"[Back to main menu]"`; dispatches each choice to the appropriate config sub-screen (steps 5.2–5.4, 6)
+      - Loops until user selects `"[Back to main menu]"`; dispatches each choice to the appropriate config sub-screen (steps 5.2-5.4, 6)
       - Passes `$Console` to all sub-screens
       - Full comment-based help
    2. [x] 5.2: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-LoggingConfigScreen.ps1`
@@ -643,8 +643,8 @@
         - If the user enters an empty string (just presses Enter), keep the existing value
         - If the user types a value, call `Test-ConfigValue`; if invalid, display the error message in red and re-prompt the same key (do not advance to the next key until valid input is given or user accepts the current value)
         - Offer `"[Reset to default]"` as a recognised input string that substitutes the default value from `Get-DefaultModuleSettings`
-      - After all keys: display a `SelectionPrompt` `"Save changes?"` with choices `'Yes — save now'`, `'Reset ALL Logging settings to defaults'`, `'Discard changes'`
-      - `'Yes — save now'`: call `Save-ModuleConfiguration` with updated config; display success panel; log Info
+      - After all keys: display a `SelectionPrompt` `"Save changes?"` with choices `'Yes - save now'`, `'Reset ALL Logging settings to defaults'`, `'Discard changes'`
+      - `'Yes - save now'`: call `Save-ModuleConfiguration` with updated config; display success panel; log Info
       - `'Reset ALL Logging settings to defaults'`: replace all Logging keys with defaults from `Get-DefaultModuleSettings`; save; display success panel; log Info
       - `'Discard changes'`: return without saving; display info panel `"No changes saved."`
       - Full comment-based help; all error paths logged
@@ -655,10 +655,10 @@
       - For `intArray` keys (range pairs): prompt for min and max separately; label as `"<Key> minimum (ms):"` and `"<Key> maximum (ms):"` respectively; after both are entered, validate the pair as a unit via `Test-ConfigValue`
       - Save/reset/discard options identical to `Show-LoggingConfigScreen`
       - Full comment-based help; all error paths logged
-   4. [ ] 5.4: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-EmergencyStopConfigScreen.ps1`
+   4. [x] 5.4: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-EmergencyStopConfigScreen.ps1`
       - `Show-EmergencyStopConfigScreen -Console [Spectre.Console.IAnsiConsole]`
       - Identical pattern to `Show-LoggingConfigScreen` but for all `EmergencyStop.*` keys
-      - For `HotkeyVKeyCodes` (int array of variable length): display as comma-separated hex strings (e.g. `0x11, 0x10, 0xDC`); accept input as comma-separated hex or decimal integers; parse and validate each element is a valid VKey code (0x01–0xFE); display informational note: `"Note: '#' key is 0xDC on UK layouts and layout-dependent on others. See README for details."`
+      - For `HotkeyVKeyCodes` (int array of variable length): display as comma-separated hex strings (e.g. `0x11, 0x10, 0xDC`); accept input as comma-separated hex or decimal integers; parse and validate each element is a valid VKey code (0x01-0xFE); display informational note: `"Note: '#' key is 0xDC on UK layouts and layout-dependent on others. See README for details."`
       - Save/reset/discard options identical above
       - Full comment-based help; all error paths logged
    5. [x] 5.5: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`
@@ -668,7 +668,7 @@
       - Run full Pester suite; confirm count increases
    6. [x] 5.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-LoggingConfigScreen.Tests.ps1`
       - Mock `Get-ModuleConfiguration` returning a known config; mock `Save-ModuleConfiguration`
-      - Queue empty string for all prompts → all current values retained; `Save-ModuleConfiguration` called with unchanged config when user chooses `'Yes — save now'`
+      - Queue empty string for all prompts - all current values retained; `Save-ModuleConfiguration` called with unchanged config when user chooses `'Yes - save now'`
       - Queue an invalid value for `MinimumLogLevel` → error message appears in `$testConsole.Output`; prompt is repeated
       - Queue `'[Reset to default]'` for one key → that key's value in the saved config equals the default from `Get-DefaultModuleSettings`
       - Queue `'Reset ALL Logging settings to defaults'` at save prompt → all Logging keys in saved config equal defaults
@@ -680,7 +680,7 @@
       - intArray: queue min > max → error message appears; pair is not saved; re-prompt
       - Queue valid min and max in order → saved as `@(min, max)` array
       - Run full Pester suite; confirm count increases
-   8. [ ] 5.8: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-EmergencyStopConfigScreen.Tests.ps1`
+   8. [x] 5.8: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-EmergencyStopConfigScreen.Tests.ps1`
       - Same pattern as 5.6 but for `EmergencyStop.*` keys
       - `HotkeyVKeyCodes`: queue `'0x11, 0x10, 0xDC'` → saved as `@(17, 16, 220)`
       - Queue `'0xFF, 0x200'` (second value out of range) → error; re-prompt
@@ -834,3 +834,4 @@
 - Exponential backoff with jitter for upload retry logic
 - Configurable retry attempts
 - Upload failure handling with same retry logic as other operations
+

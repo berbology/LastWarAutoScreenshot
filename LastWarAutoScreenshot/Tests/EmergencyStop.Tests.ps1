@@ -479,7 +479,7 @@ Describe 'Start-EmergencyStopMonitor' {
                 }
                 $monitor = Start-EmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17)
                 try {
-                    # Verify the timer was created — state is internal, but we verify the monitor started cleanly.
+                    # Verify the timer was created - state is internal, but we verify the monitor started cleanly.
                     $script:EmergencyStopTimer | Should -Not -BeNullOrEmpty
                     $script:EmergencyStopTimer.Enabled | Should -Be $true
                 } finally {
@@ -492,7 +492,7 @@ Describe 'Start-EmergencyStopMonitor' {
         It 'computes MouseGestureRequiredPollCount as ceiling(HoldDurationMs / PollIntervalMs)' {
             InModuleScope LastWarAutoScreenshot {
                 # Verify the formula: 3000 ms / 100 ms = 30 polls required.
-                # Pre-set counter to 29 — one more poll with both buttons held must trigger.
+                # Pre-set counter to 29 - one more poll with both buttons held must trigger.
                 $state = @{
                     Stopped                      = $false
                     Timer                        = $null
@@ -518,7 +518,7 @@ Describe 'Start-EmergencyStopMonitor' {
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Invoke-EmergencyStopPoll — Mouse Gesture Detection
+# Invoke-EmergencyStopPoll - Mouse Gesture Detection
 # Covers Phase 2 Step 4.6
 # ══════════════════════════════════════════════════════════════════════════════
 Describe 'Invoke-EmergencyStopPoll - Mouse Gesture Detection' {
@@ -540,7 +540,7 @@ Describe 'Invoke-EmergencyStopPoll - Mouse Gesture Detection' {
     Context 'When MouseGestureEnabled is $false' {
         It 'does not call GetKeyStateFn or modify state' {
             InModuleScope LastWarAutoScreenshot {
-                # GetKeyStateFn throws if called — confirms the gesture check is fully skipped.
+                # GetKeyStateFn throws if called - confirms the gesture check is fully skipped.
                 $state = @{
                     Stopped                      = $false
                     Timer                        = $null
@@ -847,7 +847,7 @@ Describe 'Invoke-EmergencyStopPoll - Mouse Gesture Detection' {
     Context 'When State.Stopped is $true before gesture check (e.g. hotkey fired first)' {
         It 'skips the mouse gesture check entirely without throwing' {
             InModuleScope LastWarAutoScreenshot {
-                # GetKeyStateFn throws if called — confirms the gesture is fully skipped.
+                # GetKeyStateFn throws if called - confirms the gesture is fully skipped.
                 $state = @{
                     Stopped                      = $true
                     Timer                        = $null
@@ -930,7 +930,7 @@ Describe 'Stop-EmergencyStopMonitor' {
 
                 Stop-EmergencyStopMonitor
 
-                # Flag must remain $true — Stop-EmergencyStopMonitor must not reset it
+                # Flag must remain $true - Stop-EmergencyStopMonitor must not reset it
                 $script:EmergencyStopRequested | Should -Be $true
             }
         }
@@ -965,3 +965,4 @@ Describe 'Stop-EmergencyStopMonitor' {
         }
     }
 }
+

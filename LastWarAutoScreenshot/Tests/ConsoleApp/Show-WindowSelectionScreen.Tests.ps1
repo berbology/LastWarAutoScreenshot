@@ -232,8 +232,8 @@ Describe 'Show-WindowSelectionScreen' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Sort selection
-                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select window (first loop — handle invalid)
-                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select window (second loop — handle valid)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select window (first loop - handle invalid)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select window (second loop - handle valid)
 
                 $result = Show-WindowSelectionScreen -Console $tc
                 $result | Should -Not -BeNullOrEmpty
@@ -332,7 +332,7 @@ Describe 'Show-WindowSelectionScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::Enter)      # Sort: Process name (A-Z) — first option
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Sort: Process name (A-Z) - first option
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 (alpha after A-Z)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (zapp)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu]
@@ -361,7 +361,7 @@ Describe 'Show-WindowSelectionScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name (Z-A) — second option
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name (Z-A) - second option
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 (zapp after Z-A)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (alpha)
@@ -405,3 +405,4 @@ Describe 'Show-WindowSelectionScreen' {
         }
     }
 }
+

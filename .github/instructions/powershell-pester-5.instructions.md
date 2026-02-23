@@ -9,7 +9,7 @@ This guide provides PowerShell-specific instructions for creating automated test
 
 # Running tests
 
-- NEVER run the tests yourself. Prompt me to run them manually and give you the output. Otherwise vscode crashes
+- DO NOT RUN THE TESTS! WHEN YOU NEED TO TEST THE CODE PROMPT ME AND I'LL RUN THEM AND CONFIRM WHETHER THEY FAIL OR NOT
 
 ## File Naming and Structure
 
@@ -219,7 +219,7 @@ Invoke-Pester -Configuration $config
 
 - Only use patterns and commands compatible with Pester 5.7.1 and up
 - Mocks must be inside Describe (or deeper) to be scoped correctly
-  - `Assert-MockCalled`/`Assert-MockNotCalled` are deprecated in Pester 5 — the instructions mandate `Should -Invoke`
+  - `Assert-MockCalled`/`Assert-MockNotCalled` are deprecated in Pester 5 - the instructions mandate `Should -Invoke`
   - Never dot source module scripts directly in tests, always use Import-Module
   - Always use Import-Module in a BeforeAll{} block nested at the top of a Describe{} block
   - Always import module using the code example below:
@@ -232,7 +232,7 @@ Invoke-Pester -Configuration $config
 
 - In order to ensure correct scoping and visibility ALWAYS add InModuleScope{} with -ModuleName parameter when using module functions
 - Always ensure InModuleScope blocks are placed at the correct nesting level as per Pester 5.7.1 best practices
-- **$script: scope rules — CRITICAL**: `$script:` inside `InModuleScope` resolves to the **module's** script scope, NOT the test file's script scope. These are two completely separate scopes. Never read a `$script:` variable inside `InModuleScope` that was assigned outside it (e.g. in a `BeforeAll`), and vice versa. This is the single most common source of silent null failures.
+- **$script: scope rules - CRITICAL**: `$script:` inside `InModuleScope` resolves to the **module's** script scope, NOT the test file's script scope. These are two completely separate scopes. Never read a `$script:` variable inside `InModuleScope` that was assigned outside it (e.g. in a `BeforeAll`), and vice versa. This is the single most common source of silent null failures.
 - **BeforeEach/AfterEach reset of module state**: When a test sets a module-scope `$script:` variable (e.g. `$script:EmergencyStopRequested`) via `InModuleScope`, you MUST reset it inside `InModuleScope` in `BeforeEach`/`AfterEach` too. Bare assignments outside `InModuleScope` only affect the test script scope and will NOT clean the module's copy, leaving state pollution for subsequent tests.
 - **Do not wrap tests in InModuleScope unless they call module-private code**: Public type definitions (`[Namespace.Type]::Method()`) and Win32 P/Invoke statics loaded by the module are accessible globally. Wrapping such tests in `InModuleScope` serves no purpose and breaks `$script:` variable access set in test-scope `BeforeAll` blocks.
 - Full Suite Requirement: Always run the entire, unfiltered Pester test suite (all test files, no tag or path filters) before marking any task as complete or updating documentation.
@@ -242,3 +242,4 @@ Invoke-Pester -Configuration $config
 - Result Summary: Summarize the test results (pass, fail, pending) and highlight any discrepancies before proceeding with project plan or codebase updates.
 - No Task Completion Without Full Pass: Never mark a task as complete or update the project plan unless the full suite has been run and the results match or exceed the previous baseline (except for known pending/integration tests).
 - PSPropertyCollection doesn't support direct .Count access - it evaluates per property instead of counting the total. Wrap it in `@()` to force the collection to be treated as a single array object
+

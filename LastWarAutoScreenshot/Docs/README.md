@@ -39,10 +39,10 @@ Use a PSCustomObject with the following fields (all values between 0.0 and 1.0, 
 
 | Field           | Type   | Description                                 |
 |-----------------|--------|---------------------------------------------|
-| RelativeX       | double | Left edge of box (relative X, 0.0–1.0)      |
-| RelativeY       | double | Top edge of box (relative Y, 0.0–1.0)       |
-| RelativeWidth   | double | Width of box (relative, 0.0–1.0)            |
-| RelativeHeight  | double | Height of box (relative, 0.0–1.0)           |
+| RelativeX       | double | Left edge of box (relative X, 0.0-1.0)      |
+| RelativeY       | double | Top edge of box (relative Y, 0.0-1.0)       |
+| RelativeWidth   | double | Width of box (relative, 0.0-1.0)            |
+| RelativeHeight  | double | Height of box (relative, 0.0-1.0)           |
 
 **Example:**
 
@@ -62,9 +62,9 @@ Use a PSCustomObject with the following fields (all values between 0.0 and 1.0, 
 
 | Field            | Type   | Description                                 |
 |------------------|--------|---------------------------------------------|
-| RelativeCentreX  | double | X coordinate of circle center (0.0–1.0)     |
-| RelativeCentreY  | double | Y coordinate of circle center (0.0–1.0)     |
-| RelativeRadius   | double | Radius of circle (relative, 0.0–1.0)        |
+| RelativeCentreX  | double | X coordinate of circle center (0.0-1.0)     |
+| RelativeCentreY  | double | Y coordinate of circle center (0.0-1.0)     |
+| RelativeRadius   | double | Radius of circle (relative, 0.0-1.0)        |
 
 **Example:**
 
@@ -100,11 +100,11 @@ These behaviors are fully configurable via the keys above. See [ProjectPlan.md](
 
 ## Logging
 
-For all details on error, diagnostic, and event logging—including log destinations, verbosity levels, configuration, and log format—see [docs/Logging.md](docs/Logging.md).
+For all details on error, diagnostic, and event logging-including log destinations, verbosity levels, configuration, and log format-see [docs/Logging.md](docs/Logging.md).
 
 ## Overview
 
-This project is a PowerShell 7+ module designed to automate human-like mouse movements, clicks, drags, and screen captures within Windows applications—primarily targeting the game Last War: Survival (`LastWar.exe`). The module uses window-relative coordinates for reliable automation across different display configurations and is extensible for other games or applications.
+This project is a PowerShell 7+ module designed to automate human-like mouse movements, clicks, drags, and screen captures within Windows applications-primarily targeting the game Last War: Survival (`LastWar.exe`). The module uses window-relative coordinates for reliable automation across different display configurations and is extensible for other games or applications.
 
 **Note:** This module is designed for Windows 11 (64-bit) where the target game is supported. Only one instance can run at a time since the game supports single-instance execution only.
 
@@ -192,7 +192,7 @@ Returns `$true` on success, `$false` on failure. Errors are printed in red to th
 
 ### `Set-WindowActive`
 
-Brings a window to the foreground. Accepts a handle, window title, or process ID — whichever is most convenient.
+Brings a window to the foreground. Accepts a handle, window title, or process ID - whichever is most convenient.
 
 ```powershell
 # By handle
@@ -230,7 +230,7 @@ $monitor = Start-WindowAndProcessMonitor `
 
 The returned object exposes four properties: `Timer`, `ProcessObject`, `Stop` (scriptblock), and `Cleanup` (scriptblock). Always call both `Stop` and `Cleanup` when the workflow ends to release the underlying timer and process object.
 
-**Polling interval:** Default is 1000 ms. Lower values detect closure faster at the cost of slightly higher CPU polling overhead. A range of 500–2000 ms is practical for most use cases.
+**Polling interval:** Default is 1000 ms. Lower values detect closure faster at the cost of slightly higher CPU polling overhead. A range of 500-2000 ms is practical for most use cases.
 
 ### Troubleshooting: Window State
 
@@ -257,7 +257,7 @@ $monitor = Start-EmergencyStopMonitor
 $monitor = Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
 ```
 
-**Idempotency:** calling `Start-EmergencyStopMonitor` while the monitor is already running is safe — it logs an Info message and returns `$null` without creating a second timer.
+**Idempotency:** calling `Start-EmergencyStopMonitor` while the monitor is already running is safe - it logs an Info message and returns `$null` without creating a second timer.
 
 **Re-arming:** `Start-EmergencyStopMonitor` resets `$script:EmergencyStopRequested` to `$false` on every clean start, so a new automation sequence can proceed immediately after calling it.
 
@@ -268,7 +268,7 @@ The returned object exposes two scriptblocks: `Stop` (sets the internal Stopped 
 Stops and disposes the background timer. Safe to call when no monitor is active (does not throw).
 
 ```powershell
-# Normal pattern — always stop in a finally block
+# Normal pattern - always stop in a finally block
 try {
     $result = Start-AutomationSequence -WindowHandle $handle -RelativeX 0.5 -RelativeY 0.5
 } finally {
@@ -278,7 +278,7 @@ try {
 
 **Important:** `Stop-EmergencyStopMonitor` does **not** reset `$script:EmergencyStopRequested`. After a triggered stop, the flag remains `$true` until the next call to `Start-EmergencyStopMonitor` (which resets it). Any code reading the flag between a stop and a restart will correctly see the previous stop.
 
-### `$script:EmergencyStopRequested` — the stop flag
+### `$script:EmergencyStopRequested` - the stop flag
 
 | Action                                        | Effect on flag        |
 |:----------------------------------------------|:----------------------|
@@ -447,3 +447,4 @@ Screenshot storage is managed with user-configurable limits:
 - **Naming:** Configurable patterns with timestamp and index placeholders
 
 Typical usage: Hundreds of screenshots per day, suitable for gaming PCs with adequate storage.
+

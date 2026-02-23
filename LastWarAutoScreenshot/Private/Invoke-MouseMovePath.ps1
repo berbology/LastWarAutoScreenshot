@@ -90,3 +90,4 @@ function Invoke-MouseMovePath {
 
     return $success
 }
+

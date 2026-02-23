@@ -18,7 +18,7 @@ function Show-MouseControlConfigScreen {
                Uses a ConfirmationPrompt (yes/no).  DefaultValue is set to the current value
                so pressing Enter keeps it unchanged.
 
-             intArray keys (range pairs — all duration/delay range keys):
+             intArray keys (range pairs - all duration/delay range keys):
                Shows two separate TextPrompts labelled:
                  "<Key> minimum (ms) [current: <min>]. Press Enter to keep:"
                  "<Key> maximum (ms) [current: <max>]. Press Enter to keep:"
@@ -35,7 +35,7 @@ function Show-MouseControlConfigScreen {
                any other input is validated and re-prompted if invalid.
 
           4. After all keys, renders a SelectionPrompt "Save changes?" with choices:
-               - 'Yes — save now'                           → calls Save-ModuleSettings; success panel.
+               - 'Yes - save now'                           → calls Save-ModuleSettings; success panel.
                - 'Reset ALL MouseControl settings to defaults' → replaces entire MouseControl
                                                                   section with defaults; saves; success panel.
                - 'Discard changes'                          → returns without saving; info panel.
@@ -69,7 +69,7 @@ function Show-MouseControlConfigScreen {
         TestConsole/Spectre.Console version in use.
 
         intArray '[Reset to default]' sentinel: entering '[Reset to default]' on either
-        the min or max prompt resets the ENTIRE array key to its default — not just one
+        the min or max prompt resets the ENTIRE array key to its default - not just one
         element.  Use 'Reset ALL MouseControl settings to defaults' at the save prompt
         to restore every key in one operation.
 
@@ -200,20 +200,20 @@ function Show-MouseControlConfigScreen {
             'stringEnum' { return "one of: $($rule.AllowedValues -join ' | ')" }
             'int' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "integer $($rule.Min)–$($rule.Max)"
+                    return "integer $($rule.Min)-$($rule.Max)"
                 }
                 return 'integer'
             }
             'double' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "decimal $($rule.Min)–$($rule.Max)"
+                    return "decimal $($rule.Min)-$($rule.Max)"
                 }
                 return 'decimal'
             }
             'bool'     { return 'yes or no' }
             'intArray' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "min, max (each $($rule.Min)–$($rule.Max); min ≤ max)"
+                    return "min, max (each $($rule.Min)-$($rule.Max); min ≤ max)"
                 }
                 return 'min, max'
             }
@@ -271,7 +271,7 @@ function Show-MouseControlConfigScreen {
                 $currentMin = $currentArr[0]
                 $currentMax = $currentArr[1]
 
-                # — Min prompt ——————————————————————————————————————————————
+                # - Min prompt ----------------------------------------------
                 $minPromptText = "$shortKey minimum (ms) [[current: $currentMin]]. Press Enter to keep:"
                 $minPrompt     = [Spectre.Console.TextPrompt[string]]::new($minPromptText)
                 $minPrompt.AllowEmpty = $true
@@ -286,7 +286,7 @@ function Show-MouseControlConfigScreen {
                     break
                 }
 
-                # — Max prompt ——————————————————————————————————————————————
+                # - Max prompt ----------------------------------------------
                 $maxPromptText = "$shortKey maximum (ms) [[current: $currentMax]]. Press Enter to keep:"
                 $maxPrompt     = [Spectre.Console.TextPrompt[string]]::new($maxPromptText)
                 $maxPrompt.AllowEmpty = $true
@@ -301,7 +301,7 @@ function Show-MouseControlConfigScreen {
                     break
                 }
 
-                # — Validate as a pair ————————————————————————————————————
+                # - Validate as a pair ------------------------------------
                 $pairString = "$minAnswer, $maxAnswer"
                 $validation = Test-ConfigValue -Key $def.Key -Value $pairString
                 if ($validation.Valid) {
@@ -309,7 +309,7 @@ function Show-MouseControlConfigScreen {
                     break
                 }
 
-                # Invalid — show error in red and re-prompt both min and max
+                # Invalid - show error in red and re-prompt both min and max
                 $Console.Write(
                     [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
                 )
@@ -344,7 +344,7 @@ function Show-MouseControlConfigScreen {
                     break
                 }
 
-                # Invalid — show error in red and re-prompt
+                # Invalid - show error in red and re-prompt
                 $Console.Write(
                     [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
                 )
@@ -355,7 +355,7 @@ function Show-MouseControlConfigScreen {
     # ── Step 3: Save / reset / discard ───────────────────────────────────────
     $savePrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
     $savePrompt.Title = 'Save changes?'
-    $savePrompt.AddChoice('Yes — save now')                               | Out-Null
+    $savePrompt.AddChoice('Yes - save now')                               | Out-Null
     $savePrompt.AddChoice('Reset ALL MouseControl settings to defaults')  | Out-Null
     $savePrompt.AddChoice('Discard changes')                              | Out-Null
 
@@ -363,7 +363,7 @@ function Show-MouseControlConfigScreen {
 
     switch ($saveChoice) {
 
-        'Yes — save now' {
+        'Yes - save now' {
             Save-ModuleSettings -Config $config
 
             $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
@@ -403,3 +403,4 @@ function Show-MouseControlConfigScreen {
         }
     }
 }
+

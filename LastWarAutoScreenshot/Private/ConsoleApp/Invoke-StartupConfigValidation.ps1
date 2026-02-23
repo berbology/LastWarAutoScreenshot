@@ -9,7 +9,7 @@ function Invoke-StartupConfigValidation {
 
         1. Calls Get-ModuleConfiguration to load the saved configuration.
            - If the file does not exist or is empty, Get-ModuleConfiguration creates and
-             returns a default configuration — this is always valid so the function
+             returns a default configuration - this is always valid so the function
              returns immediately with HasErrors=$false.
            - If the file contains invalid JSON, the underlying exception is caught here
              and an error Panel is written to $Console; HasErrors=$true is returned.
@@ -21,7 +21,7 @@ function Invoke-StartupConfigValidation {
         3. If any failures are found, writes a warning Panel listing each failing key
            and its validation message, then waits for the user to press Enter.
 
-        The function NEVER aborts startup.  All issues are advisory — the module
+        The function NEVER aborts startup.  All issues are advisory - the module
         operates on defaults for any invalid values until the user corrects them via
         'Configure Module'.
 
@@ -32,8 +32,8 @@ function Invoke-StartupConfigValidation {
     .OUTPUTS
         PSCustomObject
         Returns an object with:
-          HasErrors [bool]    — $true if any validation issue was found.
-          Messages  [string[]] — Array of human-readable issue descriptions
+          HasErrors [bool]    - $true if any validation issue was found.
+          Messages  [string[]] - Array of human-readable issue descriptions
                                  (empty array when HasErrors is $false).
 
     .EXAMPLE
@@ -56,7 +56,7 @@ function Invoke-StartupConfigValidation {
         TestConsole note:
           When using Spectre.Console.Testing.TestConsole, all Write() calls are captured
           in $testConsole.Output.  The 'Press Enter to continue' step reads one key via
-          $Console.Input.ReadKey($true) — tests must push a key before calling this
+          $Console.Input.ReadKey($true) - tests must push a key before calling this
           function if a validation error or warning is expected.
     #>
     [CmdletBinding()]
@@ -110,7 +110,7 @@ function Invoke-StartupConfigValidation {
             }
         }
         catch {
-            # Property navigation failed — skip this key; it will show as null in validation
+            # Property navigation failed - skip this key; it will show as null in validation
         }
 
         $validationResult = Test-ConfigValue -Key $key -Value $value
@@ -145,3 +145,4 @@ function Invoke-StartupConfigValidation {
         Messages  = $messages.ToArray()
     }
 }
+

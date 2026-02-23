@@ -354,3 +354,4 @@ All log entries must include the following fields:
 
 - See README.md for a summary and quick reference.
 - For implementation, see `src/LastWarAutoClickScreenshot/private/Write-LastWarLog.ps1`.
+

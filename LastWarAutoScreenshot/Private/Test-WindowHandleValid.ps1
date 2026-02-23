@@ -80,3 +80,4 @@ function Test-WindowHandleValid {
         return $false
     }
 }
+

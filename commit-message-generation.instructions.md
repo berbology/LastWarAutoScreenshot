@@ -28,3 +28,4 @@ These instructions define how commit messages should be generated for this proje
 ## Automation
 
 Commit messages may be auto-generated based on the changes made, but they must adhere to the above guidelines. Review and edit auto-generated messages as needed to ensure clarity and accuracy.
+

@@ -7,7 +7,7 @@ function Show-MainMenu {
         Renders a Spectre.Console SelectionPrompt with the following choices:
           - Select target window
           - Configure module
-          - Record macro (stub — displays a 'Not yet available' panel in the caller)
+          - Record macro (stub - displays a 'Not yet available' panel in the caller)
           - Run macro (disabled and shown as a non-selectable group header when no *.json files
             exist in the module's Private\Macros\ folder; a normal selectable choice otherwise)
           - Exit
@@ -63,7 +63,7 @@ function Show-MainMenu {
 
     # Build the SelectionPrompt
     $prompt       = [Spectre.Console.SelectionPrompt[string]]::new()
-    $prompt.Title = '[bold]Last War Auto Screenshot[/] — What would you like to do?'
+    $prompt.Title = '[bold]Last War Auto Screenshot[/] - What would you like to do?'
 
     $prompt.AddChoice('Select target window') | Out-Null
     $prompt.AddChoice('Configure module')     | Out-Null
@@ -85,3 +85,4 @@ function Show-MainMenu {
         default                { return 'Exit'         }
     }
 }
+

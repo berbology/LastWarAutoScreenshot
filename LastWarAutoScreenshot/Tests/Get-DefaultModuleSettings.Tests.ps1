@@ -143,3 +143,4 @@ Describe 'Get-DefaultModuleSettings' {
         }
     }
 }
+

@@ -148,3 +148,4 @@ Describe "Get-EnumeratedWindows" -Tag "Unit" {
     }
 
 }
+

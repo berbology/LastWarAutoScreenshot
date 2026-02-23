@@ -244,3 +244,4 @@ Describe 'Invoke-MouseClick' {
         }
     }
 }
+

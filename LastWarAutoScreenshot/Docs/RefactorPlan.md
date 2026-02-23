@@ -12,9 +12,9 @@ that review.
 
 ---
 
-## Item 1 — Fix broken test structure in `LoggingBackend.Tests.ps1` **[COMPLETED 2026-02-18]**
+## Item 1 - Fix broken test structure in `LoggingBackend.Tests.ps1` **[COMPLETED 2026-02-18]**
 
-**Priority:** High — affects test reliability and file system cleanliness
+**Priority:** High - affects test reliability and file system cleanliness
 
 ### Problem
 
@@ -54,9 +54,9 @@ at file scope, outside any `Describe`. This is also invalid in Pester v5.
 
 ---
 
-## Item 2 — Fix broken test structure in `LoggingBackend.RetentionPolicy.Isolated.Tests.ps1` **[COMPLETED 2026-02-18]**
+## Item 2 - Fix broken test structure in `LoggingBackend.RetentionPolicy.Isolated.Tests.ps1` **[COMPLETED 2026-02-18]**
 
-**Priority:** High — the test is likely not being discovered or run at all
+**Priority:** High - the test is likely not being discovered or run at all
 
 ### Problem
 
@@ -64,7 +64,7 @@ The file has the following layout:
 
 ```powershell
 BeforeAll { ... }
-    }           # orphaned closing brace — not valid at file scope
+    }           # orphaned closing brace - not valid at file scope
 
     It 'cleans up old logs by retention policy (isolated)' { ... }
 
@@ -113,9 +113,9 @@ Remove the two orphaned closing braces.
 
 ---
 
-## Item 3 — Remove redundant dot-source in `Write-LastWarLog.ps1` **[COMPLETED 2026-02-18]**
+## Item 3 - Remove redundant dot-source in `Write-LastWarLog.ps1` **[COMPLETED 2026-02-18]**
 
-**Priority:** Medium — unnecessary file I/O on every log call
+**Priority:** Medium - unnecessary file I/O on every log call
 
 ### Problem
 
@@ -164,9 +164,9 @@ scope).
 
 ---
 
-## Item 4 — Clean up `WindowAndProcessMonitor.Tests.ps1`
+## Item 4 - Clean up `WindowAndProcessMonitor.Tests.ps1`
 
-**Priority:** Medium — debug noise in output, code at file scope, and tests
+**Priority:** Medium - debug noise in output, code at file scope, and tests
 that may test the wrong thing
 
 ### Problem
@@ -262,11 +262,11 @@ v5 is out of spec and unreliable.
 
 ---
 
-## Item 5 — Replace `Assert-MockCalled` with `Should -Invoke` in
+## Item 5 - Replace `Assert-MockCalled` with `Should -Invoke` in
 
 `Set-WindowActive.Tests.ps1` and `Set-WindowState.Tests.ps1`
 
-**Priority:** Low — deprecated API, not currently broken but will break in
+**Priority:** Low - deprecated API, not currently broken but will break in
 future Pester releases
 
 ### Problem
@@ -319,21 +319,21 @@ Staying on deprecated API paths is a maintenance liability.
 
 **Completed 2026-02-18:** All Assert-MockCalled assertions replaced with Should -Invoke in Set-WindowActive.Tests.ps1 and Set-WindowState.Tests.ps1. Deprecation warnings eliminated, tests are now future-proof for Pester v5 and later.
 
-## Item 6 — Delete the dead `EventLogBackend.cs` source file
+## Item 6 - Delete the dead `EventLogBackend.cs` source file
 
-**Priority:** Low — no runtime impact, but misleading to readers
+**Priority:** Low - no runtime impact, but misleading to readers
 
 ### Problem
 
 `src/EventLogBackend.cs` still exists in the repository. It is **not**
-compiled or loaded — it was removed from the `Add-Type` call in
+compiled or loaded - it was removed from the `Add-Type` call in
 `LastWarAutoScreenshot.psm1` during a previous refactor session. The current
 architecture handles the EventLog backend entirely within
 `Private/Write-LastWarLog.ps1` using PowerShell's Write-EventLog cmdlet.
 
 The file contains a full C# class (`EventLogBackend`) that inherits from
 `LogBackend`, uses P/Invoke against `advapi32.dll`, and is fully functional
-on its own — but it is never invoked. Any developer reading the `src/`
+on its own - but it is never invoked. Any developer reading the `src/`
 directory would reasonably assume it is part of the active code.
 
 ### Affected file
@@ -349,7 +349,7 @@ implementation or the git history provides a clear reference.
 If you prefer not to delete it, add a comment block at the top of the file:
 
 ```csharp
-// ARCHIVED — This file is not compiled or loaded.
+// ARCHIVED - This file is not compiled or loaded.
 // The EventLog backend is implemented in Private/Write-LastWarLog.ps1 using PowerShell's Write-EventLog.
 // See git log for the history of why this approach was abandoned.
 ```
@@ -368,15 +368,15 @@ presence of an unlisted `.cs` file is actively misleading.
 
 ---
 
-## Item 7 — Simplify `Get-LoggingBackendConfig` tests
+## Item 7 - Simplify `Get-LoggingBackendConfig` tests
 
-**Priority:** Low — the tests work, but they are fragile and test
+**Priority:** Low - the tests work, but they are fragile and test
 implementation instead of behaviour
 
 ### Problem
 
 In `Tests/LoggingBackend.Tests.ps1`, the `describe 'Get-LoggingBackendConfig'`
-block mocks `Test-Path`, `Get-Content`, and `ConvertFrom-Json` — all
+block mocks `Test-Path`, `Get-Content`, and `ConvertFrom-Json` - all
 built-in PowerShell cmdlets. It then re-dot-sources `Get-LoggingBackendConfig`
 inside each test body. There are two problems:
 
@@ -439,9 +439,9 @@ the same lesson learned from the `EventLogBackend` saga.
 
 ---
 
-## Item 8 — Delete or archive the `.ps1.old` files in `Private/`
+## Item 8 - Delete or archive the `.ps1.old` files in `Private/`
 
-**Priority:** Low — no runtime impact, but dead code cluttering the module
+**Priority:** Low - no runtime impact, but dead code cluttering the module
 
 ### Problem
 
@@ -459,7 +459,7 @@ that was abandoned due to test scoping problems with PowerShell classes.
 `LogBackend.ps1.old` contains an earlier iteration of the logging backend
 abstraction.
 
-Having these in `Private/` is misleading — the directory is supposed to
+Having these in `Private/` is misleading - the directory is supposed to
 contain active private functions. A developer reading the directory listing
 cannot easily tell which files are live and which are dead.
 
@@ -478,7 +478,7 @@ and why they were retired.
 ### Why this matters
 
 The `Private/` directory should only contain active code. Dead files in an
-active directory are a maintenance liability — they will confuse future
+active directory are a maintenance liability - they will confuse future
 developers and AI agents working on the codebase.
 
 ### Status
@@ -487,7 +487,7 @@ developers and AI agents working on the codebase.
 
 ---
 
-## Architectural Decision Record — EventLog Backend Extensibility
+## Architectural Decision Record - EventLog Backend Extensibility
 
 This section records a deliberate architectural trade-off made during the
 EventLog refactoring. It is here so that future developers and AI agents do
@@ -518,7 +518,7 @@ without any changes to `Write-LastWarLog.ps1`.
 2. `Mock Write-EventLog` cannot intercept calls made from inside C# methods.
    C# calls the .NET API directly, bypassing PowerShell's mock infrastructure.
    To compensate, scriptblock delegates were injected into the C# constructor
-   as a mock seam — reimplementing dependency injection in C# purely to satisfy
+   as a mock seam - reimplementing dependency injection in C# purely to satisfy
    PowerShell tests. This made the code more complex, not less.
 
 3. PowerShell classes were tried as an alternative (see the `.ps1.old` files)
@@ -564,6 +564,7 @@ first reading this section and the git history for the EventLog backend.**
 | 7 | `Tests/LoggingBackend.Tests.ps1` | Tests verify internals not behaviour, fragile mocks | Medium |
 | 8 | `Private/EventLogBackend.ps1.old`, `Private/LogBackend.ps1.old` | Dead archive files in active code directory | Trivial |
 
-Items 1–3, 6, and 8 are safe to implement independently with no risk of regression.
+Items 1-3, 6, and 8 are safe to implement independently with no risk of regression.
 Items 4, 5, and 7 require reading the relevant source files carefully before
 making changes to avoid accidentally altering test intent.
+

@@ -42,7 +42,7 @@ Describe 'Get-RandomTargetPosition' {
         }
     }
 
-    Context 'Box parameter set: clamp — output respects [0.0, 1.0]' {
+    Context 'Box parameter set: clamp - output respects [0.0, 1.0]' {
 
         It 'no returned value falls outside [0.0, 1.0] across 100 iterations of a full-range box' {
             InModuleScope LastWarAutoScreenshot {
@@ -99,7 +99,7 @@ Describe 'Get-RandomTargetPosition' {
         It 'mean X of 100 points is within 10% of radius from centre X' {
             InModuleScope LastWarAutoScreenshot {
                 # Statistical note: z ≈ 2 for 10%-of-radius threshold with 100 samples (~95% pass rate).
-                # The test may fail rarely (~1 in 20 runs) purely from sampling variance — this is per-spec.
+                # The test may fail rarely (~1 in 20 runs) purely from sampling variance - this is per-spec.
                 $testCircle = [PSCustomObject]@{
                     RelativeCentreX = 0.5
                     RelativeCentreY = 0.5
@@ -118,7 +118,7 @@ Describe 'Get-RandomTargetPosition' {
         It 'mean Y of 100 points is within 10% of radius from centre Y' {
             InModuleScope LastWarAutoScreenshot {
                 # Statistical note: z ≈ 2 for 10%-of-radius threshold with 100 samples (~95% pass rate).
-                # The test may fail rarely (~1 in 20 runs) purely from sampling variance — this is per-spec.
+                # The test may fail rarely (~1 in 20 runs) purely from sampling variance - this is per-spec.
                 $testCircle = [PSCustomObject]@{
                     RelativeCentreX = 0.5
                     RelativeCentreY = 0.5
@@ -135,7 +135,7 @@ Describe 'Get-RandomTargetPosition' {
         }
     }
 
-    Context 'Circle parameter set: clamp — output respects [0.0, 1.0]' {
+    Context 'Circle parameter set: clamp - output respects [0.0, 1.0]' {
 
         It 'no returned value falls outside [0.0, 1.0] for a circle near an edge across 100 iterations' {
             InModuleScope LastWarAutoScreenshot {
@@ -210,3 +210,4 @@ Describe 'Get-RandomTargetPosition' {
         }
     }
 }
+

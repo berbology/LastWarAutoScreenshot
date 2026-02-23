@@ -808,7 +808,7 @@ Describe 'Configuration Functions Integration' {
 
         It 'Should inject individual EmergencyStop keys that are missing while preserving existing ones' {
             InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
-                # Config has EmergencyStop but only AutoStart — missing HotkeyVKeyCodes and PollIntervalMs
+                # Config has EmergencyStop but only AutoStart - missing HotkeyVKeyCodes and PollIntervalMs
                 $partialConfig = [PSCustomObject]@{
                     ProcessName         = $mockWindow.ProcessName
                     WindowTitle         = $mockWindow.WindowTitle
@@ -825,7 +825,7 @@ Describe 'Configuration Functions Integration' {
                 $partialConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $testConfigPath -Force
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 $es = $config.EmergencyStop
-                # AutoStart was explicitly set to $false — must be preserved
+                # AutoStart was explicitly set to $false - must be preserved
                 $es.AutoStart | Should -Be $false
                 # Missing keys should have been injected with defaults
                 $es.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
@@ -851,3 +851,4 @@ Describe 'Configuration Functions Integration' {
         }
     }
 }
+

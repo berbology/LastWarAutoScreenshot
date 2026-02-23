@@ -12,7 +12,7 @@ function Show-StorageInfoScreen {
         Data is sourced from Get-StorageInfo (to be implemented in Phase 6, task 6.2).
         Save/discard options follow the same pattern as Show-LoggingConfigScreen.
 
-        Not yet implemented — displays a "Not yet available" panel when called.
+        Not yet implemented - displays a "Not yet available" panel when called.
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for rendering and input.
@@ -39,3 +39,4 @@ function Show-StorageInfoScreen {
     )
     $Console.Write($stubPanel)
 }
+

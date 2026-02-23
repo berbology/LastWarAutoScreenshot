@@ -23,3 +23,4 @@ function Get-LogCheckHint {
         return 'Check the log file for details.'
     }
 }
+

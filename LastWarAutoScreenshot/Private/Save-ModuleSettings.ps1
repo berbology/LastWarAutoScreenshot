@@ -107,3 +107,4 @@ function Save-ModuleSettings {
         }
     }
 }
+

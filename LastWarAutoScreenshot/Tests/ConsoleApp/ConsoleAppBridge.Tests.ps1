@@ -78,7 +78,7 @@ Describe 'ConsoleAppBridge' {
 
         It 'Should use Rounded border style' {
             $result = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(@('A'))
-            # Rounded border is the project-standard style — verify it matches the static property
+            # Rounded border is the project-standard style - verify it matches the static property
             $result.Border | Should -Be ([Spectre.Console.TableBorder]::Rounded)
         }
 
@@ -114,7 +114,7 @@ Describe 'ConsoleAppBridge' {
         }
 
         It 'Should not throw when content is null (PowerShell coerces $null to empty string for string params)' {
-            # Same coercion caveat as CreateSelectionPrompt — $null becomes ''
+            # Same coercion caveat as CreateSelectionPrompt - $null becomes ''
             { [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($null, 'Header') } | Should -Not -Throw
         }
 
@@ -123,3 +123,4 @@ Describe 'ConsoleAppBridge' {
         }
     }
 }
+

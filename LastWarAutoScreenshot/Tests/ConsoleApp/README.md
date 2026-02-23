@@ -20,3 +20,4 @@ Pass `$testConsole` to screen functions via the `-Console` parameter and assert 
 | File | Screen / Function |
 |------|------------------|
 | `ConsoleAppBridge.Tests.ps1` | `[LastWarAutoScreenshot.ConsoleAppBridge]` type and methods |
+

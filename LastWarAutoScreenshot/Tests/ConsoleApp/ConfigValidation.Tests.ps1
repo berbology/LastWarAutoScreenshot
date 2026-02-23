@@ -207,7 +207,7 @@ Describe 'Test-ConfigValue' {
             }
         }
 
-        It 'Should return Valid=$true for each valid MinimumLogLevel value — "<EnumVal>"' -ForEach @(
+        It 'Should return Valid=$true for each valid MinimumLogLevel value - "<EnumVal>"' -ForEach @(
             @{ EnumVal = 'Verbose' }
             @{ EnumVal = 'Info'    }
             @{ EnumVal = 'Warning' }
@@ -234,7 +234,7 @@ Describe 'Test-ConfigValue' {
             }
         }
 
-        It 'Should return Valid=$true for each valid Logging.Backend value — "<EnumVal>"' -ForEach @(
+        It 'Should return Valid=$true for each valid Logging.Backend value - "<EnumVal>"' -ForEach @(
             @{ EnumVal = 'File'          }
             @{ EnumVal = 'EventLog'      }
             @{ EnumVal = 'File,EventLog' }
@@ -380,3 +380,4 @@ Describe 'Test-ConfigValue' {
         }
     }
 }
+

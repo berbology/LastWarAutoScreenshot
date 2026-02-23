@@ -12,3 +12,4 @@ $windows | Select-Object ProcessName, WindowTitle, WindowHandleString, ProcessID
 
 # Show count
 "Total windows found: $($windows.Count)"
+

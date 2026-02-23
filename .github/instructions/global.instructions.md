@@ -126,3 +126,4 @@
 3. Consider power consumption and memory usage
 4. Add appropriate debug output for troubleshooting
 5. Use non-blocking calls and avoid long delays
+

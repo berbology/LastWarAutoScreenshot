@@ -36,10 +36,10 @@ function Show-ConfigMenuScreen {
         on its Output property without requiring a live terminal.
 
         Sub-screen implementation status:
-          Show-LoggingConfigScreen       — implemented in Phase 5, task 5.2
-          Show-MouseControlConfigScreen  — stub in Phase 5, task 5.3
-          Show-EmergencyStopConfigScreen — stub in Phase 5, task 5.4
-          Show-StorageInfoScreen         — stub in Phase 6, task 6.3
+          Show-LoggingConfigScreen       - implemented in Phase 5, task 5.2
+          Show-MouseControlConfigScreen  - stub in Phase 5, task 5.3
+          Show-EmergencyStopConfigScreen - stub in Phase 5, task 5.4
+          Show-StorageInfoScreen         - stub in Phase 6, task 6.3
     #>
     [CmdletBinding()]
     param(
@@ -79,9 +79,10 @@ function Show-ConfigMenuScreen {
             }
 
             default {
-                # '[Back to main menu]' or any unrecognised value — exit the loop
+                # '[Back to main menu]' or any unrecognised value - exit the loop
                 return
             }
         }
     }
 }
+

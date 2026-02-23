@@ -23,7 +23,7 @@ function Show-LoggingConfigScreen {
                                           enters a valid value or accepts the current value
                                           via Enter.
           4. After all keys, renders a SelectionPrompt "Save changes?" with choices:
-               - 'Yes — save now'                 → calls Save-ModuleSettings; success panel.
+               - 'Yes - save now'                 → calls Save-ModuleSettings; success panel.
                - 'Reset ALL Logging settings to defaults' → replaces entire Logging section
                                                               with defaults; saves; success panel.
                - 'Discard changes'                → returns without saving; info panel.
@@ -63,7 +63,7 @@ function Show-LoggingConfigScreen {
 
         'Reset ALL Logging settings to defaults' on the save prompt replaces the entire
         Logging sub-object with a fresh copy from Get-DefaultModuleSettings and saves
-        immediately — any per-key changes made earlier in the same session are discarded.
+        immediately - any per-key changes made earlier in the same session are discarded.
     #>
     [CmdletBinding()]
     param(
@@ -123,20 +123,20 @@ function Show-LoggingConfigScreen {
             'stringEnum' { return "one of: $($rule.AllowedValues -join ' | ')" }
             'int' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "integer $($rule.Min)–$($rule.Max)"
+                    return "integer $($rule.Min)-$($rule.Max)"
                 }
                 return 'integer'
             }
             'double' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "decimal $($rule.Min)–$($rule.Max)"
+                    return "decimal $($rule.Min)-$($rule.Max)"
                 }
                 return 'decimal'
             }
             'bool'     { return 'true or false' }
             'intArray' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "min, max (each $($rule.Min)–$($rule.Max); min ≤ max)"
+                    return "min, max (each $($rule.Min)-$($rule.Max); min ≤ max)"
                 }
                 return 'min, max'
             }
@@ -201,7 +201,7 @@ function Show-LoggingConfigScreen {
                 break
             }
 
-            # Invalid — show error and re-prompt
+            # Invalid - show error and re-prompt
             $Console.Write(
                 [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
             )
@@ -211,7 +211,7 @@ function Show-LoggingConfigScreen {
     # ── Step 3: Save / reset / discard ───────────────────────────────────────
     $savePrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
     $savePrompt.Title = 'Save changes?'
-    $savePrompt.AddChoice('Yes — save now')                          | Out-Null
+    $savePrompt.AddChoice('Yes - save now')                          | Out-Null
     $savePrompt.AddChoice('Reset ALL Logging settings to defaults')  | Out-Null
     $savePrompt.AddChoice('Discard changes')                         | Out-Null
 
@@ -219,7 +219,7 @@ function Show-LoggingConfigScreen {
 
     switch ($saveChoice) {
 
-        'Yes — save now' {
+        'Yes - save now' {
             Save-ModuleSettings -Config $config
 
             $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
@@ -259,3 +259,4 @@ function Show-LoggingConfigScreen {
         }
     }
 }
+

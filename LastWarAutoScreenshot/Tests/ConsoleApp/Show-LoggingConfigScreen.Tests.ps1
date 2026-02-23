@@ -93,9 +93,9 @@ Describe 'Show-LoggingConfigScreen' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Empty input keeps current values; Yes — save now calls Save-ModuleSettings
+    # Context: Empty input keeps current values; Yes - save now calls Save-ModuleSettings
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user presses Enter for all keys and chooses Yes — save now' {
+    Context 'When the user presses Enter for all keys and chooses Yes - save now' {
 
         It 'Calls Save-ModuleSettings exactly once' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
@@ -781,3 +781,4 @@ Describe 'Show-LoggingConfigScreen' {
         }
     }
 }
+

@@ -352,3 +352,4 @@ It 'Handles back option correctly' {
 ---
 
 **Remember:** When in doubt, escape your square brackets with `[[` and `]]`. This prevents 99% of Spectre.Console markup errors in PowerShell projects.
+

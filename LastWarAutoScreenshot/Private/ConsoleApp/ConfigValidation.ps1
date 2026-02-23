@@ -32,8 +32,8 @@ function Test-ConfigValue {
     .OUTPUTS
         PSCustomObject
         Returns a result object with:
-        - Valid   [bool]   — $true if the value is valid, $false otherwise.
-        - Message [string] — Human-readable explanation when Valid is $false;
+        - Valid   [bool]   - $true if the value is valid, $false otherwise.
+        - Message [string] - Human-readable explanation when Valid is $false;
                              empty string when Valid is $true.
 
     .EXAMPLE
@@ -45,7 +45,7 @@ function Test-ConfigValue {
         $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value '200, 600'
 
     .NOTES
-        Pure PowerShell — no Add-Type calls.  All logic is based on the
+        Pure PowerShell - no Add-Type calls.  All logic is based on the
         $script:ConfigValidationSchema hashtable populated in
         Get-DefaultModuleSettings.ps1 at module load time.
     #>
@@ -60,7 +60,7 @@ function Test-ConfigValue {
         [object]$Value
     )
 
-    # Unknown key — pass through silently
+    # Unknown key - pass through silently
     if (-not $script:ConfigValidationSchema.ContainsKey($Key)) {
         return [PSCustomObject]@{ Valid = $true; Message = '' }
     }
@@ -273,8 +273,9 @@ function Test-ConfigValue {
         }
 
         default {
-            # Unknown type in schema — treat as valid to avoid false positives
+            # Unknown type in schema - treat as valid to avoid false positives
             return [PSCustomObject]@{ Valid = $true; Message = '' }
         }
     }
 }
+

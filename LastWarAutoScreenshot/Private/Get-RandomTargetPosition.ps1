@@ -3,14 +3,14 @@
     Generate a random target position within a bounding box or circle (relative coordinates).
 .DESCRIPTION
     Provides two parameter sets:
-    -Box: Uniform random within a box defined by RelativeX, RelativeY, RelativeWidth, RelativeHeight (all 0.0–1.0).
-    -Circle: Uniform random within a circle defined by RelativeCentreX, RelativeCentreY, RelativeRadius (all 0.0–1.0).
+    -Box: Uniform random within a box defined by RelativeX, RelativeY, RelativeWidth, RelativeHeight (all 0.0-1.0).
+    -Circle: Uniform random within a circle defined by RelativeCentreX, RelativeCentreY, RelativeRadius (all 0.0-1.0).
     Output is clamped to [0.0, 1.0] for both axes. Returns PSCustomObject @{RelativeX; RelativeY} or $null on invalid input.
     Pure PowerShell, no Add-Type.
 .PARAMETER Box
-    PSCustomObject with properties: RelativeX, RelativeY, RelativeWidth, RelativeHeight (all 0.0–1.0)
+    PSCustomObject with properties: RelativeX, RelativeY, RelativeWidth, RelativeHeight (all 0.0-1.0)
 .PARAMETER Circle
-    PSCustomObject with properties: RelativeCentreX, RelativeCentreY, RelativeRadius (all 0.0–1.0)
+    PSCustomObject with properties: RelativeCentreX, RelativeCentreY, RelativeRadius (all 0.0-1.0)
 .EXAMPLE
     Get-RandomTargetPosition -Box $box
 .EXAMPLE
@@ -80,3 +80,4 @@ function Get-RandomTargetPosition {
         return $null
     }
 }
+

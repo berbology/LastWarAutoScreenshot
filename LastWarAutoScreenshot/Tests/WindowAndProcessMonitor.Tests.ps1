@@ -80,7 +80,7 @@ Describe 'Start-WindowAndProcessMonitor' -Tag 'Integration' {
                 Mock Write-LastWarLog {}
                 Mock Test-WindowHandleValid { $true }
                 Mock Prompt-RetryAbort {}
-                # Call Invoke-MonitorPoll directly with a healthy state — no timer or sleep required.
+                # Call Invoke-MonitorPoll directly with a healthy state - no timer or sleep required.
                 # Using Start-WindowAndProcessMonitor + Start-Sleep was timing-dependent and flaky.
                 $state = @{
                     Stopped = $false; Timer = $null; WindowHandle = 123456; ProcessId = 12345
@@ -249,3 +249,4 @@ Describe 'Get-LogCheckHint' {
         }
     }
 }
+

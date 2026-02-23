@@ -39,3 +39,4 @@ function Invoke-GetCursorPosition {
         return $null
     }
 }
+
