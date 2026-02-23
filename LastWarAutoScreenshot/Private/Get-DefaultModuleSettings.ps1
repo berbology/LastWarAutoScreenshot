@@ -14,6 +14,7 @@ function Get-DefaultModuleSettings {
         - Logging (PSCustomObject): Default logging backend settings
         - MouseControl (PSCustomObject): Default mouse control settings
         - EmergencyStop (PSCustomObject): Default emergency stop settings
+        - Screenshots (PSCustomObject): Default screenshot storage settings
 
     .EXAMPLE
         $defaults = Get-DefaultModuleSettings
@@ -63,6 +64,11 @@ function Get-DefaultModuleSettings {
             # VK codes for mouse buttons are fixed and keyboard-layout-independent.
             MouseGestureEnabled        = $true
             MouseGestureHoldDurationMs = 3000
+        }
+        Screenshots = [PSCustomObject]@{
+            # Empty string = not yet configured; the storage info screen handles this state.
+            StoragePath  = ''
+            MaxStorageGB = 2.0
         }
     }
 }
@@ -235,6 +241,20 @@ $script:ConfigValidationSchema = @{
         Min         = 500
         Max         = 30000
         Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop (500-30000)'
+        Nullable    = $false
+    }
+
+    # --- Screenshots ---
+    'Screenshots.StoragePath'                     = @{
+        Type        = 'string'
+        Description = 'Folder path where screenshots are stored; empty string = not yet configured'
+        Nullable    = $true
+    }
+    'Screenshots.MaxStorageGB'                    = @{
+        Type        = 'double'
+        Min         = 0.1
+        Max         = 2048.0
+        Description = 'Maximum storage allocated to screenshots in GB (0.1-2048.0)'
         Nullable    = $false
     }
 }

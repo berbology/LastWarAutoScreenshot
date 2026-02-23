@@ -96,9 +96,10 @@ function Get-ModuleConfiguration {
                 # Get defaults from single source of truth
                 $defaults = Get-DefaultModuleSettings
                 $defaultConfig = [PSCustomObject]@{
-                    Logging      = $defaults.Logging
-                    MouseControl = $defaults.MouseControl
+                    Logging       = $defaults.Logging
+                    MouseControl  = $defaults.MouseControl
                     EmergencyStop = $defaults.EmergencyStop
+                    Screenshots   = $defaults.Screenshots
                 }
 
                 # Ensure the target directory exists before writing.
@@ -156,6 +157,17 @@ function Get-ModuleConfiguration {
                 foreach ($key in $defaults.Logging.PSObject.Properties.Name) {
                     if (-not $configData.Logging.PSObject.Properties[$key]) {
                         $configData.Logging | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.Logging.$key
+                    }
+                }
+            }
+
+            # Inject missing Screenshots keys (Phase 3 task 6.1)
+            if (-not $configData.PSObject.Properties['Screenshots']) {
+                $configData | Add-Member -MemberType NoteProperty -Name Screenshots -Value $defaults.Screenshots
+            } else {
+                foreach ($key in $defaults.Screenshots.PSObject.Properties.Name) {
+                    if (-not $configData.Screenshots.PSObject.Properties[$key]) {
+                        $configData.Screenshots | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.Screenshots.$key
                     }
                 }
             }

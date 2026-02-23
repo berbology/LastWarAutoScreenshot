@@ -152,6 +152,13 @@ function Save-ModuleConfiguration {
                 $defaults.EmergencyStop
             }
 
+            # Use existing Screenshots settings if available, otherwise use defaults
+            $screenshotsConfig = if ($existingConfig -and $existingConfig.Screenshots) {
+                $existingConfig.Screenshots
+            } else {
+                $defaults.Screenshots
+            }
+
             # Prepare configuration object for serialization
             $configData = [PSCustomObject]@{
                 ProcessName         = $WindowObject.ProcessName
@@ -166,6 +173,7 @@ function Save-ModuleConfiguration {
                 Logging             = $loggingConfig
                 MouseControl        = $mouseControlConfig
                 EmergencyStop       = $emergencyStopConfig
+                Screenshots         = $screenshotsConfig
             }
 
             Write-Verbose "Serializing configuration to JSON format"

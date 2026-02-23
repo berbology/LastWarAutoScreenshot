@@ -688,7 +688,7 @@
       - Run full Pester suite; confirm count increases
 
 6. [ ] Implement the storage & log file info screen
-   1. [ ] 6.1: Add a `Screenshots` section to `ModuleConfig.json` and defaults
+   1. [x] 6.1: Add a `Screenshots` section to `ModuleConfig.json` and defaults
       - New key: `"Screenshots": { "StoragePath": "", "MaxStorageGB": 2.0 }`
       - `StoragePath` default: `""` (empty string = not yet configured; storage screen shows "Not configured")
       - `MaxStorageGB` default: `2.0`; validation: `double`, `Min = 0.1`, `Max = 2048.0`
@@ -701,6 +701,7 @@
       - `Get-StorageInfo`
       - Reads `Screenshots.StoragePath` and `Screenshots.MaxStorageGB` from config
       - If `StoragePath` is empty or path does not exist: returns `[PSCustomObject]@{IsConfigured=$false; UsedGB=0.0; MaxGB=0.0; UsedPercent=0.0; LogFileSizeGB=0.0}`
+        - Should handle $null StoragePath defensively as in Get-DefaultModuleSettings.ps1
       - If configured: sums `(Get-ChildItem -Path $StoragePath -Recurse -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum` for screenshot files; converts to GB
       - Also computes log file folder size using `Logging.FileBackend` path (module root by convention)
       - Returns `[PSCustomObject]@{IsConfigured=[bool]; UsedGB=[double]; MaxGB=[double]; UsedPercent=[double]; LogFileSizeGB=[double]}`
@@ -834,4 +835,3 @@
 - Exponential backoff with jitter for upload retry logic
 - Configurable retry attempts
 - Upload failure handling with same retry logic as other operations
-

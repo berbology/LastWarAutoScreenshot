@@ -397,6 +397,17 @@ Describe 'Get-ModuleConfiguration' {
             }
         }
 
+        It 'Should return a config with Screenshots defaults' {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ nonExistentPath = $script:nonExistentPath } {
+                Mock Write-LastWarLog {}
+                Mock Write-Host {}
+                $config = Get-ModuleConfiguration -ConfigurationPath $nonExistentPath
+                $config.Screenshots | Should -Not -BeNullOrEmpty
+                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.MaxStorageGB | Should -Be 2.0
+            }
+        }
+
         It 'Should create the config file on disk' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ nonExistentPath = $script:nonExistentPath } {
                 Mock Write-LastWarLog {}
@@ -528,6 +539,20 @@ Describe 'Get-ModuleConfiguration' {
                 $config.Logging | Should -Not -BeNullOrEmpty
                 $config.Logging.Backend | Should -Be 'File,EventLog'
                 $config.Logging.MinimumLogLevel | Should -Be 'Info'
+            }
+        }
+
+        It 'Should return Screenshots defaults when file is empty' {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+                Mock Write-LastWarLog {}
+                Mock Write-Host {}
+                '' | Set-Content -Path $testConfigPath -Force
+
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+
+                $config.Screenshots | Should -Not -BeNullOrEmpty
+                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }
 
@@ -665,6 +690,10 @@ Describe 'Configuration Functions Integration' {
                 $config.EmergencyStop.HotkeyVKeyCodes | Should -Be $expectedDefaults.EmergencyStop.HotkeyVKeyCodes
                 $config.EmergencyStop.MouseGestureEnabled | Should -Be $expectedDefaults.EmergencyStop.MouseGestureEnabled
                 $config.EmergencyStop.MouseGestureHoldDurationMs | Should -Be $expectedDefaults.EmergencyStop.MouseGestureHoldDurationMs
+
+                # Verify Screenshots matches defaults
+                $config.Screenshots.StoragePath | Should -Be $expectedDefaults.Screenshots.StoragePath
+                $config.Screenshots.MaxStorageGB | Should -Be $expectedDefaults.Screenshots.MaxStorageGB
             }
         }
 
@@ -687,6 +716,10 @@ Describe 'Configuration Functions Integration' {
                 # Verify EmergencyStop matches defaults
                 $savedConfig.EmergencyStop.AutoStart | Should -Be $expectedDefaults.EmergencyStop.AutoStart
                 $savedConfig.EmergencyStop.HotkeyVKeyCodes | Should -Be $expectedDefaults.EmergencyStop.HotkeyVKeyCodes
+
+                # Verify Screenshots matches defaults
+                $savedConfig.Screenshots.StoragePath | Should -Be $expectedDefaults.Screenshots.StoragePath
+                $savedConfig.Screenshots.MaxStorageGB | Should -Be $expectedDefaults.Screenshots.MaxStorageGB
             }
         }
 
@@ -841,6 +874,123 @@ Describe 'Configuration Functions Integration' {
                 $es.AutoStart | Should -Be $true
                 $es.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
                 $es.PollIntervalMs | Should -Be 100
+            }
+        }
+
+        It 'Should include Screenshots defaults when Screenshots section is absent from file' {
+            InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
+                # Write a config that has no Screenshots section at all
+                $noScreenshotsConfig = [PSCustomObject]@{
+                    ProcessName        = $mockWindow.ProcessName
+                    WindowTitle        = $mockWindow.WindowTitle
+                    WindowHandle       = $mockWindow.WindowHandle
+                    WindowHandleString = $mockWindow.WindowHandle.ToString()
+                    WindowHandleInt64  = [int64]$mockWindow.WindowHandle
+                    ProcessID          = $mockWindow.ProcessID
+                    WindowState        = $mockWindow.WindowState
+                    SavedDate          = (Get-Date -Format 'o')
+                    SavedBy            = $env:USERNAME
+                    ComputerName       = $env:COMPUTERNAME
+                }
+                $noScreenshotsConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $testConfigPath -Force
+
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.Screenshots | Should -Not -BeNullOrEmpty
+                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.MaxStorageGB | Should -Be 2.0
+            }
+        }
+
+        It 'Should inject individual Screenshots keys that are missing while preserving existing ones' {
+            InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
+                # Config has Screenshots but only StoragePath - MaxStorageGB is absent
+                $partialScreenshotsConfig = [PSCustomObject]@{
+                    ProcessName        = $mockWindow.ProcessName
+                    WindowTitle        = $mockWindow.WindowTitle
+                    WindowHandle       = $mockWindow.WindowHandle
+                    WindowHandleString = $mockWindow.WindowHandle.ToString()
+                    WindowHandleInt64  = [int64]$mockWindow.WindowHandle
+                    ProcessID          = $mockWindow.ProcessID
+                    WindowState        = $mockWindow.WindowState
+                    SavedDate          = (Get-Date -Format 'o')
+                    SavedBy            = $env:USERNAME
+                    ComputerName       = $env:COMPUTERNAME
+                    Screenshots        = [PSCustomObject]@{ StoragePath = 'C:\MyScreenshots' }
+                }
+                $partialScreenshotsConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $testConfigPath -Force
+
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                # Explicitly set StoragePath must be preserved
+                $config.Screenshots.StoragePath | Should -Be 'C:\MyScreenshots'
+                # Missing MaxStorageGB should be injected with the default
+                $config.Screenshots.MaxStorageGB | Should -Be 2.0
+            }
+        }
+
+        It 'Should save and load Screenshots.StoragePath round-trip' {
+            InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
+                # Save defaults (StoragePath = '')
+                Save-ModuleConfiguration -WindowObject $mockWindow -ConfigurationPath $testConfigPath -Force
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.Screenshots.StoragePath | Should -Be ''
+            }
+        }
+
+        It 'Should save and load Screenshots.MaxStorageGB round-trip' {
+            InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
+                # Save defaults (MaxStorageGB = 2.0)
+                Save-ModuleConfiguration -WindowObject $mockWindow -ConfigurationPath $testConfigPath -Force
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.Screenshots.MaxStorageGB | Should -Be 2.0
+            }
+        }
+
+        It 'Should preserve existing Screenshots settings when saving a new window target' {
+            InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
+                # Create a config file with custom Screenshots values
+                $existingWithScreenshots = [PSCustomObject]@{
+                    ProcessName        = 'OldProcess'
+                    WindowTitle        = 'Old Window'
+                    WindowHandleString = '111'
+                    WindowHandleInt64  = [int64]111
+                    ProcessID          = [uint32]1
+                    WindowState        = 'Visible'
+                    SavedDate          = (Get-Date -Format 'o')
+                    SavedBy            = $env:USERNAME
+                    ComputerName       = $env:COMPUTERNAME
+                    Logging            = [PSCustomObject]@{
+                        Backend         = 'File'
+                        MinimumLogLevel = 'Info'
+                        FileBackend     = [PSCustomObject]@{
+                            MaxSizeMB = 50; MaxFileCount = 50; MaxAgeDays = 30; RetentionFileCount = 500
+                        }
+                    }
+                    MouseControl       = [PSCustomObject]@{
+                        EasingEnabled = $true; OvershootEnabled = $true; OvershootFactor = 0.1
+                        MicroPausesEnabled = $true; MicroPauseChance = 0.2
+                        MicroPauseDurationRangeMs = @(20, 80); JitterEnabled = $true; JitterRadiusPx = 2
+                        BezierControlPointOffsetFactor = 0.3; MovementDurationRangeMs = @(200, 600)
+                        ClickDownDurationRangeMs = @(50, 150); ClickPreDelayRangeMs = @(50, 200)
+                        ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
+                    }
+                    EmergencyStop      = [PSCustomObject]@{
+                        AutoStart = $true; HotkeyVKeyCodes = @(17, 16, 220)
+                        PollIntervalMs = 100; MouseGestureEnabled = $true; MouseGestureHoldDurationMs = 3000
+                    }
+                    Screenshots        = [PSCustomObject]@{
+                        StoragePath  = 'D:\GameScreenshots'
+                        MaxStorageGB = 5.0
+                    }
+                }
+                $existingWithScreenshots | ConvertTo-Json -Depth 5 | Set-Content -Path $testConfigPath -Force
+
+                Mock Write-Host {}
+                Save-ModuleConfiguration -WindowObject $mockWindow -ConfigurationPath $testConfigPath -Force
+                $config = Get-Content -Path $testConfigPath -Raw | ConvertFrom-Json
+
+                # Custom Screenshots settings must survive a window-target save
+                $config.Screenshots.StoragePath | Should -Be 'D:\GameScreenshots'
+                $config.Screenshots.MaxStorageGB | Should -Be 5.0
             }
         }
 
