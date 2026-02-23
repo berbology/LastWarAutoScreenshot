@@ -622,8 +622,8 @@
       - Sort selection propagated: mock `Get-EnumeratedWindows`; verify the table rows in `$testConsole.Output` appear in the expected sorted order
       - Run full Pester suite; confirm count increases
 
-5. [ ] Implement the configuration screens
-   1. [ ] 5.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-ConfigMenuScreen.ps1`
+5. [x] Implement the configuration screens
+   1. [x] 5.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-ConfigMenuScreen.ps1`
       - `Show-ConfigMenuScreen -Console [Spectre.Console.IAnsiConsole]`
       - Displays a `SelectionPrompt` "Configuration area:" with choices:
         - `Logging settings`
@@ -634,7 +634,7 @@
       - Loops until user selects `"[Back to main menu]"`; dispatches each choice to the appropriate config sub-screen (steps 5.2–5.4, 6)
       - Passes `$Console` to all sub-screens
       - Full comment-based help
-   2. [ ] 5.2: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-LoggingConfigScreen.ps1`
+   2. [x] 5.2: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-LoggingConfigScreen.ps1`
       - `Show-LoggingConfigScreen -Console [Spectre.Console.IAnsiConsole]`
       - Loads current config via `Get-ModuleConfiguration`
       - Displays a `Table` showing current values for all `Logging.*` and `Logging.FileBackend.*` keys, their current values, allowed values / range, and a description sourced from `$script:ConfigValidationSchema`
@@ -661,12 +661,12 @@
       - For `HotkeyVKeyCodes` (int array of variable length): display as comma-separated hex strings (e.g. `0x11, 0x10, 0xDC`); accept input as comma-separated hex or decimal integers; parse and validate each element is a valid VKey code (0x01–0xFE); display informational note: `"Note: '#' key is 0xDC on UK layouts and layout-dependent on others. See README for details."`
       - Save/reset/discard options identical above
       - Full comment-based help; all error paths logged
-   5. [ ] 5.5: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`
+   5. [x] 5.5: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`
       - Queue `"[Back to main menu]"` → loop exits; no sub-screen called
       - Queue `"Logging settings"` then `"[Back to main menu]"` → `Show-LoggingConfigScreen` called exactly once
       - Repeat for each sub-screen option
       - Run full Pester suite; confirm count increases
-   6. [ ] 5.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-LoggingConfigScreen.Tests.ps1`
+   6. [x] 5.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-LoggingConfigScreen.Tests.ps1`
       - Mock `Get-ModuleConfiguration` returning a known config; mock `Save-ModuleConfiguration`
       - Queue empty string for all prompts → all current values retained; `Save-ModuleConfiguration` called with unchanged config when user chooses `'Yes — save now'`
       - Queue an invalid value for `MinimumLogLevel` → error message appears in `$testConsole.Output`; prompt is repeated
