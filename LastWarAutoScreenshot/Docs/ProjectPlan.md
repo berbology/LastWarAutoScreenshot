@@ -535,8 +535,8 @@
       - `Test-ConfigValue`: valid int within range → `Valid=$true`; int below Min → `Valid=$false` with non-empty message; int above Max → same; stringEnum valid value → `Valid=$true`; invalid value → `Valid=$false`; bool true → `Valid=$true`; intArray with element[0] > element[1] → `Valid=$false`; unknown key not in schema → `Valid=$true`
       - Run full Pester suite; confirm count increases
 
-3. [ ] Create the entry point and main menu screen
-   1. [ ] 3.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-MainMenu.ps1`
+3. [x] Create the entry point and main menu screen
+   1. [x] 3.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-MainMenu.ps1`
       - `Show-MainMenu -Console [Spectre.Console.IAnsiConsole]`
       - Displays a `SelectionPrompt` with the following options:
         - `Select target window`
@@ -547,7 +547,7 @@
       - To detect macros: check `Join-Path $script:ModuleRootPath 'Private\Macros\*.json'` using `Get-ChildItem`; if count is 0 the option is rendered as `[grey](No macros recorded)[/]` and is excluded from selectable choices
       - Returns a string matching one of the menu option identifiers: `'SelectWindow'`, `'Configure'`, `'RecordMacro'`, `'RunMacro'`, `'Exit'`
       - Full comment-based help
-   2. [ ] 3.2: Create `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1`
+   2. [x] 3.2: Create `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1`
       - `[CmdletBinding()]` — no mandatory parameters
       - Optional `[Spectre.Console.IAnsiConsole]$Console` parameter defaulting to `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()`; this is the testability injection point
       - On startup:
@@ -557,7 +557,7 @@
         4. `'Exit'` breaks the loop
         5. All other options call the relevant screen function (steps 4, 5, 6) passing `$Console`
       - Full comment-based help with `.NOTES` documenting the `$Console` injection pattern
-   3. [ ] 3.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Invoke-StartupConfigValidation.ps1`
+   3. [x] 3.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Invoke-StartupConfigValidation.ps1`
       - `Invoke-StartupConfigValidation -Console [Spectre.Console.IAnsiConsole]`
       - Calls `Get-ModuleConfiguration`; if the file does not exist or is empty (both handled by `Get-ModuleConfiguration`'s own defaults path) the function returns immediately with no warnings — a freshly-created default config is always valid
       - If the file exists but contains invalid JSON: displays an error panel `"Configuration file contains invalid JSON. Default values will be used. Please reconfigure via Configure Module."` via `$Console.Write()`
@@ -566,29 +566,29 @@
       - Does NOT abort startup; only informs the user
       - Returns `[PSCustomObject]@{HasErrors=[bool]; Messages=[string[]]}`
       - Full comment-based help
-   4. [ ] 3.4: Update `LastWarAutoScreenshot.psd1`
+   4. [x] 3.4: Update `LastWarAutoScreenshot.psd1`
       - Add `'Start-LastWarAutoScreenshot'` to `FunctionsToExport`
-   5. [ ] 3.5: Update `LastWarAutoScreenshot.psm1`
+   5. [x] 3.5: Update `LastWarAutoScreenshot.psm1`
       - Add `Export-ModuleMember -Function 'Start-LastWarAutoScreenshot'` alongside the existing exports
-   6. [ ] 3.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-MainMenu.Tests.ps1`
+   6. [x] 3.6: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-MainMenu.Tests.ps1`
       - Import module; all tests use `InModuleScope`
       - Setup: `$testConsole = [Spectre.Console.Testing.TestConsole]::new()`; load `Spectre.Console.Testing.dll` via `Add-Type` in `BeforeAll`
       - Mock `Get-ChildItem` returning empty list → "Run macro" option rendered, is not in selectable choices (assert `$testConsole.Output` does not contain a selectable "Run macro" choice); queue `testConsole.Input.PushTextWithEnter('Exit')` to break prompt
       - Mock `Get-ChildItem` returning one mock file `'20260101_120000_TestMacro.json'` → "Run macro" choice is present in output
       - Return value from `Show-MainMenu` matches expected identifier string for each choice
-   7. [ ] 3.7: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1`
+   7. [x] 3.7: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1`
       - Mock `Show-MainMenu` returning `'Exit'` → loop exits cleanly, no exception
       - Mock `Invoke-StartupConfigValidation` returning `@{HasErrors=$false; Messages=@()}` → no error panel rendered; assert `$testConsole.Output` does not contain error markup
       - Mock `Invoke-StartupConfigValidation` returning `@{HasErrors=$true; Messages=@('Logging.MinimumLogLevel: invalid value')}` → error panel content appears in `$testConsole.Output`
       - Mock `Show-MainMenu` returning `'SelectWindow'` once, then `'Exit'` → window selection screen function called exactly once
       - `$Console` defaulting to real console when not provided — verify the parameter default is `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()`
-   8. [ ] 3.8: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Invoke-StartupConfigValidation.Tests.ps1`
+   8. [x] 3.8: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Invoke-StartupConfigValidation.Tests.ps1`
       - Config file does not exist → `Get-ModuleConfiguration` creates defaults; function returns `HasErrors=$false`; no output written to `$testConsole`
       - Config file exists, all values valid → returns `HasErrors=$false`; no panel written
       - Config file exists, one invalid value → returns `HasErrors=$true`; `$testConsole.Output` contains the key name and validation message
       - Multiple invalid values → all listed in output
       - Invalid JSON in config file → error panel shown; `Write-LastWarLog` called with `Level = 'Warning'`
-   9. [ ] 3.9: Run full Pester suite; confirm count increases and all tests pass
+   9. [x] 3.9: Run full Pester suite; confirm count increases and all tests pass
 
 4. [ ] Implement the window selection screen
    1. [ ] 4.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-WindowSelectionScreen.ps1`
