@@ -729,21 +729,342 @@
       - Queue invalid `MaxStorageGB` (e.g. `-1`) → error shown; re-prompt
       - Run full Pester suite; confirm count increases
 
-7. [ ] Run full Pester suite and validate
+7. [x] Run full Pester suite and validate
    1. [x] 7.1: Run the complete, unfiltered Pester suite (all files, no tag filters)
       - Record total test count; it must meet or exceed the Phase 2 final baseline
       - All tests must pass with 0 failures
       - If any test fails that previously passed, halt and investigate; do not proceed
-   2. [ ] 7.2: Manually smoke-test `Start-LastWarAutoScreenshot` in a real terminal
+   2. [x] 7.2: Manually smoke-test `Start-LastWarAutoScreenshot` in a real terminal
       - Import module; call `Start-LastWarAutoScreenshot`
       - Navigate every screen at least once; exercise sort options in window selection; save and reload a config change; observe the storage screen
       - Confirm no ANSI artefacts or rendering glitches
-   3. [ ] 7.3: Update `LastWarAutoScreenshot/Docs/README.md`
+   3. [x] 7.3: Update `LastWarAutoScreenshot/Docs/README.md`
       - Add "Getting Started" section documenting `Start-LastWarAutoScreenshot` as the entry point with a usage example
       - Document the `Private/Macros/` folder naming convention for macros
       - Document the `lib/VERSIONS.txt` file and how to update the bundled DLLs if needed
       - Document all new config keys (`Screenshots.StoragePath`, `Screenshots.MaxStorageGB`) with types, defaults, and examples
       - Document the `IAnsiConsole` injection pattern for contributors writing new screens
+
+8. [ ] Use alternate screen buffer for each sub-screen
+
+   ### Background and goal
+
+   Currently all console output accumulates in a single terminal buffer. Each time a sub-screen
+   (window selection, configuration, storage info) is displayed, its output appends below the
+   main menu, producing cluttered terminal history that never scrolls away. The goal of this task
+   is to render every sub-screen in a dedicated alternate screen buffer, exactly as demonstrated
+   by the Spectre.Console "Mirror universe" example (`examples/Console/AlternateScreen`), so that:
+   - Each sub-screen renders into a clean, empty terminal buffer
+   - When the sub-screen exits (for any reason, including unhandled exceptions), the original
+     terminal content (the main menu) is automatically restored by the OS/terminal
+   - The user experience is equivalent to a proper full-screen TUI application
+   - Terminals that do not support alternate buffers (e.g. CI runners, legacy consoles) continue
+     to function without error via graceful degradation
+
+   ### Architecture decision
+
+   Alternate screen management is **centralised in `Start-LastWarAutoScreenshot.ps1`**, not
+   distributed across each `Show-*Screen.ps1` function. Reasons:
+   - Screen functions remain pure; they have no awareness of buffer management
+   - `Show-ConfigMenuScreen` dispatches to config sub-screens; centralising avoids double-nesting
+     the alternate buffer (entering it again inside an already-entered alternate screen)
+   - Simpler to reason about: one place owns the enter/exit lifecycle
+   - Existing screen tests call functions directly and are completely unaffected
+
+   The `[System.Action]` delegate pattern with `.GetNewClosure()` is used when passing a
+   PowerShell scriptblock to the C# `RunInAlternateScreen` method.  This is consistent with
+   the `.GetNewClosure()` pattern already used in `Start-EmergencyStopMonitor.ps1` for timer
+   callbacks.
+
+   ---
+
+   1. [ ] 8.1: Add `RunInAlternateScreen` static method to `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
+      - Add the following method to the existing `ConsoleAppBridge` static class (no new files):
+
+        ```csharp
+        /// <summary>
+        /// Runs the supplied <paramref name="action"/> inside an alternate terminal screen
+        /// buffer when the terminal supports it.  If the terminal does not support alternate
+        /// buffers (e.g. CI runners, legacy consoles) the action is invoked directly so that
+        /// callers degrade gracefully without any code change.
+        /// </summary>
+        /// <param name="console">
+        /// The <see cref="IAnsiConsole"/> instance to use.  The buffer capability is checked
+        /// on this instance so that injected test consoles are respected correctly.
+        /// </param>
+        /// <param name="action">The screen content to run inside the alternate buffer.</param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="console"/> or <paramref name="action"/> is <c>null</c>.
+        /// </exception>
+        public static void RunInAlternateScreen(IAnsiConsole console, Action action)
+        {
+            if (console == null) throw new ArgumentNullException(nameof(console));
+            if (action == null) throw new ArgumentNullException(nameof(action));
+
+            if (console.Profile.Capabilities.AlternateBuffer)
+            {
+                // Spectre.Console IAnsiConsole extension method (Spectre.Console >= 0.42;
+                // bundled version is 0.54.0 so this is guaranteed available).
+                // It writes ESC[?1049h, clears the screen, runs the action, then writes
+                // ESC[?1049l in a finally block, restoring the original buffer even if
+                // the action throws.
+                console.AlternateScreen(action);
+            }
+            else
+            {
+                // Graceful degradation: run the action directly in the current buffer.
+                // No ANSI sequences are written; output accumulates as before.
+                action();
+            }
+        }
+        ```
+
+      - The `using System;` directive is already present in `ConsoleAppBridge.cs`; no new
+        `using` directives are required because `AlternateScreen` is an extension method in
+        the `Spectre.Console` namespace which is already imported.
+      - Do NOT add `SetLastError`, P/Invoke, or any unmanaged code; this is pure managed .NET.
+      - Place the method after the existing `CreatePanel` method, before the closing `}` of the
+        class.
+
+   2. [ ] 8.2: Update `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1` to wrap each sub-screen dispatch in `RunInAlternateScreen`
+
+      - **Do not change** `Invoke-StartupConfigValidation` or `Show-MainMenu`; these must
+        remain in the normal terminal buffer so the user always returns to a clean menu.
+      - Modify only the `switch` body inside the `while ($true)` loop.
+      - For each case, assign the content to a named scriptblock variable, call `.GetNewClosure()`
+        on it (to capture `$Console` from the enclosing function scope), cast to `[System.Action]`,
+        and pass to `RunInAlternateScreen`.  This is identical to the `.GetNewClosure()` pattern
+        already used for timer callbacks in `Start-EmergencyStopMonitor.ps1`.
+      - Updated switch body (replace the entire `switch ($choice) { … }` block):
+
+        ```powershell
+        switch ($choice) {
+
+            'SelectWindow' {
+                $screenBlock = { Show-WindowSelectionScreen -Console $Console }.GetNewClosure()
+                [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
+                    $Console, [System.Action]$screenBlock)
+            }
+
+            'Configure' {
+                $screenBlock = { Show-ConfigMenuScreen -Console $Console }.GetNewClosure()
+                [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
+                    $Console, [System.Action]$screenBlock)
+            }
+
+            'RecordMacro' {
+                $screenBlock = {
+                    $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                        'Macro recording is not yet available. This feature will be implemented in a future release.',
+                        'Record Macro'
+                    )
+                    $Console.Write($stubPanel)
+                }.GetNewClosure()
+                [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
+                    $Console, [System.Action]$screenBlock)
+            }
+
+            'RunMacro' {
+                # Phase 4 placeholder - macro running requires the recording feature first
+            }
+
+            'Exit' {
+                return
+            }
+        }
+        ```
+
+      - `RunMacro` is a no-op placeholder and does not need wrapping yet (nothing is rendered).
+      - Update the `.NOTES` section of the function's comment-based help to document that
+        sub-screen dispatches use alternate screen buffers via `RunInAlternateScreen`, and that
+        terminals not supporting alternate buffers fall back to in-place rendering automatically.
+
+   3. [ ] 8.3: Review all existing `Tests/ConsoleApp/*.Tests.ps1` files - confirm no changes are needed
+
+      This review step is mandatory before proceeding to step 8.4.
+
+      Existing screen tests call `Show-*Screen` functions directly (not via
+      `Start-LastWarAutoScreenshot`).  They create a `TestConsole` and inject it.
+      `Spectre.Console.Testing.TestConsole` sets `Profile.Capabilities.AlternateBuffer = $false`
+      by default (it is a headless test double, not a live terminal).  Because
+      `RunInAlternateScreen` is called from `Start-LastWarAutoScreenshot.ps1` and NOT from the
+      `Show-*Screen` functions, these tests do not call `RunInAlternateScreen` at all.
+      Therefore **no changes are expected** to any of the following:
+
+      - `Tests/ConsoleApp/ConfigValidation.Tests.ps1`
+      - `Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1` — updated in step 8.4
+      - `Tests/ConsoleApp/Get-StorageInfo.Tests.ps1`
+      - `Tests/ConsoleApp/Invoke-StartupConfigValidation.Tests.ps1`
+      - `Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`
+      - `Tests/ConsoleApp/Show-EmergencyStopConfigScreen.Tests.ps1`
+      - `Tests/ConsoleApp/Show-LoggingConfigScreen.Tests.ps1`
+      - `Tests/ConsoleApp/Show-MainMenu.Tests.ps1`
+      - `Tests/ConsoleApp/Show-MouseControlConfigScreen.Tests.ps1`
+      - `Tests/ConsoleApp/Show-StorageInfoScreen.Tests.ps1`
+      - `Tests/ConsoleApp/Show-WindowSelectionScreen.Tests.ps1`
+      - `Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` — updated in step 8.5
+
+      For each file above (except those being updated), open it, confirm no test references
+      `RunInAlternateScreen` or `AlternateBuffer`, and record "no change required" against each.
+      If any test unexpectedly breaks after steps 8.1–8.2, halt and investigate before continuing.
+
+   4. [ ] 8.4: Add `RunInAlternateScreen` tests to `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
+
+      Add a new `Context 'RunInAlternateScreen'` block after the existing `Context 'CreatePanel'`
+      block.  Load `Spectre.Console.Testing.dll` is already loaded via the `BeforeAll` at the top
+      of the file — no new setup is needed.
+
+      Tests to add:
+
+      - **Action invoked when AlternateBuffer capability is false (graceful degradation)**
+
+        ```
+        $tc = [Spectre.Console.Testing.TestConsole]::new()
+        # AlternateBuffer defaults to $false on TestConsole - no need to set it explicitly
+        $invoked = $false
+        $action  = [System.Action]{ $invoked = $true }
+        [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen($tc, $action)
+        $invoked | Should -BeTrue
+        ```
+
+      - **Action invoked when AlternateBuffer capability is true**
+
+        ```
+        $tc = [Spectre.Console.Testing.TestConsole]::new()
+        $tc.Profile.Capabilities.AlternateBuffer = $true
+        $invoked = $false
+        $action  = [System.Action]{ $invoked = $true }
+        [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen($tc, $action)
+        $invoked | Should -BeTrue
+        ```
+
+      - **Throws ArgumentNullException when console is null**
+
+        ```
+        { [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen($null, [System.Action]{}) }
+            | Should -Throw
+        ```
+
+      - **Throws ArgumentNullException when action is null**
+
+        ```
+        $tc = [Spectre.Console.Testing.TestConsole]::new()
+        { [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen($tc, $null) }
+            | Should -Throw
+        ```
+
+      - **Alternate screen ANSI sequence appears in output when AlternateBuffer is true**
+        - Set `$tc.Profile.Capabilities.AlternateBuffer = $true`
+        - Queue an empty action; call `RunInAlternateScreen`
+        - Assert `$tc.Output` contains the ANSI entry sequence `ESC[?1049h` (as a raw byte
+          sequence in the output string): `$tc.Output | Should -Match '\x1b\[\?1049h'`
+        - This confirms Spectre.Console's `AlternateScreen` extension method was actually
+          invoked (not just the graceful-degradation path)
+
+      Important scoping note: these tests do NOT use `InModuleScope` because
+      `[LastWarAutoScreenshot.ConsoleAppBridge]` is a .NET type, not a PowerShell function.
+      The `$invoked = $false` / `$invoked = $true` pattern works because the `[System.Action]`
+      delegate captures the enclosing PowerShell scope via closure.
+
+   5. [ ] 8.5: Update `LastWarAutoScreenshot/Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` to cover the `RunInAlternateScreen` dispatch path
+
+      **Existing tests must not be removed or altered** — verify they still pass as-is after
+      the `Start-LastWarAutoScreenshot.ps1` changes from step 8.2 (they should, because
+      `TestConsole.AlternateBuffer = $false` means `RunInAlternateScreen` calls the action
+      directly, so mocked screen functions are still called in exactly the same way).
+
+      Add a new `Context 'Alternate screen dispatch'` block with the following tests:
+
+      - **Screen function is called when AlternateBuffer is false (default)**
+
+        ```
+        Mock Invoke-StartupConfigValidation { [PSCustomObject]@{HasErrors=$false;Messages=@()} }
+        Mock Show-WindowSelectionScreen { }
+        $callCount = 0
+        Mock Show-MainMenu -MockWith {
+            $callCount++
+            if ($callCount -eq 1) { return 'SelectWindow' }
+            return 'Exit'
+        }
+        $tc = [Spectre.Console.Testing.TestConsole]::new()
+        # AlternateBuffer is $false by default; action runs directly
+        Start-LastWarAutoScreenshot -Console $tc
+        Should -Invoke Show-WindowSelectionScreen -Exactly 1
+        ```
+
+      - **Screen function is called when AlternateBuffer is true**
+
+        ```
+        Mock Invoke-StartupConfigValidation { [PSCustomObject]@{HasErrors=$false;Messages=@()} }
+        Mock Show-ConfigMenuScreen { }
+        $callCount = 0
+        Mock Show-MainMenu -MockWith {
+            $callCount++
+            if ($callCount -eq 1) { return 'Configure' }
+            return 'Exit'
+        }
+        $tc = [Spectre.Console.Testing.TestConsole]::new()
+        $tc.Profile.Capabilities.Interactive = $true
+        $tc.Profile.Capabilities.AlternateBuffer = $true
+        Start-LastWarAutoScreenshot -Console $tc
+        Should -Invoke Show-ConfigMenuScreen -Exactly 1
+        ```
+
+      - **RecordMacro stub renders inside alternate screen when AlternateBuffer is true**
+
+        ```
+        Mock Invoke-StartupConfigValidation { [PSCustomObject]@{HasErrors=$false;Messages=@()} }
+        $callCount = 0
+        Mock Show-MainMenu -MockWith {
+            $callCount++
+            if ($callCount -eq 1) { return 'RecordMacro' }
+            return 'Exit'
+        }
+        $tc = [Spectre.Console.Testing.TestConsole]::new()
+        $tc.Profile.Capabilities.Interactive = $true
+        $tc.Profile.Capabilities.AlternateBuffer = $true
+        Start-LastWarAutoScreenshot -Console $tc
+        # Stub panel content must appear in the TestConsole output regardless of buffer mode
+        $tc.Output | Should -Match 'Macro recording is not yet available'
+        ```
+
+      All three tests use `InModuleScope -ModuleName 'LastWarAutoScreenshot'` consistent with
+      the existing tests in this file.
+
+   6. [ ] 8.6: Run the full Pester suite and validate
+
+      - Run the complete, unfiltered Pester suite (all files, no tag or name filters)
+      - Total test count must meet or exceed the Phase 3 Task 7 baseline plus the new tests
+        added in steps 8.4 and 8.5
+      - All tests must pass with 0 failures and 0 errors
+      - If any previously-passing test now fails, halt immediately; do not proceed until the
+        regression is understood and fixed (do not delete or skip failing tests)
+
+   7. [ ] 8.7: Manually smoke-test the alternate screen behaviour in a real terminal
+
+      - Import the module: `Import-Module .\LastWarAutoScreenshot\LastWarAutoScreenshot.psd1 -Force`
+      - Call `Start-LastWarAutoScreenshot`
+      - Navigate to "Select target window" — confirm the terminal clears and shows only the
+        window selection screen; no main menu content is visible behind it
+      - Press back / select a window and return — confirm the main menu is restored cleanly with
+        no artefacts from the window selection screen
+      - Repeat for "Configure module" and the macro stub
+      - Navigate two levels deep: main menu → Configure → Logging settings; confirm only one
+        alternate screen is active (the config menu and its sub-screens share the same buffer;
+        there is no double-nesting)
+      - Hold `Ctrl+Shift+#` during a screen to trigger emergency stop; confirm the terminal
+        restores correctly after the stop message
+      - If your terminal does not support alternate buffers, confirm the application still works
+        (output accumulates in-place; no crash or error)
+
+   8. [ ] 8.8: Update `LastWarAutoScreenshot/Docs/README.md`
+
+      - In the "Console Application" or "Getting Started" section, add a note explaining that
+        each sub-screen uses an alternate terminal buffer; users with terminals that do not
+        support alternate buffers will see output accumulate in-place (this is expected and not
+        a bug)
+      - Document that `Start-LastWarAutoScreenshot` is the sole entry point and that buffer
+        management is handled automatically — no user action is required
 
 ## Phase 4: Mouse Macro Recording
 
@@ -852,3 +1173,12 @@
 
 - Many console app tests use workarounds for matching text that wraps onto next line
 - This is messy, find a way to resolve this cleanly
+
+10.3 [ ] Spectre.Console screen layout - module configuration
+
+- Put all configuration options on one screen
+  - Currently separate screens for each category of config options, overkill. Have all config on one page under category headings
+    - Have page 1, page 2 if required - press [F1] previous page, [F2] next page
+  - Don't iterate through all options for each category as we currently do, select a single config option on main config page to set it
+  - Show user key names not codes for configuration requiring key presses
+  -
