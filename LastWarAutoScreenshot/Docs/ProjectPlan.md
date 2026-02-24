@@ -697,7 +697,7 @@
       - Update `Get-ModuleConfiguration` to inject missing `Screenshots` keys using the same `Add-Member` pattern as existing sections
       - Update `Save-ModuleConfiguration` to persist `Screenshots` keys
       - Update `ModuleConfiguration.Tests.ps1`: add round-trip tests for `Screenshots.StoragePath` and `Screenshots.MaxStorageGB`; add default-injection test
-   2. [ ] 6.2: Create `LastWarAutoScreenshot/Private/ConsoleApp/Get-StorageInfo.ps1`
+   2. [x] 6.2: Create `LastWarAutoScreenshot/Private/ConsoleApp/Get-StorageInfo.ps1`
       - `Get-StorageInfo`
       - Reads `Screenshots.StoragePath` and `Screenshots.MaxStorageGB` from config
       - If `StoragePath` is empty or path does not exist: returns `[PSCustomObject]@{IsConfigured=$false; UsedGB=0.0; MaxGB=0.0; UsedPercent=0.0; LogFileSizeGB=0.0}`

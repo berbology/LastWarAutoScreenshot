@@ -169,7 +169,7 @@ when it pertains to an issue during troubleshooting. Remind me to remove it once
 ### Profiling and Benchmarking
 
 - **Profilers:** Use language-specific profilers (Chrome DevTools, Py-Spy, VisualVM, dotTrace, etc.) to identify bottlenecks.
-- **Microbenchmarks:** Write microbenchmarks for critical code paths. Use `benchmark.js`, `pytest-benchmark`, or JMH for Java.
+- **Microbenchmarking:** Write microbenchmarks for critical code paths. Use `benchmark.js`, `pytest-benchmark`, or JMH for Java.
 - **A/B Testing:** Measure real-world impact of optimizations with A/B or canary releases.
 - **Continuous Performance Testing:** Integrate performance tests into CI/CD. Use tools like k6, Gatling, or Locust.
 
@@ -344,4 +344,3 @@ Performance optimization is an ongoing process. Always measure, profile, and ite
 ---
 
 <!-- End of Performance Optimization Instructions -->
-

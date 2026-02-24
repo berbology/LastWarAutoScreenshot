@@ -95,4 +95,3 @@ For this project: Respect my classes, and interfaces and general design
 Only suggest absolute minimal necessary changes.
 Confirm you've read the full instructions and will follow these anti-violation rules for every response.
 Confirm a list of all instructions files you just read and then a list of those you didn't and why. Ask me if I want to add or remove any files from your context
-
