@@ -715,13 +715,13 @@
       - If `UsedPercent >= 90`: display warning panel `"Screenshot storage is over 90% full. Consider increasing the limit or clearing old screenshots."` in yellow
       - Save/discard pattern identical to config screens
       - Full comment-based help; all error paths logged
-   4. [ ] 6.4: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Get-StorageInfo.Tests.ps1`
+   4. [x] 6.4: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Get-StorageInfo.Tests.ps1`
       - Mock `Get-ModuleConfiguration` returning `StoragePath = ''` → returns `IsConfigured=$false`
       - Mock `Get-ModuleConfiguration` returning a valid path that does not exist → returns `IsConfigured=$false`
       - Mock `Get-ChildItem` returning a fixed list of files with known sizes → `UsedGB` calculated correctly; `UsedPercent` calculated correctly against `MaxStorageGB`
       - Access denied path → returns `IsConfigured=$false`; `Write-LastWarLog` called with `Level = 'Error'`
       - Run full Pester suite; confirm count increases
-   5. [ ] 6.5: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-StorageInfoScreen.Tests.ps1`
+   5. [x] 6.5: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-StorageInfoScreen.Tests.ps1`
       - Mock `Get-StorageInfo` returning `IsConfigured=$false` → info panel shown; prompts for `StoragePath` and `MaxStorageGB`
       - Mock `Get-StorageInfo` returning `UsedPercent = 95.0` → warning panel content appears in `$testConsole.Output`
       - Mock `Get-StorageInfo` returning `UsedPercent = 50.0` → no warning panel
@@ -838,7 +838,7 @@
 
 ## Phase 10: Improvements
 
-1. [ ] Inject functions for improved testability
+10.1 [ ] Inject functions for improved testability
 
 - Investigate improving testability by injecting private functions rather than mocking in every test file
   - All existing config screens call Get-ModuleConfiguration internally.
@@ -847,3 +847,8 @@
   - Would it simplify testing to do this?
   - What are the pros and cons of each approach?
   - Which files would need the change?
+
+10.2 [ ] Fix wordwrap workaround in tests
+
+- Many console app tests use workarounds for matching text that wraps onto next line
+- This is messy, find a way to resolve this cleanly
