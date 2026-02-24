@@ -707,7 +707,7 @@
       - Returns `[PSCustomObject]@{IsConfigured=[bool]; UsedGB=[double]; MaxGB=[double]; UsedPercent=[double]; LogFileSizeGB=[double]}`
       - Error handling: if path exists but access is denied, returns `IsConfigured=$false`; logs Error
       - Pure PowerShell; no `Add-Type`
-   3. [ ] 6.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-StorageInfoScreen.ps1`
+   3. [x] 6.3: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-StorageInfoScreen.ps1`
       - `Show-StorageInfoScreen -Console [Spectre.Console.IAnsiConsole]`
       - Calls `Get-StorageInfo`
       - If not configured: display info panel `"Screenshot storage path is not yet configured. Set it in the Screenshots section below."`  then prompts for `StoragePath` and `MaxStorageGB` using `TextPrompt` with `Test-ConfigValue` validation (same save/discard pattern as config screens)
@@ -835,3 +835,15 @@
 - Exponential backoff with jitter for upload retry logic
 - Configurable retry attempts
 - Upload failure handling with same retry logic as other operations
+
+## Phase 10: Improvements
+
+1. [ ] Inject functions for improved testability
+
+- Investigate improving testability by injecting private functions rather than mocking in every test file
+  - All existing config screens call Get-ModuleConfiguration internally.
+  - Injecting a $StorageInfo parameter would allow tests to avoid mocking Get-StorageInfo
+  - Established project pattern is mock-based injection via InModuleScope rather than parameter injection for internal data.
+  - Would it simplify testing to do this?
+  - What are the pros and cons of each approach?
+  - Which files would need the change?
