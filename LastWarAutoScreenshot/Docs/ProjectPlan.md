@@ -687,7 +687,7 @@
       - Informational note about `#` key layout appears in `$testConsole.Output`
       - Run full Pester suite; confirm count increases
 
-6. [ ] Implement the storage & log file info screen
+6. [x] Implement the storage & log file info screen
    1. [x] 6.1: Add a `Screenshots` section to `ModuleConfig.json` and defaults
       - New key: `"Screenshots": { "StoragePath": "", "MaxStorageGB": 2.0 }`
       - `StoragePath` default: `""` (empty string = not yet configured; storage screen shows "Not configured")
@@ -730,7 +730,7 @@
       - Run full Pester suite; confirm count increases
 
 7. [ ] Run full Pester suite and validate
-   1. [ ] 7.1: Run the complete, unfiltered Pester suite (all files, no tag filters)
+   1. [x] 7.1: Run the complete, unfiltered Pester suite (all files, no tag filters)
       - Record total test count; it must meet or exceed the Phase 2 final baseline
       - All tests must pass with 0 failures
       - If any test fails that previously passed, halt and investigate; do not proceed
