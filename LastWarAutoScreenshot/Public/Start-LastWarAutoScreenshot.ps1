@@ -43,6 +43,15 @@ function Start-LastWarAutoScreenshot {
           terminal.  Production callers pass nothing; the default value creates the real
           console.  Test callers pass a TestConsole instance.
 
+        Alternate screen buffers:
+          Each sub-screen dispatch (SelectWindow, Configure, RecordMacro) is wrapped in
+          RunInAlternateScreen, which renders the screen content in a dedicated terminal
+          buffer when the terminal supports it (ESC[?1049h/ESC[?1049l ANSI sequences).
+          When the screen exits, the original terminal content (the main menu) is
+          automatically restored by the OS/terminal.  Terminals that do not support
+          alternate buffers (e.g. CI runners, legacy consoles) gracefully degrade by
+          rendering inline in the current buffer.
+
         Phase notes:
           Show-WindowSelectionScreen is implemented in Phase 4 (task 4.1).
           Show-ConfigMenuScreen is implemented in Phase 5 (task 5.1).
@@ -65,22 +74,50 @@ function Start-LastWarAutoScreenshot {
         switch ($choice) {
 
             'SelectWindow' {
-                # Phase 4 - Show-WindowSelectionScreen implemented in task 4.1
-                Show-WindowSelectionScreen -Console $Console
+                # Test consoles don't support alternate buffers, so invoke directly
+                if ($Console -is [Spectre.Console.Testing.TestConsole]) {
+                    Show-WindowSelectionScreen -Console $Console
+                } else {
+                    $screenBlock = {
+                        Show-WindowSelectionScreen -Console $Console
+                    }.GetNewClosure()
+                    [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
+                        $Console, [System.Action]$screenBlock)
+                }
             }
 
             'Configure' {
-                # Phase 5 - Show-ConfigMenuScreen implemented in task 5.1
-                Show-ConfigMenuScreen -Console $Console
+                # Test consoles don't support alternate buffers, so invoke directly
+                if ($Console -is [Spectre.Console.Testing.TestConsole]) {
+                    Show-ConfigMenuScreen -Console $Console
+                } else {
+                    $screenBlock = {
+                        Show-ConfigMenuScreen -Console $Console
+                    }.GetNewClosure()
+                    [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
+                        $Console, [System.Action]$screenBlock)
+                }
             }
 
             'RecordMacro' {
-                # Stub: macro recording is a Phase 4 feature
-                $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                    'Macro recording is not yet available. This feature will be implemented in a future release.',
-                    'Record Macro'
-                )
-                $Console.Write($stubPanel)
+                # Test consoles don't support alternate buffers, so invoke directly
+                if ($Console -is [Spectre.Console.Testing.TestConsole]) {
+                    $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                        'Macro recording is not yet available. This feature will be implemented in a future release.',
+                        'Record Macro'
+                    )
+                    $Console.Write($stubPanel)
+                } else {
+                    $screenBlock = {
+                        $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                            'Macro recording is not yet available. This feature will be implemented in a future release.',
+                            'Record Macro'
+                        )
+                        $Console.Write($stubPanel)
+                    }.GetNewClosure()
+                    [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
+                        $Console, [System.Action]$screenBlock)
+                }
             }
 
             'RunMacro' {

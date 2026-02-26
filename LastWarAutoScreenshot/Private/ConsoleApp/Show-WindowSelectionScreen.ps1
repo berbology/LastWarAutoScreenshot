@@ -4,12 +4,10 @@ function Show-WindowSelectionScreen {
         Displays the window selection screen using Spectre.Console UI components.
 
     .DESCRIPTION
-        Guides the user through selecting a target application window in five steps:
+        Guides the user through selecting a target application window in four steps:
 
         1.  Sort selection - the user chooses how the window list is ordered.
-        2.  Window enumeration and display - all open windows are enumerated and shown
-            in a Spectre.Console Table with columns: #, Active, Process, Application,
-            Minimised. The active (foreground) window is marked with [bold]*[/].
+        2.  Window enumeration - all open windows are enumerated.
         3.  Window selection - the user picks a window from a SelectionPrompt or
             chooses '[Back to main menu]' to cancel.
         4.  Window validation - Test-WindowHandleValid confirms the window is still
@@ -44,10 +42,7 @@ function Show-WindowSelectionScreen {
 
         Window titles and process names that contain Spectre.Console markup characters
         ('[', ']') are escaped with [Spectre.Console.Markup]::Escape() before being
-        placed in the Table or SelectionPrompt choices, preventing rendering errors.
-
-        Active window: [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
-        is called on each loop iteration to refresh the active-window marker.
+        placed in the SelectionPrompt choices, preventing rendering errors.
 
         Sorting: the sort order is chosen once (before the loop) and re-applied on
         each iteration. Sort options: Process name A-Z, Process name Z-A,
@@ -100,27 +95,6 @@ function Show-WindowSelectionScreen {
             'Minimised last'     { @($allWindows | Sort-Object WindowState -Descending) }
             default              { @($allWindows | Sort-Object WindowTitle) }
         }
-
-        # Get the active (foreground) window handle for table marking
-        $activeHandle = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
-
-        # Build and render the window table
-        $table = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(@('#', 'Active', 'Process', 'Application', 'Minimised'))
-
-        for ($i = 0; $i -lt $sortedWindows.Count; $i++) {
-            $win           = $sortedWindows[$i]
-            $activeMarker  = if ($win.WindowHandle -eq $activeHandle) { '[bold]*[/]' } else { '' }
-            $escapedProc   = [Spectre.Console.Markup]::Escape($win.ProcessName)
-            $escapedTitle  = [Spectre.Console.Markup]::Escape($win.WindowTitle)
-            $isMinimised   = if ($win.WindowState -eq 'Minimized') { 'Yes' } else { 'No' }
-
-            [Spectre.Console.TableExtensions]::AddRow(
-                $table,
-                [string[]]@(($i + 1).ToString(), $activeMarker, $escapedProc, $escapedTitle, $isMinimised)
-            ) | Out-Null
-        }
-
-        $Console.Write($table)
 
         # ── Step 3: Window selection prompt ────────────────────────────────────
         $selectionPrompt       = [Spectre.Console.SelectionPrompt[string]]::new()

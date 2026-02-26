@@ -116,5 +116,41 @@ namespace LastWarAutoScreenshot
             }
             return panel;
         }
+
+        /// <summary>
+        /// Runs the supplied <paramref name="action"/> inside an alternate terminal screen
+        /// buffer when the terminal supports it.  If the terminal does not support alternate
+        /// buffers (e.g. CI runners, legacy consoles) the action is invoked directly so that
+        /// callers degrade gracefully without any code change.
+        /// </summary>
+        /// <param name="console">
+        /// The <see cref="IAnsiConsole"/> instance to use.  The buffer capability is checked
+        /// on this instance so that injected test consoles are respected correctly.
+        /// </param>
+        /// <param name="action">The screen content to run inside the alternate buffer.</param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="console"/> or <paramref name="action"/> is <c>null</c>.
+        /// </exception>
+        public static void RunInAlternateScreen(IAnsiConsole console, Action action)
+        {
+            if (console == null) throw new ArgumentNullException(nameof(console));
+            if (action == null) throw new ArgumentNullException(nameof(action));
+
+            if (console.Profile.Capabilities.AlternateBuffer)
+            {
+                // Spectre.Console IAnsiConsole extension method (Spectre.Console >= 0.42;
+                // bundled version is 0.54.0 so this is guaranteed available).
+                // It writes ESC[?1049h, clears the screen, runs the action, then writes
+                // ESC[?1049l in a finally block, restoring the original buffer even if
+                // the action throws.
+                console.AlternateScreen(action);
+            }
+            else
+            {
+                // Graceful degradation: run the action directly in the current buffer.
+                // No ANSI sequences are written; output accumulates as before.
+                action();
+            }
+        }
     }
 }

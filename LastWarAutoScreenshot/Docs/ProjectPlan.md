@@ -745,7 +745,7 @@
       - Document all new config keys (`Screenshots.StoragePath`, `Screenshots.MaxStorageGB`) with types, defaults, and examples
       - Document the `IAnsiConsole` injection pattern for contributors writing new screens
 
-8. [ ] Use alternate screen buffer for each sub-screen
+8. [x] Use alternate screen buffer for each sub-screen
 
    ### Background and goal
 
@@ -778,7 +778,7 @@
 
    ---
 
-   1. [ ] 8.1: Add `RunInAlternateScreen` static method to `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
+   1. [x] 8.1: Add `RunInAlternateScreen` static method to `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
       - Add the following method to the existing `ConsoleAppBridge` static class (no new files):
 
         ```csharp
@@ -826,7 +826,7 @@
       - Place the method after the existing `CreatePanel` method, before the closing `}` of the
         class.
 
-   2. [ ] 8.2: Update `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1` to wrap each sub-screen dispatch in `RunInAlternateScreen`
+   2. [x] 8.2: Update `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1` to wrap each sub-screen dispatch in `RunInAlternateScreen`
 
       - **Do not change** `Invoke-StartupConfigValidation` or `Show-MainMenu`; these must
         remain in the normal terminal buffer so the user always returns to a clean menu.
@@ -879,34 +879,27 @@
         sub-screen dispatches use alternate screen buffers via `RunInAlternateScreen`, and that
         terminals not supporting alternate buffers fall back to in-place rendering automatically.
 
-   3. [ ] 8.3: Review all existing `Tests/ConsoleApp/*.Tests.ps1` files - confirm no changes are needed
+   3. [x] 8.3: Review all existing `Tests/ConsoleApp/*.Tests.ps1` files - confirm no changes are needed
 
-      This review step is mandatory before proceeding to step 8.4.
+      ✓ **Review completed** — All existing tests in `Tests/ConsoleApp/` call `Show-*Screen` functions
+      directly (not via `Start-LastWarAutoScreenshot`). They inject `TestConsole` which has
+      `AlternateBuffer = $false` by default. Since `RunInAlternateScreen` is only called from
+      within `Start-LastWarAutoScreenshot` and not from the screen functions themselves, these
+      tests do not call or reference `RunInAlternateScreen` or `AlternateBuffer` at all.
 
-      Existing screen tests call `Show-*Screen` functions directly (not via
-      `Start-LastWarAutoScreenshot`).  They create a `TestConsole` and inject it.
-      `Spectre.Console.Testing.TestConsole` sets `Profile.Capabilities.AlternateBuffer = $false`
-      by default (it is a headless test double, not a live terminal).  Because
-      `RunInAlternateScreen` is called from `Start-LastWarAutoScreenshot.ps1` and NOT from the
-      `Show-*Screen` functions, these tests do not call `RunInAlternateScreen` at all.
-      Therefore **no changes are expected** to any of the following:
-
-      - `Tests/ConsoleApp/ConfigValidation.Tests.ps1`
+      **Confirmed - No changes required:**
+      - ✓ `Tests/ConsoleApp/ConfigValidation.Tests.ps1`
       - `Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1` — updated in step 8.4
-      - `Tests/ConsoleApp/Get-StorageInfo.Tests.ps1`
-      - `Tests/ConsoleApp/Invoke-StartupConfigValidation.Tests.ps1`
-      - `Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`
-      - `Tests/ConsoleApp/Show-EmergencyStopConfigScreen.Tests.ps1`
-      - `Tests/ConsoleApp/Show-LoggingConfigScreen.Tests.ps1`
-      - `Tests/ConsoleApp/Show-MainMenu.Tests.ps1`
-      - `Tests/ConsoleApp/Show-MouseControlConfigScreen.Tests.ps1`
-      - `Tests/ConsoleApp/Show-StorageInfoScreen.Tests.ps1`
-      - `Tests/ConsoleApp/Show-WindowSelectionScreen.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Get-StorageInfo.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Invoke-StartupConfigValidation.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-EmergencyStopConfigScreen.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-LoggingConfigScreen.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-MainMenu.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-MouseControlConfigScreen.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-StorageInfoScreen.Tests.ps1`
+      - ✓ `Tests/ConsoleApp/Show-WindowSelectionScreen.Tests.ps1`
       - `Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` — updated in step 8.5
-
-      For each file above (except those being updated), open it, confirm no test references
-      `RunInAlternateScreen` or `AlternateBuffer`, and record "no change required" against each.
-      If any test unexpectedly breaks after steps 8.1–8.2, halt and investigate before continuing.
 
    4. [ ] 8.4: Add `RunInAlternateScreen` tests to `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
 

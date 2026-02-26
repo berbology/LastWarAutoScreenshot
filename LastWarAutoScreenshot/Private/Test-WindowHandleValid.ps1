@@ -61,18 +61,8 @@ function Test-WindowHandleValid {
         if (-not $exists) {
             return $false
         }
-        # Edge case: check if window is visible
-        $visible = & $IsWindowVisibleFn $hWnd
-        if (-not $visible) {
-            Write-LastWarLog -Message "Window handle $hWnd is not visible." -Level Info -FunctionName 'Test-WindowHandleValid' -Context "VisibilityCheck"
-            return $false
-        }
-        # Edge case: check if window is minimized (iconic)
-        $minimized = & $IsIconicFn $hWnd
-        if ($minimized) {
-            Write-LastWarLog -Message "Window handle $hWnd is minimized (iconic)." -Level Info -FunctionName 'Test-WindowHandleValid' -Context "MinimizedCheck"
-            return $false
-        }
+        # Window handle exists and is valid. Applications like Spotify may have transient visibility states,
+        # so we do not re-check visibility/minimization here. Existence check is sufficient.
         return $true
     } catch {
         Write-LastWarLog -Message "Failed to check window handle validity: $_" -Level Error -FunctionName 'Test-WindowHandleValid' -Context "IsWindow API call" -LogStackTrace $_
