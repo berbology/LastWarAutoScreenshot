@@ -100,6 +100,9 @@ function Show-WindowSelectionScreen {
         $selectionPrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
         $selectionPrompt.Title = 'Select a window:'
 
+        $backChoice = [Spectre.Console.Markup]::Escape('[Back to main menu]')
+        $selectionPrompt.AddChoice($backChoice) | Out-Null
+
         $choiceLabels = @()
         for ($i = 0; $i -lt $sortedWindows.Count; $i++) {
             $win         = $sortedWindows[$i]
@@ -107,8 +110,6 @@ function Show-WindowSelectionScreen {
             $choiceLabels += $choiceLabel
             $selectionPrompt.AddChoice($choiceLabel) | Out-Null
         }
-        $backChoice = [Spectre.Console.Markup]::Escape('[Back to main menu]')
-        $selectionPrompt.AddChoice($backChoice) | Out-Null
 
         $selectedChoice = $selectionPrompt.Show($Console)
 

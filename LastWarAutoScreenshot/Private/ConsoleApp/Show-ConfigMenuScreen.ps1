@@ -52,11 +52,11 @@ function Show-ConfigMenuScreen {
         $prompt       = [Spectre.Console.SelectionPrompt[string]]::new()
         $prompt.Title = 'Configuration area:'
 
+        $prompt.AddChoice('[[Back to main menu]]')     | Out-Null
         $prompt.AddChoice('Logging settings')        | Out-Null
         $prompt.AddChoice('Mouse control settings')  | Out-Null
         $prompt.AddChoice('Emergency stop settings') | Out-Null
         $prompt.AddChoice('Storage & log file info') | Out-Null
-        $prompt.AddChoice('[[Back to main menu]]')     | Out-Null
 
         $selection = $prompt.Show($Console)
 
