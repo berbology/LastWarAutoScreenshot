@@ -24,12 +24,8 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # Choices: [0] Logging, [1] Mouse control, [2] Emergency stop, [3] Storage, [4] [Back]
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select [Back to main menu]
+                # Choices: [0] [Back to main menu], [1] Logging, [2] Mouse control, [3] Emergency stop, [4] Storage
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select [Back to main menu] (index 0, default)
 
                 { Show-ConfigMenuScreen -Console $tc } | Should -Not -Throw
             }
@@ -44,11 +40,7 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
 
                 Show-ConfigMenuScreen -Console $tc
 
@@ -71,13 +63,10 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # First iteration: choose 'Logging settings' (first choice, index 0)
+                # First iteration: choose 'Logging settings' (index 1, 1 down from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: choose '[Back to main menu]' (index 4)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Second iteration: choose '[Back to main menu]' (index 0, Enter immediately)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
@@ -95,11 +84,10 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
+                # First iteration: choose 'Logging settings' (index 1)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Second iteration: choose '[Back to main menu]' (index 0)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
@@ -125,14 +113,11 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # First iteration: Mouse control settings (index 1)
+                # First iteration: Mouse control settings (index 2, 2 downs from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: [Back to main menu] (index 4)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Second iteration: [Back to main menu] (index 0, Enter immediately)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
@@ -156,15 +141,12 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # First iteration: Emergency stop settings (index 2)
+                # First iteration: Emergency stop settings (index 3, 3 downs from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: [Back to main menu] (index 4)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Second iteration: [Back to main menu] (index 0, Enter immediately)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
@@ -188,16 +170,13 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # First iteration: Storage & log file info (index 3)
+                # First iteration: Storage & log file info (index 4, 4 downs from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: [Back to main menu] (index 4)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Second iteration: [Back to main menu] (index 0, Enter immediately)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
@@ -221,10 +200,7 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # [Back to main menu] is index 0; just Enter exits and causes output to render
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
@@ -246,11 +222,7 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
 
                 Show-ConfigMenuScreen -Console $tc
 
@@ -273,15 +245,13 @@ Describe 'Show-ConfigMenuScreen' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # First iteration: Logging settings (index 0)
+                # First iteration: Logging settings (index 1, 1 down from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: Logging settings again (index 0)
+                # Second iteration: Logging settings again (index 1, 1 down from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Third iteration: [Back to main menu] (index 4)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Third iteration: [Back to main menu] (index 0, Enter immediately)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
