@@ -44,13 +44,13 @@ function Start-LastWarAutoScreenshot {
           console.  Test callers pass a TestConsole instance.
 
         Alternate screen buffers:
-          Each sub-screen dispatch (SelectWindow, Configure, RecordMacro) is wrapped in
-          RunInAlternateScreen, which renders the screen content in a dedicated terminal
-          buffer when the terminal supports it (ESC[?1049h/ESC[?1049l ANSI sequences).
-          When the screen exits, the original terminal content (the main menu) is
-          automatically restored by the OS/terminal.  Terminals that do not support
-          alternate buffers (e.g. CI runners, legacy consoles) gracefully degrade by
-          rendering inline in the current buffer.
+          The entire main-menu loop (figlet + menu + dispatch) runs inside a single
+          RunInAlternateScreen call.  Each sub-screen dispatch (SelectWindow, Configure,
+          RecordMacro) opens a nested alternate buffer via a further RunInAlternateScreen
+          call.  RunInAlternateScreen gracefully degrades — if the terminal (or injected
+          TestConsole) does not advertise AlternateBuffer capability, the action is
+          invoked directly in the current buffer without any ANSI sequences.  No manual
+          TestConsole type checks are needed.
 
         Phase notes:
           Show-WindowSelectionScreen is implemented in Phase 4 (task 4.1).
@@ -67,67 +67,64 @@ function Start-LastWarAutoScreenshot {
     # Run startup config validation; any panels are written inside this function
     Invoke-StartupConfigValidation -Console $Console | Out-Null
 
-    # Main application loop
-    while ($true) {
-        $choice = Show-MainMenu -Console $Console
+    # $mainBlock is defined WITHOUT GetNewClosure() so that it retains the module's parse-time
+    # session state binding. GetNewClosure() strips the module session state, causing private
+    # functions (Show-MainMenu, Show-WindowSelectionScreen, etc.) to be unresolvable inside
+    # the closure. $Console is received as a parameter; Invoke-InAlternateScreen passes it.
+    $mainBlock = {
+        param([Spectre.Console.IAnsiConsole]$Console)
+        # Display the application title figlet once at the start of the alternate buffer
+        $figlet = [Spectre.Console.FigletText]::new('Last War Auto Screenshot')
+        $figlet.Justification = [Spectre.Console.Justify]::Center
+        $titlePanel = [Spectre.Console.Panel]::new($figlet)
+        $titlePanel.Expand = $false
+        $titlePanel.Padding = [Spectre.Console.Padding]::new(0, 0, 0, 1)
+        $Console.Write($titlePanel) | Out-Null
 
-        switch ($choice) {
+        while ($true) {
+            $choice = Show-MainMenu -Console $Console
 
-            'SelectWindow' {
-                # Test consoles don't support alternate buffers, so invoke directly
-                if ($Console -is [Spectre.Console.Testing.TestConsole]) {
-                    Show-WindowSelectionScreen -Console $Console
-                } else {
+            switch ($choice) {
+
+                'SelectWindow' {
                     $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
                         Show-WindowSelectionScreen -Console $Console
-                    }.GetNewClosure()
-                    [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
-                        $Console, [System.Action]$screenBlock)
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
-            }
 
-            'Configure' {
-                # Test consoles don't support alternate buffers, so invoke directly
-                if ($Console -is [Spectre.Console.Testing.TestConsole]) {
-                    Show-ConfigMenuScreen -Console $Console
-                } else {
+                'Configure' {
                     $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
                         Show-ConfigMenuScreen -Console $Console
-                    }.GetNewClosure()
-                    [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
-                        $Console, [System.Action]$screenBlock)
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
-            }
 
-            'RecordMacro' {
-                # Test consoles don't support alternate buffers, so invoke directly
-                if ($Console -is [Spectre.Console.Testing.TestConsole]) {
-                    $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                        'Macro recording is not yet available. This feature will be implemented in a future release.',
-                        'Record Macro'
-                    )
-                    $Console.Write($stubPanel)
-                } else {
+                'RecordMacro' {
                     $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
                         $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
                             'Macro recording is not yet available. This feature will be implemented in a future release.',
                             'Record Macro'
                         )
                         $Console.Write($stubPanel)
-                    }.GetNewClosure()
-                    [LastWarAutoScreenshot.ConsoleAppBridge]::RunInAlternateScreen(
-                        $Console, [System.Action]$screenBlock)
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
-            }
 
-            'RunMacro' {
-                # Phase 4 placeholder - macro running requires the recording feature first
-            }
+                'RunMacro' {
+                    # Phase 4 placeholder - macro running requires the recording feature first
+                }
 
-            'Exit' {
-                return
+                'Exit' {
+                    return
+                }
             }
         }
     }
+
+    Invoke-InAlternateScreen -Console $Console -Action $mainBlock
 }
 

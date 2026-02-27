@@ -14,6 +14,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Exits cleanly without exception when Show-MainMenu returns Exit immediately' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -26,6 +30,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Calls Show-MainMenu exactly once when it returns Exit on the first call' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -40,6 +48,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Calls Invoke-StartupConfigValidation exactly once before entering the loop' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -57,6 +69,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Does not write error markup to output when validation reports no errors' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -71,6 +87,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Error panel content appears in output when validation mock writes a panel to Console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Show-MainMenu -MockWith { 'Exit' }
                 # Simulate what the real Invoke-StartupConfigValidation does on failure:
                 # it writes a panel directly to $Console before returning
@@ -96,6 +116,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Calls Show-WindowSelectionScreen exactly once when Show-MainMenu returns SelectWindow then Exit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -115,6 +139,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Does not call Show-WindowSelectionScreen when Show-MainMenu returns Exit immediately' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -130,6 +158,10 @@ Describe 'Start-LastWarAutoScreenshot' {
 
         It 'Writes the stub panel to Console when Show-MainMenu returns RecordMacro' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
@@ -157,6 +189,38 @@ Describe 'Start-LastWarAutoScreenshot' {
                 Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } |
                 Select-Object -ExpandProperty Mandatory |
                 Should -BeFalse
+        }
+    }
+
+    Context 'Title figlet output' {
+
+        It 'Writes the application title to the console before entering the menu loop' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-MainMenu -MockWith { 'Exit' }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LastWarAutoScreenshot -Console $tc
+
+                # Figlet renders ASCII art across multiple lines, so the literal string
+                # "Last War Auto Screenshot" doesn't appear contiguously. Instead, verify
+                # that the panel containing the figlet was rendered by checking for panel borders.
+                $tc.Output | Should -Match '┌───'
+            }
+        }
+    }
+
+    Context 'Invoke-MainAppLoop removed' {
+
+        It 'Invoke-MainAppLoop does not exist as a command in the module' {
+            $cmd = Get-Command -Name 'Invoke-MainAppLoop' -ErrorAction SilentlyContinue
+            $cmd | Should -BeNullOrEmpty
         }
     }
 }
