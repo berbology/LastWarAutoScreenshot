@@ -57,6 +57,7 @@ Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`. Macr
 ### Module Loading (`LastWarAutoScreenshot.psm1`)
 
 On import, the psm1:
+
 1. Verifies all C# source files and `lib/Spectre.Console.dll` exist
 2. Checks whether the C# types are already loaded in the session (to survive `-Force` re-imports)
 3. Compiles and loads C# types via `Add-Type`; `ConsoleAppBridge.cs` is compiled separately because it references `Spectre.Console.dll`
@@ -67,6 +68,7 @@ On import, the psm1:
 Every screen function (`Show-*`) accepts `[Spectre.Console.IAnsiConsole]$Console`. In production, the default is `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()`. In tests, inject `[Spectre.Console.Testing.TestConsole]`.
 
 **Adding a new screen:**
+
 ```powershell
 function Show-MyScreen {
     [CmdletBinding()]
@@ -114,17 +116,21 @@ Always suppress return values from Spectre.Console methods with `| Out-Null`. Ne
 
 - Test files: `*.Tests.ps1`, placed in `Tests/` or `Tests/ConsoleApp/`
 - Import the module in `BeforeAll` at the top level using the manifest path, never dot-source module scripts directly:
+
   ```powershell
   BeforeAll {
       $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
       Import-Module $moduleManifest -Force
   }
   ```
+
 - Load `Spectre.Console.Testing.dll` in `BeforeAll` for console tests:
+
   ```powershell
   $testingDll = Join-Path $PSScriptRoot '..\..\lib\test\Spectre.Console.Testing.dll'
   Add-Type -Path $testingDll
   ```
+
 - Use `InModuleScope LastWarAutoScreenshot { }` inside `It`, `Context`, or `BeforeAll/BeforeEach` blocks — **not** as a wrapper around multiple lifecycle blocks
 - **`$script:` scope warning:** `$script:` inside `InModuleScope` resolves to the module's script scope, not the test file's scope. Never read a `$script:` variable inside `InModuleScope` that was set outside it. Reset module-scope `$script:` variables inside `InModuleScope` in `BeforeEach`/`AfterEach`.
 - Use `Should -Invoke` (not the deprecated `Assert-MockCalled`)
@@ -140,3 +146,8 @@ Always suppress return values from Spectre.Console methods with `| Out-Null`. Ne
 - When asked to fix an error, give ONE clear solution.
 - Update `Docs/` files in the same PR as code changes when relevant (see `update-docs-on-code-change.instructions.md`).
 - The bundled Spectre.Console DLLs are tracked in git. Never auto-update them at runtime. Updates must go through a proper PR with full test runs.
+
+## git
+
+- **Commit messages** Always follow commit message guidance in [text](commit-message-generation.instructions.md)
+- **Pull request** Always follow pull request guidance in [text](pull-request-description-generation.instructions.md)
