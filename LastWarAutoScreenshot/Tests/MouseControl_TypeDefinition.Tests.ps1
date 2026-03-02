@@ -101,9 +101,10 @@ Describe '[LastWarAutoScreenshot.MouseControlAPI] type definition' {
 
     It 'GetAsyncKeyState is callable with VK_SHIFT (0x10) without throwing' {
         InModuleScope -ModuleName LastWarAutoScreenshot {
-            # VK_SHIFT = 0x10 (16) — safe to call; returns 0 when Shift is not held.
+            # VK_SHIFT = 0x10 (16) - safe to call; returns 0 when Shift is not held.
             # We only verify no exception is thrown, not the actual key state.
             { [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState(0x10) } | Should -Not -Throw
         }
     }
 }
+

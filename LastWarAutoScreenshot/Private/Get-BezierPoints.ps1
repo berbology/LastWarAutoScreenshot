@@ -63,3 +63,4 @@ function Get-BezierPoints {
     return $points
 }
 #endregion
+

@@ -21,3 +21,4 @@ function Get-LoggingBackendConfig {
     }
     return $json.Logging.Backend -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 }
+

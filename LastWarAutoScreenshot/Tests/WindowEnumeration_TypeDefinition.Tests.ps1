@@ -53,7 +53,7 @@ Describe 'WindowEnumeration_TypeDefinition' {
     Context 'API Calls With Real Handles' {
         BeforeAll {
             # GetForegroundWindow always returns a valid handle in an active terminal session.
-            # Uses the module's own API directly — no Add-Type required.
+            # Uses the module's own API directly - no Add-Type required.
             $script:testWindowHandle = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
             $script:hasValidHandle = ($script:testWindowHandle -ne [IntPtr]::Zero)
         }

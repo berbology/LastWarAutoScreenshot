@@ -73,3 +73,4 @@ if ($diff) {
 } else {
     Write-Information "Info: Round-trip test PASSED. Saved and loaded configuration match."
 }
+

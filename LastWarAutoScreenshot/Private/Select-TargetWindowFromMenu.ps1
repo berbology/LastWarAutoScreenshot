@@ -622,3 +622,4 @@ function Test-WindowExists {
         return $false
     }
 }
+

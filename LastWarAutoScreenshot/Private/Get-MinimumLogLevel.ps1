@@ -10,7 +10,7 @@ function Get-MinimumLogLevel {
     .PARAMETER ConfigPath
         Path to the JSON config file. Defaults to the ModuleConfig.json in the Private directory.
     .OUTPUTS
-        string — One of 'Info', 'Warning', or 'Error'.
+        string - One of 'Info', 'Warning', or 'Error'.
     #>
     [OutputType([string])]
     param(
@@ -29,3 +29,4 @@ function Get-MinimumLogLevel {
 
     return $json.Logging.MinimumLogLevel
 }
+

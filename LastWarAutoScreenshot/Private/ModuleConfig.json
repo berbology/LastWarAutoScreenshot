@@ -31,5 +31,9 @@
 		"PollIntervalMs": 100,
 		"MouseGestureEnabled": true,
 		"MouseGestureHoldDurationMs": 3000
+	},
+	"Screenshots": {
+		"StoragePath": "",
+		"MaxStorageGB": 2.0
 	}
 }

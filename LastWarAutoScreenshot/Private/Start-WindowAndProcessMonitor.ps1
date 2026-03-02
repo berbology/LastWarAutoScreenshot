@@ -263,3 +263,4 @@ function Start-WindowAndProcessMonitor {
         return $null
     }
 }
+

@@ -79,3 +79,4 @@ function Invoke-MouseClick {
 
     return $true
 }
+

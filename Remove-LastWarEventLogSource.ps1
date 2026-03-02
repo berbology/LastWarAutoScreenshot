@@ -20,3 +20,4 @@ try {
 } catch {
     Write-Error "Failed to remove event log source: $_"
 }
+

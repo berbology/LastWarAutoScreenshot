@@ -122,3 +122,4 @@ Describe 'Get-LoggingBackendConfig' {
         Remove-Item $tmp.FullName -Force
     }
 }
+

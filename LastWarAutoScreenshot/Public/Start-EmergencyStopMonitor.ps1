@@ -36,14 +36,14 @@ function Start-EmergencyStopMonitor {
         Virtual key code reference:
           0x11 (17)  = VK_CONTROL
           0x10 (16)  = VK_SHIFT
-          0xDC (220) = VK_OEM_5  — '#' on UK QWERTY, '\' on standard US layout.
+          0xDC (220) = VK_OEM_5  - '#' on UK QWERTY, '\' on standard US layout.
                                    Adjust this value to match your keyboard layout.
 
     .OUTPUTS
         PSCustomObject with scriptblock properties:
-          Stop    — sets State.Stopped = $true and stops the timer (does NOT null the variable
-                    or dispose the timer — use Stop-EmergencyStopMonitor for full clean-up).
-          Cleanup — safely stops and disposes the timer.
+          Stop    - sets State.Stopped = $true and stops the timer (does NOT null the variable
+                    or dispose the timer - use Stop-EmergencyStopMonitor for full clean-up).
+          Cleanup - safely stops and disposes the timer.
 
         Returns $null (with Info logged) when called while already running.
 
@@ -62,7 +62,7 @@ function Start-EmergencyStopMonitor {
              Pester mocks are scoped to the calling runspace and cannot intercept callbacks
              on other threads, making hot-key registration untestable with Pester.
           2. Complexity: RegisterHotKey requires a message loop and explicit UnregisterHotKey
-             on exit — significantly more scaffolding for no functional benefit at the poll
+             on exit - significantly more scaffolding for no functional benefit at the poll
              rates used here.
           Polling via System.Timers.Timer is simple, fully testable, and sufficient.
 
@@ -89,7 +89,7 @@ function Start-EmergencyStopMonitor {
 
         if ($timerRunning) {
             Write-LastWarLog -Level Info `
-                -Message 'Emergency stop monitor is already running — ignoring duplicate start.' `
+                -Message 'Emergency stop monitor is already running - ignoring duplicate start.' `
                 -FunctionName 'Start-EmergencyStopMonitor'
             return $null
         }
@@ -103,7 +103,7 @@ function Start-EmergencyStopMonitor {
 
     # ── Resolve effective parameter values ───────────────────────────────────────
     # Get-ModuleConfiguration is the single source of truth for all defaults.
-    # It never returns $null — if no config file exists it creates one with defaults.
+    # It never returns $null - if no config file exists it creates one with defaults.
     $config = Get-ModuleConfiguration
     $effectivePollIntervalMs  = [int]$config.EmergencyStop.PollIntervalMs
     $effectiveHotkeyVKeyCodes = [int[]]$config.EmergencyStop.HotkeyVKeyCodes
@@ -141,7 +141,7 @@ function Start-EmergencyStopMonitor {
         try {
             Invoke-EmergencyStopPoll -State $state
         } catch {
-            # Ultimate safety net — never let an unhandled exception escape the Elapsed handler.
+            # Ultimate safety net - never let an unhandled exception escape the Elapsed handler.
         }
     }.GetNewClosure())
 
@@ -156,3 +156,4 @@ function Start-EmergencyStopMonitor {
         }.GetNewClosure()
     }
 }
+

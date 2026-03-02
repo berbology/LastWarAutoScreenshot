@@ -31,7 +31,7 @@ Describe 'Get-WindowBounds' {
     It 'logs error and returns $null on invalid handle or Win32 failure' {
         InModuleScope LastWarAutoScreenshot {
             Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
-            # 'fail' is an invalid string handle — conversion throws in the catch block, returning $null
+            # 'fail' is an invalid string handle - conversion throws in the catch block, returning $null
             $result = Get-WindowBounds -WindowHandle 'fail'
             $result | Should -BeNullOrEmpty
             Should -Invoke Write-LastWarLog -Exactly 1
@@ -87,3 +87,4 @@ Describe 'ConvertTo-ScreenCoordinates' {
     }
 }
 #endregion
+

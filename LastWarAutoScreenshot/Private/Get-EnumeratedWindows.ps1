@@ -265,3 +265,4 @@ function Get-EnumeratedWindows {
         Remove-Variable -Name filteredWindows -Scope Script -ErrorAction SilentlyContinue
     }
 }
+

@@ -25,25 +25,25 @@
       - Logs an Error via Write-LastWarLog
       - Writes a red ANSI console message
 
-    Extracted from the timer callback so it can be called synchronously in Pester tests —
+    Extracted from the timer callback so it can be called synchronously in Pester tests -
     timer thread-pool callbacks are invisible to PowerShell mocks.
 
 .PARAMETER State
     Hashtable with the following keys:
-      Stopped                      [bool]   — set to $true to suppress further polls
-      Timer           [System.Timers.Timer] — stopped when emergency stop triggers
-      HotkeyVKeyCodes              [int[]]  — virtual key codes that must all be held simultaneously
-      GetKeyStateFn            [ScriptBlock] — injectable mock; receives vKey as first arg.
+      Stopped                      [bool]   - set to $true to suppress further polls
+      Timer           [System.Timers.Timer] - stopped when emergency stop triggers
+      HotkeyVKeyCodes              [int[]]  - virtual key codes that must all be held simultaneously
+      GetKeyStateFn            [ScriptBlock] - injectable mock; receives vKey as first arg.
                                                Defaults to [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState
                                                when $null. Shared by both hotkey and mouse gesture checks.
-      MouseGestureEnabled          [bool]   — when $true, activates mouse gesture detection.
+      MouseGestureEnabled          [bool]   - when $true, activates mouse gesture detection.
                                                Defaults to $false when absent from the hashtable.
-      MouseGestureVKeyCodes        [int[]]  — VK_LBUTTON (0x01) and VK_RBUTTON (0x02).
+      MouseGestureVKeyCodes        [int[]]  - VK_LBUTTON (0x01) and VK_RBUTTON (0x02).
                                                Not keyboard-layout-dependent.
-      MouseGestureRequiredPollCount [int]   — consecutive polls where both buttons must be held
+      MouseGestureRequiredPollCount [int]   - consecutive polls where both buttons must be held
                                                before triggering. Computed as MouseGestureHoldDurationMs
                                                / PollIntervalMs in Start-EmergencyStopMonitor.
-      MouseGestureCurrentPollCount  [int]   — running counter; incremented each poll whilst both
+      MouseGestureCurrentPollCount  [int]   - running counter; incremented each poll whilst both
                                                buttons are held, reset to 0 on release. Mutated in-place.
 
 .NOTES
@@ -104,7 +104,7 @@ function Invoke-EmergencyStopPoll {
             Write-LastWarLog -Level Error `
                 -Message 'Emergency stop triggered by hotkey combination.' `
                 -FunctionName 'Start-EmergencyStopMonitor'
-            Write-Host "`e[31mEMERGENCY STOP TRIGGERED — automation halted. $(Get-LogCheckHint)`e[0m"
+            Write-Host "`e[31mEMERGENCY STOP TRIGGERED - automation halted. $(Get-LogCheckHint)`e[0m"
         }
     }
 
@@ -143,7 +143,7 @@ function Invoke-EmergencyStopPoll {
                     Write-LastWarLog -Level Error `
                         -Message 'Emergency stop triggered by mouse gesture (both mouse buttons held).' `
                         -FunctionName 'Start-EmergencyStopMonitor'
-                    Write-Host "`e[31mEMERGENCY STOP TRIGGERED — automation halted. $(Get-LogCheckHint)`e[0m"
+                    Write-Host "`e[31mEMERGENCY STOP TRIGGERED - automation halted. $(Get-LogCheckHint)`e[0m"
                 }
             } else {
                 $State.MouseGestureCurrentPollCount = 0
@@ -151,3 +151,4 @@ function Invoke-EmergencyStopPoll {
         }
     }
 }
+

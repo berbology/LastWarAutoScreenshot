@@ -10,15 +10,15 @@ function Start-AutomationSequence {
     The handle of the target window. Accepts IntPtr, int64, int, or string.
 
 .PARAMETER RelativeX
-    The X coordinate as a percentage (0.0–1.0) relative to the window's width. Mutually exclusive with -Region.
+    The X coordinate as a percentage (0.0-1.0) relative to the window's width. Mutually exclusive with -Region.
 
 .PARAMETER RelativeY
-    The Y coordinate as a percentage (0.0–1.0) relative to the window's height. Mutually exclusive with -Region.
+    The Y coordinate as a percentage (0.0-1.0) relative to the window's height. Mutually exclusive with -Region.
 
 .PARAMETER Region
     A PSCustomObject defining a Box or Circle area from which a random target position is selected via Get-RandomTargetPosition.
-    Box format: @{ RelativeX; RelativeY; RelativeWidth; RelativeHeight } (all 0.0–1.0)
-    Circle format: @{ RelativeCentreX; RelativeCentreY; RelativeRadius } (all 0.0–1.0)
+    Box format: @{ RelativeX; RelativeY; RelativeWidth; RelativeHeight } (all 0.0-1.0)
+    Circle format: @{ RelativeCentreX; RelativeCentreY; RelativeRadius } (all 0.0-1.0)
     Mutually exclusive with -RelativeX/-RelativeY.
 
 .EXAMPLE
@@ -147,3 +147,4 @@ function Start-AutomationSequence {
         Stop-EmergencyStopMonitor | Out-Null
     }
 }
+

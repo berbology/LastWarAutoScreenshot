@@ -44,3 +44,4 @@ function Move-MouseToPoint {
         return $false
     }
 }
+

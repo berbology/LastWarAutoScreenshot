@@ -90,3 +90,4 @@ function Set-WindowState {
         return $false
     }
 }
+

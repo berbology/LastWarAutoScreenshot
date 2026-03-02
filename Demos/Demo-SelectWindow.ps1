@@ -13,3 +13,4 @@ if ($selected) {
 } else {
     Write-Warning "Warning: No window selected or operation cancelled."
 }
+

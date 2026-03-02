@@ -87,18 +87,19 @@ function Get-ModuleConfiguration {
             # Treat empty config file the same as missing file: recreate with defaults
             if (-not $fileExists -or $fileIsEmpty) {
                 if ($fileIsEmpty) {
-                    Write-Verbose "Configuration file is empty at: $ConfigurationPath — recreating with module-setting defaults."
+                    Write-Verbose "Configuration file is empty at: $ConfigurationPath - recreating with module-setting defaults."
                 }
                 else {
-                    Write-Verbose "Configuration file not found at: $ConfigurationPath — creating with module-setting defaults."
+                    Write-Verbose "Configuration file not found at: $ConfigurationPath - creating with module-setting defaults."
                 }
 
                 # Get defaults from single source of truth
                 $defaults = Get-DefaultModuleSettings
                 $defaultConfig = [PSCustomObject]@{
-                    Logging      = $defaults.Logging
-                    MouseControl = $defaults.MouseControl
+                    Logging       = $defaults.Logging
+                    MouseControl  = $defaults.MouseControl
                     EmergencyStop = $defaults.EmergencyStop
+                    Screenshots   = $defaults.Screenshots
                 }
 
                 # Ensure the target directory exists before writing.
@@ -160,6 +161,17 @@ function Get-ModuleConfiguration {
                 }
             }
 
+            # Inject missing Screenshots keys (Phase 3 task 6.1)
+            if (-not $configData.PSObject.Properties['Screenshots']) {
+                $configData | Add-Member -MemberType NoteProperty -Name Screenshots -Value $defaults.Screenshots
+            } else {
+                foreach ($key in $defaults.Screenshots.PSObject.Properties.Name) {
+                    if (-not $configData.Screenshots.PSObject.Properties[$key]) {
+                        $configData.Screenshots | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.Screenshots.$key
+                    }
+                }
+            }
+
             # Validate required properties exist
             $requiredProperties = @('ProcessName', 'WindowTitle', 'WindowHandleString', 'WindowHandleInt64')
             $missingProperties = $requiredProperties | Where-Object { -not $configData.PSObject.Properties[$_] }
@@ -201,3 +213,4 @@ function Get-ModuleConfiguration {
         Write-Verbose "Window configuration load process completed"
     }
 }
+
