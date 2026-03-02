@@ -901,7 +901,7 @@
       - ✓ `Tests/ConsoleApp/Show-WindowSelectionScreen.Tests.ps1`
       - `Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` — updated in step 8.5
 
-   4. [ ] 8.4: Add `RunInAlternateScreen` tests to `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
+   4. [x] 8.4: Add `RunInAlternateScreen` tests to `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
 
       Add a new `Context 'RunInAlternateScreen'` block after the existing `Context 'CreatePanel'`
       block.  Load `Spectre.Console.Testing.dll` is already loaded via the `BeforeAll` at the top
@@ -959,7 +959,7 @@
       The `$invoked = $false` / `$invoked = $true` pattern works because the `[System.Action]`
       delegate captures the enclosing PowerShell scope via closure.
 
-   5. [ ] 8.5: Update `LastWarAutoScreenshot/Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` to cover the `RunInAlternateScreen` dispatch path
+   5. [x] 8.5: Update `LastWarAutoScreenshot/Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` to cover the `RunInAlternateScreen` dispatch path
 
       **Existing tests must not be removed or altered** — verify they still pass as-is after
       the `Start-LastWarAutoScreenshot.ps1` changes from step 8.2 (they should, because
@@ -1024,7 +1024,7 @@
       All three tests use `InModuleScope -ModuleName 'LastWarAutoScreenshot'` consistent with
       the existing tests in this file.
 
-   6. [ ] 8.6: Run the full Pester suite and validate
+   6. [x] 8.6: Run the full Pester suite and validate
 
       - Run the complete, unfiltered Pester suite (all files, no tag or name filters)
       - Total test count must meet or exceed the Phase 3 Task 7 baseline plus the new tests
@@ -1033,7 +1033,7 @@
       - If any previously-passing test now fails, halt immediately; do not proceed until the
         regression is understood and fixed (do not delete or skip failing tests)
 
-   7. [ ] 8.7: Manually smoke-test the alternate screen behaviour in a real terminal
+   7. [x] 8.7: Manually smoke-test the alternate screen behaviour in a real terminal
 
       - Import the module: `Import-Module .\LastWarAutoScreenshot\LastWarAutoScreenshot.psd1 -Force`
       - Call `Start-LastWarAutoScreenshot`
@@ -1050,7 +1050,7 @@
       - If your terminal does not support alternate buffers, confirm the application still works
         (output accumulates in-place; no crash or error)
 
-   8. [ ] 8.8: Update `LastWarAutoScreenshot/Docs/README.md`
+   8. [x] 8.8: Update `LastWarAutoScreenshot/Docs/README.md`
 
       - In the "Console Application" or "Getting Started" section, add a note explaining that
         each sub-screen uses an alternate terminal buffer; users with terminals that do not
