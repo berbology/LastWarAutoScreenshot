@@ -49,15 +49,16 @@ function Show-ConfigMenuScreen {
 
     while ($true) {
 
-        $prompt       = [Spectre.Console.SelectionPrompt[string]]::new()
-        $prompt.Title = 'Configuration area:'
-
-        $prompt.AddChoice('[[Back to main menu]]')     | Out-Null
-        $prompt.AddChoice('Logging settings')        | Out-Null
-        $prompt.AddChoice('Mouse control settings')  | Out-Null
-        $prompt.AddChoice('Emergency stop settings') | Out-Null
-        $prompt.AddChoice('Storage & log file info') | Out-Null
-
+        $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            'Configuration area:',
+            @(
+                '[[Back to main menu]]',
+                'Logging settings',
+                'Mouse control settings',
+                'Emergency stop settings',
+                'Storage & log file info'
+            )
+        )
         $selection = $prompt.Show($Console)
 
         switch ($selection) {

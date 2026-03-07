@@ -7,9 +7,10 @@ function Show-MainMenu {
         Renders a Spectre.Console SelectionPrompt with the following choices:
           - Select target window
           - Configure module
-          - Record macro (stub - displays a 'Not yet available' panel in the caller)
+          - Record macro
           - Run macro (disabled and shown as a non-selectable group header when no *.json files
             exist in the module's Private\Macros\ folder; a normal selectable choice otherwise)
+          - Manage macros (always visible regardless of whether macros exist)
           - Exit
 
         The function checks the Private\Macros\ folder for saved macro files before building
@@ -17,7 +18,7 @@ function Show-MainMenu {
         yyyyMMdd_HHmmss_<name>.json).
 
         Returns a string identifier corresponding to the user's selection:
-          'SelectWindow' | 'Configure' | 'RecordMacro' | 'RunMacro' | 'Exit'
+          'SelectWindow' | 'Configure' | 'RecordMacro' | 'RunMacro' | 'ManageMacros' | 'Exit'
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance to use for rendering and input.
@@ -26,7 +27,7 @@ function Show-MainMenu {
 
     .OUTPUTS
         String
-        One of: 'SelectWindow', 'Configure', 'RecordMacro', 'RunMacro', 'Exit'
+        One of: 'SelectWindow', 'Configure', 'RecordMacro', 'RunMacro', 'ManageMacros', 'Exit'
 
     .EXAMPLE
         $console = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
@@ -62,27 +63,28 @@ function Show-MainMenu {
     $hasMacros = $macroFiles.Count -gt 0
 
     # Build the SelectionPrompt
-    $prompt       = [Spectre.Console.SelectionPrompt[string]]::new()
-    $prompt.Title = 'What would you like to do?'
-
-    $prompt.AddChoice('Select target window') | Out-Null
-    $prompt.AddChoice('Configure module')     | Out-Null
-    $prompt.AddChoice('Record macro')         | Out-Null
+    $choices = [System.Collections.Generic.List[string]]::new()
+    $choices.Add('Select target window')
+    $choices.Add('Configure module')
+    $choices.Add('Record macro')
 
     if ($hasMacros) {
-        $prompt.AddChoice('Run macro') | Out-Null
+        $choices.Add('Run macro')
     }
 
-    $prompt.AddChoice('Exit') | Out-Null
+    $choices.Add('Manage macros')
+    $choices.Add('Exit')
 
-    $selection = $prompt.Show($Console)
+    $prompt     = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt('What would you like to do?', $choices.ToArray())
+    $selection  = $prompt.Show($Console)
 
     switch ($selection) {
-        'Select target window' { return 'SelectWindow' }
-        'Configure module'     { return 'Configure'    }
-        'Record macro'         { return 'RecordMacro'  }
-        'Run macro'            { return 'RunMacro'     }
-        default                { return 'Exit'         }
+        'Select target window' { return 'SelectWindow'  }
+        'Configure module'     { return 'Configure'     }
+        'Record macro'         { return 'RecordMacro'   }
+        'Run macro'            { return 'RunMacro'      }
+        'Manage macros'        { return 'ManageMacros'  }
+        default                { return 'Exit'          }
     }
 }
 

@@ -7,7 +7,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'Get-StorageInfo' {
+Describe 'Get-StorageInfo' -Tag 'Unit' {
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: StoragePath is empty string (not yet configured)

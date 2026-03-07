@@ -4,7 +4,9 @@
 .SYNOPSIS
     Moves the mouse cursor to the specified absolute screen coordinates (X, Y).
 .DESCRIPTION
-    Placeholder implementation for mouse movement. Computes delta from current cursor position to target, then sends a mouse move event using SendInput. Logs errors and returns $true/$false. Replaced by Invoke-MouseMovePath in Phase 2 step 2.5.
+    Sets the cursor to the given absolute pixel position using SetCursorPos, bypassing
+    Windows pointer acceleration. Used by Invoke-MouseClick when the cursor is not already
+    at the target position for a single-step jump.
 .PARAMETER X
     Target X coordinate (integer, absolute screen position).
 .PARAMETER Y
@@ -12,7 +14,8 @@
 .EXAMPLE
     Move-MouseToPoint -X 100 -Y 200
 .NOTES
-    This is a placeholder for step 1.6. It will be replaced by Invoke-MouseMovePath in step 2.5.
+    Replaced the original placeholder delta/SendInput approach. SetCursorPos sets absolute
+    pixel coordinates directly, so pointer speed/acceleration settings have no effect.
 ##>
 
 function Move-MouseToPoint {
@@ -25,17 +28,9 @@ function Move-MouseToPoint {
     )
 
     try {
-        $current = Invoke-GetCursorPosition
-        if ($null -eq $current) {
-            Write-LastWarLog -Level Error -Message "Failed to get current cursor position." -FunctionName 'Move-MouseToPoint'
-            return $false
-        }
-        $deltaX = $X - $current.X
-        $deltaY = $Y - $current.Y
-            $moveFlag = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE
-            $result = Invoke-SendMouseInput -DeltaX $deltaX -DeltaY $deltaY -ButtonFlags $moveFlag
+        $result = Invoke-SetCursorPos -X $X -Y $Y
         if (-not $result) {
-            Write-LastWarLog -Level Error -Message "SendInput failed to move mouse." -FunctionName 'Move-MouseToPoint'
+            Write-LastWarLog -Level Error -Message "SetCursorPos failed to move mouse." -FunctionName 'Move-MouseToPoint'
             return $false
         }
         return $true

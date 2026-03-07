@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Show-ConfigMenuScreen' {
+Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: User immediately selects [Back to main menu]

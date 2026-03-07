@@ -4,7 +4,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'ConsoleAppBridge' {
+Describe 'ConsoleAppBridge' -Tag 'Unit' {
 
     Context 'Type loading' {
         It 'Type [LastWarAutoScreenshot.ConsoleAppBridge] should be accessible after module import' {
@@ -88,6 +88,37 @@ Describe 'ConsoleAppBridge' {
 
         It 'Should accept an empty columns array without throwing' {
             { [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(@()) } | Should -Not -Throw
+        }
+    }
+
+    Context 'CreateEmptyTextPrompt' {
+
+        BeforeAll {
+            $testingDll = Join-Path $PSScriptRoot '..\..\lib\test\Spectre.Console.Testing.dll'
+            Add-Type -Path $testingDll
+        }
+
+        It 'Should return a non-null object with AllowEmpty set to true' {
+            $result = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateEmptyTextPrompt('Position mouse and press Enter:')
+            $result | Should -Not -BeNullOrEmpty
+            $result.AllowEmpty | Should -BeTrue
+        }
+
+        It 'Should include the supplied title in the output when shown on a TestConsole' {
+            $title  = 'Move mouse to target and press Enter...'
+            $result = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateEmptyTextPrompt($title)
+            $tc     = [Spectre.Console.Testing.TestConsole]::new()
+            $tc.Input.PushKey([System.ConsoleKey]::Enter)
+            $result.Show($tc) | Out-Null
+            $tc.Output | Should -BeLike "*$title*"
+        }
+
+        It 'Should accept empty input and return an empty string when Enter is pressed immediately' {
+            $result = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateEmptyTextPrompt('')
+            $tc     = [Spectre.Console.Testing.TestConsole]::new()
+            $tc.Input.PushKey([System.ConsoleKey]::Enter)
+            $value  = $result.Show($tc)
+            $value  | Should -Be ''
         }
     }
 

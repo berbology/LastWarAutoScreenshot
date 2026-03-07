@@ -11,7 +11,7 @@ BeforeAll {
 # ══════════════════════════════════════════════════════════════════════════════
 # Invoke-EmergencyStopPoll
 # ══════════════════════════════════════════════════════════════════════════════
-Describe 'Invoke-EmergencyStopPoll' {
+Describe 'Invoke-EmergencyStopPoll' -Tag 'Unit' {
 
     BeforeEach {
         # Reset module-scope flag and timer before every test.
@@ -273,7 +273,7 @@ Describe 'Invoke-EmergencyStopPoll' {
 # ══════════════════════════════════════════════════════════════════════════════
 # Start-EmergencyStopMonitor
 # ══════════════════════════════════════════════════════════════════════════════
-Describe 'Start-EmergencyStopMonitor' {
+Describe 'Start-EmergencyStopMonitor' -Tag 'Unit' {
 
     BeforeEach {
         InModuleScope LastWarAutoScreenshot {
@@ -521,7 +521,7 @@ Describe 'Start-EmergencyStopMonitor' {
 # Invoke-EmergencyStopPoll - Mouse Gesture Detection
 # Covers Phase 2 Step 4.6
 # ══════════════════════════════════════════════════════════════════════════════
-Describe 'Invoke-EmergencyStopPoll - Mouse Gesture Detection' {
+Describe 'Invoke-EmergencyStopPoll - Mouse Gesture Detection' -Tag 'Unit' {
 
     BeforeEach {
         InModuleScope LastWarAutoScreenshot {
@@ -867,7 +867,7 @@ Describe 'Invoke-EmergencyStopPoll - Mouse Gesture Detection' {
 # ══════════════════════════════════════════════════════════════════════════════
 # Stop-EmergencyStopMonitor
 # ══════════════════════════════════════════════════════════════════════════════
-Describe 'Stop-EmergencyStopMonitor' {
+Describe 'Stop-EmergencyStopMonitor' -Tag 'Unit' {
 
     BeforeEach {
         InModuleScope LastWarAutoScreenshot {

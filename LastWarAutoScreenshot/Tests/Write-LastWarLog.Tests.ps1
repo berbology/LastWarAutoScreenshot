@@ -3,7 +3,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'Write-LastWarLog ModuleRootPath initialisation' {
+Describe 'Write-LastWarLog ModuleRootPath initialisation' -Tag 'Unit' {
     # Runs before the sibling Describe redirects $script:ModuleRootPath, so we see the real value.
     It 'Should initialise ModuleRootPath to the module installation directory' {
         InModuleScope LastWarAutoScreenshot {
@@ -13,7 +13,7 @@ Describe 'Write-LastWarLog ModuleRootPath initialisation' {
     }
 }
 
-Describe 'Write-LastWarLog' {
+Describe 'Write-LastWarLog' -Tag 'Unit' {
     BeforeAll {
         # Redirect the module's log output to a unique temp directory so tests
         # never write into the module source tree.

@@ -353,12 +353,14 @@ function Show-MouseControlConfigScreen {
     }
 
     # ── Step 3: Save / reset / discard ───────────────────────────────────────
-    $savePrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
-    $savePrompt.Title = 'Save changes?'
-    $savePrompt.AddChoice('Yes - save now')                               | Out-Null
-    $savePrompt.AddChoice('Reset ALL MouseControl settings to defaults')  | Out-Null
-    $savePrompt.AddChoice('Discard changes')                              | Out-Null
-
+    $savePrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+        'Save changes?',
+        @(
+            'Yes - save now',
+            'Reset ALL MouseControl settings to defaults',
+            'Discard changes'
+        )
+    )
     $saveChoice = $savePrompt.Show($Console)
 
     switch ($saveChoice) {

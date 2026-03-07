@@ -129,7 +129,7 @@ Describe 'Show-MenuLoop logging' -Tag 'Unit' {
     }
 }
 
-Describe 'Select-TargetWindowFromMenu' {
+Describe 'Select-TargetWindowFromMenu' -Tag 'Unit' {
     Context 'When accepting pipeline input' {
         BeforeAll {
             $mockWindows = @(
@@ -351,7 +351,7 @@ Describe 'Select-TargetWindowFromMenu' {
     }
 }
 
-Describe 'Get-SortedWindows' {
+Describe 'Get-SortedWindows' -Tag 'Unit' {
     BeforeAll {
         $script:sortWindows = @(
             New-MockWindowData -ProcessName 'zebra' -WindowTitle 'ABC Window' -WindowState 'Visible'
@@ -427,7 +427,7 @@ Describe 'Get-SortedWindows' {
     }
 }
 
-Describe 'Test-WindowExists' {
+Describe 'Test-WindowExists' -Tag 'Unit' {
     Context 'When validating window handles' {
         It 'Should return true for valid window handle' {
             InModuleScope LastWarAutoScreenshot {
@@ -449,7 +449,7 @@ Describe 'Test-WindowExists' {
     }
 }
 
-Describe 'Select-TargetWindowFromMenu window list scenarios' {
+Describe 'Select-TargetWindowFromMenu window list scenarios' -Tag 'Unit' {
     Context 'When multiple windows with same process name exist' {
         BeforeAll {
             $mockWindows = @(

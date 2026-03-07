@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Show-MouseControlConfigScreen' {
+Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Table renders current values

@@ -5,7 +5,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'Set-WindowActive' {
+Describe 'Set-WindowActive' -Tag 'Unit' {
     BeforeAll {
         Mock Write-Host { } -ModuleName LastWarAutoScreenshot
     }

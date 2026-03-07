@@ -3,7 +3,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'Set-WindowState' {
+Describe 'Set-WindowState' -Tag 'Unit' {
     BeforeAll {
         Mock Write-LastWarLog { } -ModuleName LastWarAutoScreenshot
         Mock Write-Host { } -ModuleName LastWarAutoScreenshot

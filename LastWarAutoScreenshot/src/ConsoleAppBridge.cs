@@ -57,7 +57,8 @@ namespace LastWarAutoScreenshot
             if (title == null) throw new ArgumentNullException(nameof(title));
             if (choices == null) throw new ArgumentNullException(nameof(choices));
 
-            var prompt = new SelectionPrompt<string> { Title = title };
+            var prompt = new SelectionPrompt<string> { Title = title }
+                .WrapAround();
             foreach (var choice in choices)
             {
                 prompt.AddChoice(choice);
@@ -115,6 +116,20 @@ namespace LastWarAutoScreenshot
                 panel.Header = new PanelHeader(header);
             }
             return panel;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="TextPrompt{T}"/> that accepts empty input (the user can
+        /// press Enter without typing anything).  Used by the macro recording coordinate
+        /// capture flow where the user positions the mouse and presses Enter to confirm.
+        /// </summary>
+        /// <param name="title">The prompt text displayed to the user.</param>
+        /// <returns>A configured <see cref="TextPrompt{T}"/> ready to call <c>.Show(console)</c>.</returns>
+        public static TextPrompt<string> CreateEmptyTextPrompt(string title)
+        {
+            var prompt = new TextPrompt<string>(title);
+            prompt.AllowEmpty = true;
+            return prompt;
         }
 
         /// <summary>

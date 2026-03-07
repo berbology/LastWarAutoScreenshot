@@ -184,7 +184,7 @@ function Get-ModuleConfiguration {
             }
 
             Write-Verbose "Configuration loaded successfully: ProcessName=$($configData.ProcessName), WindowTitle=$($configData.WindowTitle)"
-            Write-Host "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -ForegroundColor Green
+            Write-LastWarLog -Level Info -Message "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -FunctionName 'Get-ModuleConfiguration'
 
             # Return configuration object
             return $configData

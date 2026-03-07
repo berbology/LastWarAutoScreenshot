@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Invoke-StartupConfigValidation' {
+Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
 
     Context 'When the config file does not exist (Get-ModuleConfiguration returns defaults)' {
 

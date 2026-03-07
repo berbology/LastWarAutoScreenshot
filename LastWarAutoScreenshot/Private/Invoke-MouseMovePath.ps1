@@ -40,15 +40,11 @@ function Invoke-MouseMovePath {
 
     $success = $true
     for ($i = 1; $i -lt $numSteps; $i++) {
-        $prev = $Points[$i-1]
         $curr = $Points[$i]
-        $deltaX = $curr.X - $prev.X
-        $deltaY = $curr.Y - $prev.Y
-        $result = Invoke-SendMouseInput -DeltaX $deltaX -DeltaY $deltaY
+        $result = Invoke-SetCursorPos -X $curr.X -Y $curr.Y
         if (-not $result) {
             $success = $false
-            Write-LastWarLog -Level Error -Message "Invoke-MouseMovePath: SendInput error at step $i" -FunctionName 'Invoke-MouseMovePath'
-            Write-Host "`e[31mInvoke-MouseMovePath: SendInput error at step $i`e[0m"
+            Write-LastWarLog -Level Error -Message "Invoke-MouseMovePath: SetCursorPos error at step $i" -FunctionName 'Invoke-MouseMovePath'
         }
         Start-Sleep -Milliseconds ([int]$stepDelays[$i])
         if ((Get-Random -Minimum 0.0 -Maximum 1.0) -lt $MicroPauseChance) {
@@ -74,15 +70,11 @@ function Invoke-MouseMovePath {
         $overshootY = [int]($Points[-1].Y + $overshootVecY)
         $correctionPoints = Get-BezierPoints -StartX $overshootX -StartY $overshootY -EndX $Points[-1].X -EndY $Points[-1].Y
         for ($i = 1; $i -lt $correctionPoints.Count; $i++) {
-            $prev = $correctionPoints[$i-1]
             $curr = $correctionPoints[$i]
-            $deltaX = $curr.X - $prev.X
-            $deltaY = $curr.Y - $prev.Y
-            $result = Invoke-SendMouseInput -DeltaX $deltaX -DeltaY $deltaY
+            $result = Invoke-SetCursorPos -X $curr.X -Y $curr.Y
             if (-not $result) {
                 $success = $false
-                Write-LastWarLog -Level Error -Message "Invoke-MouseMovePath: Correction SendInput error at step $i" -FunctionName 'Invoke-MouseMovePath'
-                Write-Host "`e[31mInvoke-MouseMovePath: Correction SendInput error at step $i`e[0m"
+                Write-LastWarLog -Level Error -Message "Invoke-MouseMovePath: Correction SetCursorPos error at step $i" -FunctionName 'Invoke-MouseMovePath'
             }
             Start-Sleep -Milliseconds 5
         }

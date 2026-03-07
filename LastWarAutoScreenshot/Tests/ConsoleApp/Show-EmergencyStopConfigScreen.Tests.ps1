@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Show-EmergencyStopConfigScreen' {
+Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
     # Prompts in order:
     #   1. AutoStart              (bool  -> ConfirmationPrompt): push 'y' or 'n' explicitly

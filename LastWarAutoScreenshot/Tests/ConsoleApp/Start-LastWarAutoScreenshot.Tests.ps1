@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Start-LastWarAutoScreenshot' {
+Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
 
     Context 'Loop lifecycle' {
 
@@ -156,7 +156,7 @@ Describe 'Start-LastWarAutoScreenshot' {
             }
         }
 
-        It 'Writes the stub panel to Console when Show-MainMenu returns RecordMacro' {
+        It 'Calls Show-RecordMacroScreen exactly once when Show-MainMenu returns RecordMacro then Exit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Invoke-InAlternateScreen -MockWith {
                     param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
@@ -165,16 +165,63 @@ Describe 'Start-LastWarAutoScreenshot' {
                 Mock Invoke-StartupConfigValidation -MockWith {
                     [PSCustomObject]@{ HasErrors = $false; Messages = @() }
                 }
-                $script:_stubMenuCallCount = 0
+                Mock Show-RecordMacroScreen -MockWith { $null }
+                $script:_recordMenuCallCount = 0
                 Mock Show-MainMenu -MockWith {
-                    $script:_stubMenuCallCount++
-                    if ($script:_stubMenuCallCount -eq 1) { 'RecordMacro' } else { 'Exit' }
+                    $script:_recordMenuCallCount++
+                    if ($script:_recordMenuCallCount -eq 1) { 'RecordMacro' } else { 'Exit' }
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 Start-LastWarAutoScreenshot -Console $tc
 
-                $tc.Output | Should -Match 'not yet available'
+                Should -Invoke Show-RecordMacroScreen -Exactly 1
+            }
+        }
+
+        It 'Calls Show-RunMacroScreen exactly once when Show-MainMenu returns RunMacro then Exit' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-RunMacroScreen -MockWith { $null }
+                $script:_runMenuCallCount = 0
+                Mock Show-MainMenu -MockWith {
+                    $script:_runMenuCallCount++
+                    if ($script:_runMenuCallCount -eq 1) { 'RunMacro' } else { 'Exit' }
+                }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LastWarAutoScreenshot -Console $tc
+
+                Should -Invoke Show-RunMacroScreen -Exactly 1
+            }
+        }
+
+        It 'Calls Show-ManageMacrosScreen exactly once when Show-MainMenu returns ManageMacros then Exit' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-ManageMacrosScreen -MockWith { $null }
+                $script:_manageMenuCallCount = 0
+                Mock Show-MainMenu -MockWith {
+                    $script:_manageMenuCallCount++
+                    if ($script:_manageMenuCallCount -eq 1) { 'ManageMacros' } else { 'Exit' }
+                }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LastWarAutoScreenshot -Console $tc
+
+                Should -Invoke Show-ManageMacrosScreen -Exactly 1
             }
         }
     }

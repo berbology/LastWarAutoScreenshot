@@ -136,6 +136,17 @@ Always suppress return values from Spectre.Console methods with `| Out-Null`. Ne
 - Use `Should -Invoke` (not the deprecated `Assert-MockCalled`)
 - Use `-TestCases` / `-ForEach` for data-driven tests
 - Full test suite must pass (all files, no filters) before any task is marked complete. Check and report total test count vs. the known baseline.
+- Use valid assertions such as
+  - Should -BeAtLeast 1 # result should be at least 1
+  - Should -Invoke {function} -Times 1 # Should invoke function at least 1 times
+  - Should -BeExactly "hello" # case sensitive string assertion
+  - Should -BeTrue | -BeFalse
+  - Should -BeLike | -BeLikeExactly # Wildcard matching | Case sensitive wildcard matching
+- Do not use MarkupLine or WriteLine as these methods do not exist in our project. Instead use the following:
+
+```powershell
+$Console.Write([Spectre.Console.Markup]::new(...))
+```
 
 ## Critical Workflow Rules
 

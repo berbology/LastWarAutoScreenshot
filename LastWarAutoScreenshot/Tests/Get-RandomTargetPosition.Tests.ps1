@@ -5,7 +5,7 @@
 # Covers bounds, distribution, clamping, and invalid-input behaviour for the private
 # Get-RandomTargetPosition function.
 
-Describe 'Get-RandomTargetPosition' {
+Describe 'Get-RandomTargetPosition' -Tag 'Unit' {
 
     BeforeAll {
         $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'

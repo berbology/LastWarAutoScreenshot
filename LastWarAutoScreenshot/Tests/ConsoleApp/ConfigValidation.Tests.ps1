@@ -4,7 +4,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'Test-ConfigValue' {
+Describe 'Test-ConfigValue' -Tag 'Unit' {
 
     Context 'When the key is not present in the schema (unknown key)' {
         It 'Should return Valid=$true for an unrecognised key' {

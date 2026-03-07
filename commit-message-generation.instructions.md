@@ -7,7 +7,7 @@ These instructions define how commit messages should be generated for this proje
 1. **Concise and Descriptive**:
    1. Use British English at all times
    2. Be extremely detailed with file changes and reasons for changes
-   3. Use lots of emojis.
+   3. Use commonly used emojis relevant to the context. Use plenty of them but never use random ones, make them relevant!
    4. Use conventional commit format: type(scope): description
    5. IMPORTANT: Only include issue numbers using 'Fixes #123' or 'Closes #456' format if they correspond to real issues or tasks. Do NOT make up placeholder fake ones!
 2. **Imperative Mood**: Use the imperative mood (e.g., "Add feature" instead of "Added feature").
@@ -28,4 +28,3 @@ These instructions define how commit messages should be generated for this proje
 ## Automation
 
 Commit messages may be auto-generated based on the changes made, but they must adhere to the above guidelines. Review and edit auto-generated messages as needed to ensure clarity and accuracy.
-

@@ -5,7 +5,7 @@
 # Step 2.8: Add tests verifying Invoke-MouseMovePath is called instead of Move-MouseToPoint, and ClickPreDelay/ClickPostDelay Start-Sleep calls are present.
 
 
-Describe 'Start-AutomationSequence' {
+Describe 'Start-AutomationSequence' -Tag 'Unit' {
 
     BeforeAll {
         $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'

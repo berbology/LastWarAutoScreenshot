@@ -5,7 +5,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'EventLog backend in Write-LastWarLog' {
+Describe 'EventLog backend in Write-LastWarLog' -Tag 'Unit' {
     Context 'Event writing' {
         BeforeEach {
             InModuleScope LastWarAutoScreenshot {

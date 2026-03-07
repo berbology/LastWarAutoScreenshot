@@ -6,7 +6,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe '[LastWarAutoScreenshot.MouseControlAPI] type definition' {
+Describe '[LastWarAutoScreenshot.MouseControlAPI] type definition' -Tag 'Unit' {
     It 'Loads the MouseControlAPI type without error' {
         InModuleScope -ModuleName LastWarAutoScreenshot {
             { [void][LastWarAutoScreenshot.MouseControlAPI] } | Should -Not -Throw
@@ -104,6 +104,62 @@ Describe '[LastWarAutoScreenshot.MouseControlAPI] type definition' {
             # VK_SHIFT = 0x10 (16) - safe to call; returns 0 when Shift is not held.
             # We only verify no exception is thrown, not the actual key state.
             { [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState(0x10) } | Should -Not -Throw
+        }
+    }
+
+    It 'Has static constant MOUSEEVENTF_ABSOLUTE = 0x8000' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_ABSOLUTE | Should -Be 0x8000
+        }
+    }
+
+    It 'Has static constant MOUSEEVENTF_VIRTUALDESK = 0x4000' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_VIRTUALDESK | Should -Be 0x4000
+        }
+    }
+
+    It 'Has static constant SM_XVIRTUALSCREEN = 76' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            [LastWarAutoScreenshot.MouseControlAPI]::SM_XVIRTUALSCREEN | Should -Be 76
+        }
+    }
+
+    It 'Has static constant SM_YVIRTUALSCREEN = 77' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            [LastWarAutoScreenshot.MouseControlAPI]::SM_YVIRTUALSCREEN | Should -Be 77
+        }
+    }
+
+    It 'Has static constant SM_CXVIRTUALSCREEN = 78' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            [LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN | Should -Be 78
+        }
+    }
+
+    It 'Has static constant SM_CYVIRTUALSCREEN = 79' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            [LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN | Should -Be 79
+        }
+    }
+
+    It 'Has static method GetSystemMetrics with correct signature' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            $method = [LastWarAutoScreenshot.MouseControlAPI].GetMethod('GetSystemMetrics', [System.Reflection.BindingFlags]::Public -bor [System.Reflection.BindingFlags]::Static)
+            $method | Should -Not -BeNullOrEmpty
+            $method.GetParameters().Count | Should -Be 1
+            $method.GetParameters()[0].ParameterType.Name | Should -Be 'Int32'
+            $method.ReturnType.Name | Should -Be 'Int32'
+        }
+    }
+
+    It 'GetSystemMetrics returns positive values for virtual screen dimensions' {
+        InModuleScope -ModuleName LastWarAutoScreenshot {
+            $width = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN)
+            $height = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN)
+            
+            $width | Should -BeGreaterThan 0
+            $height | Should -BeGreaterThan 0
         }
     }
 }

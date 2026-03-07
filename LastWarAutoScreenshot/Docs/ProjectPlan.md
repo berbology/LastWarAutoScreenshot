@@ -425,7 +425,7 @@
 
 **Included:** Main menu, window selection screen, configuration screens (Logging, MouseControl, EmergencyStop), storage info screen, startup config validation, `IAnsiConsole` injection throughout, full Pester test coverage using `TestConsole`.
 
-**Explicitly out of scope for Phase 3:** Task Scheduler (Phase 5), visual screenshot region selection (Phase 6), live mouse coordinate display during recording (Phase 4).
+**Explicitly out of scope for Phase 3:** Task Scheduler (6), visual screenshot region selection (Phase 5), live mouse coordinate display during recording (Phase 4).
 
 ---
 
@@ -1061,45 +1061,1211 @@
 
 ## Phase 4: Mouse Macro Recording
 
-1. [ ] Implement action recording macro that generates user settings in module configuration (JSON import/export supported)
-   - Prompt user to start recording
-   - Display recording status
-   - Use keyboard to select what to record
-     - A target box/circle
-     - A drag-click
-     - A screenshot region
-   - For recording move mouse, click on target region
-     - Prompt user to move mouse to centre of region to click and press configurable keyboard shortcut Ctrl-Shift-R
-     - Prompt user to move mouse to top left position of region to click and press Ctrl-Shift-R
-     - If possible display a box border outline over the window and allow user to accept or redo
-   - For recording click drag
-     - Prompt user to move mouse to centre of region to start click drag and press configurable keyboard shortcut Ctrl-Shift-R
-     - Prompt user to drag-click to destination - record start and end point of drag
-   - After each action has been recorded with Ctrl-Shift-R prompt user to press Y to commit action, R to redo, Q to quit back to main menu
+### Architecture decisions (record here for future reference)
 
-## Phase 5: Configuration & Scheduling
+- **Macro storage format:** Pure JSON files stored in `Private/Macros/`. Macros are both stored and executed as JSON — the PowerShell module's existing mouse control infrastructure (`Start-AutomationSequence`, `Invoke-MouseMovePath`, `Invoke-MouseClick`, etc.) handles execution directly.
+- **File naming convention:** `yyyyMMdd_HHmmss_<name>.json` — datetime prefix is the creation timestamp (UTC); `<name>` is user-supplied, validated to `[a-zA-Z0-9_-]`, max 50 characters. Spaces are auto-converted to hyphens with user confirmation.
+- **Macro file location:** `Private/Macros/` within the module root. The folder is created on first macro save if it doesn't exist. `Show-MainMenu` already checks this folder for `*.json` files (Phase 3).
+- **Action naming:** All action types support an optional `name` property. Named actions can be referenced by Loop actions. Names must be unique within a macro (enforced across all action types). Unnamed actions execute in sequence but cannot be referenced by loops. They can also be given a name via Manage Macros -> Edit Macro -> Rename macro step
+- **Coordinate capture method:** The user moves the mouse to the target position over the game window (which must be visible and windowed — not exclusive fullscreen), then presses Enter in the console app (which retains keyboard focus throughout). On Enter press, the module calls `Invoke-GetCursorPosition` and converts the absolute screen coordinates to window-relative coordinates via `Get-WindowBounds`. After each capture, the user is offered Accept / Redo / Cancel. No hotkey polling or background listeners are required — standard Spectre.Console `TextPrompt` with `AllowEmpty` handles the Enter key press, making the capture flow fully testable with `TestConsole`.
+- **Sequence model:** Flat ordered array of actions. Execution walks the array in order. Loop actions look up referenced named actions from the full sequence by name (position-independent — reordering in the edit screen cannot break loop references). Each iteration of a loop executes the referenced actions in the order specified by the loop's `actionNames` array.
+- **Loop constraints:** Loops cannot reference other Loop actions (no nesting). This is validated at save time and during recording. Loops can only reference non-Loop named actions.
+- **Emergency stop integration:** `$script:EmergencyStopRequested` is checked between every action during macro execution. If triggered, execution halts cleanly and reports which action was interrupted.
+- **DragClick:** New `Invoke-MouseDragClick` private function — orchestrates existing `Invoke-MouseMovePath` (Bezier path to start), `Invoke-SendMouseInput` (button down), `Invoke-MouseMovePath` (Bezier path to end), `Invoke-SendMouseInput` (button up). No new Win32 API required — existing `MOUSEEVENTF_LEFTDOWN`, `MOUSEEVENTF_LEFTUP`, and `MOUSEEVENTF_MOVE` constants in `MouseControlAPI.cs` suffice.
+- **Screenshot actions:** Region coordinates are recorded in the macro JSON during Phase 4. Actual screenshot capture is deferred to Phase 6. During execution, screenshot actions log a warning (`"Screenshot capture not yet implemented — skipping"`) and continue without error.
+- **Main menu additions:** Three macro-related options: "Record macro" (always visible), "Run macro" (visible only when `*.json` files exist in `Private/Macros/` — existing Phase 3 behaviour), "Manage macros" (always visible — shows `"No macros saved yet"` message when no macros exist).
+- **Testability:** All screen functions follow the established `$Console` / `IAnsiConsole` injection pattern. All file I/O is mockable. Coordinate capture is mockable via `Invoke-GetCursorPosition` mock. Macro file operations use `TestDrive:\` in Pester tests.
 
-1. [ ] Design and implement configuration schema supporting both JSON and YAML formats:
+### Phase 4 scope (what is and is not included)
 
-- Note: Most, if not all of this task has already been done
-- Window target settings
-- Action sequences with window-relative coordinates
-- Human-like interaction parameters
-- Emergency stop configuration
-- Storage limits and screenshot settings
-- Logging preferences
-- Azure upload settings (for future use)
+**Included:** JSON macro schema definition and validation, macro file CRUD operations (save, load, list, rename, delete), coordinate capture via Enter key with Accept/Redo/Cancel, recording screen with full action type support (MoveToPoint, MoveToRegion box/circle, LeftClick, DragClick, Screenshot region stub, Delay, Loop), macro execution engine with emergency stop integration and progress display, "Run macro" screen with macro selection and execution, "Manage macros" screen (view details, edit macro with macro rename and step rename/reorder, delete macro), main menu updates, `Invoke-MouseDragClick` implementation, full Pester test coverage using `TestConsole`.
 
-1. [ ] Integrate with Windows Task Scheduler for automated execution:
+**Explicitly out of scope for Phase 4:** Visual overlays showing shapes on the game window (see Phase 4b), actual screenshot capture (Phase 5), Task Scheduler integration (Phase 6), step deletion within edit macro (future enhancement), YAML import/export.
 
-- Start date/time configuration
-- Repeat interval settings (e.g., every 6 hours)
-- Repeat duration (fixed or indefinite)
-- Random delay before task start (0-120 minutes)
-- Task expiration and stop conditions
-- Reference Windows Task Scheduler "Edit Trigger" dialog for UI patterns
+### Naming and validation rules
 
-## Phase 6: Screenshot Management
+- **Macro names:** `[a-zA-Z0-9_-]` only, 1–50 characters. Spaces auto-converted to hyphens with user confirmation. Must be unique among all saved macro files. Validated by `Get-ValidMacroName`.
+- **Action names (within a macro):** Same character rules as macro names. Must be unique within the macro (enforced across all action types — cannot have a MoveToPoint and a LeftClick both named `action1`). Validated by `Test-MacroAction`.
+- **Filename format:** `yyyyMMdd_HHmmss_<name>.json` — datetime portion is UTC, `<name>` is the validated macro name. On rename, the datetime prefix is preserved; only the name portion changes.
+- **Display format:** When presenting macros to the user, show `"<name> (dd/MM/yy HH:mm:ss)"` using the current localisation format, e.g. `"my-saved-sequence (29/01/26 19:29:22)"`.
+
+### JSON macro file schema
+
+```json
+{
+    "version": "1.0",
+    "metadata": {
+        "name": "get-vs-scores",
+        "createdUtc": "2026-02-24T12:12:12Z",
+        "modifiedUtc": "2026-02-24T12:12:12Z",
+        "description": ""
+    },
+    "targetWindow": {
+        "processName": "LastWar",
+        "windowTitle": "Last War: Survival"
+    },
+    "sequence": [
+        {
+            "name": "target-vs-icon",
+            "type": "MoveToRegion",
+            "region": {
+                "type": "Circle",
+                "relativeCentreX": 0.452,
+                "relativeCentreY": 0.621,
+                "relativeRadius": 0.053
+            }
+        },
+        {
+            "type": "LeftClick"
+        },
+        {
+            "name": "ranking-icon",
+            "type": "MoveToRegion",
+            "region": {
+                "type": "Box",
+                "relativeX": 0.30,
+                "relativeY": 0.20,
+                "relativeWidth": 0.10,
+                "relativeHeight": 0.05
+            }
+        },
+        {
+            "type": "LeftClick"
+        },
+        {
+            "name": "vs-score-screenshot-region",
+            "type": "Screenshot",
+            "region": {
+                "topLeft": { "relativeX": 0.10, "relativeY": 0.15 },
+                "bottomRight": { "relativeX": 0.90, "relativeY": 0.85 }
+            }
+        },
+        {
+            "name": "move-vs-score-bottom",
+            "type": "MoveToPoint",
+            "position": {
+                "relativeX": 0.50,
+                "relativeY": 0.90
+            }
+        },
+        {
+            "name": "scroll-next-vs-scores",
+            "type": "DragClick",
+            "start": { "relativeX": 0.50, "relativeY": 0.80 },
+            "end": { "relativeX": 0.50, "relativeY": 0.20 }
+        },
+        {
+            "name": "loop-get-vs-screenshots",
+            "type": "Loop",
+            "iterations": 19,
+            "actionNames": [
+                "move-vs-score-bottom",
+                "scroll-next-vs-scores",
+                "vs-score-screenshot-region"
+            ]
+        },
+        {
+            "type": "MoveToPoint",
+            "position": { "relativeX": 0.05, "relativeY": 0.05 }
+        },
+        {
+            "type": "LeftClick"
+        },
+        {
+            "type": "Delay",
+            "seconds": 5
+        },
+        {
+            "type": "LeftClick"
+        },
+        {
+            "type": "Delay",
+            "seconds": 5
+        },
+        {
+            "type": "LeftClick"
+        }
+    ]
+}
+```
+
+**Action type specifications:**
+
+| Type | Required properties | Optional | Notes |
+|------|-------------------|----------|-------|
+| `MoveToPoint` | `position.relativeX` (double 0.0–1.0), `position.relativeY` (double 0.0–1.0) | `name` | Moves mouse to exact relative coordinate |
+| `MoveToRegion` | `region.type` (`'Box'` or `'Circle'`); if Box: `region.relativeX`, `region.relativeY`, `region.relativeWidth`, `region.relativeHeight` (all double 0.0–1.0); if Circle: `region.relativeCentreX`, `region.relativeCentreY`, `region.relativeRadius` (all double 0.0–1.0) | `name` | Random point within region selected at execution time via `Get-RandomTargetPosition` |
+| `LeftClick` | *(none)* | `name` | Clicks at current mouse position (typically follows a Move action) |
+| `DragClick` | `start.relativeX`, `start.relativeY`, `end.relativeX`, `end.relativeY` (all double 0.0–1.0) | `name` | Mouse down at start, Bezier path to end, mouse up |
+| `Screenshot` | `region.topLeft.relativeX`, `region.topLeft.relativeY`, `region.bottomRight.relativeX`, `region.bottomRight.relativeY` (all double 0.0–1.0) | `name` | Capture deferred to Phase 6; logs warning and skips during execution |
+| `Delay` | `seconds` (double, 0.1–3600) | `name` | Pauses execution for the specified duration |
+| `Loop` | `iterations` (int, 1–10000), `actionNames` (string array, non-empty) | `name` | Executes referenced named actions in order, repeated N times; cannot reference other Loops |
+
+### Reference: example macro sequences
+
+These example sequences informed the JSON schema design and are used as validation
+test cases throughout Phase 4 implementation.
+
+**Sequence 1 — "Get VS Scores"**
+
+1. Move mouse to first target circle (name: target-vs-icon)
+2. Left-click
+3. Move mouse to target square (name: ranking-icon)
+4. Left-click
+5. Move mouse to target square (name: your-alliance)
+6. Left-click
+7. Screenshot region (name: vs-score-screenshot-region)
+8. Move mouse to bottom of vs scores (name: move-vs-score-bottom)
+9. Click drag up to top of vs scores (name: scroll-next-vs-scores)
+10. Screenshot region (reuse named action vs-score-screenshot-region)
+11. Loop (name: loop-get-vs-screenshots): move-vs-score-bottom → scroll-next-vs-scores → vs-score-screenshot-region × 19 iterations
+12. Move mouse outside VS window (unnamed)
+13. Left-click
+14. Pause 5 seconds
+15. Left-click
+16. Pause 5 seconds
+17. Left-click
+
+**Sequence 2 — "Get Arms Race Scores"**
+
+1. Move mouse to first target circle (name: target-events-icon)
+2. Left-click
+3. Move mouse to bottom of arms race scores (name: move-arms-race-score-bottom)
+4. Click drag up to top of arms race scores (name: scroll-next-arms-race-scores)
+5. Screenshot region (name: arms-race-screenshot-region)
+6. Left-click
+7. Pause 5 seconds
+8. Left-click
+9. Pause 5 seconds
+10. Left-click
+
+---
+
+1. [x] Define JSON macro schema and validation functions
+   1. [x] 1.1: Create `LastWarAutoScreenshot/Private/MacroSchema.ps1`
+      - Define `$script:MacroSchemaVersion = '1.0'` (module-scoped constant, not inside a function)
+      - Define `$script:MacroActionTypes` as a hashtable of valid action types and their required/optional properties:
+
+        ```powershell
+        $script:MacroActionTypes = @{
+            'MoveToPoint' = @{
+                Required = @('position.relativeX', 'position.relativeY')
+                Ranges   = @{ 'position.relativeX' = @(0.0, 1.0); 'position.relativeY' = @(0.0, 1.0) }
+            }
+            'MoveToRegion' = @{
+                Required    = @('region.type')
+                SubTypes    = @{
+                    'Box'    = @{
+                        Required = @('region.relativeX', 'region.relativeY', 'region.relativeWidth', 'region.relativeHeight')
+                        Ranges   = @{
+                            'region.relativeX'      = @(0.0, 1.0); 'region.relativeY'      = @(0.0, 1.0)
+                            'region.relativeWidth'  = @(0.0, 1.0); 'region.relativeHeight'  = @(0.0, 1.0)
+                        }
+                    }
+                    'Circle' = @{
+                        Required = @('region.relativeCentreX', 'region.relativeCentreY', 'region.relativeRadius')
+                        Ranges   = @{
+                            'region.relativeCentreX' = @(0.0, 1.0); 'region.relativeCentreY' = @(0.0, 1.0)
+                            'region.relativeRadius'  = @(0.0, 1.0)
+                        }
+                    }
+                }
+            }
+            'LeftClick'   = @{ Required = @() }
+            'DragClick'   = @{
+                Required = @('start.relativeX', 'start.relativeY', 'end.relativeX', 'end.relativeY')
+                Ranges   = @{
+                    'start.relativeX' = @(0.0, 1.0); 'start.relativeY' = @(0.0, 1.0)
+                    'end.relativeX'   = @(0.0, 1.0); 'end.relativeY'   = @(0.0, 1.0)
+                }
+            }
+            'Screenshot'  = @{
+                Required = @('region.topLeft.relativeX', 'region.topLeft.relativeY',
+                             'region.bottomRight.relativeX', 'region.bottomRight.relativeY')
+                Ranges   = @{
+                    'region.topLeft.relativeX'     = @(0.0, 1.0); 'region.topLeft.relativeY'     = @(0.0, 1.0)
+                    'region.bottomRight.relativeX' = @(0.0, 1.0); 'region.bottomRight.relativeY' = @(0.0, 1.0)
+                }
+            }
+            'Delay'       = @{
+                Required = @('seconds')
+                Ranges   = @{ 'seconds' = @(0.1, 3600) }
+            }
+            'Loop'        = @{
+                Required = @('iterations', 'actionNames')
+                Ranges   = @{ 'iterations' = @(1, 10000) }
+            }
+        }
+        ```
+
+      - All dot-notation property paths (e.g. `position.relativeX`) are resolved by a private helper `Get-NestedProperty -Object [PSCustomObject] -Path [string]` that walks the dot-separated segments and returns the value or `$null` if any segment is missing
+      - Full comment-based help on all functions in this file
+   2. [x] 1.2: Create `Get-ValidMacroName` in `Private/MacroSchema.ps1`
+      - `Get-ValidMacroName -Name [string] -ExistingNames [string[]] [-AutoFix]`
+      - Validates name against rules: matches regex `^[a-zA-Z0-9_-]+$`, 1–50 characters
+      - If `-AutoFix`: trims leading/trailing whitespace, converts spaces to hyphens, strips characters not matching `[a-zA-Z0-9_-]`, truncates to 50 characters
+      - If the original name contained spaces and `-AutoFix` was applied, the `WasAutoFixed` flag is set to `$true` so the caller can prompt the user for confirmation
+      - Checks uniqueness against `$ExistingNames` (case-insensitive comparison)
+      - Returns `[PSCustomObject]@{Valid=[bool]; SanitisedName=[string]; WasAutoFixed=[bool]; Message=[string]}`
+      - `Message` is empty string when `Valid = $true`; human-readable error when `Valid = $false`
+      - Full comment-based help
+   3. [x] 1.3: Create `Test-MacroAction` in `Private/MacroSchema.ps1`
+      - `Test-MacroAction -Action [PSCustomObject] -ExistingNames [string[]]`
+      - Validates a single action against `$script:MacroActionTypes`:
+        - `type` property exists and is a recognised action type
+        - All required properties exist and are non-null
+        - All numeric properties are within their defined ranges
+        - For `MoveToRegion`: `region.type` is `'Box'` or `'Circle'`; the correct sub-type required properties are validated
+        - For `Screenshot`: `bottomRight.relativeX > topLeft.relativeX` and `bottomRight.relativeY > topLeft.relativeY`
+        - For `Loop`: `actionNames` is a non-empty string array; each name exists in `$ExistingNames`; no name in `actionNames` resolves to a Loop action (loop nesting check requires the caller to pass action type information — use an optional `-ActionTypeLookup [hashtable]` parameter mapping name → type)
+        - If action has a `name` property: validates via `Get-ValidMacroName` against `$ExistingNames`
+      - Returns `[PSCustomObject]@{Valid=[bool]; Message=[string]}`
+      - `Message` is empty string when `Valid = $true`; first validation error found when `Valid = $false`
+   4. [x] 1.4: Create `Test-MacroFile` in `Private/MacroSchema.ps1`
+      - `Test-MacroFile -MacroData [PSCustomObject]`
+      - Validates the complete macro structure:
+        - `version` field exists and equals `$script:MacroSchemaVersion`
+        - `metadata` object exists with `name` (valid via `Get-ValidMacroName`), `createdUtc` (valid ISO 8601), `modifiedUtc` (valid ISO 8601)
+        - `targetWindow` object exists with non-empty `processName` and `windowTitle` strings
+        - `sequence` is a non-empty array
+        - Builds a running names set and action-type lookup as it iterates through the sequence
+        - Each action in sequence passes `Test-MacroAction` with the names set accumulated so far
+        - After full iteration: all Loop `actionNames` references resolve to named actions in the sequence
+        - No Loop action references another Loop action
+      - Returns `[PSCustomObject]@{Valid=[bool]; Messages=[string[]]}`
+      - `Messages` is empty array when `Valid = $true`; all validation errors collected when `Valid = $false`
+      - Logs each validation error via `Write-LastWarLog -Level Warning`
+   5. [x] 1.5: Create `LastWarAutoScreenshot/Tests/MacroSchema.Tests.ps1`
+      - Import module in `BeforeAll` using the manifest path (standard pattern)
+      - **`Get-ValidMacroName` tests:**
+        - Valid name `'my-macro-1'` → `Valid=$true`, `SanitisedName='my-macro-1'`
+        - Name with spaces `'my macro'` with `-AutoFix` → `SanitisedName='my-macro'`, `WasAutoFixed=$true`, `Valid=$true`
+        - Name with invalid characters `'my macro!@#'` with `-AutoFix` → stripped to `'my-macro'`
+        - Name exceeding 50 characters → truncated to 50
+        - Empty string → `Valid=$false` with non-empty `Message`
+        - Duplicate name in `$ExistingNames` → `Valid=$false`
+        - Name with only invalid characters `'!!!'` with `-AutoFix` → `Valid=$false` (empty after stripping)
+      - **`Test-MacroAction` tests:**
+        - Valid `MoveToPoint` action → `Valid=$true`
+        - `MoveToPoint` missing `position.relativeX` → `Valid=$false` with message
+        - `MoveToPoint` with `relativeX` = 1.5 (out of range) → `Valid=$false`
+        - Valid `MoveToRegion` Box → `Valid=$true`
+        - Valid `MoveToRegion` Circle → `Valid=$true`
+        - `MoveToRegion` with invalid `region.type` → `Valid=$false`
+        - Valid `LeftClick` (no required properties) → `Valid=$true`
+        - Valid `DragClick` → `Valid=$true`
+        - Valid `Screenshot` → `Valid=$true`
+        - `Screenshot` with `bottomRight.relativeX < topLeft.relativeX` → `Valid=$false`
+        - Valid `Delay` with `seconds = 5` → `Valid=$true`
+        - `Delay` with `seconds = 0` (below minimum) → `Valid=$false`
+        - `Delay` with `seconds = 4000` (above maximum) → `Valid=$false`
+        - Valid `Loop` referencing existing named actions → `Valid=$true`
+        - `Loop` referencing non-existent action name → `Valid=$false`
+        - `Loop` referencing another Loop action → `Valid=$false`
+        - `Loop` with `iterations = 0` → `Valid=$false`
+        - `Loop` with empty `actionNames` array → `Valid=$false`
+        - Action with duplicate `name` in `$ExistingNames` → `Valid=$false`
+        - Unknown action `type` → `Valid=$false`
+      - **`Test-MacroFile` tests:**
+        - Valid complete macro (based on "Get VS Scores" example) → `Valid=$true`, empty `Messages`
+        - Missing `version` → `Valid=$false`
+        - Wrong `version` value → `Valid=$false`
+        - Missing `metadata.name` → `Valid=$false`
+        - Missing `targetWindow.processName` → `Valid=$false`
+        - Empty `sequence` array → `Valid=$false`
+        - Duplicate action names in sequence → `Valid=$false`
+        - Broken loop reference → `Valid=$false`
+        - Nested loop (Loop referencing another Loop) → `Valid=$false`
+        - Multiple errors collected → `Messages` array contains all errors
+      - Run full Pester suite; confirm count increases
+
+2. [x] Implement macro file management functions
+   1. [x] 2.1: Create `LastWarAutoScreenshot/Private/Save-MacroFile.ps1`
+      - `Save-MacroFile -MacroData [PSCustomObject] [-Force]`
+      - Validates macro via `Test-MacroFile`; if invalid, logs Error with all validation messages and returns `Success=$false`
+      - Creates `Private/Macros/` directory if it doesn't exist (`New-Item -ItemType Directory -Force`)
+      - Generates filename from `metadata.createdUtc` and `metadata.name`:
+        - Parse `createdUtc` as `[datetime]`; format as `yyyyMMdd_HHmmss`
+        - Sanitise name via `Get-ValidMacroName`
+        - Result: `<yyyyMMdd_HHmmss>_<name>.json`
+      - Full file path: `Join-Path $script:ModuleRootPath 'Private\Macros' $filename`
+      - If file already exists and `-Force` not specified: log Warning `"Macro file already exists. Use -Force to overwrite."`, return `Success=$false`
+      - Serialise `$MacroData` to JSON via `ConvertTo-Json -Depth 10` and write to file via `Set-Content -Encoding UTF8`
+      - Log Info `"Macro '<name>' saved to <filepath>"` via `Write-LastWarLog`
+      - Returns `[PSCustomObject]@{Success=[bool]; FilePath=[string]; Message=[string]}`
+      - Error handling: `try/catch` around file write; logs Error on failure; returns `Success=$false`
+      - Full comment-based help
+   2. [x] 2.2: Create `LastWarAutoScreenshot/Private/Get-MacroFile.ps1`
+      - `Get-MacroFile -FilePath [string]`
+      - Validates file exists via `Test-Path`; if not, logs Error and returns `$null`
+      - Reads file content via `Get-Content -Raw -Encoding UTF8`
+      - Parses JSON via `ConvertFrom-Json`; if JSON is invalid, logs Error and returns `$null`
+      - Validates via `Test-MacroFile`; attaches validation result to the return object
+      - Returns `[PSCustomObject]@{Valid=[bool]; Data=[PSCustomObject]; Messages=[string[]]}`
+      - `Data` is the parsed macro object; `Valid` and `Messages` come from `Test-MacroFile`
+      - If the file contained valid JSON but failed schema validation, `Data` is still returned (allows the manage screen to display and potentially fix the macro); `Valid=$false` with `Messages` describing the issues
+      - Full comment-based help
+   3. [x] 2.3: Create `LastWarAutoScreenshot/Private/Get-MacroFileList.ps1`
+      - `Get-MacroFileList`
+      - Scans `Join-Path $script:ModuleRootPath 'Private\Macros'` for `*.json` files via `Get-ChildItem`
+      - If folder does not exist or contains no JSON files: returns empty array `@()`
+      - For each file: parses the filename to extract datetime and name portions using regex `'^(\d{8}_\d{6})_(.+)\.json$'`
+      - For each file: reads JSON via `Get-MacroFile`; extracts `metadata.name`, `metadata.createdUtc`, sequence length
+      - Constructs display date from `createdUtc` in localised format `dd/MM/yy HH:mm:ss`
+      - Returns `[PSCustomObject[]]` each with properties: `FileName`, `FilePath`, `Name`, `CreatedUtc`, `DisplayDate`, `ActionCount`, `Valid`
+      - Sorted by `CreatedUtc` descending (newest first)
+      - Corrupt files (invalid JSON or failed filename parse): logged as Warning via `Write-LastWarLog` and excluded from results
+      - Full comment-based help
+   4. [x] 2.4: Create `LastWarAutoScreenshot/Private/Remove-MacroFile.ps1`
+      - `Remove-MacroFile -FilePath [string]`
+      - Validates file exists via `Test-Path`; if not, logs Warning and returns `$false`
+      - Deletes the file via `Remove-Item -Force`
+      - Logs Info `"Macro file deleted: <filepath>"` via `Write-LastWarLog`
+      - Returns `$true` on success, `$false` on failure
+      - Error handling: `try/catch` around `Remove-Item`; logs Error on access denied or other failure
+      - Full comment-based help
+   5. [x] 2.5: Create `LastWarAutoScreenshot/Private/Rename-MacroFile.ps1`
+      - `Rename-MacroFile -FilePath [string] -NewName [string]`
+      - Validates file exists; if not, returns `Success=$false`
+      - Validates new name via `Get-ValidMacroName` (checking against existing macro names from `Get-MacroFileList`, excluding the current file)
+      - If name is invalid, returns `Success=$false` with validation message
+      - Reads the existing macro file via `Get-MacroFile`
+      - Updates `metadata.name` to the new name
+      - Updates `metadata.modifiedUtc` to current UTC time in ISO 8601 format
+      - Extracts the original datetime prefix from the existing filename using regex
+      - Generates new filename: `<original-datetime-prefix>_<new-name>.json`
+      - Writes updated JSON to new file path; deletes old file
+      - Logs Info `"Macro renamed from '<old>' to '<new>'"` via `Write-LastWarLog`
+      - Returns `[PSCustomObject]@{Success=[bool]; NewFilePath=[string]; Message=[string]}`
+      - Error handling: if write succeeds but delete of old file fails, logs Error but returns `Success=$true` (the renamed file exists; user may need to manually clean up the old one)
+      - Full comment-based help
+   6. [x] 2.6: Create `LastWarAutoScreenshot/Tests/MacroFileManagement.Tests.ps1`
+      - Import module in `BeforeAll`; all file operations use `TestDrive:\` via mocking `$script:ModuleRootPath`
+      - **`Save-MacroFile` tests:**
+        - Valid macro → file created on disk at expected path; file content is valid JSON matching input; returns `Success=$true` with `FilePath`
+        - Creates `Private/Macros/` directory if it doesn't exist
+        - Filename matches `yyyyMMdd_HHmmss_<name>.json` convention
+        - File already exists without `-Force` → returns `Success=$false`; file not overwritten
+        - File already exists with `-Force` → file overwritten; returns `Success=$true`
+        - Invalid macro (fails `Test-MacroFile`) → returns `Success=$false`; no file written; `Write-LastWarLog` called with Level Error
+      - **`Get-MacroFile` tests:**
+        - Valid JSON file → returns `Valid=$true` with `Data` containing parsed macro
+        - Non-existent file → returns `$null`; `Write-LastWarLog` called with Level Error
+        - Invalid JSON → returns `$null`; `Write-LastWarLog` called with Level Error
+        - Valid JSON but schema-invalid macro → returns `Valid=$false` with `Data` still populated and `Messages` listing errors
+      - **`Get-MacroFileList` tests:**
+        - Empty/non-existent folder → returns empty array
+        - Multiple valid files → returned sorted by `CreatedUtc` descending; each has correct `Name`, `DisplayDate`, `ActionCount`
+        - Corrupt file (invalid JSON) → excluded from results; `Write-LastWarLog` called with Level Warning
+        - File with non-matching filename pattern → excluded with Warning logged
+        - `DisplayDate` format matches `dd/MM/yy HH:mm:ss` localised pattern
+      - **`Remove-MacroFile` tests:**
+        - Existing file → deleted; returns `$true`; `Write-LastWarLog` called with Level Info
+        - Non-existent file → returns `$false`; `Write-LastWarLog` called with Level Warning
+      - **`Rename-MacroFile` tests:**
+        - Valid rename → new file created with updated name in JSON and filename; old file deleted; `metadata.modifiedUtc` updated; returns `Success=$true`
+        - Datetime prefix preserved in new filename
+        - Duplicate name (clash with another macro) → returns `Success=$false`; no files changed
+        - Invalid characters in new name → returns `Success=$false`
+      - Run full Pester suite; confirm count increases
+
+3. [x] Implement coordinate capture helper
+   1. [x] 3.1: Add `CreateEmptyTextPrompt` to `LastWarAutoScreenshot/src/ConsoleAppBridge.cs`
+      - Add the following method to the existing `ConsoleAppBridge` static class (after `RunInAlternateScreen`):
+
+        ```csharp
+        /// <summary>
+        /// Creates a <see cref="TextPrompt{T}"/> that accepts empty input (the user can
+        /// press Enter without typing anything).  Used by the macro recording coordinate
+        /// capture flow where the user positions the mouse and presses Enter to confirm.
+        /// </summary>
+        /// <param name="title">The prompt text displayed to the user.</param>
+        /// <returns>A configured <see cref="TextPrompt{T}"/> ready to call <c>.Show(console)</c>.</returns>
+        public static TextPrompt<string> CreateEmptyTextPrompt(string title)
+        {
+            var prompt = new TextPrompt<string>(title);
+            prompt.AllowEmpty = true;
+            return prompt;
+        }
+        ```
+
+      - No new `using` directives required; `TextPrompt<string>` is in the `Spectre.Console` namespace already imported
+   2. [x] 3.2: Add `CreateEmptyTextPrompt` test to `LastWarAutoScreenshot/Tests/ConsoleApp/ConsoleAppBridge.Tests.ps1`
+      - Add a new `Context 'CreateEmptyTextPrompt'` block:
+        - Returns non-null object with `.AllowEmpty` equal to `$true`
+        - Title property matches supplied title string
+        - Accepts empty input via `TestConsole`: queue `$tc.Input.PushKey([System.ConsoleKey]::Enter)`; call `$prompt.Show($tc)`; no exception thrown; returned value is empty string
+   3. [x] 3.3: Create `LastWarAutoScreenshot/Private/Invoke-CaptureMousePosition.ps1`
+      - `Invoke-CaptureMousePosition -WindowHandle [object] -Console [Spectre.Console.IAnsiConsole] -PromptMessage [string]`
+      - Accepts/Redo/Cancel loop:
+        1. Displays `$PromptMessage` via `$Console.MarkupLine()` (the message should instruct the user to position the mouse and press Enter)
+        2. Creates an empty text prompt via `[LastWarAutoScreenshot.ConsoleAppBridge]::CreateEmptyTextPrompt('')` and calls `.Show($Console)` — blocks until the user presses Enter
+        3. Immediately calls `Invoke-GetCursorPosition` to capture absolute screen coordinates
+        4. Calls `Get-WindowBounds -WindowHandle $WindowHandle` to get the window rectangle
+        5. Computes relative coordinates:
+           - `$relativeX = [math]::Round(($absolute.X - $bounds.Left) / $bounds.Width, 4)`
+           - `$relativeY = [math]::Round(($absolute.Y - $bounds.Top) / $bounds.Height, 4)`
+        6. Validates relative coordinates are within [0.0, 1.0]; if outside, displays warning markup `"[red]Position is outside the target window. Please position the mouse within the window bounds.[/]"` and loops back to step 1 automatically (no Accept/Redo prompt shown for out-of-bounds captures)
+        7. Displays captured position: `"[green]Position captured: ($relativeX, $relativeY) relative to window[/]"`
+        8. Shows `SelectionPrompt` with choices: `'Accept'`, `'Redo'`, `'Cancel'`
+           - `'Accept'`: returns the captured position
+           - `'Redo'`: loops back to step 1
+           - `'Cancel'`: returns `$null`
+      - Returns `[PSCustomObject]@{RelativeX=[double]; RelativeY=[double]; AbsoluteX=[int]; AbsoluteY=[int]}` or `$null` on cancel
+      - Full comment-based help with `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`, `.OUTPUTS`
+   4. [x] 3.4: Create `LastWarAutoScreenshot/Tests/Invoke-CaptureMousePosition.Tests.ps1`
+      - Import module in `BeforeAll`; load `Spectre.Console.Testing.dll`
+      - **User accepts first capture:**
+        - Mock `Invoke-GetCursorPosition` returning `@{X=300; Y=200}`
+        - Mock `Get-WindowBounds` returning `@{Left=100; Top=100; Right=500; Bottom=500; Width=400; Height=400}`
+        - Queue Enter key + 'Accept' selection on TestConsole
+        - Call `Invoke-CaptureMousePosition`; verify returned `RelativeX = 0.5`, `RelativeY = 0.25`
+      - **Position outside window triggers automatic redo:**
+        - Mock `Invoke-GetCursorPosition` returning `@{X=50; Y=50}` (outside window bounds Left=100)
+        - First capture is outside → warning text appears in `$testConsole.Output`
+        - Second call returns position inside window → user accepts → correct coordinates returned
+        - Verify `Invoke-GetCursorPosition` called at least twice
+      - **User selects Redo:**
+        - Mock `Invoke-GetCursorPosition` returning two different positions (first call, second call)
+        - Queue Enter + 'Redo' + Enter + 'Accept' on TestConsole
+        - Returned position matches the second capture, not the first
+      - **User selects Cancel:**
+        - Queue Enter + 'Cancel' on TestConsole
+        - Returns `$null`
+      - **Relative coordinate precision:**
+        - Verify coordinates are rounded to 4 decimal places
+      - Run full Pester suite; confirm count increases
+
+4. [x] Implement DragClick action
+   1. [x] 4.1: Create `LastWarAutoScreenshot/Private/Invoke-MouseDragClick.ps1`
+      - `Invoke-MouseDragClick -StartX [int] -StartY [int] -EndX [int] -EndY [int]`
+      - Reads `MouseControl` config section via `Get-ModuleConfiguration` for movement parameters, click delays, and Bezier settings
+      - Execution steps:
+        1. **Move to start position:** `Invoke-GetCursorPosition` → `Get-BezierPoints` from current position to `($StartX, $StartY)` → `Invoke-MouseMovePath`; if move fails, return `Success=$false`
+        2. **Check emergency stop:** if `$script:EmergencyStopRequested`, return `Success=$false` with `Message = 'Emergency stop triggered before drag'`
+        3. **Pre-click delay:** `Start-Sleep -Milliseconds` (random within `ClickPreDelayRangeMs` config range)
+        4. **Mouse button down:** `Invoke-SendMouseInput -DeltaX 0 -DeltaY 0 -ButtonFlags $MOUSEEVENTF_LEFTDOWN`; if fails, return `Success=$false`
+        5. **Hold delay:** `Start-Sleep -Milliseconds` (random within `ClickDownDurationRangeMs`)
+        6. **Check emergency stop:** if `$script:EmergencyStopRequested`, release button (step 8) immediately and return `Success=$false`
+        7. **Drag to end position:** `Get-BezierPoints` from `($StartX, $StartY)` to `($EndX, $EndY)` → `Invoke-MouseMovePath`; button remains held because only `LEFTDOWN` was sent
+        8. **Mouse button up:** `Invoke-SendMouseInput -DeltaX 0 -DeltaY 0 -ButtonFlags $MOUSEEVENTF_LEFTUP`
+        9. **Post-click delay:** `Start-Sleep -Milliseconds` (random within `ClickPostDelayRangeMs`)
+      - **Critical safety:** Step 8 (button up) is in a `finally` block to ensure the mouse button is always released, even on exceptions or emergency stop. A stuck mouse button would render the system unusable.
+      - Returns `[PSCustomObject]@{Success=[bool]; Message=[string]}`
+      - Full comment-based help including `.NOTES` documenting the `finally` block safety mechanism
+   2. [x] 4.2: Create `LastWarAutoScreenshot/Tests/Invoke-MouseDragClick.Tests.ps1`
+      - Import module in `BeforeAll`
+      - Mock `Invoke-GetCursorPosition`, `Get-BezierPoints`, `Invoke-MouseMovePath`, `Invoke-SendMouseInput`, `Start-Sleep`, `Get-ModuleConfiguration` (returning known config with `MouseControl` section)
+      - **Successful drag-click:**
+        - Verify `Invoke-MouseMovePath` called twice (once to move to start, once for the drag path)
+        - Verify `Invoke-SendMouseInput` called with `$MOUSEEVENTF_LEFTDOWN` before the drag path
+        - Verify `Invoke-SendMouseInput` called with `$MOUSEEVENTF_LEFTUP` after the drag path
+        - Verify `Start-Sleep` called for pre-delay, hold, and post-delay
+        - Returns `Success=$true`
+      - **Emergency stop before drag:**
+        - Set `$script:EmergencyStopRequested = $true` before call
+        - Verify `Invoke-SendMouseInput` for LEFTDOWN is NOT called
+        - Returns `Success=$false`
+      - **Emergency stop during drag (after button down):**
+        - Set `$script:EmergencyStopRequested = $true` inside mock of `Invoke-MouseMovePath` (second call)
+        - Verify `Invoke-SendMouseInput` with `MOUSEEVENTF_LEFTUP` IS called (button released in finally block)
+        - Returns `Success=$false`
+      - **SendInput failure on button down:**
+        - Mock `Invoke-SendMouseInput` returning `$false` for LEFTDOWN
+        - `Write-LastWarLog` called with Level Error
+        - Returns `Success=$false`
+      - **Move to start fails:**
+        - Mock `Invoke-MouseMovePath` returning `$false` on first call
+        - Button down is NOT called; returns `Success=$false`
+      - Run full Pester suite; confirm count increases
+
+5. [x] Update main menu and entry point
+   1. [x] 5.1: Update `LastWarAutoScreenshot/Private/ConsoleApp/Show-MainMenu.ps1`
+      - Add `'Manage macros'` as a new menu option, positioned after `'Run macro'` (or after the disabled macro indicator when no macros exist) and before `'Exit'`
+      - `'Manage macros'` is always visible regardless of whether macros exist
+      - Add mapping in the `switch` block: `'Manage macros' { return 'ManageMacros' }`
+      - Update comment-based help: add `'ManageMacros'` to `.OUTPUTS` list
+   2. [x] 5.2: Update `LastWarAutoScreenshot/Public/Start-LastWarAutoScreenshot.ps1`
+      - Replace the `'RecordMacro'` stub block with a dispatch to `Show-RecordMacroScreen`:
+
+        ```powershell
+        'RecordMacro' {
+            $screenBlock = {
+                param([Spectre.Console.IAnsiConsole]$Console)
+                Show-RecordMacroScreen -Console $Console
+            }
+            Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+        }
+        ```
+
+      - Replace the `'RunMacro'` placeholder comment with a dispatch to `Show-RunMacroScreen`:
+
+        ```powershell
+        'RunMacro' {
+            $screenBlock = {
+                param([Spectre.Console.IAnsiConsole]$Console)
+                Show-RunMacroScreen -Console $Console
+            }
+            Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+        }
+        ```
+
+      - Add a new `'ManageMacros'` case dispatching to `Show-ManageMacrosScreen`:
+
+        ```powershell
+        'ManageMacros' {
+            $screenBlock = {
+                param([Spectre.Console.IAnsiConsole]$Console)
+                Show-ManageMacrosScreen -Console $Console
+            }
+            Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+        }
+        ```
+
+      - Update comment-based help: remove "not yet available" notes for RecordMacro; document all dispatch targets including ManageMacros; update `.NOTES` Phase notes
+   3. [x] 5.3: Update `LastWarAutoScreenshot/Tests/ConsoleApp/Show-MainMenu.Tests.ps1`
+      - Add test: `'Manage macros'` option always appears in `$testConsole.Output` regardless of macro folder state (mock `Get-ChildItem` returning empty)
+      - Add test: `'Manage macros'` option appears when macros exist (mock `Get-ChildItem` returning files)
+      - Add test: selecting `'Manage macros'` returns `'ManageMacros'`
+      - Existing tests must continue to pass unchanged
+   4. [x] 5.4: Update `LastWarAutoScreenshot/Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1`
+      - Add test: `'ManageMacros'` dispatches to `Show-ManageMacrosScreen` (mock `Show-MainMenu` returning `'ManageMacros'` then `'Exit'`; verify `Should -Invoke Show-ManageMacrosScreen -Exactly 1`)
+      - Add test: `'RecordMacro'` dispatches to `Show-RecordMacroScreen` (same pattern)
+      - Add test: `'RunMacro'` dispatches to `Show-RunMacroScreen` (same pattern)
+      - Update any existing tests that reference the `'Macro recording is not yet available'` stub panel text — the stub is now replaced with a real screen dispatch
+      - Existing tests for `'SelectWindow'`, `'Configure'`, `'Exit'` must continue to pass unchanged
+   5. [x] 5.5: Run full Pester suite; confirm count increases and all tests pass
+
+6. [x] Implement macro recording screen
+   1. [x] 6.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-RecordMacroScreen.ps1`
+      - `Show-RecordMacroScreen -Console [Spectre.Console.IAnsiConsole]`
+      - Full recording workflow:
+
+      **Step 1 — Validate target window:**
+      - Load config via `Get-ModuleConfiguration`
+      - Check that a target window is configured (config has `ProcessName` and `WindowHandle`); if not, display error panel `"No target window configured. Please select a target window from the main menu first."` via `$Console.Write()` and return `$null`
+      - Validate window handle is still valid via `Test-WindowHandleValid`; if not, display error panel `"Target window is no longer open. Please select a new target window."` and return `$null`
+      - Store `$windowHandle` for use in coordinate capture calls
+
+      **Step 2 — Prompt for macro name:**
+      - Display info panel explaining the recording workflow: `"You will build a macro by adding actions one at a time. Position your mouse over the game window and press Enter to capture coordinates. The console must have keyboard focus while recording."`
+      - `TextPrompt`: `"Enter a name for this macro:"`
+      - Validate via `Get-ValidMacroName -AutoFix` (checking against existing macro names from `Get-MacroFileList`)
+      - If `WasAutoFixed` is `$true` (spaces were converted): display the sanitised name and confirm via `SelectionPrompt` with `'Use "<sanitised-name>"'` / `'Enter a different name'` / `'Cancel'`
+      - If `Valid = $false`: display error message in red markup and re-prompt
+      - `'Cancel'` at any point: return `$null` (back to main menu)
+
+      **Step 3 — Action recording loop:**
+      - Initialise empty sequence array `$sequence = @()` and names set `$existingNames = @()`
+      - Main loop: display current sequence summary as a `Table` with columns `#`, `Type`, `Name`, `Details`; for each action show its type, optional name, and a brief summary of key parameters (e.g. `"(0.45, 0.62)"` for a point, `"Box 0.3×0.2 at (0.1, 0.1)"` for a region)
+      - Show `SelectionPrompt` "Add action to sequence:" with dynamic choices:
+        - Always shown: `'Move mouse to point'`, `'Move mouse to region (box)'`, `'Move mouse to region (circle)'`, `'Left-click'`, `'Drag-click'`, `'Screenshot region'`, `'Add delay'`
+        - Shown only when one or more NAMED non-Loop actions exist: `'Create loop'`
+        - Shown only when one or more actions exist in the sequence: `'Save macro'`
+        - Always shown: `'Discard and exit'`
+
+      **Step 3a — Move mouse to point:**
+      - Call `Invoke-CaptureMousePosition -WindowHandle $windowHandle -Console $Console -PromptMessage '[yellow]Move your mouse to the target position, then press [[Enter]]...[/]'`
+      - If `$null` returned (user cancelled): return to action menu
+      - Prompt for optional name: `TextPrompt` `"Enter a name for this action (or press [[Enter]] to skip):"` via `CreateEmptyTextPrompt`
+      - If name provided: validate via `Get-ValidMacroName -AutoFix -ExistingNames $existingNames`; if `WasAutoFixed`, confirm; if invalid, re-prompt; add to `$existingNames`
+      - Build action object:
+
+        ```powershell
+        $action = [PSCustomObject]@{
+            type     = 'MoveToPoint'
+            position = [PSCustomObject]@{
+                relativeX = $captured.RelativeX
+                relativeY = $captured.RelativeY
+            }
+        }
+        if ($actionName) { $action | Add-Member -NotePropertyName 'name' -NotePropertyValue $actionName }
+        ```
+
+      - Append to `$sequence`; display confirmation `"[green]MoveToPoint action added to sequence (step $($sequence.Count)).[/]"`
+      - Return to action menu
+
+      **Step 3b — Move mouse to region (box):**
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the TOP-LEFT corner of the target box, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the BOTTOM-RIGHT corner of the target box, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Compute region:
+        - `$relativeX = $topLeft.RelativeX`; `$relativeY = $topLeft.RelativeY`
+        - `$relativeWidth = [math]::Round($bottomRight.RelativeX - $topLeft.RelativeX, 4)`
+        - `$relativeHeight = [math]::Round($bottomRight.RelativeY - $topLeft.RelativeY, 4)`
+      - Validate width and height are positive; if not, display error `"[red]Bottom-right must be below and to the right of top-left. Please try again.[/]"` and redo both captures (loop back to first capture prompt)
+      - Display summary: `"Box region: position ($relativeX, $relativeY) size ($relativeWidth × $relativeHeight)"`
+      - Prompt for optional name (same pattern as step 3a)
+      - Build action object with `type = 'MoveToRegion'`, `region` containing `type = 'Box'` and all four properties
+      - Append to `$sequence`; return to action menu
+
+      **Step 3c — Move mouse to region (circle):**
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the CENTRE of the target circle, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the EDGE of the circle, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Compute radius: `$radius = [math]::Round([math]::Sqrt([math]::Pow($edge.RelativeX - $centre.RelativeX, 2) + [math]::Pow($edge.RelativeY - $centre.RelativeY, 2)), 4)`
+      - Validate radius is greater than 0; if not, display error `"[red]Edge point must be different from centre. Please try again.[/]"` and redo both captures
+      - Display summary: `"Circle region: centre ($centre.RelativeX, $centre.RelativeY), radius $radius"`
+      - Prompt for optional name
+      - Build action object with `type = 'MoveToRegion'`, `region` containing `type = 'Circle'`, `relativeCentreX`, `relativeCentreY`, `relativeRadius`
+      - Append to `$sequence`; return to action menu
+
+      **Step 3d — Left-click:**
+      - No position capture required (clicks wherever the mouse is at execution time, typically following a Move action)
+      - Display info: `"Left-click action will execute at the current mouse position during playback."`
+      - Prompt for optional name
+      - Build action object with `type = 'LeftClick'`; optional `name`
+      - Append to `$sequence`; return to action menu
+
+      **Step 3e — Drag-click:**
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the DRAG START position, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the DRAG END position (where the button will be released), then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Display summary: `"Drag from ($start.RelativeX, $start.RelativeY) to ($end.RelativeX, $end.RelativeY)"`
+      - Prompt for optional name
+      - Build action object with `type = 'DragClick'`, `start` and `end` sub-objects each containing `relativeX` and `relativeY`
+      - Append to `$sequence`; return to action menu
+
+      **Step 3f — Screenshot region:**
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the TOP-LEFT of the screenshot region, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Call `Invoke-CaptureMousePosition` with prompt: `"[yellow]Move your mouse to the BOTTOM-RIGHT of the screenshot region, then press [[Enter]]...[/]"`
+      - If cancelled: return to action menu
+      - Validate bottom-right is below and to the right of top-left (same validation as step 3b box)
+      - Display summary: `"Screenshot region: ($topLeft.RelativeX, $topLeft.RelativeY) to ($bottomRight.RelativeX, $bottomRight.RelativeY)"`
+      - Display note: `"[grey]Note: Screenshot capture will be available in a future release. The region coordinates are recorded for later use.[/]"`
+      - Prompt for optional name (recommended — display `"[grey]Naming screenshot actions is recommended so they can be referenced in loops.[/]"`)
+      - Build action object with `type = 'Screenshot'`, `region` containing `topLeft` and `bottomRight` sub-objects
+      - Append to `$sequence`; return to action menu
+
+      **Step 3g — Add delay:**
+      - `TextPrompt`: `"Enter delay in seconds (0.1 - 3600):"`
+      - Validate: parse as `[double]`; must be ≥ 0.1 and ≤ 3600
+      - If invalid: display error in red markup and re-prompt
+      - Prompt for optional name
+      - Build action object with `type = 'Delay'`, `seconds` property
+      - Append to `$sequence`; return to action menu
+
+      **Step 3h — Create loop:**
+      - Collect all NAMED non-Loop actions from `$sequence` into a selectable list
+      - Display table of available named actions: `#`, `Name`, `Type`, `Details`
+      - Initialise empty loop action list `$loopActionNames = @()`
+      - Loop action selection via `SelectionPrompt`:
+        - List all named actions + `'Done adding actions'` + `'Cancel loop'`
+        - User selects an action → name added to `$loopActionNames`; display current loop contents as `"Loop so far: action1 → action2 → ..."`
+        - An action can be added multiple times to the loop (allows patterns like move → click → move → click)
+        - Repeat until `'Done adding actions'` or `'Cancel loop'`
+      - If `'Cancel loop'` or `$loopActionNames` is empty: return to action menu
+      - `TextPrompt`: `"How many times should this loop repeat? (1 - 10000):"`
+      - Validate: parse as `[int]`; must be ≥ 1 and ≤ 10000; re-prompt on invalid input
+      - Prompt for optional loop name
+      - Display summary: `"Loop: action1 → action2 → ... × N iterations"`
+      - Build action object with `type = 'Loop'`, `iterations`, `actionNames` array
+      - Append to `$sequence`; return to action menu
+
+      **Step 3i — Save macro:**
+      - Build complete macro object:
+
+        ```powershell
+        $macroData = [PSCustomObject]@{
+            version      = $script:MacroSchemaVersion
+            metadata     = [PSCustomObject]@{
+                name        = $macroName
+                createdUtc  = (Get-Date).ToUniversalTime().ToString('o')
+                modifiedUtc = (Get-Date).ToUniversalTime().ToString('o')
+                description = ''
+            }
+            targetWindow = [PSCustomObject]@{
+                processName = $config.ProcessName
+                windowTitle = $config.WindowTitle
+            }
+            sequence     = $sequence
+        }
+        ```
+
+      - Validate via `Test-MacroFile`; if invalid, display error panel listing all validation messages; return to action menu (do not lose the recorded sequence — user can fix issues and try saving again)
+      - Call `Save-MacroFile -MacroData $macroData`
+      - If `Success=$true`: display success panel `"[green]Macro '<name>' saved successfully with <N> actions.[/]"`; log Info; return `$null` (back to main menu)
+      - If `Success=$false`: display error panel with the save error message; return to action menu
+
+      **Step 3j — Discard and exit:**
+      - If `$sequence.Count -gt 0`: `SelectionPrompt` `"Are you sure you want to discard this macro? All <N> recorded actions will be lost."` with choices `'Yes, discard'`, `'No, continue recording'`
+        - `'No, continue recording'`: return to action menu
+        - `'Yes, discard'`: return `$null` (back to main menu)
+      - If `$sequence.Count -eq 0`: return `$null` immediately (nothing to lose)
+
+      - Full comment-based help with `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`, `.OUTPUTS`, `.NOTES` documenting the coordinate capture flow and the requirement for the game window to be visible/windowed
+
+   2. [x] 6.2: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-RecordMacroScreen.Tests.ps1`
+      - Import module in `BeforeAll`; load `Spectre.Console.Testing.dll`
+      - All tests use `InModuleScope -ModuleName 'LastWarAutoScreenshot'` inside `It` blocks
+      - Common mocks in `BeforeEach`: `Get-ModuleConfiguration` returning config with valid window target, `Test-WindowHandleValid` returning `$true`, `Get-MacroFileList` returning empty array, `Save-MacroFile` returning `Success=$true`
+      - **No target window configured:**
+        - Mock `Get-ModuleConfiguration` returning config without `ProcessName`
+        - `$testConsole.Output` contains `'No target window configured'`
+        - Returns `$null`
+      - **Target window no longer open:**
+        - Mock `Test-WindowHandleValid` returning `$false`
+        - `$testConsole.Output` contains `'no longer open'`
+        - Returns `$null`
+      - **User enters macro name and immediately discards (empty sequence):**
+        - Queue name input + 'Discard and exit' selection
+        - Returns `$null`; `Save-MacroFile` NOT called
+      - **Record a single MoveToPoint and save:**
+        - Mock `Invoke-CaptureMousePosition` returning `@{RelativeX=0.5; RelativeY=0.3; AbsoluteX=300; AbsoluteY=200}`
+        - Queue: macro name → 'Move mouse to point' → Enter (capture) → action name → 'Save macro'
+        - Verify `Save-MacroFile` called once with macro data containing one `MoveToPoint` action
+        - Verify the action's `position.relativeX` = 0.5 and `position.relativeY` = 0.3
+        - `$testConsole.Output` contains `'saved successfully'`
+      - **Record MoveToRegion (box) — validates bottom-right > top-left:**
+        - Mock `Invoke-CaptureMousePosition` returning top-left then bottom-right coordinates
+        - Queue appropriate inputs
+        - Verify the action's `region.type` = `'Box'` and width/height are positive
+      - **Record MoveToRegion (circle) — computes radius:**
+        - Mock `Invoke-CaptureMousePosition` returning centre then edge coordinates
+        - Verify the action's `region.relativeRadius` matches expected calculation
+      - **Record LeftClick — no capture required:**
+        - Queue: 'Left-click' → optional name → 'Save macro'
+        - `Invoke-CaptureMousePosition` NOT called
+        - Saved action has `type = 'LeftClick'`
+      - **Record DragClick — captures start and end:**
+        - Mock `Invoke-CaptureMousePosition` returning start then end coordinates
+        - Saved action has `type = 'DragClick'` with correct `start` and `end`
+      - **Record Screenshot — includes future-release note:**
+        - `$testConsole.Output` contains `'future release'`
+        - Saved action has `type = 'Screenshot'`
+      - **Record Delay — validates range:**
+        - Queue: 'Add delay' → '5' → 'Save macro'
+        - Saved action has `type = 'Delay'`, `seconds = 5`
+      - **Create Loop — references named actions:**
+        - Record two named actions first, then create a loop referencing them
+        - Saved loop action has correct `actionNames` and `iterations`
+      - **Loop option hidden when no named actions exist:**
+        - Queue: 'Left-click' (unnamed) → verify `'Create loop'` does NOT appear in the menu
+      - **Loop option shown when named actions exist:**
+        - Record a named action → verify `'Create loop'` DOES appear in the menu
+      - **Save macro option hidden when sequence is empty:**
+        - Verify `'Save macro'` does NOT appear in the initial menu (no actions recorded yet)
+      - **Discard with actions — confirmation prompt shown:**
+        - Record one action, then select 'Discard and exit'
+        - `$testConsole.Output` contains `'Are you sure'`
+        - Queue 'Yes, discard' → returns `$null`
+      - **Discard with actions — user declines:**
+        - Queue 'No, continue recording' → user remains in recording loop
+      - **Macro name with spaces — auto-fix confirmation:**
+        - Queue name with spaces `'my macro'` → sanitised version shown → user confirms
+        - Saved macro name uses hyphens
+      - **Save fails — error displayed, user stays in recording loop:**
+        - Mock `Save-MacroFile` returning `Success=$false`
+        - Error message appears in output; user can try saving again
+      - Run full Pester suite; confirm count increases
+
+7. [x] Implement macro execution engine
+   1. [x] 7.1: Create `LastWarAutoScreenshot/Private/Invoke-MacroAction.ps1`
+      - `Invoke-MacroAction -Action [PSCustomObject] -WindowHandle [object] -ActionLookup [hashtable]`
+      - `$ActionLookup` is a hashtable of `name → action` built from the full sequence; used by Loop actions to resolve references
+      - Checks `$script:EmergencyStopRequested` before executing; if set, returns immediately with `Success=$false`, `Message='Emergency stop active'`, `Skipped=$true`
+      - Dispatches based on `$Action.type`:
+
+        | Type | Execution |
+        |------|-----------|
+        | `MoveToPoint` | `ConvertTo-ScreenCoordinates` → `Invoke-GetCursorPosition` → `Get-BezierPoints` → `Invoke-MouseMovePath` |
+        | `MoveToRegion` | `Get-RandomTargetPosition` (Box or Circle) → `ConvertTo-ScreenCoordinates` → Bezier path as above |
+        | `LeftClick` | `Invoke-MouseClick` at current position (no X/Y parameters — clicks in place) |
+        | `DragClick` | `ConvertTo-ScreenCoordinates` for start and end → `Invoke-MouseDragClick` |
+        | `Screenshot` | `Write-LastWarLog -Level Warning 'Screenshot capture not yet implemented — skipping action'`; returns `Success=$true`, `Skipped=$true` |
+        | `Delay` | `Start-Sleep -Seconds $Action.seconds` |
+        | `Loop` | For `1..$Action.iterations`: for each name in `$Action.actionNames`: resolve from `$ActionLookup` → recursive call to `Invoke-MacroAction` (same `$ActionLookup` passed through); emergency stop checked between each iteration and each action within the loop |
+
+      - Includes a `$Depth` parameter (default 0, max 1) to guard against unexpected recursion — Loop actions increment depth; if depth exceeds 1, logs Error `'Loop nesting detected — aborting'` and returns `Success=$false` (this should never happen due to validation, but provides defence in depth)
+      - Returns `[PSCustomObject]@{Success=[bool]; Message=[string]; Skipped=[bool]}`
+      - Full comment-based help
+
+   2. [x] 7.2: Create `LastWarAutoScreenshot/Private/Invoke-MacroSequence.ps1`
+      - `Invoke-MacroSequence -MacroData [PSCustomObject] -WindowHandle [object] -Console [Spectre.Console.IAnsiConsole]`
+      - Validates macro via `Test-MacroFile`; if invalid, displays error panel with all messages and returns `Success=$false`
+      - Builds `$actionLookup` hashtable from all named actions in the sequence:
+
+        ```powershell
+        $actionLookup = @{}
+        foreach ($action in $MacroData.sequence) {
+            if ($action.name) { $actionLookup[$action.name] = $action }
+        }
+        ```
+
+      - Reads `EmergencyStop.AutoStart` from config; if `$true`, calls `Start-EmergencyStopMonitor`
+      - Displays macro name and total action count
+      - Iterates through `$MacroData.sequence` in order:
+        - For each action: displays progress markup `"[blue]Executing step $i of $total: $($action.type)$(if ($action.name) {" '$($action.name)'"})[/]"` via `$Console.MarkupLine()`
+        - Calls `Invoke-MacroAction -Action $action -WindowHandle $WindowHandle -ActionLookup $actionLookup`
+        - If `Success=$false` and not `Skipped`: halts execution; displays error panel `"[red]Macro halted at step $i: $($result.Message)[/]"`; breaks out of loop
+        - If `$script:EmergencyStopRequested` after action: halts; displays `"[red]Emergency stop triggered at step $i. Macro execution halted.[/]"`; breaks
+        - If `Skipped=$true`: displays `"[grey]Step $i skipped ($($action.type) not yet implemented).[/]"`; continues to next action
+      - `finally` block: always calls `Stop-EmergencyStopMonitor`
+      - Returns `[PSCustomObject]@{Success=[bool]; CompletedActions=[int]; TotalActions=[int]; Message=[string]}`
+      - `CompletedActions` counts successfully executed (non-skipped) actions
+      - Full comment-based help
+
+   3. [x] 7.3: Create `LastWarAutoScreenshot/Tests/MacroExecution.Tests.ps1`
+      - Import module in `BeforeAll`
+      - Common mocks: `ConvertTo-ScreenCoordinates`, `Invoke-GetCursorPosition`, `Get-BezierPoints`, `Invoke-MouseMovePath`, `Invoke-MouseClick`, `Invoke-MouseDragClick`, `Start-Sleep`, `Get-ModuleConfiguration`, `Start-EmergencyStopMonitor`, `Stop-EmergencyStopMonitor`, `Write-LastWarLog`, `Test-MacroFile` returning `Valid=$true`
+      - **`Invoke-MacroAction` tests:**
+        - `MoveToPoint` action → `ConvertTo-ScreenCoordinates` called with correct relative coordinates; `Invoke-MouseMovePath` called; returns `Success=$true`
+        - `MoveToRegion` Box action → `Get-RandomTargetPosition` called with Box parameter set; then coordinates converted and path followed
+        - `MoveToRegion` Circle action → `Get-RandomTargetPosition` called with Circle parameter set
+        - `LeftClick` action → `Invoke-MouseClick` called; returns `Success=$true`
+        - `DragClick` action → `Invoke-MouseDragClick` called with correct start/end coordinates
+        - `Screenshot` action → `Write-LastWarLog` called with Level Warning; returns `Success=$true`, `Skipped=$true`
+        - `Delay` action with `seconds = 5` → `Start-Sleep -Seconds 5` called; returns `Success=$true`
+        - `Loop` action with 3 iterations and 2 action names → referenced actions executed 6 times total (3 × 2)
+        - Emergency stop set → returns `Success=$false`, `Skipped=$false` immediately; no action function called
+        - Unknown action type → returns `Success=$false` with descriptive message
+      - **`Invoke-MacroSequence` tests:**
+        - Valid macro with 3 actions → all 3 executed in order; returns `CompletedActions=3`, `TotalActions=3`, `Success=$true`
+        - `EmergencyStop.AutoStart=$true` in config → `Start-EmergencyStopMonitor` called before execution; `Stop-EmergencyStopMonitor` called in finally
+        - Emergency stop triggered mid-sequence → execution halts; `CompletedActions` reflects actions completed before stop; `Success=$false`
+        - Action failure mid-sequence → halts at failing action; `CompletedActions` reflects completed count
+        - Screenshot action → skipped with message; sequence continues; `CompletedActions` does not count skipped actions
+        - Invalid macro → error displayed; returns `Success=$false`, `CompletedActions=0`
+        - Progress output appears in `$testConsole.Output` for each step
+      - Run full Pester suite; confirm count increases
+
+8. [x] Implement Run Macro screen
+   1. [x] 8.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-RunMacroScreen.ps1`
+      - `Show-RunMacroScreen -Console [Spectre.Console.IAnsiConsole]`
+
+      **Step 1 — List and select macro:**
+      - Call `Get-MacroFileList`
+      - If empty: display info panel `"No macros saved yet. Record a macro from the main menu to get started."` and return `$null`
+      - Build `SelectionPrompt` listing macros in display format: `"<name> (<DisplayDate>)"` plus `'[[Back to main menu]]'`
+      - If `'[Back to main menu]'` selected: return `$null`
+      - Identify selected macro by matching the display string back to the `Get-MacroFileList` results
+
+      **Step 2 — Load and validate macro:**
+      - Call `Get-MacroFile -FilePath $selectedMacro.FilePath`
+      - If `$null` returned: display error panel `"Failed to load macro file."` and return to step 1
+      - If `Valid=$false`: display error panel listing all validation messages from `Messages` array; return to step 1
+
+      **Step 3 — Display macro summary:**
+      - Display metadata as a `Panel`: macro name, created date, action count, target window process/title
+      - Display sequence as a `Table` with columns: `#`, `Type`, `Name`, `Details`
+        - `Details` column shows a brief human-readable summary per action type:
+          - `MoveToPoint`: `"(0.45, 0.62)"`
+          - `MoveToRegion` Box: `"Box at (0.3, 0.2) size (0.1 × 0.05)"`
+          - `MoveToRegion` Circle: `"Circle at (0.45, 0.62) r=0.05"`
+          - `LeftClick`: `"Click at current position"`
+          - `DragClick`: `"(0.5, 0.8) → (0.5, 0.2)"`
+          - `Screenshot`: `"(0.1, 0.15) → (0.9, 0.85) [deferred]"`
+          - `Delay`: `"5 seconds"`
+          - `Loop`: `"action1 → action2 × 19"`
+
+      **Step 4 — Validate target window:**
+      - Load current config via `Get-ModuleConfiguration`; check window handle valid via `Test-WindowHandleValid`
+      - If window handle is not valid: display error panel `"[red]Target window is not open. Please select a target window from the main menu before running a macro.[/]"` and return to step 1
+      - If the current config's `ProcessName` differs from the macro's `targetWindow.processName`: display warning panel `"[yellow]This macro was recorded for process '<macro-process>' but the current target window is '<config-process>'. The macro may not work correctly.[/]"` and show `SelectionPrompt` `'Continue anyway'` / `'Cancel'`; if `'Cancel'`, return to step 1
+
+      **Step 5 — Confirm and execute:**
+      - `SelectionPrompt`: `"Run this macro?"` with choices `'Yes, run now'`, `'Cancel'`
+      - If `'Cancel'`: return to step 1
+      - Call `Invoke-MacroSequence -MacroData $macro.Data -WindowHandle $config.WindowHandle -Console $Console`
+      - Display results:
+        - On success: `"[green]Macro completed successfully. $completedActions of $totalActions actions executed.[/]"`
+        - On failure: `"[red]Macro execution failed at step $($completedActions + 1) of $totalActions. $completedActions actions completed before failure.[/]"` with `$result.Message`
+        - On emergency stop: `"[yellow]Macro halted by emergency stop. $completedActions of $totalActions actions completed.[/]"`
+      - Return `$null` (back to main menu) after displaying results
+
+      - Full comment-based help
+
+   2. [x] 8.2: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-RunMacroScreen.Tests.ps1`
+      - Import module in `BeforeAll`; load `Spectre.Console.Testing.dll`
+      - **No macros saved:**
+        - Mock `Get-MacroFileList` returning empty array
+        - `$testConsole.Output` contains `'No macros saved'`
+        - Returns `$null`
+      - **User selects Back to main menu:**
+        - Mock `Get-MacroFileList` returning one macro
+        - Queue '[[Back to main menu]]' selection
+        - `Invoke-MacroSequence` NOT called; returns `$null`
+      - **Load failure:**
+        - Mock `Get-MacroFile` returning `$null`
+        - Error panel displayed; user returns to macro list
+      - **Validation failure:**
+        - Mock `Get-MacroFile` returning `Valid=$false` with messages
+        - Error messages appear in `$testConsole.Output`
+      - **Macro summary table displayed:**
+        - Mock with valid macro containing multiple action types
+        - `$testConsole.Output` contains action type names and parameter summaries
+      - **Target window not found:**
+        - Mock `Test-WindowHandleValid` returning `$false`
+        - Error panel with `'not open'` displayed
+      - **Process name mismatch — user continues:**
+        - Mock config with different `ProcessName` than macro's `targetWindow.processName`
+        - Warning displayed; queue 'Continue anyway' → `Invoke-MacroSequence` called
+      - **Process name mismatch — user cancels:**
+        - Queue 'Cancel' → `Invoke-MacroSequence` NOT called
+      - **Successful execution:**
+        - Mock `Invoke-MacroSequence` returning `Success=$true`, `CompletedActions=5`, `TotalActions=5`
+        - `$testConsole.Output` contains `'completed successfully'`
+      - **Failed execution:**
+        - Mock `Invoke-MacroSequence` returning `Success=$false`, `CompletedActions=2`, `TotalActions=5`
+        - `$testConsole.Output` contains `'failed'`
+      - **User cancels at confirmation:**
+        - Queue 'Cancel' at run confirmation → `Invoke-MacroSequence` NOT called
+      - Run full Pester suite; confirm count increases
+
+9. [x] Implement Manage Macros screen with Edit Macro
+   1. [x] 9.1: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-ManageMacrosScreen.ps1`
+      - `Show-ManageMacrosScreen -Console [Spectre.Console.IAnsiConsole]`
+
+      **No macros state:**
+      - Call `Get-MacroFileList`; if empty: display info panel `"No macros saved yet. Record a macro from the main menu to get started."` and return `$null`
+
+      **Macro list loop:**
+      - Show `SelectionPrompt` listing macros in display format `"<name> (<DisplayDate>)"` plus `'[[Back to main menu]]'`
+      - If `'[Back to main menu]'` selected: return `$null`
+      - For the selected macro, show management `SelectionPrompt` with choices:
+        - `'View details'`
+        - `'Edit macro'`
+        - `'Delete macro'`
+        - `'[[Back to macro list]]'`
+
+      **View details:**
+      - Load macro via `Get-MacroFile -FilePath $selectedMacro.FilePath`
+      - Display metadata `Table`: Name, Created (localised), Modified (localised), Action count, Target window (process + title)
+      - Display sequence `Table` with columns: `#`, `Type`, `Name`, `Details` (same format as Run Macro screen step 3)
+      - Wait for user to acknowledge: `CreateEmptyTextPrompt` with message `"Press [[Enter]] to return..."` → user presses Enter
+      - Return to management options for this macro
+
+      **Edit macro:**
+      - Dispatch to `Show-EditMacroScreen -Console $Console -FilePath $selectedMacro.FilePath`
+      - After edit screen returns, refresh macro list (in case name changed) and return to macro list
+
+      **Delete macro:**
+      - `SelectionPrompt`: `"Are you sure you want to delete macro '<name>'? This cannot be undone."` with choices `'Yes, delete'`, `'No, keep it'`
+      - If `'Yes, delete'`: call `Remove-MacroFile -FilePath $selectedMacro.FilePath`; if successful display `"[green]Macro '<name>' deleted.[/]"`; if failed display error panel
+      - If `'No, keep it'`: return to management options
+      - After deletion: refresh macro list and return to macro list (or to "no macros" state if last macro was deleted)
+
+      - Full comment-based help
+
+   2. [x] 9.2: Create `LastWarAutoScreenshot/Private/ConsoleApp/Show-EditMacroScreen.ps1`
+      - `Show-EditMacroScreen -Console [Spectre.Console.IAnsiConsole] -FilePath [string]`
+      - Load macro via `Get-MacroFile`; if load fails, display error panel and return
+      - Track whether changes have been made: `$hasChanges = $false`
+
+      **Edit menu loop:**
+      - Display macro name as a `Panel` header
+      - Display sequence `Table` with columns: `#`, `Type`, `Name`, `Details`
+      - Show `SelectionPrompt` with dynamic choices:
+        - Always shown: `'Rename macro'`, `'Edit steps'`
+        - Shown only if `$hasChanges`: `'Save changes'`, `'Discard changes'`
+        - Shown only if NOT `$hasChanges`: `'[[Back]]'`
+
+      **Rename macro:**
+      - `TextPrompt` pre-populated with current name (display current name and prompt for new): `"Current name: <name>. Enter new name (or press [[Enter]] to keep current):"`
+      - If empty input (Enter only): keep current name, return to edit menu
+      - Validate via `Get-ValidMacroName -AutoFix` (checking against existing macro names from `Get-MacroFileList`, excluding current macro)
+      - If `WasAutoFixed`: confirm sanitised name with user
+      - If valid: update `$macroData.metadata.name`; set `$hasChanges = $true`
+      - If invalid: display error and re-prompt
+      - Return to edit menu
+
+      **Edit steps:**
+      - Display numbered `SelectionPrompt` listing all steps as `"#<N>: <type> [[<name>]]"` (or `"#<N>: <type>"` if unnamed) plus `'[[Back to edit menu]]'`
+      - If `'[Back to edit menu]'` selected: return to edit menu
+      - For the selected step, show step detail (type, name, all parameters) and `SelectionPrompt`:
+        - `'Rename step'` (shown as `'Add name to step'` if step has no name)
+        - `'Move up'` (hidden if step is first in sequence, i.e. index 0)
+        - `'Move down'` (hidden if step is last in sequence)
+        - `'[[Back to step list]]'`
+
+      **Rename step / Add name to step:**
+      - If step has existing name: `TextPrompt` `"Current name: <name>. Enter new name (or press [[Enter]] to keep current):"` via `CreateEmptyTextPrompt`
+      - If step has no name: `TextPrompt` `"Enter a name for this step (or press [[Enter]] to skip):"`
+      - If empty input: keep current name (or remain unnamed), return to step options
+      - Validate via `Get-ValidMacroName -AutoFix -ExistingNames` (all other named actions in the sequence)
+      - If valid and step was previously referenced by a Loop action: automatically update the Loop's `actionNames` array to use the new name; display `"[grey]Updated loop '<loop-name>' to reference new step name.[/]"`
+      - Set `$hasChanges = $true`
+      - Return to step list (re-display with updated name)
+
+      **Move up:**
+      - Swap the selected step with the step at index `(current - 1)` in the `$macroData.sequence` array
+      - Set `$hasChanges = $true`
+      - Return to step list (re-display with updated order; highlight moved step by its new position)
+
+      **Move down:**
+      - Swap the selected step with the step at index `(current + 1)` in the `$macroData.sequence` array
+      - Set `$hasChanges = $true`
+      - Return to step list (re-display with updated order)
+
+      **Save changes:**
+      - Update `$macroData.metadata.modifiedUtc` to current UTC time in ISO 8601 format
+      - If macro name was changed: call `Rename-MacroFile -FilePath $FilePath -NewName $macroData.metadata.name`; update `$FilePath` to the new file path returned
+      - Call `Save-MacroFile -MacroData $macroData -Force` (overwrite existing file)
+      - If save successful: display `"[green]Changes saved successfully.[/]"`; return (back to manage macros screen)
+      - If save failed: display error panel; remain on edit menu
+
+      **Discard changes:**
+      - `SelectionPrompt`: `"Discard all unsaved changes?"` with choices `'Yes, discard'`, `'No, keep editing'`
+      - If `'Yes, discard'`: return (back to manage macros screen) without saving
+      - If `'No, keep editing'`: return to edit menu
+
+      - Full comment-based help
+
+   3. [x] 9.3: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-ManageMacrosScreen.Tests.ps1`
+      - Import module in `BeforeAll`; load `Spectre.Console.Testing.dll`
+      - **No macros saved:**
+        - Mock `Get-MacroFileList` returning empty array
+        - `$testConsole.Output` contains `'No macros saved'`
+        - Returns `$null`
+      - **User selects Back to main menu:**
+        - Mock `Get-MacroFileList` returning one macro
+        - Queue `'[[Back to main menu]]'`
+        - Returns `$null`
+      - **View details:**
+        - Mock `Get-MacroFile` returning valid macro with known actions
+        - Queue: select macro → 'View details' → Enter (acknowledge) → '[[Back to macro list]]' → '[[Back to main menu]]'
+        - `$testConsole.Output` contains macro name, action types, and parameter summaries
+      - **Delete macro — confirmed:**
+        - Mock `Remove-MacroFile` returning `$true`
+        - Queue: select macro → 'Delete macro' → 'Yes, delete' → '[[Back to main menu]]'
+        - `Should -Invoke Remove-MacroFile -Exactly 1`
+        - `$testConsole.Output` contains `'deleted'`
+      - **Delete macro — declined:**
+        - Queue: select macro → 'Delete macro' → 'No, keep it' → '[[Back to macro list]]' → '[[Back to main menu]]'
+        - `Should -Invoke Remove-MacroFile -Exactly 0`
+      - **Edit macro dispatches to Show-EditMacroScreen:**
+        - Mock `Show-EditMacroScreen`
+        - Queue: select macro → 'Edit macro' → (edit screen returns) → '[[Back to main menu]]'
+        - `Should -Invoke Show-EditMacroScreen -Exactly 1` with correct `-FilePath`
+      - Run full Pester suite; confirm count increases
+
+   4. [x] 9.4: Create `LastWarAutoScreenshot/Tests/ConsoleApp/Show-EditMacroScreen.Tests.ps1`
+      - Import module in `BeforeAll`; load `Spectre.Console.Testing.dll`
+      - Common mock: `Get-MacroFile` returning valid macro with 3 actions (MoveToPoint named `'action-a'`, LeftClick unnamed, Loop named `'my-loop'` referencing `'action-a'`)
+      - **Rename macro:**
+        - Queue: 'Rename macro' → 'new-name' → 'Save changes'
+        - Mock `Rename-MacroFile` returning `Success=$true`; mock `Save-MacroFile` returning `Success=$true`
+        - Verify `Rename-MacroFile` called with `-NewName 'new-name'`
+      - **Rename macro — keep current (empty input):**
+        - Queue: 'Rename macro' → Enter (empty) → '[[Back]]'
+        - `Rename-MacroFile` NOT called; `$hasChanges` remains `$false`
+      - **Rename step — updates loop reference:**
+        - Queue: 'Edit steps' → select `'action-a'` → 'Rename step' → 'action-b' → '[[Back to step list]]' → '[[Back to edit menu]]' → 'Save changes'
+        - Verify the Loop action's `actionNames` array now contains `'action-b'` instead of `'action-a'`
+      - **Add name to unnamed step:**
+        - Queue: 'Edit steps' → select LeftClick step → 'Add name to step' → 'my-click' → back → back → 'Save changes'
+        - Saved macro contains the LeftClick action with `name = 'my-click'`
+      - **Move step up:**
+        - Queue: 'Edit steps' → select second step → 'Move up' → '[[Back to step list]]' → '[[Back to edit menu]]' → 'Save changes'
+        - Verify sequence order changed: originally-second step is now first
+      - **Move step down:**
+        - Queue: 'Edit steps' → select first step → 'Move down' → back → back → 'Save changes'
+        - Verify sequence order changed: originally-first step is now second
+      - **Move up hidden for first step:**
+        - Queue: 'Edit steps' → select first step → verify `'Move up'` does NOT appear in options
+      - **Move down hidden for last step:**
+        - Queue: 'Edit steps' → select last step → verify `'Move down'` does NOT appear in options
+      - **Save changes — success:**
+        - Mock `Save-MacroFile` returning `Success=$true`
+        - `$testConsole.Output` contains `'saved successfully'`
+      - **Save changes — failure:**
+        - Mock `Save-MacroFile` returning `Success=$false`
+        - Error displayed; user remains on edit menu
+      - **Discard changes — confirmed:**
+        - Make a change, then queue 'Discard changes' → 'Yes, discard'
+        - `Save-MacroFile` NOT called; screen returns
+      - **Discard changes — declined:**
+        - Queue 'Discard changes' → 'No, keep editing'
+        - User remains on edit menu
+      - **Back only shown when no changes:**
+        - No changes made → `'[[Back]]'` appears; `'Save changes'` and `'Discard changes'` do NOT appear
+      - **Save/Discard only shown when changes exist:**
+        - After making a change → `'Save changes'` and `'Discard changes'` appear; `'[[Back]]'` does NOT appear
+      - Run full Pester suite; confirm count increases
+
+10. [ ] Run full Pester suite and validate
+    1. [ ] 10.1: Run the complete, unfiltered Pester suite (all files, no tag or name filters)
+       - Record total test count; it must meet or exceed the Phase 3 final baseline plus all new tests added in tasks 1–9
+       - All tests must pass with 0 failures and 0 errors
+       - If any test fails that previously passed, halt and investigate; do not proceed
+    2. [ ] 10.2: Manually smoke-test all macro workflows in a real terminal
+       - Import module; call `Start-LastWarAutoScreenshot`
+       - **Record macro:** Navigate to "Record macro"; enter a macro name; record at least one of each action type (MoveToPoint, MoveToRegion box, MoveToRegion circle, LeftClick, DragClick, Screenshot, Delay); create a Loop; save the macro. Verify the JSON file appears in `Private/Macros/` with correct content.
+       - **Run macro:** Navigate to "Run macro"; select the recorded macro; verify the summary table displays all actions correctly; run the macro targeting a visible window (e.g. Notepad); observe mouse movements and clicks executing in order; verify the emergency stop (Ctrl+Shift+#) halts execution mid-macro.
+       - **Manage macros:** Navigate to "Manage macros"; view macro details; edit macro (rename macro, rename a step, reorder steps, save changes); verify the JSON file is updated on disk; delete a macro; verify the file is removed.
+       - **Edge cases:** Attempt to run a macro with the target window closed — verify error message. Record a macro with a name containing spaces — verify auto-fix to hyphens. Create a loop referencing multiple named actions — verify execution repeats correctly.
+       - Confirm no ANSI artefacts or rendering glitches in any screen
+
+11. [x] Documentation updates
+    1. [x] 11.1: Update `LastWarAutoScreenshot/Docs/README.md`
+       - Add "Macro Recording" section documenting:
+         - How to record a macro (step-by-step user guide)
+         - The coordinate capture workflow (position mouse, press Enter)
+         - Requirement for the game window to be visible/windowed (not exclusive fullscreen)
+         - All action types with descriptions and when to use each
+         - How to create loops for repetitive actions
+         - Macro naming rules (`[a-zA-Z0-9_-]`, max 50 characters)
+       - Add "Running Macros" section documenting:
+         - How to select and run a saved macro
+         - Emergency stop integration (Ctrl+Shift+# or mouse gesture)
+         - Target window validation and process mismatch warnings
+         - Screenshot actions being deferred (logged as warning, skipped during execution)
+       - Add "Managing Macros" section documenting:
+         - View details, edit (rename macro, rename/reorder steps), delete
+         - File location (`Private/Macros/`) and naming convention
+         - JSON format overview with a brief example
+       - Document `Invoke-MouseDragClick` function with usage example
+    2. [x] 11.2: Create or update `LastWarAutoScreenshot/Docs/MacroFormat.md`
+       - Full JSON schema documentation with annotated example
+       - Action type reference table with all required/optional properties
+       - Validation rules and error messages
+       - Example macro files for both reference sequences ("Get VS Scores" and "Get Arms Race Scores")
+
+12. [ ] Bug fixes
+    1. [ ] 12.1: User prompt incorrect when recording a macro action
+       - When recording coords for `Move mouse to point` and other actions in Record Macro it correctly prompts the user , upon hitting enter to record screen coords the next prompt displays as `Move your mouse to the target position, then press [Enter]...`. After pressing Enter the display output incorrectly shows `What would you like to do?, 0.2765) relative to windowWhat would you like to do?`. It should show the x,y coords in green on one line and the prompt `What would you like to do?` on the next line, followed by the choices (which display correctly already)
+    2. [ ] 12.2: Enable wrap around in all scpectre.console screens showing selection prompts
+       - Wrap around is currently disabled on all selection prompts. Enable it in ConsoleAppBridge.cs
+    3. [ ] 12.3: Ensure ConsoleAppBridge.cs helper classes are being used everywhere instead of directly instantiating new objects from Spectre.Console
+       -In some places we are directly instantiating new objects such as Show-MainMenu.ps1: `$prompt = [Spectre.Console.SelectionPrompt[string]]::new()` when we have a helper class for this already
+       - Check for any other places we are doing this and ensure it is deliberate. In those cases, explain why the decision was made to directly instantiate a Spectr.Console object and not use a helper class
+
+## Phase 4b: Visual Overlay for Macro Recording (Future)
+
+This is a potential enhancement to the macro recording workflow. During recording, after the
+user captures coordinates for a region (box or circle), a transparent overlay window would be
+drawn on top of the game window showing the captured shape. This would provide visual
+confirmation that the region was captured correctly before the user accepts it.
+
+### Requirements
+
+- Transparent overlay window drawn on top of the target game window
+- Win32 `CreateWindowEx` with `WS_EX_LAYERED`, `WS_EX_TRANSPARENT`, and `WS_EX_TOPMOST` styles
+- GDI+ or Direct2D drawing for shapes (rectangle outline, circle outline, crosshair for points)
+- Overlay must not capture mouse clicks (click-through) so the user can still interact with the game
+- Overlay must track the target window position (if the window moves, the overlay follows)
+- Overlay is dismissed when the user accepts or redoes the capture
+
+### Implementation notes
+
+- Would require a new C# class in `src/` (e.g. `OverlayWindow.cs`) with Win32 window management
+- Significant complexity: message pump, WM_PAINT handler, transparency management, window tracking
+- Could potentially use a WPF or WinForms transparent window instead of raw Win32 for simpler implementation
+- The macro recording screen (`Show-RecordMacroScreen`) would call the overlay after each coordinate capture, passing the shape type and coordinates
+- Overlay is purely cosmetic — does not affect the recorded coordinates or macro functionality
+
+### Decision
+
+Deferred from Phase 4 to reduce scope and complexity. The text-based coordinate display with
+Accept/Redo/Cancel flow provides adequate feedback for the initial implementation. This
+enhancement can be revisited after Phase 4 is complete if users find the text-only feedback
+insufficient.
+
+## Phase 5: Screenshot Management
 
 1. [ ] Add screenshot functionality for user-defined screen regions:
 
@@ -1121,6 +2287,28 @@
 - GUI progress indicator showing usage in GB
 - Prompt user when limit reached with actionable suggestions (increase limit or cleanup)
 - Prompt user when drive is full
+
+## Phase 6: Configuration & Scheduling
+
+1. [ ] Design and implement configuration schema supporting both JSON and YAML formats:
+
+- Note: Most, if not all of this task has already been done
+- Window target settings
+- Action sequences with window-relative coordinates
+- Human-like interaction parameters
+- Emergency stop configuration
+- Storage limits and screenshot settings
+- Logging preferences
+- Azure upload settings (for future use)
+
+1. [ ] Integrate with Windows Task Scheduler for automated execution:
+
+- Start date/time configuration
+- Repeat interval settings (e.g., every 6 hours)
+- Repeat duration (fixed or indefinite)
+- Random delay before task start (0-120 minutes)
+- Task expiration and stop conditions
+- Reference Windows Task Scheduler "Edit Trigger" dialog for UI patterns
 
 ## Phase 7: Module Installation & Versioning
 

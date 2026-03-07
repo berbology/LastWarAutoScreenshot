@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Show-LoggingConfigScreen' {
+Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Table renders current values

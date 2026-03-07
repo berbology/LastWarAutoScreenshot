@@ -8,7 +8,7 @@ BeforeAll {
 }
 
 #region Get-WindowBounds
-Describe 'Get-WindowBounds' {
+Describe 'Get-WindowBounds' -Tag 'Unit' {
     It 'returns correct PSCustomObject shape and width/height' {
         InModuleScope LastWarAutoScreenshot {
             Mock Invoke-GetWindowRect {
@@ -41,7 +41,7 @@ Describe 'Get-WindowBounds' {
 #endregion
 
 #region ConvertTo-ScreenCoordinates
-Describe 'ConvertTo-ScreenCoordinates' {
+Describe 'ConvertTo-ScreenCoordinates' -Tag 'Unit' {
     It 'returns correct absolute coordinates for (0.0, 0.0)' {
         InModuleScope LastWarAutoScreenshot {
             Mock Get-WindowBounds {

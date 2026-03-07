@@ -8,7 +8,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Show-MainMenu' {
+Describe 'Show-MainMenu' -Tag 'Unit' {
 
     Context 'When no macros are present (macro folder absent or empty)' {
 
@@ -51,13 +51,14 @@ Describe 'Show-MainMenu' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with 3 DownArrows when no macros present' {
+        It 'Returns Exit when Exit is selected with 4 DownArrows when no macros present' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 # Selectable order: [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Exit (Run macro is not a choice when no macros exist)
+                # [2] Record macro, [3] Manage macros, [4] Exit (Run macro is not a choice when no macros exist)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -122,7 +123,7 @@ Describe 'Show-MainMenu' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with macros present (4 DownArrows)' {
+        It 'Returns Exit when Exit is selected with macros present (5 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
@@ -130,6 +131,7 @@ Describe 'Show-MainMenu' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -157,6 +159,53 @@ Describe 'Show-MainMenu' {
 
                 Show-MainMenu -Console $tc | Out-Null
                 $tc.Output | Should -Match 'Run macro'
+            }
+        }
+    }
+
+    Context 'Manage macros option' {
+
+        It 'Manage macros option always appears in output when no macros are present' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Match 'Manage macros'
+            }
+        }
+
+        It 'Manage macros option appears in output when macros exist' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
+                Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Match 'Manage macros'
+            }
+        }
+
+        It 'Returns ManageMacros when Manage macros is selected with no macros present' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                # Selectable order (no macros): [0] Select target window, [1] Configure module,
+                # [2] Record macro, [3] Manage macros, [4] Exit
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                $result = Show-MainMenu -Console $tc
+                $result | Should -Be 'ManageMacros'
             }
         }
     }

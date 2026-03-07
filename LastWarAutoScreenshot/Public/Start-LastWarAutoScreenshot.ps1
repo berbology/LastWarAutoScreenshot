@@ -11,11 +11,12 @@ function Start-LastWarAutoScreenshot {
              them by pressing Enter.
           2. Enters an infinite loop rendering the main menu via Show-MainMenu.
           3. Dispatches each selection to the relevant screen function:
-               SelectWindow → Show-WindowSelectionScreen   (Phase 4)
-               Configure    → Show-ConfigMenuScreen         (Phase 5)
-               RecordMacro  → 'Not yet available' Panel stub
-               RunMacro     → Phase 4 placeholder
-               Exit         → breaks the loop and returns
+               SelectWindow  → Show-WindowSelectionScreen   (Phase 1)
+               Configure     → Show-ConfigMenuScreen         (Phase 3)
+               RecordMacro   → Show-RecordMacroScreen        (Phase 4)
+               RunMacro      → Show-RunMacroScreen           (Phase 4)
+               ManageMacros  → Show-ManageMacrosScreen       (Phase 4)
+               Exit          → breaks the loop and returns
           4. The loop restarts after each screen returns (except Exit).
 
     .PARAMETER Console
@@ -53,9 +54,10 @@ function Start-LastWarAutoScreenshot {
           TestConsole type checks are needed.
 
         Phase notes:
-          Show-WindowSelectionScreen is implemented in Phase 4 (task 4.1).
-          Show-ConfigMenuScreen is implemented in Phase 5 (task 5.1).
-          'Run macro' screen is implemented in Phase 4.
+          Show-WindowSelectionScreen is implemented in Phase 1 (window management).
+          Show-ConfigMenuScreen is implemented in Phase 3 (console app).
+          Show-RecordMacroScreen, Show-RunMacroScreen, and Show-ManageMacrosScreen are
+          implemented in Phase 4 (macro recording).
           Macro file naming convention: Private\Macros\yyyyMMdd_HHmmss_<name>.json
     #>
     [CmdletBinding()]
@@ -105,17 +107,25 @@ function Start-LastWarAutoScreenshot {
                 'RecordMacro' {
                     $screenBlock = {
                         param([Spectre.Console.IAnsiConsole]$Console)
-                        $stubPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                            'Macro recording is not yet available. This feature will be implemented in a future release.',
-                            'Record Macro'
-                        )
-                        $Console.Write($stubPanel)
+                        Show-RecordMacroScreen -Console $Console
                     }
                     Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
 
                 'RunMacro' {
-                    # Phase 4 placeholder - macro running requires the recording feature first
+                    $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
+                        Show-RunMacroScreen -Console $Console
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+                }
+
+                'ManageMacros' {
+                    $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
+                        Show-ManageMacrosScreen -Console $Console
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
 
                 'Exit' {

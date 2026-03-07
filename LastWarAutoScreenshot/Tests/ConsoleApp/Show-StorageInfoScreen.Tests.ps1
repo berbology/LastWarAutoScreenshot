@@ -11,7 +11,7 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Show-StorageInfoScreen' {
+Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Storage is not yet configured (IsConfigured=$false)

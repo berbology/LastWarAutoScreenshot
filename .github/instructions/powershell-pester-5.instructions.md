@@ -149,6 +149,11 @@ Context 'Integration tests' -Skip { }
 - **Avoid Aliases**: Use full cmdlet names (`Where-Object` not `?`)
 - **Single Responsibility**: One assertion per test when possible
 - **Test File Organization**: Group related tests in Context blocks. Context blocks can be nested.
+- **MarkupLine**: Avoid using MarkupLine or Writeline, they don't exist in the project. Instead use the following:
+
+```powershell
+$Console.Write([Spectre.Console.Markup]::new(...))
+```
 
 ## Example Test Pattern
 
@@ -242,4 +247,3 @@ Invoke-Pester -Configuration $config
 - Result Summary: Summarize the test results (pass, fail, pending) and highlight any discrepancies before proceeding with project plan or codebase updates.
 - No Task Completion Without Full Pass: Never mark a task as complete or update the project plan unless the full suite has been run and the results match or exceed the previous baseline (except for known pending/integration tests).
 - PSPropertyCollection doesn't support direct .Count access - it evaluates per property instead of counting the total. Wrap it in `@()` to force the collection to be treated as a single array object
-

@@ -33,20 +33,31 @@ namespace LastWarAutoScreenshot
             public IntPtr dwExtraInfo;
         }
 
-        [StructLayout(LayoutKind.Explicit)]
+        [StructLayout(LayoutKind.Explicit, Size = 40)]
         public struct INPUT
         {
             [FieldOffset(0)]
             public uint type;
+            [FieldOffset(4)]
+            public uint pad;
             [FieldOffset(8)]
             public MOUSEINPUT mi;
         }
 
         // Constants
         public const uint INPUT_MOUSE = 0;
-        public const uint MOUSEEVENTF_MOVE = 0x0001;
-        public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
-        public const uint MOUSEEVENTF_LEFTUP = 0x0004;
+        public const uint MOUSEEVENTF_MOVE       = 0x0001;
+        public const uint MOUSEEVENTF_LEFTDOWN   = 0x0002;
+        public const uint MOUSEEVENTF_LEFTUP     = 0x0004;
+        public const uint MOUSEEVENTF_ABSOLUTE   = 0x8000;
+        public const uint MOUSEEVENTF_VIRTUALDESK = 0x4000;
+
+        // System metric indices for virtual desktop dimensions/origin
+        // Used when normalising absolute coordinates for MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK
+        public const int SM_XVIRTUALSCREEN  = 76;
+        public const int SM_YVIRTUALSCREEN  = 77;
+        public const int SM_CXVIRTUALSCREEN = 78;
+        public const int SM_CYVIRTUALSCREEN = 79;
 
         // P/Invoke declarations
         [DllImport("user32.dll", SetLastError = true)]
@@ -58,7 +69,14 @@ namespace LastWarAutoScreenshot
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetCursorPos(int X, int Y);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll", SetLastError = false)]
+        public static extern int GetSystemMetrics(int nIndex);
 
         // GetAsyncKeyState returns a short whose high-order bit (0x8000) indicates
         // whether the key is currently held down.  The low-order bit records whether

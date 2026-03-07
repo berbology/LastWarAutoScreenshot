@@ -56,16 +56,25 @@ function Show-WindowSelectionScreen {
     )
 
     # ── Step 1: Sort selection (shown once, before the main loop) ─────────────
-    $sortPrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
-    $sortPrompt.Title = 'Sort windows by:'
-    $sortPrompt.AddChoice('Process name (A-Z)') | Out-Null
-    $sortPrompt.AddChoice('Process name (Z-A)') | Out-Null
-    $sortPrompt.AddChoice('Window title (A-Z)') | Out-Null
-    $sortPrompt.AddChoice('Window title (Z-A)') | Out-Null
-    $sortPrompt.AddChoice('Minimised first')    | Out-Null
-    $sortPrompt.AddChoice('Minimised last')     | Out-Null
-
+    $sortPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+        'Sort windows by:',
+        @(
+            '[[Back to main menu]]',
+            'Process name (A-Z)',
+            'Process name (Z-A)',
+            'Window title (A-Z)',
+            'Window title (Z-A)',
+            'Minimised first',
+            'Minimised last'
+        )
+    )
     $sortChoice = $sortPrompt.Show($Console)
+
+    # Handle back navigation from sort selection (Show() returns the original stored string,
+    # including escape sequences - use double brackets to match what was stored in AddChoice)
+    if ($sortChoice -ieq '[[Back to main menu]]') {
+        return $null
+    }
 
     # ── Main selection loop ────────────────────────────────────────────────────
     while ($true) {
@@ -97,23 +106,21 @@ function Show-WindowSelectionScreen {
         }
 
         # ── Step 3: Window selection prompt ────────────────────────────────────
-        $selectionPrompt       = [Spectre.Console.SelectionPrompt[string]]::new()
-        $selectionPrompt.Title = 'Select a window:'
-
-        $backChoice = [Spectre.Console.Markup]::Escape('[Back to main menu]')
-        $selectionPrompt.AddChoice($backChoice) | Out-Null
-
+        $backChoice   = '[[Back to main menu]]'  # Use double brackets for AddChoice
         $choiceLabels = @()
         for ($i = 0; $i -lt $sortedWindows.Count; $i++) {
-            $win         = $sortedWindows[$i]
-            $choiceLabel = "$($i + 1): $([Spectre.Console.Markup]::Escape($win.ProcessName)) - $([Spectre.Console.Markup]::Escape($win.WindowTitle)) ($($win.WindowState))"
-            $choiceLabels += $choiceLabel
-            $selectionPrompt.AddChoice($choiceLabel) | Out-Null
+            $win          = $sortedWindows[$i]
+            $choiceLabels += "$($i + 1): $([Spectre.Console.Markup]::Escape($win.ProcessName)) - $([Spectre.Console.Markup]::Escape($win.WindowTitle)) ($($win.WindowState))"
         }
 
-        $selectedChoice = $selectionPrompt.Show($Console)
+        $selectionPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            'Select a window:',
+            [string[]](@($backChoice) + $choiceLabels)
+        )
+        $selectedChoice  = $selectionPrompt.Show($Console)
 
-        if ($selectedChoice -eq $backChoice) {
+        # Show() returns the original stored string; match the double-bracket form used in AddChoice
+        if ($selectedChoice -ieq '[[Back to main menu]]') {
             return $null
         }
 

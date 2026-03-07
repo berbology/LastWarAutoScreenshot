@@ -3,7 +3,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe 'Get-DefaultModuleSettings' {
+Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
     Context 'When called without parameters' {
         It 'Should return a PSCustomObject' {
             InModuleScope LastWarAutoScreenshot {
