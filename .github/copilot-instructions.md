@@ -35,7 +35,7 @@ Before anything else, you must read and understand ALL the rules below:
 1. This project...
    1. is an auto mouse-mover and clicker that then takes screenshots to upload to a cloud service for OCR processing
    2. Uses Powershell v7.5.4 project on Windows
-   3. Uses Powershell module (with manifest) LastWarAutoScreenshot.psm1 in src/LastWarAutoScreenshot
+   3. Uses Powershell module (with manifest) LastWarAutoScreenshot.psm1 in powershell-module
    4. Controls the mouse cursor via Powershell Type Definitions in c#:
       1. setCursorPos - Sets cursor position
       2. mouseEvent - Fires mouse click events mouse-up and mouse-down
@@ -52,11 +52,11 @@ Before anything else, you must read and understand ALL the rules below:
 
 ## Key Files / folders
 
-* `src/LastWarAutoScreenshot/LastWarAutoScreenshot.psm1` - Main powershell module file
-* `src/LastWarAutoScreenshot/LastWarAutoScreenshot.psd1` - Main powershell module manifest
-* `src/` - Core modules, functions, type definitions
-* `src/LastWarAutoScreenshot/public` - Public functions, exported by `LastWarAutoScreenshot.psm1`
-* `src/LastWarAutoScreenshot/private` - Private functions
+* `powershell-module/LastWarAutoScreenshot.psm1` - Main powershell module file
+* `powershell-module/LastWarAutoScreenshot.psd1` - Main powershell module manifest
+* `powershell-module/src/` - Core modules, functions, type definitions
+* `powershell-module/Public` - Public functions, exported by `LastWarAutoScreenshot.psm1`
+* `powershell-module/Private` - Private functions
 
 ## Testing Approach
 

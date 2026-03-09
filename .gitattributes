@@ -1,3 +1,3 @@
 # Treat all bundled DLLs as binary so git does not attempt to diff them.
 # They must be committed and shipped with the module - do NOT add them to .gitignore.
-LastWarAutoScreenshot/lib/**/*.dll binary
+powershell-module/lib/**/*.dll binary

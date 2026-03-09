@@ -18,6 +18,19 @@ This guide provides PowerShell-specific instructions for creating automated test
 - **Import Pattern:** Use `BeforeAll { . $PSScriptRoot/FunctionName.ps1 }` to import tested functions, being very careful to place them at the correct nesting level as per Pester 5.7.1 best practices
   - InModuleScope should only be used inside It, Context, or (if needed) BeforeAll/BeforeEach, not as a wrapper for multiple Pester lifecycle blocks or as a direct child of Describe
 - **No Direct Code:** Put ALL code inside Pester blocks (`BeforeAll`, `Describe`, `Context`, `It`, etc.)
+- **Write Clear, Separated Assertions** Don't use `Should -BeExactly $value`. Separate type and value assertions. The following example is clearer and easier to debug:
+  
+```powershell
+It "Should be a double with value -1.0" {
+    $actual = -1.0
+    
+    # 1. Verify the specific type
+    $actual | Should -BeOfType [double]
+    
+    # 2. Verify the exact value
+    $actual | Should -Be (-1.0) # Parenthesis force negative number parsing as literal rather than potential param name
+}
+```
 
 ## Test Structure Hierarchy
 

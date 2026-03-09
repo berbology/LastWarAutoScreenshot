@@ -1,0 +1,51 @@
+{
+	"Logging": {
+		"Backend": "File,EventLog",
+		"MinimumLogLevel": "Info",
+		"FileBackend": {
+			"MaxSizeMB": 50,
+			"MaxFileCount": 50,
+			"MaxAgeDays": 30,
+			"RetentionFileCount": 500
+		}
+	},
+	"MouseControl": {
+		"EasingEnabled": true,
+		"OvershootEnabled": true,
+		"OvershootFactor": 0.1,
+		"MicroPausesEnabled": true,
+		"MicroPauseChance": 0.2,
+		"MicroPauseDurationRangeMs": [20, 80],
+		"JitterEnabled": true,
+		"JitterRadiusPx": 2,
+		"BezierControlPointOffsetFactor": 0.3,
+		"MovementDurationRangeMs": [200, 600],
+		"ClickDownDurationRangeMs": [50, 150],
+		"ClickPreDelayRangeMs": [50, 200],
+		"ClickPostDelayRangeMs": [100, 300],
+		"PathPointCount": 20
+	},
+	"EmergencyStop": {
+		"AutoStart": true,
+		"HotkeyVKeyCodes": [17, 16, 220],
+		"PollIntervalMs": 100,
+		"MouseGestureEnabled": true,
+		"MouseGestureHoldDurationMs": 3000
+	},
+	"Screenshots": {
+		"StoragePath": "C:\\LastWarAutoScreenshot\\Screenshots",
+		"MaxStorageGB": 2.0,
+		"StorageWarningThresholdPercent": 90,
+		"FileFormat": "PNG",
+		"FilenamePattern": "{MacroName}_{ActionName}_{Timestamp}_{Index}",
+		"SimilarityCheck": {
+			"Enabled": false,
+			"Threshold": 0.98,
+			"SampleCount": 1000,
+			"FullScan": false,
+			"TolerancePerChannel": 10,
+			"Action": "StopNestedMacro",
+			"ConsecutiveThreshold": 1
+		}
+	}
+}

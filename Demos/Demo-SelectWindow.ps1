@@ -1,7 +1,7 @@
 # Demo: Run the interactive window selection menu for Last War Auto Screenshot
 # This script uses Import-Module and public module functions only
 
-$moduleManifest = Join-Path $PSScriptRoot '../LastWarAutoScreenshot.psd1'
+$moduleManifest = Join-Path $PSScriptRoot '../powershell-module/LastWarAutoScreenshot.psd1'
 Import-Module $moduleManifest -Force
 
 # Enumerate all windows and launch the menu

@@ -12,16 +12,16 @@ PowerShell 7+ module (`LastWarAutoScreenshot`) that automates human-like mouse i
 
 ```powershell
 # Import the module
-Import-Module .\LastWarAutoScreenshot\LastWarAutoScreenshot.psd1
+Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
 
 # Launch the interactive app (entry point)
 Start-LastWarAutoScreenshot
 
 # Run full test suite (always run the full suite, never filter)
-Invoke-Pester -Path .\LastWarAutoScreenshot\Tests -Output Detailed
+Invoke-Pester -Path .\powershell-module\Tests -Output Detailed
 
 # Run a single test file
-Invoke-Pester -Path .\LastWarAutoScreenshot\Tests\ConsoleApp\Show-MainMenu.Tests.ps1 -Output Detailed
+Invoke-Pester -Path .\powershell-module\Tests\ConsoleApp\Show-MainMenu.Tests.ps1 -Output Detailed
 ```
 
 > **IMPORTANT:** Do NOT run tests yourself. Prompt the user to run them and report results back.
@@ -29,7 +29,7 @@ Invoke-Pester -Path .\LastWarAutoScreenshot\Tests\ConsoleApp\Show-MainMenu.Tests
 ## Repository Structure
 
 ```
-LastWarAutoScreenshot/
+powershell-module/
 ├── LastWarAutoScreenshot.psm1   # Module entry point: loads C# types, dot-sources all .ps1 files
 ├── LastWarAutoScreenshot.psd1   # Module manifest
 ├── src/                         # C# source files compiled at module load via Add-Type
@@ -133,6 +133,7 @@ Always suppress return values from Spectre.Console methods with `| Out-Null`. Ne
 
 - Use `InModuleScope LastWarAutoScreenshot { }` inside `It`, `Context`, or `BeforeAll/BeforeEach` blocks — **not** as a wrapper around multiple lifecycle blocks
 - **`$script:` scope warning:** `$script:` inside `InModuleScope` resolves to the module's script scope, not the test file's scope. Never read a `$script:` variable inside `InModuleScope` that was set outside it. Reset module-scope `$script:` variables inside `InModuleScope` in `BeforeEach`/`AfterEach`.
+- Use `InModuleScope
 - Use `Should -Invoke` (not the deprecated `Assert-MockCalled`)
 - Use `-TestCases` / `-ForEach` for data-driven tests
 - Full test suite must pass (all files, no filters) before any task is marked complete. Check and report total test count vs. the known baseline.
@@ -146,6 +147,20 @@ Always suppress return values from Spectre.Console methods with `| Out-Null`. Ne
 
 ```powershell
 $Console.Write([Spectre.Console.Markup]::new(...))
+```
+
+Don't use `Should -BeExactly $value` to check type and value. Separate type and value checks. The following example is clearer and easier to debug:
+
+```powershell
+It "Should be a double with value -1.0" {
+    $actual = -1.0
+    
+    # 1. Verify the specific type
+    $actual | Should -BeOfType [double]
+    
+    # 2. Verify the exact value
+    $actual | Should -Be (-1.0) # Parenthesis force negative number parsing as literal rather than potential param name
+}
 ```
 
 ## Critical Workflow Rules

@@ -2,7 +2,7 @@
 # Demo script for Project Plan Task 1.4: Select-TargetWindowFromMenu
 # This script uses Import-Module and public module functions only
 
-$moduleManifest = Join-Path $PSScriptRoot '../LastWarAutoScreenshot.psd1'
+$moduleManifest = Join-Path $PSScriptRoot '../powershell-module/LastWarAutoScreenshot.psd1'
 Import-Module $moduleManifest -Force
 
 $InformationPreference = 'Continue'

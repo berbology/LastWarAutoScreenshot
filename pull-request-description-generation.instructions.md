@@ -29,7 +29,7 @@ These instructions define how pull request descriptions should be generated for 
 
      Changes:
      - 🛠️ Updated config loader to parse both JSON and YAML files.
-     - 📄 Updated README.md path to point to its new location in src/LastWarAutoScreenshot/Docs.
+     - 📄 Updated README.md path to point to its new location in powershell-module/Docs.
 
      Testing:
      - ✅ Unit tests were added for YAML parsing.
