@@ -47,12 +47,16 @@ function Start-LastWarAutoScreenshot {
 
         Alternate screen buffers:
           The entire main-menu loop (figlet + menu + dispatch) runs inside a single
-          RunInAlternateScreen call.  Each sub-screen dispatch (SelectWindow, Configure,
-          RecordMacro) opens a nested alternate buffer via a further RunInAlternateScreen
-          call.  RunInAlternateScreen gracefully degrades — if the terminal (or injected
-          TestConsole) does not advertise AlternateBuffer capability, the action is
-          invoked directly in the current buffer without any ANSI sequences.  No manual
-          TestConsole type checks are needed.
+          RunInAlternateScreen call.  Sub-screens that need a clean buffer
+          (Configure, RecordMacro, RunMacro, ManageMacros, ViewStorageInfo) open a
+          nested alternate buffer via a further RunInAlternateScreen call.
+          Show-WindowSelectionScreen runs inline in the main alternate buffer (no
+          nested buffer) so that its 'Saved' banner persists above the main menu,
+          matching the pattern used by Show-LoggingConfigScreen inside
+          Show-ConfigMenuScreen.  RunInAlternateScreen gracefully degrades — if the
+          terminal (or injected TestConsole) does not advertise AlternateBuffer
+          capability, the action is invoked directly in the current buffer without
+          any ANSI sequences.  No manual TestConsole type checks are needed.
 
         Phase notes:
           Show-WindowSelectionScreen is implemented in Phase 1 (window management).
@@ -90,11 +94,7 @@ function Start-LastWarAutoScreenshot {
             switch ($choice) {
 
                 'SelectWindow' {
-                    $screenBlock = {
-                        param([Spectre.Console.IAnsiConsole]$Console)
-                        Show-WindowSelectionScreen -Console $Console
-                    }
-                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+                    Show-WindowSelectionScreen -Console $Console
                 }
 
                 'Configure' {
