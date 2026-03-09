@@ -619,7 +619,7 @@ function Show-RecordMacroScreen {
                 $saveResult = Save-MacroFile -MacroData $macroData
                 if ($saveResult.Success) {
                     $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                        "[green]Macro '$macroName' saved successfully with $($sequence.Count) actions.[/]",
+                        "Macro '$macroName' saved successfully.",
                         '[green]Saved[/]'
                     )
                     $Console.Write($successPanel)

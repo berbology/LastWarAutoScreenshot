@@ -779,4 +779,80 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
             }
         }
     }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Save confirmation banner
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user records and saves a macro' {
+
+        It 'Writes a "Saved" panel containing "saved successfully" to the console' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    [PSCustomObject]@{ RelativeX = 0.0; RelativeY = 0.0 }
+                }
+                Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action menu: 3 DownArrows → index 3 'Left-click'
+                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: Enter (skip)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 7 DownArrows → 'Save macro' (index 7; no Create loop; Discard is at index 8)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'saved successfully'
+            }
+        }
+
+        It 'The "Saved" panel output contains the macro name' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    [PSCustomObject]@{ RelativeX = 0.0; RelativeY = 0.0 }
+                }
+                Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action menu: 3 DownArrows → index 3 'Left-click'
+                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: Enter (skip)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 7 DownArrows → 'Save macro' (index 7; no Create loop; Discard is at index 8)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'my-macro'
+            }
+        }
+    }
 }
