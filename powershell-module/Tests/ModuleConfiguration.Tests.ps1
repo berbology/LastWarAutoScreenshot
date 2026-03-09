@@ -403,7 +403,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                 Mock Write-Host {}
                 $config = Get-ModuleConfiguration -ConfigurationPath $nonExistentPath
                 $config.Screenshots | Should -Not -BeNullOrEmpty
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
                 $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }
@@ -551,7 +551,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
 
                 $config.Screenshots | Should -Not -BeNullOrEmpty
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
                 $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }

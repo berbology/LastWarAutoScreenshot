@@ -25,10 +25,11 @@ function Show-ScreenshotConfigScreen {
                that are mapped back to raw config values via a switch statement.
 
              StoragePath (string with path validation):
-               TextPrompt with AllowEmpty=$true.  Empty input clears the path (sets to '').
-               Non-empty input is validated by checking that the parent directory exists via
-               Test-Path.  If the parent does not exist, an error is displayed and the prompt
-               repeats.  The directory is NOT created here — auto-creation occurs at capture time.
+               TextPrompt with AllowEmpty=$true.  Empty input keeps the current value (default).
+               Non-empty input must be an absolute path; relative paths are rejected with an
+               error.  The parent directory is also checked via Test-Path.  The directory is
+               also created on disk immediately when the user saves (in addition to
+               auto-creation at first capture time).
 
              FilenamePattern (string with example display):
                TextPrompt with AllowEmpty=$true.  After the user enters a non-empty value,
@@ -98,9 +99,8 @@ function Show-ScreenshotConfigScreen {
         (int or double) before being stored on the config object, matching ConvertFrom-Json
         behaviour.
 
-        StoragePath empty input behaviour: pressing Enter without typing clears the path
-        (sets StoragePath = '').  This differs from other TextPrompt keys where empty input
-        keeps the current value.  The prompt title text communicates this difference.
+        StoragePath empty input behaviour: pressing Enter without typing keeps the current value.
+        This is the standard behaviour for TextPrompt keys.
     #>
     [CmdletBinding()]
     param(
@@ -309,20 +309,27 @@ function Show-ScreenshotConfigScreen {
         }
         elseif ($def.Key -eq 'Screenshots.StoragePath') {
             # ── StoragePath: TextPrompt with path parent validation ────────────
-            # Empty input clears the path (sets to ''); this differs from other TextPrompt
-            # keys where empty input retains the current value.
+            # Empty input keeps the current value (default behaviour for TextPrompt).
+            # This differs from FilenamePattern which also supports empty input to keep.
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $([Spectre.Console.Markup]::Escape("$currentValue"))]]. Enter path or press Enter to clear:"
+                $promptText   = "$description [[current: $([Spectre.Console.Markup]::Escape("$currentValue"))]]. Enter path or press Enter to keep the default:"
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
                 $answer = $textPrompt.Show($Console)
 
-                # Empty → clear path
+                # Empty → keep current value
                 if ([string]::IsNullOrEmpty($answer)) {
-                    & $def.Set $config ''
                     break
+                }
+
+                # Validate that the path is absolute (not a relative path)
+                if (-not [System.IO.Path]::IsPathRooted($answer)) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Please enter a full file path, e.g. 'C:\LastWar\Screenshots'.`n[/]")
+                    )
+                    continue
                 }
 
                 # Validate that the parent directory exists
@@ -453,6 +460,18 @@ function Show-ScreenshotConfigScreen {
 
         'Yes - save now' {
             Save-ModuleSettings -Config $config
+
+            # Create screenshot directory immediately if it is configured but not yet on disk.
+            # Directory is also created at first capture time by Invoke-CaptureScreenRegion,
+            # but creating it here gives the user immediate confirmation that the path is usable.
+            $storagePath = $config.Screenshots.StoragePath
+            if (-not [string]::IsNullOrEmpty($storagePath) -and
+                -not (Test-Path -Path $storagePath -PathType Container)) {
+                New-Item -Path $storagePath -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+                Write-LastWarLog -Level Info `
+                    -Message "Created screenshot storage directory: $storagePath" `
+                    -FunctionName 'Show-ScreenshotConfigScreen'
+            }
 
             $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
                 'Screenshot settings saved successfully.',

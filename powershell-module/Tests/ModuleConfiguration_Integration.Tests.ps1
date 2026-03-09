@@ -257,7 +257,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
 
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 $config.Screenshots | Should -Not -BeNullOrEmpty
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
                 $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }
@@ -290,10 +290,10 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
 
         It 'Should save and load Screenshots.StoragePath round-trip' {
             InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
-                # Save defaults (StoragePath = '')
+                # Save defaults (StoragePath = 'C:\LastWarAutoScreenshot\Screenshots')
                 Save-ModuleConfiguration -WindowObject $mockWindow -ConfigurationPath $testConfigPath -Force
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
             }
         }
 

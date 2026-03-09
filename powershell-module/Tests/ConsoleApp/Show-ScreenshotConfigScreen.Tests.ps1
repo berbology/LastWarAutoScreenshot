@@ -36,12 +36,13 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
             Mock Write-LastWarLog {}
             Mock Resolve-ScreenshotFilename { 'my-macro_screenshot_20260101_120000_0001.png' }
             Mock Test-Path { $true }
+            Mock New-Item {}
         }
     }
 
     # Helper: push the full default input sequence (all empty/keep + 'Yes - save now')
     # Input order matches the key definition order in Show-ScreenshotConfigScreen:
-    #   1  StoragePath                      TextPrompt   Enter (empty → clear)
+    #   1  StoragePath                      TextPrompt   Enter (empty → keep)
     #   2  MaxStorageGB                     TextPrompt   Enter (empty → keep)
     #   3  StorageWarningThresholdPercent   TextPrompt   Enter (empty → keep)
     #   4  FileFormat                       SelectPrompt Enter (first = 'PNG')
@@ -64,7 +65,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath: empty → clear
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat SelectionPrompt → PNG
@@ -124,7 +125,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushTextWithEnter('C:\NonExistent\Screenshots')  # 1st StoragePath: invalid parent
-                $tc.Input.PushKey([ConsoleKey]::Enter)                     # 2nd StoragePath: empty → clear and break
+                $tc.Input.PushKey([ConsoleKey]::Enter)                     # 2nd StoragePath: keep and break
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
@@ -543,6 +544,107 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 Show-ScreenshotConfigScreen -Console $tc
 
                 $tc.Output | Should -Match 'No changes saved'
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Relative path is rejected
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When StoragePath input is a relative path' {
+
+        It 'Console output contains full file path error and prompt re-displays' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushTextWithEnter('MyFolder')          # 1st StoragePath: relative → error, re-prompt
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # 2nd StoragePath: keep and break
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # FilenamePattern
+                $tc.Input.PushTextWithEnter('n')                 # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # SampleCount
+                $tc.Input.PushTextWithEnter('n')                 # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)       # Save: Discard changes
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                $tc.Output | Should -Match 'full file path'
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Directory creation when StoragePath does not exist
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When saving with a non-empty StoragePath that does not exist on disk' {
+
+        It 'Calls New-Item to create the directory' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                # Mock Test-Path: returns false when -PathType is specified (directory check),
+                # returns true otherwise (parent directory validation)
+                Mock Test-Path {
+                    if ($null -ne $PathType) {
+                        return $false
+                    }
+                    return $true
+                }
+                Mock New-Item {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushTextWithEnter('C:\Screenshots')    # StoragePath: absolute path
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # FilenamePattern
+                $tc.Input.PushTextWithEnter('n')                 # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # SampleCount
+                $tc.Input.PushTextWithEnter('n')                 # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Save: 'Yes - save now'
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                Should -Invoke New-Item -Times 1
+            }
+        }
+
+        It 'Does not call New-Item when the screenshot directory already exists' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                # Mock Test-Path to return true for all checks (parent exists, directory exists)
+                Mock Test-Path { $true }
+                Mock New-Item {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # StoragePath: keep
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # FilenamePattern
+                $tc.Input.PushTextWithEnter('n')                 # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # SampleCount
+                $tc.Input.PushTextWithEnter('n')                 # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # Save: 'Yes - save now'
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                Should -Not -Invoke New-Item
             }
         }
     }

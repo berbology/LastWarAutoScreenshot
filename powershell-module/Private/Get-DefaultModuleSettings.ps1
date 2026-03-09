@@ -66,8 +66,7 @@ function Get-DefaultModuleSettings {
             MouseGestureHoldDurationMs = 3000
         }
         Screenshots = [PSCustomObject]@{
-            # Empty string = not yet configured; the storage info screen handles this state.
-            StoragePath                    = ''
+            StoragePath                    = 'C:\LastWarAutoScreenshot\Screenshots'
             MaxStorageGB                   = 2.0
             StorageWarningThresholdPercent = 90
             FileFormat                     = 'PNG'
@@ -259,7 +258,7 @@ $script:ConfigValidationSchema = @{
     # --- Screenshots ---
     'Screenshots.StoragePath'                     = @{
         Type        = 'string'
-        Description = 'Folder path where screenshots are stored; empty string = not yet configured'
+        Description = 'Folder path where screenshots are stored'
         Nullable    = $true
     }
     'Screenshots.MaxStorageGB'                    = @{
