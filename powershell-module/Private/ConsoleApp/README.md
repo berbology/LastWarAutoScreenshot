@@ -12,12 +12,12 @@ testability.
 | `ConfigValidation.ps1` | `Test-ConfigValue` — validates a single config key against the schema in `Get-DefaultModuleSettings.ps1` |
 | `Get-StorageInfo.ps1` | Reads screenshot storage path and log folder; returns used/free stats |
 | `Invoke-StartupConfigValidation.ps1` | Runs on app start; validates all config keys and surfaces warnings before the main menu loads |
-| `Show-ConfigMenuScreen.ps1` | Configuration area selection menu (Logging / Mouse control / Emergency stop / Storage) |
+| `Show-ConfigMenuScreen.ps1` | Configuration area selection menu (Logging / Mouse control / Emergency stop / Screenshot settings) |
 | `Show-EmergencyStopConfigScreen.ps1` | Edit `EmergencyStop.*` config keys interactively |
 | `Show-LoggingConfigScreen.ps1` | Edit `Logging.*` config keys interactively |
 | `Show-MainMenu.ps1` | Top-level app menu |
 | `Show-MouseControlConfigScreen.ps1` | Edit `MouseControl.*` config keys interactively |
-| `Show-StorageInfoScreen.ps1` | Display storage usage chart; configure `Screenshots.*` keys |
+| `Show-StorageInfoScreen.ps1` | Display screenshot storage usage (chart/table) and log file disk usage in two sections; accessible from the top-level main menu |
 | `Show-WindowSelectionScreen.ps1` | Enumerate windows, sort, select, and persist the target |
 
 ### Adding a new screen

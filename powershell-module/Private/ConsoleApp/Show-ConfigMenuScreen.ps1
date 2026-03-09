@@ -10,7 +10,6 @@ function Show-ConfigMenuScreen {
           - Mouse control settings  → Show-MouseControlConfigScreen
           - Emergency stop settings → Show-EmergencyStopConfigScreen
           - Screenshot settings     → Show-ScreenshotConfigScreen
-          - Storage & log file info → Show-StorageInfoScreen
           - [Back to main menu]     → exits the loop and returns
 
         The function loops continuously, returning to this menu after each sub-screen
@@ -41,7 +40,6 @@ function Show-ConfigMenuScreen {
           Show-MouseControlConfigScreen  - implemented
           Show-EmergencyStopConfigScreen - implemented
           Show-ScreenshotConfigScreen    - implemented
-          Show-StorageInfoScreen         - implemented
     #>
     [CmdletBinding()]
     param(
@@ -58,8 +56,7 @@ function Show-ConfigMenuScreen {
                 'Logging settings',
                 'Mouse control settings',
                 'Emergency stop settings',
-                'Screenshot settings',
-                'Storage & log file info'
+                'Screenshot settings'
             )
         )
         $selection = $prompt.Show($Console)
@@ -80,10 +77,6 @@ function Show-ConfigMenuScreen {
 
             'Screenshot settings' {
                 Show-ScreenshotConfigScreen -Console $Console
-            }
-
-            'Storage & log file info' {
-                Show-StorageInfoScreen -Console $Console
             }
 
             default {

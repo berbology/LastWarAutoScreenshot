@@ -13,8 +13,11 @@ function Show-WindowSelectionScreen {
         4.  Window validation - Test-WindowHandleValid confirms the window is still
             open. If closed, an error panel is shown and the loop restarts from step 2
             (does NOT return to the main menu; the user must select again).
-        5.  On a valid selection, the window is saved via Save-ModuleConfiguration, a
-            success panel is displayed, and the window object is returned.
+        5.  Save confirmation - the user is prompted to save or discard. Choosing
+            'Yes - save now' saves via Save-ModuleConfiguration, writes a green
+            'Saved' panel stating the window title, and returns the window object.
+            Choosing 'Discard changes' writes a 'No changes saved.' panel and
+            returns $null.
 
         Returns $null when the user cancels via '[Back to main menu]' or when no
         windows are found after enumeration.
@@ -153,17 +156,40 @@ function Show-WindowSelectionScreen {
             continue  # Loop back to step 2; do NOT return $null
         }
 
-        # ── Step 5: Save and return ────────────────────────────────────────────
-        Save-ModuleConfiguration -WindowObject $selectedWindow -Force
-
-        $escapedSuccessTitle = [Spectre.Console.Markup]::Escape($selectedWindow.WindowTitle)
-        $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-            "Window '[bold]$escapedSuccessTitle[/]' selected and saved to configuration.",
-            '[green]Success[/]'
+        # ── Step 5: Confirm save ───────────────────────────────────────────────
+        $savePrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            'Save changes?',
+            @('Yes - save now', 'Discard changes')
         )
-        $Console.Write($successPanel)
+        $saveChoice = $savePrompt.Show($Console)
 
-        return $selectedWindow
+        $escapedTitle = [Spectre.Console.Markup]::Escape($selectedWindow.WindowTitle)
+        switch ($saveChoice) {
+            'Yes - save now' {
+                Save-ModuleConfiguration -WindowObject $selectedWindow -Force
+
+                $savedPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                    "Target window '$escapedTitle' selected.",
+                    '[green]Saved[/]'
+                )
+                $Console.Write($savedPanel)
+
+                Write-LastWarLog -Level Info `
+                    -Message "Target window '$($selectedWindow.WindowTitle)' selected and saved by user." `
+                    -FunctionName 'Show-WindowSelectionScreen'
+
+                return $selectedWindow
+            }
+            default {
+                $discardPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                    'No changes saved.',
+                    'Discarded'
+                )
+                $Console.Write($discardPanel)
+
+                return $null
+            }
+        }
     }
 }
 

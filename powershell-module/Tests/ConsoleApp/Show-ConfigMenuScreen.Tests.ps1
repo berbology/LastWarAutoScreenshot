@@ -21,11 +21,10 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # Choices: [0] [Back to main menu], [1] Logging, [2] Mouse control, [3] Emergency stop, [4] Screenshot, [5] Storage
+                # Choices: [0] [Back to main menu], [1] Logging, [2] Mouse control, [3] Emergency stop, [4] Screenshot
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Select [Back to main menu] (index 0, default)
 
                 { Show-ConfigMenuScreen -Console $tc } | Should -Not -Throw
@@ -38,7 +37,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -62,7 +60,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -84,7 +81,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -99,7 +95,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Should -Not -Invoke Show-MouseControlConfigScreen
                 Should -Not -Invoke Show-EmergencyStopConfigScreen
                 Should -Not -Invoke Show-ScreenshotConfigScreen
-                Should -Not -Invoke Show-StorageInfoScreen
             }
         }
     }
@@ -115,7 +110,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -144,7 +138,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -164,49 +157,16 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Storage & log file info chosen then back
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user selects Storage and log file info then [Back to main menu]' {
-
-        It 'Calls Show-StorageInfoScreen exactly once' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Show-LoggingConfigScreen        {}
-                Mock Show-MouseControlConfigScreen   {}
-                Mock Show-EmergencyStopConfigScreen  {}
-                Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                # First iteration: Storage & log file info (index 5, 5 downs from [Back to main menu])
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: [Back to main menu] (index 0, Enter immediately)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-ConfigMenuScreen -Console $tc
-
-                Should -Invoke Show-StorageInfoScreen -Exactly 1
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
     # Context: Console output contains all expected choices
     # ════════════════════════════════════════════════════════════════════════
     Context 'Console output' {
 
-        It 'Output contains all six menu options' {
+        It 'Output contains all five menu options' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Show-LoggingConfigScreen        {}
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -219,7 +179,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match 'Mouse control settings'
                 $tc.Output | Should -Match 'Emergency stop settings'
                 $tc.Output | Should -Match 'Screenshot settings'
-                $tc.Output | Should -Match 'Storage'
                 $tc.Output | Should -Match 'Back to main menu'
             }
         }
@@ -230,7 +189,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -254,7 +212,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -272,7 +229,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -297,7 +253,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -328,7 +283,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-MouseControlConfigScreen   {}
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
-                Mock Show-StorageInfoScreen          {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -348,4 +302,3 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
         }
     }
 }
-

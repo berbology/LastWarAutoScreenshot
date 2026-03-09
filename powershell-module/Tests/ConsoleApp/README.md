@@ -42,5 +42,5 @@ are accessible.
 | `Show-MouseControlConfigScreen.Tests.ps1` | Mouse control config — bool prompts, intArray validation |
 | `Show-EmergencyStopConfigScreen.Tests.ps1` | Emergency stop config — VKey code parsing and validation |
 | `Get-StorageInfo.Tests.ps1` | Storage stats calculation, unconfigured path, access denied |
-| `Show-StorageInfoScreen.Tests.ps1` | Storage screen rendering, warning at 90%, save/discard |
+| `Show-StorageInfoScreen.Tests.ps1` | Storage screen rendering: not-configured panel, warning at 90%, log section for File and EventLog backends |
 

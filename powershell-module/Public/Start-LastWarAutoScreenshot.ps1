@@ -11,12 +11,13 @@ function Start-LastWarAutoScreenshot {
              them by pressing Enter.
           2. Enters an infinite loop rendering the main menu via Show-MainMenu.
           3. Dispatches each selection to the relevant screen function:
-               SelectWindow  → Show-WindowSelectionScreen   (Phase 1)
-               Configure     → Show-ConfigMenuScreen         (Phase 3)
-               RecordMacro   → Show-RecordMacroScreen        (Phase 4)
-               RunMacro      → Show-RunMacroScreen           (Phase 4)
-               ManageMacros  → Show-ManageMacrosScreen       (Phase 4)
-               Exit          → breaks the loop and returns
+               SelectWindow     → Show-WindowSelectionScreen   (Phase 1)
+               Configure        → Show-ConfigMenuScreen         (Phase 3)
+               ViewStorageInfo  → Show-StorageInfoScreen        (Phase 3)
+               RecordMacro      → Show-RecordMacroScreen        (Phase 4)
+               RunMacro         → Show-RunMacroScreen           (Phase 4)
+               ManageMacros     → Show-ManageMacrosScreen       (Phase 4)
+               Exit             → breaks the loop and returns
           4. The loop restarts after each screen returns (except Exit).
 
     .PARAMETER Console
@@ -100,6 +101,14 @@ function Start-LastWarAutoScreenshot {
                     $screenBlock = {
                         param([Spectre.Console.IAnsiConsole]$Console)
                         Show-ConfigMenuScreen -Console $Console
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+                }
+
+                'ViewStorageInfo' {
+                    $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
+                        Show-StorageInfoScreen -Console $Console
                     }
                     Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }

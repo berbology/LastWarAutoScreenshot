@@ -1,11 +1,10 @@
 # Show-StorageInfoScreen.Tests.ps1
 # Pester v5 tests for the Show-StorageInfoScreen private function.
 #
-# Show-StorageInfoScreen is a read-only view + navigation screen.  It shows storage
-# status (info panel when not configured, chart/table/warning panels when configured)
-# and presents a SelectionPrompt with Back / Configure screenshot settings /
-# Open storage folder in Explorer.  It does NOT contain editing prompts, save logic,
-# or validation.  Those live in Show-ScreenshotConfigScreen.
+# Show-StorageInfoScreen is a read-only view screen divided into two sections:
+#   Section 1 — Screenshot Storage: info panel (not configured) or chart/table/warnings (configured)
+#   Section 2 — Log Files: log size table when Logging.Backend includes File, or EventLog info panel
+# Navigation offers [[Back]] always and 'Open storage folder in Explorer' when configured.
 
 BeforeAll {
     # Tests\ConsoleApp\ is two levels below the module root; go up twice to find the manifest
@@ -31,6 +30,9 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                         Screenshots = [PSCustomObject]@{
                             StoragePath  = ''
                             MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
                         }
                     }
                 }
@@ -61,6 +63,9 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                             StoragePath  = ''
                             MaxStorageGB = 2.0
                         }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
+                        }
                     }
                 }
                 Mock Get-StorageInfo {
@@ -83,6 +88,40 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match 'not yet configured'
             }
         }
+
+        It 'Shows the Screenshot Storage section heading in the not-configured panel' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = ''
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured  = $false
+                        UsedGB        = 0.0
+                        MaxGB         = 0.0
+                        UsedPercent   = 0.0
+                        LogFileSizeGB = 0.0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Match 'Screenshot Storage'
+            }
+        }
     }
 
     # ════════════════════════════════════════════════════════════════════════
@@ -97,6 +136,9 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                         Screenshots = [PSCustomObject]@{
                             StoragePath  = 'C:\Screenshots'
                             MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
                         }
                     }
                 }
@@ -131,6 +173,9 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                         Screenshots = [PSCustomObject]@{
                             StoragePath  = 'C:\Screenshots'
                             MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
                         }
                     }
                 }
@@ -172,6 +217,9 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                             StoragePath  = 'C:\Screenshots'
                             MaxStorageGB = 2.0
                         }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
+                        }
                     }
                 }
                 Mock Get-StorageInfo {
@@ -195,6 +243,199 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                 Show-StorageInfoScreen -Console $tc
 
                 $tc.Output | Should -Not -Match 'over 90'
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Logging.Backend is EventLog only
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When Logging.Backend is EventLog only' {
+
+        It 'Shows the Event log info panel in the Log Files section' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = ''
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured  = $false
+                        UsedGB        = 0.0
+                        MaxGB         = 0.0
+                        UsedPercent   = 0.0
+                        LogFileSizeGB = 0.0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Match 'Event log'
+            }
+        }
+
+        It 'Does not show log file size row when Logging.Backend is EventLog only' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = ''
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured  = $false
+                        UsedGB        = 0.0
+                        MaxGB         = 0.0
+                        UsedPercent   = 0.0
+                        LogFileSizeGB = 0.0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Not -Match 'Log Files GB'
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Logging.Backend includes File
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When Logging.Backend includes File' {
+
+        It 'Shows the log file size row in the Log Files section' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = 'C:\Screenshots'
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'File'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured    = $true
+                        UsedGB          = 0.5
+                        MaxGB           = 2.0
+                        UsedPercent     = 25.0
+                        LogFileSizeGB   = 0.012
+                        DiskFreeGB      = 100.0
+                        DiskTotalGB     = 500.0
+                        ScreenshotCount = 3
+                        OldestScreenshotDate = [datetime]::new(2026, 1, 1, 0, 0, 0, [System.DateTimeKind]::Utc)
+                        NewestScreenshotDate = [datetime]::new(2026, 3, 1, 0, 0, 0, [System.DateTimeKind]::Utc)
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Match 'Log Files GB'
+            }
+        }
+
+        It 'Shows disk space row in the Log Files section when backend includes File' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = 'C:\Screenshots'
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'File'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured    = $true
+                        UsedGB          = 0.5
+                        MaxGB           = 2.0
+                        UsedPercent     = 25.0
+                        LogFileSizeGB   = 0.012
+                        DiskFreeGB      = 100.0
+                        DiskTotalGB     = 500.0
+                        ScreenshotCount = 0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Match 'Disk space'
+            }
+        }
+
+        It 'Does not show the Event log info panel when backend includes File' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = 'C:\Screenshots'
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'File'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured    = $true
+                        UsedGB          = 0.5
+                        MaxGB           = 2.0
+                        UsedPercent     = 25.0
+                        LogFileSizeGB   = 0.012
+                        DiskFreeGB      = 100.0
+                        DiskTotalGB     = 500.0
+                        ScreenshotCount = 0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Not -Match 'Event log backend is active'
             }
         }
     }

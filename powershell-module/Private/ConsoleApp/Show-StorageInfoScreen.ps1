@@ -1,30 +1,35 @@
 function Show-StorageInfoScreen {
     <#
     .SYNOPSIS
-        Displays current screenshot storage and log file usage information, and provides
-        navigation to related screens.
+        Displays screenshot storage status and log file usage in two distinct sections.
 
     .DESCRIPTION
-        Uses Get-StorageInfo to retrieve the current storage state.  The screen behaves
-        differently depending on whether storage has already been configured:
+        Uses Get-StorageInfo and Get-ModuleConfiguration to retrieve current storage and
+        logging state.  The screen is divided into two sections:
 
-        Not configured (IsConfigured = $false):
-          - Displays an information panel prompting the user to configure a storage path.
+        Section 1 — Screenshot Storage:
+          Not configured (IsConfigured = $false):
+            - Displays an information panel prompting the user to configure a storage path
+              via Configure Module → Screenshot settings.
+          Configured (IsConfigured = $true):
+            - If storage usage is at or above 90 % of the configured maximum, a yellow
+              warning panel is shown first.
+            - A BreakdownChart visualises used vs free storage proportionally.
+            - A Table summarises Used GB, Max GB, % Used, and the number of screenshot
+              files with their date range.
+            - If disk free space is below 5 GB (and DriveInfo did not fail), a low disk
+              space warning panel is shown.
 
-        Configured (IsConfigured = $true):
-          - If storage usage is at or above 90 % of the configured maximum, a yellow
-            warning panel is shown first.
-          - A BreakdownChart visualises used vs free storage proportionally.
-          - A Table summarises Used GB, Max GB, % Used, Log Files GB, Disk space, and
-            the number of screenshot files with their date range.
-          - If disk free space is below 5 GB (and DriveInfo did not fail), a low disk
-            space warning panel is shown.
+        Section 2 — Log Files:
+          When Logging.Backend contains 'File' (i.e. File or File,EventLog):
+            - A table shows Log Files GB and Disk space (GB free / GB total).
+          When Logging.Backend is 'EventLog' only:
+            - An info panel states that no log files are written to disk.
 
-        Always: a SelectionPrompt offers navigation choices:
-          '[[Back]]'                           -> returns to the calling screen.
-          'Configure screenshot settings'      -> navigates to Show-ScreenshotConfigScreen.
-          'Open storage folder in Explorer'    -> launches Explorer at the storage path
-                                                 (only shown when IsConfigured = $true).
+        Navigation:
+          '[[Back]]'                        -> returns to the calling screen.
+          'Open storage folder in Explorer' -> launches Explorer at the storage path
+                                              (only shown when IsConfigured = $true).
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -55,6 +60,10 @@ function Show-StorageInfoScreen {
 
         Date formatting for screenshot date range uses 'dd/MM/yy HH:mm' in UTC, consistent
         with the DisplayDate format used elsewhere in the module.
+
+        Navigation uses '[[Back]]' (double brackets for Spectre display) but the switch
+        default branch handles the returned single-bracket value '[Back]' — no explicit
+        string comparison against '[Back]' is needed.
     #>
     [CmdletBinding()]
     param(
@@ -66,11 +75,11 @@ function Show-StorageInfoScreen {
     $config      = Get-ModuleConfiguration
     $storageInfo = Get-StorageInfo
 
-    # ── Step 1: Storage status - chart/table or not-configured panel ──────────
+    # ── Section 1: Screenshot Storage ─────────────────────────────────────────
     if (-not $storageInfo.IsConfigured) {
         $infoPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-            'Screenshot storage path is not yet configured. Set it in the Screenshots section below.',
-            'Storage & Log File Info'
+            'Screenshot storage path is not yet configured. Set it in Configure Module -> Screenshot settings.',
+            'Screenshot Storage'
         )
         $Console.Write($infoPanel)
     }
@@ -113,34 +122,26 @@ function Show-StorageInfoScreen {
 
         [Spectre.Console.TableExtensions]::AddRow(
             $usageTable,
-            [string[]]@('Used GB',      [Spectre.Console.Markup]::Escape("$([math]::Round($usedGB, 3))"))
+            [string[]]@('Used GB', [Spectre.Console.Markup]::Escape("$([math]::Round($usedGB, 3))"))
         ) | Out-Null
         [Spectre.Console.TableExtensions]::AddRow(
             $usageTable,
-            [string[]]@('Max GB',       [Spectre.Console.Markup]::Escape("$($storageInfo.MaxGB)"))
+            [string[]]@('Max GB', [Spectre.Console.Markup]::Escape("$($storageInfo.MaxGB)"))
         ) | Out-Null
         [Spectre.Console.TableExtensions]::AddRow(
             $usageTable,
-            [string[]]@('% Used',       [Spectre.Console.Markup]::Escape("$([math]::Round($storageInfo.UsedPercent, 1)) %"))
-        ) | Out-Null
-        [Spectre.Console.TableExtensions]::AddRow(
-            $usageTable,
-            [string[]]@('Log Files GB', [Spectre.Console.Markup]::Escape("$([math]::Round($storageInfo.LogFileSizeGB, 3))"))
-        ) | Out-Null
-        [Spectre.Console.TableExtensions]::AddRow(
-            $usageTable,
-            [string[]]@('Disk space',   [Spectre.Console.Markup]::Escape("$($storageInfo.DiskFreeGB) GB free of $($storageInfo.DiskTotalGB) GB total"))
+            [string[]]@('% Used', [Spectre.Console.Markup]::Escape("$([math]::Round($storageInfo.UsedPercent, 1)) %"))
         ) | Out-Null
 
         $screenshotRowValue = "$($storageInfo.ScreenshotCount) file(s)"
         if ($storageInfo.ScreenshotCount -gt 0) {
             $oldestStr           = $storageInfo.OldestScreenshotDate.ToString('dd/MM/yy HH:mm')
             $newestStr           = $storageInfo.NewestScreenshotDate.ToString('dd/MM/yy HH:mm')
-            $screenshotRowValue += " — oldest: $oldestStr UTC, newest: $newestStr UTC"
+            $screenshotRowValue += " - oldest: $oldestStr UTC, newest: $newestStr UTC"
         }
         [Spectre.Console.TableExtensions]::AddRow(
             $usageTable,
-            [string[]]@('Screenshots',  [Spectre.Console.Markup]::Escape($screenshotRowValue))
+            [string[]]@('Screenshots', [Spectre.Console.Markup]::Escape($screenshotRowValue))
         ) | Out-Null
 
         $Console.Write($usageTable)
@@ -155,12 +156,37 @@ function Show-StorageInfoScreen {
         }
     }
 
+    # ── Section 2: Log Files ───────────────────────────────────────────────────
+    $loggingBackend = $config.Logging.Backend
+
+    if ($loggingBackend -like '*File*') {
+        $logTable = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(@('Metric', 'Value'))
+        $logTable.Title = [Spectre.Console.TableTitle]::new('Log Files')
+
+        [Spectre.Console.TableExtensions]::AddRow(
+            $logTable,
+            [string[]]@('Log Files GB', [Spectre.Console.Markup]::Escape("$([math]::Round($storageInfo.LogFileSizeGB, 3))"))
+        ) | Out-Null
+        [Spectre.Console.TableExtensions]::AddRow(
+            $logTable,
+            [string[]]@('Disk space', [Spectre.Console.Markup]::Escape("$($storageInfo.DiskFreeGB) GB free of $($storageInfo.DiskTotalGB) GB total"))
+        ) | Out-Null
+
+        $Console.Write($logTable)
+    }
+    else {
+        $eventLogPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+            'Event log backend is active - no log files are written to disk.',
+            'Log Files'
+        )
+        $Console.Write($eventLogPanel)
+    }
+
     # ── Navigation ────────────────────────────────────────────────────────────
     $storePath  = $config.Screenshots.StoragePath
 
     $navChoices = [System.Collections.Generic.List[string]]::new()
     $navChoices.Add('[[Back]]')
-    $navChoices.Add('Configure screenshot settings')
     if ($storageInfo.IsConfigured) {
         $navChoices.Add('Open storage folder in Explorer')
     }
@@ -172,9 +198,6 @@ function Show-StorageInfoScreen {
     $navChoice = $navPrompt.Show($Console)
 
     switch ($navChoice) {
-        'Configure screenshot settings' {
-            Show-ScreenshotConfigScreen -Console $Console
-        }
         'Open storage folder in Explorer' {
             Start-Process -FilePath 'explorer.exe' -ArgumentList $storePath
             $Console.Write([Spectre.Console.Markup]::new("[green]Opening storage folder in Explorer...`n[/]"))
@@ -185,3 +208,4 @@ function Show-StorageInfoScreen {
         }
     }
 }
+

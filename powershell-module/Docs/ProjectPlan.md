@@ -3005,6 +3005,11 @@ test cases throughout Phase 4 implementation.
 
 ## Phase 6
 
+> **UX note:** `Show-StorageInfoScreen` has been moved from Configure Module → Storage & log file info
+> to the top-level main menu as **"View module storage info"**.  The screen now shows two sections:
+> Screenshot Storage and Log Files (disk usage when `Logging.Backend` includes `File`, or an
+> EventLog-only info panel otherwise).  No new backend functions were required.
+
 ## Phase 6: Configuration & Scheduling
 
 1. [ ] Design and implement configuration schema supporting both JSON and YAML formats:

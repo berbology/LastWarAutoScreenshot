@@ -51,13 +51,15 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with 4 DownArrows when no macros present' {
+        It 'Returns Exit when Exit is selected with 5 DownArrows when no macros present' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 # Selectable order: [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage macros, [4] Exit (Run macro is not a choice when no macros exist)
+                # [2] Record macro, [3] Manage macros, [4] View module storage info, [5] Exit
+                # (Run macro is not a choice when no macros exist)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -123,7 +125,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with macros present (5 DownArrows)' {
+        It 'Returns Exit when Exit is selected with macros present (6 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
@@ -131,6 +133,9 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
+                # Selectable order (macros present): [0] Select target window, [1] Configure module,
+                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] View module storage info, [6] Exit
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -198,7 +203,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage macros, [4] Exit
+                # [2] Record macro, [3] Manage macros, [4] View module storage info, [5] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -206,6 +211,61 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
                 $result = Show-MainMenu -Console $tc
                 $result | Should -Be 'ManageMacros'
+            }
+        }
+    }
+
+    Context 'When the user selects View module storage info' {
+
+        It 'Returns ViewStorageInfo when View module storage info is selected with no macros present (4 DownArrows)' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                # Selectable order (no macros): [0] Select target window, [1] Configure module,
+                # [2] Record macro, [3] Manage macros, [4] View module storage info, [5] Exit
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                $result = Show-MainMenu -Console $tc
+                $result | Should -Be 'ViewStorageInfo'
+            }
+        }
+
+        It 'Returns ViewStorageInfo when View module storage info is selected with macros present (5 DownArrows)' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
+                Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                # Selectable order (macros present): [0] Select target window, [1] Configure module,
+                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] View module storage info, [6] Exit
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                $result = Show-MainMenu -Console $tc
+                $result | Should -Be 'ViewStorageInfo'
+            }
+        }
+
+        It 'Output contains View module storage info as a choice' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select first item
+
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Match 'View module storage info'
             }
         }
     }
