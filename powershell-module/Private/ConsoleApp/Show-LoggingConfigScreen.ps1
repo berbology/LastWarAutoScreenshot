@@ -13,7 +13,8 @@ function Show-LoggingConfigScreen {
              value, allowed values or range, and a human-readable description sourced
              from $script:ConfigValidationSchema.
           3. Iterates each Logging key in order.  For each key a TextPrompt is shown:
-               "<Description> [current: <value>] (<constraints>). Press Enter to keep:"
+               "Description [range] (current value): "
+             where the range bracket is rendered in blue and the current value in green.
              - Empty input (just Enter) → current value kept unchanged.
              - '[Reset to default]'     → value replaced with the default from
                                           Get-DefaultModuleSettings.
@@ -144,6 +145,31 @@ function Show-LoggingConfigScreen {
         }
     }
 
+    # ── Helper: build prompt text ─────────────────────────────────────────────
+    # Format: "Description [blue][[range]][/] [green](Current)[/]: "
+    # stringEnum: range = "Value1 | Value2 | ..." in full brackets [[...]]
+    # int:        range = "min-max" in full brackets [[min-max]]
+    $buildPromptText = {
+        param($description, $rule, $currentValue)
+        $escapedValue = [Spectre.Console.Markup]::Escape("$currentValue")
+
+        if ($rule) {
+            switch ($rule.Type) {
+                'stringEnum' {
+                    $rangeStr = $rule.AllowedValues -join ' | '
+                    return "$description [blue][[$rangeStr]][/] [green]($escapedValue)[/]: "
+                }
+                'int' {
+                    if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+                        return "$description [blue][[$($rule.Min)-$($rule.Max)]][/] [green]($escapedValue)[/]: "
+                    }
+                }
+            }
+        }
+
+        return "$description [green]($escapedValue)[/]: "
+    }
+
     # ── Step 1: Render summary table of current values ────────────────────────
     $table = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(
         @('Setting', 'Current Value', 'Allowed / Range', 'Description')
@@ -170,13 +196,12 @@ function Show-LoggingConfigScreen {
 
     # ── Step 2: Prompt for each Logging key in turn ───────────────────────────
     foreach ($def in $loggingKeyDefs) {
-        $rule          = $script:ConfigValidationSchema[$def.Key]
-        $constraintStr = & $buildConstraintString $rule
-        $description   = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
+        $rule        = $script:ConfigValidationSchema[$def.Key]
+        $description = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
 
         while ($true) {
             $currentValue = & $def.Get $config
-            $promptText   = "$description [[current: $currentValue]] ($constraintStr). Press Enter to keep:"
+            $promptText   = & $buildPromptText $description $rule $currentValue
 
             $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
             $textPrompt.AllowEmpty = $true

@@ -95,41 +95,41 @@ $script:ConfigValidationSchema = @{
     'Logging.MinimumLogLevel'                     = @{
         Type          = 'stringEnum'
         AllowedValues = @('Verbose', 'Info', 'Warning', 'Error')
-        Description   = 'Minimum log level for all logging backends'
+        Description   = 'Logging level'
         Nullable      = $false
     }
     'Logging.Backend'                             = @{
         Type          = 'stringEnum'
         AllowedValues = @('File', 'EventLog', 'File,EventLog')
-        Description   = "Active logging backend(s); use 'File', 'EventLog', or 'File,EventLog'"
+        Description   = "Log target'"
         Nullable      = $false
     }
     'Logging.FileBackend.MaxSizeMB'               = @{
         Type        = 'int'
         Min         = 1
         Max         = 10240
-        Description = 'Maximum size in MB per log file before rollover is triggered (1-10240)'
+        Description = 'Log file rollover MB'
         Nullable    = $false
     }
     'Logging.FileBackend.MaxFileCount'            = @{
         Type        = 'int'
         Min         = 1
         Max         = 10000
-        Description = 'Maximum number of log files to retain per rollover cycle (1-10000)'
+        Description = 'Log file count'
         Nullable    = $false
     }
     'Logging.FileBackend.MaxAgeDays'              = @{
         Type        = 'int'
         Min         = 1
         Max         = 3650
-        Description = 'Maximum age in days of log files before they are purged (1-3650)'
+        Description = 'Log file retention days'
         Nullable    = $false
     }
     'Logging.FileBackend.RetentionFileCount'      = @{
         Type        = 'int'
         Min         = 1
         Max         = 100000
-        Description = 'Total number of log files to keep across all rollover archives (1-100000)'
+        Description = 'Failsafe max log file count to prevent runaway disk usage if logs not auto-deleted for some reason'
         Nullable    = $false
     }
 

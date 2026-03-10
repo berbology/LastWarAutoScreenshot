@@ -230,12 +230,12 @@ function Show-ScreenshotConfigScreen {
     # Format: "Description [blue][[y/n]][/] [green](Default)[/]: "
     $buildBoolPromptText = {
         param($description, $currentValue)
-        $displayValue = if ($currentValue) { 'True' } else { 'False' }
+        $displayValue = if ($currentValue) { 'y' } else { 'n' }
         return "$description [blue][[y/n]][/] [green]($displayValue)[/]: "
     }
 
     # ── Helper: build numeric prompt text ────────────────────────────────────────
-    # Format: "Description [blue][[min-max)[/] [green](Default)[/]: "
+    # Format: "Description [blue][[min-max]][/] [green](Default)[/]: "
     $buildNumericPromptText = {
         param($description, $rule, $currentValue)
         $rangeStr = ''
