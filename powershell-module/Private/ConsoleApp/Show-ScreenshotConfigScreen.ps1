@@ -226,6 +226,45 @@ function Show-ScreenshotConfigScreen {
         }
     }
 
+    # ── Helper: build bool prompt text ───────────────────────────────────────────
+    # Format: "Description [blue][[y/n]][/] [green](Default)[/]: "
+    $buildBoolPromptText = {
+        param($description, $currentValue)
+        $displayValue = if ($currentValue) { 'True' } else { 'False' }
+        return "$description [blue][[y/n]][/] [green]($displayValue)[/]: "
+    }
+
+    # ── Helper: build numeric prompt text ────────────────────────────────────────
+    # Format: "Description [blue][[min-max)[/] [green](Default)[/]: "
+    $buildNumericPromptText = {
+        param($description, $rule, $currentValue)
+        $rangeStr = ''
+        if ($rule -and $rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+            $rangeStr = "$($rule.Min)-$($rule.Max)"
+        }
+
+        if ($rangeStr) {
+            return "$description [blue][[$rangeStr]][/] [green]($currentValue)[/]: "
+        } else {
+            return "$description [green]($currentValue)[/]: "
+        }
+    }
+
+    # ── Helper: parse yes/no user input to boolean ───────────────────────────────
+    $parseBoolInput = {
+        param($userInput)
+        $lower = $userInput.ToLowerInvariant().Trim()
+        if ($lower -in @('y', 'yes', 'true', '1')) {
+            return $true
+        }
+        elseif ($lower -in @('n', 'no', 'false', '0')) {
+            return $false
+        }
+        else {
+            return $null  # Invalid input
+        }
+    }
+
     # ── Step 1: Render summary table of current values ────────────────────────
     $table = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(
         @('Setting', 'Current Value', 'Allowed / Range', 'Description')
@@ -256,12 +295,34 @@ function Show-ScreenshotConfigScreen {
         $description = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
 
         if ($def.Type -eq 'bool') {
-            # ── Bool: ConfirmationPrompt (yes/no) ─────────────────────────────
+            # ── Bool: TextPrompt with y/n parsing and standard format ────────────
             $currentValue  = & $def.Get $config
-            $promptText    = "$description [[$currentValue]]:"
-            $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
-            $confirmPrompt.DefaultValue = [bool]$currentValue
-            $newValue = $confirmPrompt.Show($Console)
+            $promptText    = & $buildBoolPromptText $description $currentValue
+
+            while ($true) {
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty input → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    $newValue = $currentValue
+                    break
+                }
+
+                # Parse y/n/yes/no input
+                $parsed = & $parseBoolInput $answer
+                if ($null -eq $parsed) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Please enter y/yes/true/1 or n/no/false/0.`n[/]")
+                    )
+                    continue
+                }
+
+                $newValue = $parsed
+                break
+            }
+
             & $def.Set $config $newValue
 
             # Per-key post-prompt information notes
@@ -313,7 +374,7 @@ function Show-ScreenshotConfigScreen {
             # This differs from FilenamePattern which also supports empty input to keep.
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[$([Spectre.Console.Markup]::Escape("$currentValue"))]]:"
+                $promptText   = "$description [green]($([Spectre.Console.Markup]::Escape("$currentValue")))[/]: "
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -347,10 +408,9 @@ function Show-ScreenshotConfigScreen {
         }
         elseif ($def.Key -eq 'Screenshots.FilenamePattern') {
             # ── FilenamePattern: TextPrompt with example display ───────────────
-            $constraintStr = & $buildConstraintString $rule
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description ($constraintStr) [[$([Spectre.Console.Markup]::Escape("$currentValue"))]]:"
+                $promptText   = "$description [green]($([Spectre.Console.Markup]::Escape("$currentValue")))[/]: "
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -392,27 +452,11 @@ function Show-ScreenshotConfigScreen {
             }
         }
         else {
-            # ── int / double: TextPrompt (same as Show-LoggingConfigScreen) ────
-            # Per-key custom hint text overrides the generic constraint string for keys
-            # where the raw constraint string is less informative than a plain-English hint.
-            $hintText = switch ($def.Key) {
-                'Screenshots.SimilarityCheck.Threshold' {
-                    '(0-1.0, 1.0 = 100% identical). Recommend: 0.98'
-                }
-                'Screenshots.SimilarityCheck.TolerancePerChannel' {
-                    '(0 = exact match, 255 = any pixel counts as matching)'
-                }
-                'Screenshots.SimilarityCheck.ConsecutiveThreshold' {
-                    '(1 = trigger on first match; higher = fewer false positives)'
-                }
-                default {
-                    "($(& $buildConstraintString $rule))"
-                }
-            }
-
+            # ── int / double: TextPrompt with standard format and validation ──────
+            # Prompt format: "Description [min-max) (Default): "
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description $hintText [[$currentValue]]:"
+                $promptText   = & $buildNumericPromptText $description $rule $currentValue
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
