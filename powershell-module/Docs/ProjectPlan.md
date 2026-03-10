@@ -506,9 +506,8 @@
         - `'Logging.MinimumLogLevel'` - `stringEnum`; `AllowedValues = @('Verbose','Info','Warning','Error')`
         - `'Logging.Backend'` - `stringEnum`; `AllowedValues = @('File','EventLog','File,EventLog')`
         - `'Logging.FileBackend.MaxSizeMB'` - `int`; `Min = 1`, `Max = 10240`
-        - `'Logging.FileBackend.MaxFileCount'` - `int`; `Min = 1`, `Max = 10000`
         - `'Logging.FileBackend.MaxAgeDays'` - `int`; `Min = 1`, `Max = 3650`
-        - `'Logging.FileBackend.RetentionFileCount'` - `int`; `Min = 1`, `Max = 100000`
+        - `'Logging.FileBackend.MaxLogFileCount'` - `int`; `Min = 1`, `Max = 100000`
         - `'MouseControl.OvershootFactor'` - `double`; `Min = 0.0`, `Max = 1.0`
         - `'MouseControl.MicroPauseChance'` - `double`; `Min = 0.0`, `Max = 1.0`
         - `'MouseControl.JitterRadiusPx'` - `int`; `Min = 0`, `Max = 20`

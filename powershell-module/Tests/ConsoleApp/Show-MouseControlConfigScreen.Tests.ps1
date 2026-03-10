@@ -23,8 +23,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -95,8 +95,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -171,8 +171,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -235,8 +235,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -301,8 +301,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -365,8 +365,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -435,8 +435,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -501,8 +501,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -573,8 +573,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -645,8 +645,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -715,8 +715,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -792,8 +792,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -866,8 +866,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -940,8 +940,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -1008,8 +1008,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -1082,8 +1082,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -1148,8 +1148,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -1219,8 +1219,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{
@@ -1284,8 +1284,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MinimumLogLevel = 'Info'
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50; MaxFileCount = 50
-                                MaxAgeDays = 30; RetentionFileCount = 500
+                                MaxSizeMB = 50
+                                MaxAgeDays = 30; MaxLogFileCount = 500
                             }
                         }
                         MouseControl = [PSCustomObject]@{

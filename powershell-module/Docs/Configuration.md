@@ -142,5 +142,5 @@ Full details in [Logging.md](Logging.md). Quick reference:
 | `Logging.Backend` | string | `"EventLog"` | `File`, `EventLog`, or `File,EventLog` |
 | `Logging.MinimumLogLevel` | string | `"Info"` | `Verbose`, `Info`, `Warning`, `Error` |
 | `Logging.FileBackend.MaxSizeMB` | int | `10` | Max log file size before rollover (1-10240) |
-| `Logging.FileBackend.MaxFileCount` | int | `5` | Max rotated log files to keep (1-10000) |
 | `Logging.FileBackend.MaxAgeDays` | int | `30` | Delete log files older than this (1-3650) |
+| `Logging.FileBackend.MaxLogFileCount` | int | `500` | Max log files to keep; oldest deleted when reached (1-100000) |

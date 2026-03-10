@@ -15,7 +15,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'Initial table display' {
 
-        It 'Console output contains all six Logging key names' {
+        It 'Console output contains all five Logging key names' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -24,9 +24,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -39,7 +38,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -49,9 +48,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match 'MinimumLog'
                 $tc.Output | Should -Match 'Backend'
                 $tc.Output | Should -Match 'MaxSizeMB'
-                $tc.Output | Should -Match 'MaxFileCount'
                 $tc.Output | Should -Match 'MaxAgeDays'
-                $tc.Output | Should -Match 'RetentionFileCou'
+                $tc.Output | Should -Match 'MaxLogFileCou'
             }
         }
 
@@ -64,9 +62,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -79,7 +76,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -106,9 +103,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -121,7 +117,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -139,9 +135,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -154,7 +149,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -174,9 +169,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -189,7 +183,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -207,9 +201,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -222,7 +215,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -246,9 +239,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -261,7 +253,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -281,9 +273,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -296,7 +287,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -322,9 +313,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -339,7 +329,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushTextWithEnter('InvalidLevel')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -359,9 +349,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -376,7 +365,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushTextWithEnter('BADVALUE')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -402,9 +391,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -418,7 +406,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushTextWithEnter('Warning')
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -444,9 +432,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -460,7 +447,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushTextWithEnter('[Reset to default]')
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -486,9 +473,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -501,7 +487,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -520,9 +506,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'EventLog'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 99
-                                MaxFileCount       = 99
                                 MaxAgeDays         = 99
-                                RetentionFileCount = 999
+                                MaxLogFileCount = 999
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -535,7 +520,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -557,9 +542,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -572,7 +556,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -591,9 +575,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -606,7 +589,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -631,9 +614,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -649,7 +631,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('100')
-                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 2; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -675,9 +657,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -694,7 +675,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('0')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 2; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -721,9 +702,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -736,7 +716,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -756,9 +736,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -771,7 +750,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)

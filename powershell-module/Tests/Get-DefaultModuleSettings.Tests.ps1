@@ -37,9 +37,8 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.Logging.FileBackend | Should -Not -BeNullOrEmpty
                 $defaults.Logging.FileBackend.MaxSizeMB | Should -Be 50
-                $defaults.Logging.FileBackend.MaxFileCount | Should -Be 50
                 $defaults.Logging.FileBackend.MaxAgeDays | Should -Be 30
-                $defaults.Logging.FileBackend.RetentionFileCount | Should -Be 500
+                $defaults.Logging.FileBackend.MaxLogFileCount | Should -Be 500
             }
         }
     }

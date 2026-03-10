@@ -33,10 +33,9 @@ function Get-DefaultModuleSettings {
             Backend         = 'File,EventLog'
             MinimumLogLevel = 'Info'
             FileBackend     = [PSCustomObject]@{
-                MaxSizeMB          = 50
-                MaxFileCount       = 50
-                MaxAgeDays         = 30
-                RetentionFileCount = 500
+                MaxSizeMB        = 50
+                MaxAgeDays       = 30
+                MaxLogFileCount  = 500
             }
         }
         MouseControl = [PSCustomObject]@{
@@ -111,13 +110,6 @@ $script:ConfigValidationSchema = @{
         Description = 'Log file rollover MB'
         Nullable    = $false
     }
-    'Logging.FileBackend.MaxFileCount'            = @{
-        Type        = 'int'
-        Min         = 1
-        Max         = 10000
-        Description = 'Log file count'
-        Nullable    = $false
-    }
     'Logging.FileBackend.MaxAgeDays'              = @{
         Type        = 'int'
         Min         = 1
@@ -125,11 +117,11 @@ $script:ConfigValidationSchema = @{
         Description = 'Log file retention days'
         Nullable    = $false
     }
-    'Logging.FileBackend.RetentionFileCount'      = @{
+    'Logging.FileBackend.MaxLogFileCount'         = @{
         Type        = 'int'
         Min         = 1
         Max         = 100000
-        Description = 'Failsafe max log file count to prevent runaway disk usage if logs not auto-deleted for some reason'
+        Description = 'Max log files to keep; once reached, the oldest is deleted when a new one is created'
         Nullable    = $false
     }
 

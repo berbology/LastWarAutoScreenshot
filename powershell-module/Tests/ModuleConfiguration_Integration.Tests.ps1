@@ -323,7 +323,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         Backend         = 'File'
                         MinimumLogLevel = 'Info'
                         FileBackend     = [PSCustomObject]@{
-                            MaxSizeMB = 50; MaxFileCount = 50; MaxAgeDays = 30; RetentionFileCount = 500
+                            MaxSizeMB = 50; MaxAgeDays = 30; MaxLogFileCount = 500
                         }
                     }
                     MouseControl       = [PSCustomObject]@{

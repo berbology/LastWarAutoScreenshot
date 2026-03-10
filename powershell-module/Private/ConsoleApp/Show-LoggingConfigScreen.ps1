@@ -31,8 +31,8 @@ function Show-LoggingConfigScreen {
 
         Logging keys covered (in order):
           Logging.MinimumLogLevel, Logging.Backend,
-          Logging.FileBackend.MaxSizeMB, Logging.FileBackend.MaxFileCount,
-          Logging.FileBackend.MaxAgeDays, Logging.FileBackend.RetentionFileCount
+          Logging.FileBackend.MaxSizeMB, Logging.FileBackend.MaxAgeDays,
+          Logging.FileBackend.MaxLogFileCount
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -98,22 +98,16 @@ function Show-LoggingConfigScreen {
             DefGet = { param($d) $d.Logging.FileBackend.MaxSizeMB }
         },
         @{
-            Key    = 'Logging.FileBackend.MaxFileCount'
-            Get    = { param($c) $c.Logging.FileBackend.MaxFileCount }
-            Set    = { param($c, $v) $c.Logging.FileBackend.MaxFileCount = [int]$v }
-            DefGet = { param($d) $d.Logging.FileBackend.MaxFileCount }
-        },
-        @{
             Key    = 'Logging.FileBackend.MaxAgeDays'
             Get    = { param($c) $c.Logging.FileBackend.MaxAgeDays }
             Set    = { param($c, $v) $c.Logging.FileBackend.MaxAgeDays = [int]$v }
             DefGet = { param($d) $d.Logging.FileBackend.MaxAgeDays }
         },
         @{
-            Key    = 'Logging.FileBackend.RetentionFileCount'
-            Get    = { param($c) $c.Logging.FileBackend.RetentionFileCount }
-            Set    = { param($c, $v) $c.Logging.FileBackend.RetentionFileCount = [int]$v }
-            DefGet = { param($d) $d.Logging.FileBackend.RetentionFileCount }
+            Key    = 'Logging.FileBackend.MaxLogFileCount'
+            Get    = { param($c) $c.Logging.FileBackend.MaxLogFileCount }
+            Set    = { param($c, $v) $c.Logging.FileBackend.MaxLogFileCount = [int]$v }
+            DefGet = { param($d) $d.Logging.FileBackend.MaxLogFileCount }
         }
     )
 

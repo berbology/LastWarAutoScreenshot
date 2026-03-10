@@ -4,9 +4,8 @@
 		"MinimumLogLevel": "Info",
 		"FileBackend": {
 			"MaxSizeMB": 50,
-			"MaxFileCount": 50,
 			"MaxAgeDays": 30,
-			"RetentionFileCount": 500
+			"MaxLogFileCount": 500
 		}
 	},
 	"MouseControl": {

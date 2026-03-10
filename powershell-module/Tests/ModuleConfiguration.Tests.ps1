@@ -132,9 +132,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     MinimumLogLevel = 'Warning'
                     FileBackend = @{
                         MaxSizeMB = 100
-                        MaxFileCount = 100
                         MaxAgeDays = 60
-                        RetentionFileCount = 1000
+                        MaxLogFileCount = 1000
                     }
                 }
             } | ConvertTo-Json -Depth 5
@@ -199,9 +198,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.Logging.Backend | Should -Be 'EventLog'
                 $config.Logging.MinimumLogLevel | Should -Be 'Warning'
                 $config.Logging.FileBackend.MaxSizeMB | Should -Be 100
-                $config.Logging.FileBackend.MaxFileCount | Should -Be 100
                 $config.Logging.FileBackend.MaxAgeDays | Should -Be 60
-                $config.Logging.FileBackend.RetentionFileCount | Should -Be 1000
+                $config.Logging.FileBackend.MaxLogFileCount | Should -Be 1000
             }
         }
 
