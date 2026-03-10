@@ -758,10 +758,10 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             }
         }
 
-        It 'Should inject SimilarityCheck.Action with default StopNestedMacro' {
+        It 'Should inject SimilarityCheck.Action with default StopLoop' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopNestedMacro'
+                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopLoop'
             }
         }
 
@@ -820,10 +820,10 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             $partialConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $script:testConfigPath -Force
         }
 
-        It 'Should inject Action as StopNestedMacro' {
+        It 'Should inject Action as StopLoop' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopNestedMacro'
+                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopLoop'
             }
         }
 
@@ -859,7 +859,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                         SampleCount         = 1000
                         FullScan            = $false
                         TolerancePerChannel = 10
-                        Action              = 'StopNestedMacro'
+                        Action              = 'StopLoop'
                         # ConsecutiveThreshold is intentionally omitted
                     }
                 }

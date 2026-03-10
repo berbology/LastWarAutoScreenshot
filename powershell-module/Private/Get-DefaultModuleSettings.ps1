@@ -77,7 +77,7 @@ function Get-DefaultModuleSettings {
                 SampleCount          = 1000
                 FullScan             = $false
                 TolerancePerChannel  = 10
-                Action               = 'StopNestedMacro'
+                Action               = 'StopLoop'
                 ConsecutiveThreshold = 1
             }
         }
@@ -319,8 +319,8 @@ $script:ConfigValidationSchema = @{
     }
     'Screenshots.SimilarityCheck.Action'         = @{
         Type          = 'stringEnum'
-        AllowedValues = @('StopNestedMacro', 'StopMacro', 'Warn')
-        Description   = 'Action when threshold is reached. StopNestedMacro exits the current loop and continues the parent sequence. StopMacro halts the entire macro. Warn logs and continues'
+        AllowedValues = @('StopLoop', 'StopMacro', 'Warn')
+        Description   = 'Action when threshold is reached. StopLoop exits the current loop and continues the parent sequence. StopMacro halts the entire macro. Warn logs and continues'
         Nullable      = $false
     }
     'Screenshots.SimilarityCheck.ConsecutiveThreshold' = @{

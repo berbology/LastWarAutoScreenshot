@@ -46,10 +46,10 @@ function Invoke-MacroAction {
         Skipped is $true when the action was intentionally not executed (e.g.
         emergency stop, StoragePath not configured).
         SimilarityStop is $true when the Screenshot case detects that consecutive
-        images are similar and the configured Action is StopNestedMacro or StopMacro.
+        images are similar and the configured Action is StopLoop or StopMacro.
 
     .NOTES
-        StopNestedMacro contract: the Screenshot case returns SimilarityStop=$true;
+        StopLoop contract: the Screenshot case returns SimilarityStop=$true;
         the Loop case intercepts it, logs a message, and returns SimilarityStop=$false
         so the parent sequence continues after the loop.
 
@@ -209,7 +209,7 @@ function Invoke-MacroAction {
                     if ($similarityResult.Similar -eq $true) {
                         $ScreenshotContext.ConsecutiveSimilarCount++
                         if ($ScreenshotContext.ConsecutiveSimilarCount -ge $simConfig.ConsecutiveThreshold) {
-                            if ($simConfig.Action -ieq 'StopNestedMacro' -or $simConfig.Action -ieq 'StopMacro') {
+                            if ($simConfig.Action -ieq 'StopLoop' -or $simConfig.Action -ieq 'StopMacro') {
                                 Write-LastWarLog -Level Info -FunctionName 'Invoke-MacroAction' `
                                     -Message "Similarity threshold reached ($([int]($similarityResult.MatchPercent * 100))% match, $($ScreenshotContext.ConsecutiveSimilarCount) consecutive) — signalling similarity stop"
                                 return [PSCustomObject]@{ Success = $true; Skipped = $false; SimilarityStop = $true; Message = 'Similarity threshold reached' }
@@ -254,10 +254,10 @@ function Invoke-MacroAction {
                     $loopResult = Invoke-MacroAction -Action $refAction -WindowHandle $WindowHandle -ActionLookup $ActionLookup -Depth ($Depth + 1) -ScreenshotContext $ScreenshotContext
                     if ($loopResult.SimilarityStop -eq $true) {
                         $loopSimConfig = (Get-ModuleConfiguration).Screenshots.SimilarityCheck
-                        if ($loopSimConfig.Action -ieq 'StopNestedMacro') {
+                        if ($loopSimConfig.Action -ieq 'StopLoop') {
                             Write-LastWarLog -Level Info -FunctionName 'Invoke-MacroAction' `
                                 -Message "Similarity threshold reached inside loop '$($Action.name)' — exiting loop and continuing parent sequence"
-                            return [PSCustomObject]@{ Success = $true; Skipped = $false; SimilarityStop = $false; Message = 'Similarity stop consumed by loop (StopNestedMacro)' }
+                            return [PSCustomObject]@{ Success = $true; Skipped = $false; SimilarityStop = $false; Message = 'Similarity stop consumed by loop (StopLoop)' }
                         } elseif ($loopSimConfig.Action -ieq 'StopMacro') {
                             return [PSCustomObject]@{ Success = $true; Skipped = $false; SimilarityStop = $true; Message = $loopResult.Message }
                         }

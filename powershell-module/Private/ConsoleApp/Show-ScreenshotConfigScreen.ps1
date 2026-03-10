@@ -83,8 +83,8 @@ function Show-ScreenshotConfigScreen {
         TestConsole/Spectre.Console version in use.
 
         SimilarityCheck.Action display vs raw values:
-          Display: 'StopNestedMacro (exit current loop, parent sequence continues)'
-          Raw:     'StopNestedMacro'
+          Display: 'StopLoop (exit current loop, parent sequence continues)'
+          Raw:     'StopLoop'
           Display: 'StopMacro (halt entire macro; reported as success)'
           Raw:     'StopMacro'
           Display: 'Warn (log warning and continue)'
@@ -291,7 +291,7 @@ function Show-ScreenshotConfigScreen {
             elseif ($def.Key -eq 'Screenshots.SimilarityCheck.Action') {
                 # ── Action: SelectionPrompt with display-mapped choices ────────
                 $actionDisplayChoices = @(
-                    'StopNestedMacro (exit current loop, parent sequence continues)',
+                    'StopLoop (exit current loop, parent sequence continues)',
                     'StopMacro (halt entire macro; reported as success)',
                     'Warn (log warning and continue)'
                 )
@@ -300,9 +300,9 @@ function Show-ScreenshotConfigScreen {
                 )
                 $displayChoice = $actionPrompt.Show($Console)
                 $rawValue = switch ($displayChoice) {
-                    'StopNestedMacro (exit current loop, parent sequence continues)' { 'StopNestedMacro' }
-                    'StopMacro (halt entire macro; reported as success)'             { 'StopMacro' }
-                    default                                                          { 'Warn' }
+                    'StopLoop (exit current loop, parent sequence continues)' { 'StopLoop' }
+                    'StopMacro (halt entire macro; reported as success)'     { 'StopMacro' }
+                    default                                                  { 'Warn' }
                 }
                 & $def.Set $config $rawValue
             }

@@ -26,7 +26,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                             SampleCount          = 1000
                             FullScan             = $false
                             TolerancePerChannel  = 10
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 1
                         }
                     }
@@ -52,7 +52,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
     #   8  SimilarityCheck.SampleCount      TextPrompt   Enter (empty → keep)
     #   9  SimilarityCheck.FullScan         ConfirmPrompt 'n' (keep false)
     #  10  SimilarityCheck.TolerancePerChannel TextPrompt Enter (empty → keep)
-    #  11  SimilarityCheck.Action           SelectPrompt Enter (first = StopNestedMacro display)
+    #  11  SimilarityCheck.Action           SelectPrompt Enter (first = StopLoop display)
     #  12  SimilarityCheck.ConsecutiveThreshold TextPrompt Enter (empty → keep)
     #  13  Save prompt                      SelectPrompt Enter ('Yes - save now')
 
@@ -75,7 +75,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount: keep
                 $tc.Input.PushTextWithEnter('n')             # FullScan: keep false
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # TolerancePerChannel: keep
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action SelectionPrompt → StopNestedMacro
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action SelectionPrompt → StopLoop
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # ConsecutiveThreshold: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Save: 'Yes - save now' (first choice)
 
@@ -322,9 +322,9 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     # Context: SimilarityCheck.Action display choice mapped to raw value
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When SimilarityCheck.Action StopNestedMacro display choice is selected' {
+    Context 'When SimilarityCheck.Action StopLoop display choice is selected' {
 
-        It 'The saved config contains Action = StopNestedMacro (raw value, not display string)' {
+        It 'The saved config contains Action = StopLoop (raw value, not display string)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
@@ -338,14 +338,14 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
                 $tc.Input.PushTextWithEnter('n')             # FullScan
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # TolerancePerChannel
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action: Enter → first = StopNestedMacro
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action: Enter → first = StopLoop
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # ConsecutiveThreshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Save: 'Yes - save now'
 
                 Show-ScreenshotConfigScreen -Console $tc
 
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.Screenshots.SimilarityCheck.Action -eq 'StopNestedMacro'
+                    $Config.Screenshots.SimilarityCheck.Action -eq 'StopLoop'
                 }
             }
         }
@@ -413,7 +413,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
             }
         }
 
-        It 'The config passed to Save-ModuleSettings has default ConsecutiveThreshold=1 and Action=StopNestedMacro' {
+        It 'The config passed to Save-ModuleSettings has default ConsecutiveThreshold=1 and Action=StopLoop' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 # Start with non-default values to confirm they are overwritten
                 Mock Get-ModuleConfiguration {
@@ -459,7 +459,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 # Reset ALL replaces $config.Screenshots with defaults; verify key default values
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
                     $Config.Screenshots.SimilarityCheck.ConsecutiveThreshold -eq 1 -and
-                    $Config.Screenshots.SimilarityCheck.Action -eq 'StopNestedMacro'
+                    $Config.Screenshots.SimilarityCheck.Action -eq 'StopLoop'
                 }
             }
         }

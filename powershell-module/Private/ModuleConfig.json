@@ -44,7 +44,7 @@
 			"SampleCount": 1000,
 			"FullScan": false,
 			"TolerancePerChannel": 10,
-			"Action": "StopNestedMacro",
+			"Action": "StopLoop",
 			"ConsecutiveThreshold": 1
 		}
 	}
