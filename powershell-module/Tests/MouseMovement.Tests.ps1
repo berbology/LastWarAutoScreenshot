@@ -166,10 +166,7 @@ Describe 'Invoke-MouseMovePath' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MicroPauseDurationRangeMs = @(1,1); OvershootEnabled = $false; OvershootFactor = 0.1 } }
             } -ModuleName LastWarAutoScreenshot
-            Write-Host "===============================================================" -ForegroundColor Red
-            Write-Host "Ignore expected error message about SetCursorPos failure below:" -ForegroundColor Red
             $result = Invoke-MouseMovePath -Points $points
-            Write-Host '===============================================================' -ForegroundColor Red
             $result | Should -Be $false
         }
     }

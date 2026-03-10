@@ -258,21 +258,21 @@ $script:ConfigValidationSchema = @{
     # --- Screenshots ---
     'Screenshots.StoragePath'                     = @{
         Type        = 'string'
-        Description = 'Folder path where screenshots are stored'
+        Description = 'Screenshot save location'
         Nullable    = $true
     }
     'Screenshots.MaxStorageGB'                    = @{
         Type        = 'double'
         Min         = 0.1
         Max         = 2048.0
-        Description = 'Maximum storage allocated to screenshots in GB (0.1-2048.0)'
+        Description = 'Max size of screenshot folder (GB)'
         Nullable    = $false
     }
     'Screenshots.StorageWarningThresholdPercent' = @{
         Type        = 'int'
         Min         = 1
         Max         = 99
-        Description = 'Warn when screenshot storage usage exceeds this percentage of the configured MaxStorageGB limit'
+        Description = 'Storage space used warning (%)'
         Nullable    = $false
     }
     'Screenshots.FileFormat'                     = @{
@@ -283,51 +283,51 @@ $script:ConfigValidationSchema = @{
     }
     'Screenshots.FilenamePattern'                = @{
         Type        = 'string'
-        Description = 'Filename pattern. Placeholders: {MacroName}, {ActionName}, {Timestamp}, {Date}, {Time}, {Index}. Resolved filename must not exceed 200 characters'
+        Description = 'Placeholders: {MacroName}, {ActionName}, {Timestamp}, {Date}, {Time}, {Index}'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Enabled'        = @{
         Type        = 'bool'
-        Description = 'Enable similarity detection to automatically stop macro execution when consecutive screenshots match (scroll-end detection)'
+        Description = 'Consecutive duplicate screenshot detection'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Threshold'      = @{
         Type        = 'double'
         Min         = 0.01
         Max         = 1.0
-        Description = 'Similarity ratio required to trigger the configured Action (0.0 to 1.0, where 1.0 = 100% identical). Recommended: 0.98'
+        Description = 'Duplicate trigger threshold (0-1.0, 1.0 = 100% identical). Recommend: 0.98'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.SampleCount'    = @{
         Type        = 'int'
         Min         = 100
         Max         = 100000
-        Description = 'Number of pixels sampled for comparison. Ignored when FullScan is true'
+        Description = 'Pixels per sample (Ignored when FullScan enabled)'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.FullScan'       = @{
         Type        = 'bool'
-        Description = 'Compare every pixel instead of a sample. More accurate but slower for large screenshots'
+        Description = 'Compare every pixel. (More accurate but much slower)'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.TolerancePerChannel' = @{
         Type        = 'int'
         Min         = 0
         Max         = 255
-        Description = 'Maximum per-channel (R/G/B) difference that still counts as a matching pixel. 0 = exact match required'
+        Description = 'Max per-channel (R/G/B) difference that counts as a matching pixel. 0 = exact match'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Action'         = @{
         Type          = 'stringEnum'
         AllowedValues = @('StopLoop', 'StopMacro', 'Warn')
-        Description   = 'Action when threshold is reached. StopLoop exits the current loop and continues the parent sequence. StopMacro halts the entire macro. Warn logs and continues'
+        Description   = 'Duplicate detected trigger action. (StopLoop|StopMacro|Warn)'
         Nullable      = $false
     }
     'Screenshots.SimilarityCheck.ConsecutiveThreshold' = @{
         Type        = 'int'
         Min         = 1
         Max         = 100
-        Description = 'Number of consecutive screenshots that must each exceed the similarity threshold before the configured Action fires. 1 = trigger on first match (default). Use a higher value to avoid false positives on briefly static content'
+        Description = 'Consecutive duplicates required to trigger action. Higher value may reduce false positives'
         Nullable    = $false
     }
 }

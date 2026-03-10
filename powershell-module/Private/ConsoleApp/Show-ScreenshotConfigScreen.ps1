@@ -258,7 +258,7 @@ function Show-ScreenshotConfigScreen {
         if ($def.Type -eq 'bool') {
             # ── Bool: ConfirmationPrompt (yes/no) ─────────────────────────────
             $currentValue  = & $def.Get $config
-            $promptText    = "$description [[current: $currentValue]]:"
+            $promptText    = "$description [[$currentValue]]:"
             $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
             $confirmPrompt.DefaultValue = [bool]$currentValue
             $newValue = $confirmPrompt.Show($Console)
@@ -296,7 +296,7 @@ function Show-ScreenshotConfigScreen {
                     'Warn (log warning and continue)'
                 )
                 $actionPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
-                    'Similarity stop action:', $actionDisplayChoices
+                    'Duplicate detected trigger action:', $actionDisplayChoices
                 )
                 $displayChoice = $actionPrompt.Show($Console)
                 $rawValue = switch ($displayChoice) {
@@ -313,7 +313,7 @@ function Show-ScreenshotConfigScreen {
             # This differs from FilenamePattern which also supports empty input to keep.
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $([Spectre.Console.Markup]::Escape("$currentValue"))]]. Enter path or press Enter to keep the default:"
+                $promptText   = "$description [[$([Spectre.Console.Markup]::Escape("$currentValue"))]]:"
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -350,7 +350,7 @@ function Show-ScreenshotConfigScreen {
             $constraintStr = & $buildConstraintString $rule
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $([Spectre.Console.Markup]::Escape("$currentValue"))]] ($constraintStr). Press Enter to keep:"
+                $promptText   = "$description ($constraintStr) [[$([Spectre.Console.Markup]::Escape("$currentValue"))]]:"
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -397,13 +397,13 @@ function Show-ScreenshotConfigScreen {
             # where the raw constraint string is less informative than a plain-English hint.
             $hintText = switch ($def.Key) {
                 'Screenshots.SimilarityCheck.Threshold' {
-                    '(0.0 to 1.0, where 1.0 = 100% identical)'
+                    '(0-1.0, 1.0 = 100% identical). Recommend: 0.98'
                 }
                 'Screenshots.SimilarityCheck.TolerancePerChannel' {
                     '(0 = exact match, 255 = any pixel counts as matching)'
                 }
                 'Screenshots.SimilarityCheck.ConsecutiveThreshold' {
-                    '(1 = trigger on first match; higher values require N consecutive similar screenshots)'
+                    '(1 = trigger on first match; higher = fewer false positives)'
                 }
                 default {
                     "($(& $buildConstraintString $rule))"
@@ -412,7 +412,7 @@ function Show-ScreenshotConfigScreen {
 
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $currentValue]] $hintText. Press Enter to keep:"
+                $promptText   = "$description $hintText [[$currentValue]]:"
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
