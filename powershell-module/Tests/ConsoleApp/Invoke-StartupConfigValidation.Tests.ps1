@@ -103,7 +103,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
 
     Context 'When one config value is invalid' {
 
-        It 'Returns HasErrors=$true' {
+        It 'Returns HasErrors=$true and UserAction=ConfigureModule when user selects first option' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
@@ -118,10 +118,37 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Input.PushKey([ConsoleKey]::Enter)  # Acknowledge the warning panel
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # Select first option (Configure Module)
 
                 $result = Invoke-StartupConfigValidation -Console $tc
                 $result.HasErrors | Should -BeTrue
+                $result.UserAction | Should -Be 'ConfigureModule'
+            }
+        }
+
+        It 'Returns UserAction=Exit when user selects second option' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{
+                        Logging       = [PSCustomObject]@{ MinimumLogLevel = 'BadValue' }
+                        MouseControl  = [PSCustomObject]@{}
+                        EmergencyStop = [PSCustomObject]@{}
+                    }
+                }
+                Mock Test-ConfigValue -MockWith { [PSCustomObject]@{ Valid = $true; Message = '' } }
+                Mock Test-ConfigValue -ParameterFilter { $Key -eq 'Logging.MinimumLogLevel' } -MockWith {
+                    [PSCustomObject]@{ Valid = $false; Message = 'must be one of: Verbose, Info, Warning, Error' }
+                }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Exit option
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select it
+
+                $result = Invoke-StartupConfigValidation -Console $tc
+                $result.HasErrors | Should -BeTrue
+                $result.UserAction | Should -Be 'Exit'
             }
         }
 
@@ -140,6 +167,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
@@ -162,6 +190,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
@@ -184,6 +213,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Invoke-StartupConfigValidation -Console $tc
@@ -213,6 +243,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Invoke-StartupConfigValidation -Console $tc
@@ -238,6 +269,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
@@ -264,6 +296,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Invoke-StartupConfigValidation -Console $tc
@@ -280,10 +313,28 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Acknowledge the error panel
 
                 $result = Invoke-StartupConfigValidation -Console $tc
                 $result.HasErrors | Should -BeTrue
+                $result.UserAction | Should -Be 'ConfigureModule'
+            }
+        }
+
+        It 'Returns UserAction=Exit when user selects Exit on JSON error' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith { throw [System.ArgumentException] 'Invalid JSON format' }
+                Mock Write-LastWarLog {}
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Exit option
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select it
+
+                $result = Invoke-StartupConfigValidation -Console $tc
+                $result.HasErrors | Should -BeTrue
+                $result.UserAction | Should -Be 'Exit'
             }
         }
 
@@ -293,6 +344,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
@@ -306,6 +358,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
@@ -320,6 +373,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 Mock Test-ConfigValue {}
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
+                $tc.Profile.Capabilities.Interactive = $true
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Invoke-StartupConfigValidation -Console $tc | Out-Null

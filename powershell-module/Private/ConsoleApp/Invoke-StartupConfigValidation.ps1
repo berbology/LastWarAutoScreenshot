@@ -32,9 +32,11 @@ function Invoke-StartupConfigValidation {
     .OUTPUTS
         PSCustomObject
         Returns an object with:
-          HasErrors [bool]    - $true if any validation issue was found.
-          Messages  [string[]] - Array of human-readable issue descriptions
-                                 (empty array when HasErrors is $false).
+          HasErrors  [bool]    - $true if any validation issue was found.
+          Messages   [string[]] - Array of human-readable issue descriptions
+                                  (empty array when HasErrors is $false).
+          UserAction [string]  - User's action choice: 'Continue', 'ConfigureModule', or 'Exit'.
+                                 Only set when HasErrors is $true.
 
     .EXAMPLE
         $result = Invoke-StartupConfigValidation -Console $console
@@ -51,13 +53,22 @@ function Invoke-StartupConfigValidation {
         Fresh install path:
           Get-ModuleConfiguration creates a default-only config when no file exists.
           All default values satisfy the schema, so this function returns HasErrors=$false
-          immediately without writing any output to $Console.
+          with UserAction='Continue' immediately without writing any output to $Console.
+
+        User action selection:
+          When validation errors or warnings are found, a selection prompt is displayed
+          with two options: 'Configure Module' and 'Exit'. The user's choice is returned
+          in the UserAction property:
+            - 'ConfigureModule': User wants to configure the module
+            - 'Exit': User wants to exit the application
+            - 'Continue': No issues found (normal flow)
 
         TestConsole note:
           When using Spectre.Console.Testing.TestConsole, all Write() calls are captured
-          in $testConsole.Output.  The 'Press Enter to continue' step reads one key via
-          $Console.Input.ReadKey($true) - tests must push a key before calling this
-          function if a validation error or warning is expected.
+          in $testConsole.Output.  The selection prompt will use $testConsole.Input to
+          read the user's choice - tests must queue an input key or option before calling
+          this function if a validation error or warning is expected. Use
+          $testConsole.Input.PushText() or similar methods to simulate user selections.
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -84,13 +95,19 @@ function Invoke-StartupConfigValidation {
         $errorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($errorMsg, '[red]Configuration Error[/]')
         $Console.Write($errorPanel)
 
-        # Wait for user acknowledgement
-        $Console.Write([Spectre.Console.Markup]::new("[grey]Press [[Enter]] to continue...[/]`n"))
-        $Console.Input.ReadKey($true) | Out-Null
+        # Show selection prompt for user action
+        $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            "What would you like to do?",
+            @("Configure Module", "Exit")
+        )
+        $choice = $prompt.Show($Console)
+
+        $userAction = if ($choice -eq "Exit") { "Exit" } else { "ConfigureModule" }
 
         return [PSCustomObject]@{
-            HasErrors = $hasErrors
-            Messages  = $messages.ToArray()
+            HasErrors  = $hasErrors
+            Messages   = $messages.ToArray()
+            UserAction = $userAction
         }
     }
 
@@ -135,14 +152,23 @@ function Invoke-StartupConfigValidation {
         $warningPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($messageBody, '[yellow]Configuration Warnings[/]')
         $Console.Write($warningPanel)
 
-        # Wait for user acknowledgement
-        $Console.Write([Spectre.Console.Markup]::new("[grey]Press [[Enter]] to continue...[/]`n"))
-        $Console.Input.ReadKey($true) | Out-Null
+        # Show selection prompt for user action
+        $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            "What would you like to do?",
+            @("Configure Module", "Exit")
+        )
+        $choice = $prompt.Show($Console)
+
+        $userAction = if ($choice -eq "Exit") { "Exit" } else { "ConfigureModule" }
+    }
+    else {
+        $userAction = "Continue"
     }
 
     return [PSCustomObject]@{
-        HasErrors = $hasErrors
-        Messages  = $messages.ToArray()
+        HasErrors  = $hasErrors
+        Messages   = $messages.ToArray()
+        UserAction = $userAction
     }
 }
 

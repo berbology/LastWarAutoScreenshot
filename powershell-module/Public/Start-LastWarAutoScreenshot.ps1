@@ -6,10 +6,13 @@ function Start-LastWarAutoScreenshot {
     .DESCRIPTION
         Entry point for the console application.  On startup it:
           1. Validates the saved module configuration (Invoke-StartupConfigValidation) and
-             displays any errors or warnings as a Spectre.Console Panel before showing the
-             main menu.  Validation issues do not abort startup - the user must acknowledge
-             them by pressing Enter.
-          2. Enters an infinite loop rendering the main menu via Show-MainMenu.
+             displays any errors or warnings as a Spectre.Console Panel. If validation issues
+             are found, the user is presented with a selection prompt offering two options:
+             'Configure Module' (opens the configuration screen) or 'Exit' (exits the app).
+             If 'Exit' is selected, the function returns immediately. If 'Configure Module' is
+             selected, the config menu is shown.
+          2. Once validation is complete (or config is updated and validated), enters an
+             infinite loop rendering the main menu via Show-MainMenu.
           3. Dispatches each selection to the relevant screen function:
                SelectWindow     → Show-WindowSelectionScreen   (Phase 1)
                Configure        → Show-ConfigMenuScreen         (Phase 3)
@@ -72,7 +75,15 @@ function Start-LastWarAutoScreenshot {
     )
 
     # Run startup config validation; any panels are written inside this function
-    Invoke-StartupConfigValidation -Console $Console | Out-Null
+    $validationResult = Invoke-StartupConfigValidation -Console $Console
+
+    # Handle user action from validation warnings/errors
+    if ($validationResult.UserAction -eq "Exit") {
+        return
+    }
+    elseif ($validationResult.UserAction -eq "ConfigureModule") {
+        $null = Show-ConfigMenuScreen -Console $Console
+    }
 
     # $mainBlock is defined WITHOUT GetNewClosure() so that it retains the module's parse-time
     # session state binding. GetNewClosure() strips the module session state, causing private
