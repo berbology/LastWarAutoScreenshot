@@ -22,7 +22,7 @@ Describe 'Start-AutomationSequence' -Tag 'Integration' {
                 Mock Get-ModuleConfiguration {
                     @{ 
                         EmergencyStop = @{ AutoStart = $false }
-                        MouseControl = @{ ClickPreDelayRangeMs = @(50, 200); ClickPostDelayRangeMs = @(100, 300) }
+                        MouseControl = @{ MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200; ClickPostDelayRangeMs = @(100, 300) }
                     }
                 }
                 
@@ -48,7 +48,7 @@ Describe 'Start-AutomationSequence' -Tag 'Integration' {
                 Mock Get-ModuleConfiguration {
                     @{ 
                         EmergencyStop = @{ AutoStart = $false }
-                        MouseControl = @{ ClickPreDelayRangeMs = @(50, 50); ClickPostDelayRangeMs = @(100, 100) }
+                        MouseControl = @{ MinClickPreDelayMs = 50; MaxClickPreDelayMs = 50; ClickPostDelayRangeMs = @(100, 100) }
                     }
                 }
                 

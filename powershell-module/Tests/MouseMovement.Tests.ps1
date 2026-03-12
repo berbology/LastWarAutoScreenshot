@@ -393,7 +393,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 @{ 
                     MouseControl = @{ 
-                        ClickPreDelayRangeMs = @(50, 200)
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
@@ -420,7 +420,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 @{ 
                     MouseControl = @{ 
-                        ClickPreDelayRangeMs = @(50, 200)
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
@@ -447,7 +447,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 @{ 
                     MouseControl = @{ 
-                        ClickPreDelayRangeMs = @(50, 200)
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
@@ -471,7 +471,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 @{ 
                     MouseControl = @{ 
-                        ClickPreDelayRangeMs = @(50, 200)
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
@@ -499,7 +499,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 @{ 
                     MouseControl = @{ 
-                        ClickPreDelayRangeMs = @(50, 200)
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }

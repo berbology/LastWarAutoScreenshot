@@ -108,11 +108,9 @@ function Start-AutomationSequence {
 
         # Click pre-delay
         $config = Get-ModuleConfiguration
-        $preDelayRange = $config.MouseControl.ClickPreDelayRangeMs
-        if ($preDelayRange -and $preDelayRange.Count -eq 2) {
-            $preDelayMs = Get-Random -Minimum $preDelayRange[0] -Maximum ($preDelayRange[1] + 1)
-            Start-Sleep -Milliseconds $preDelayMs
-        }
+        $minPreDelay = $config.MouseControl.MinClickPreDelayMs
+        $maxPreDelay = $config.MouseControl.MaxClickPreDelayMs
+        Start-Sleep -Milliseconds (Get-Random -Minimum $minPreDelay -Maximum ($maxPreDelay + 1))
 
         if ($script:EmergencyStopRequested) {
             Write-LastWarLog -Level Warning -Message 'Emergency stop requested after mouse move. Skipping click.'

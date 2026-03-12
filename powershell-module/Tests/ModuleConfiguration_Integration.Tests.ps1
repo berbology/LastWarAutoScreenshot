@@ -149,7 +149,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.MaxMovementDurationMs | Should -Be 600
                 $mouse.MinClickDownDurationMs | Should -Be 50
                 $mouse.MaxClickDownDurationMs | Should -Be 150
-                $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
+                $mouse.MinClickPreDelayMs | Should -Be 50
+                $mouse.MaxClickPreDelayMs | Should -Be 200
                 $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
                 $mouse.PathPointCount | Should -Be 20
             }
@@ -175,7 +176,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.MaxMovementDurationMs | Should -Be 600
                 $mouse.MinClickDownDurationMs | Should -Be 50
                 $mouse.MaxClickDownDurationMs | Should -Be 150
-                $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
+                $mouse.MinClickPreDelayMs | Should -Be 50
+                $mouse.MaxClickPreDelayMs | Should -Be 200
                 $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
                 $mouse.PathPointCount | Should -Be 20
             }
@@ -338,7 +340,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         MinMicroPauseDurationMs = 20; MaxMicroPauseDurationMs = 80; JitterEnabled = $true; JitterRadiusPx = 2
                         BezierControlPointOffsetFactor = 0.3; MinMovementDurationMs = 200; MaxMovementDurationMs = 600
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        ClickPreDelayRangeMs = @(50, 200)
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
                     }
                     EmergencyStop      = [PSCustomObject]@{

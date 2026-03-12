@@ -45,7 +45,7 @@ function Show-MouseControlConfigScreen {
           MicroPauseChance, MinMicroPauseDurationMs, MaxMicroPauseDurationMs, JitterEnabled,
           JitterRadiusPx, BezierControlPointOffsetFactor, MinMovementDurationMs,
           MaxMovementDurationMs, MinClickDownDurationMs, MaxClickDownDurationMs,
-          ClickPreDelayRangeMs,
+          MinClickPreDelayMs, MaxClickPreDelayMs,
           ClickPostDelayRangeMs, PathPointCount
 
     .PARAMETER Console
@@ -193,11 +193,18 @@ function Show-MouseControlConfigScreen {
             DefGet = { param($d) $d.MouseControl.MaxClickDownDurationMs }
         },
         @{
-            Key    = 'MouseControl.ClickPreDelayRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.ClickPreDelayRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.ClickPreDelayRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.ClickPreDelayRangeMs }
+            Key    = 'MouseControl.MinClickPreDelayMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinClickPreDelayMs }
+            Set    = { param($c, $v) $c.MouseControl.MinClickPreDelayMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinClickPreDelayMs }
+        },
+        @{
+            Key    = 'MouseControl.MaxClickPreDelayMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxClickPreDelayMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxClickPreDelayMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxClickPreDelayMs }
         },
         @{
             Key    = 'MouseControl.ClickPostDelayRangeMs'

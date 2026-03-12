@@ -42,7 +42,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -70,8 +71,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -94,12 +95,12 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match '(?s)Bezie.*rControl.*PointOffse.*tFactor'
                 $tc.Output | Should -Match '(?s)MinMo.*vementDu.*rationMs'
                 $tc.Output | Should -Match '(?s)MaxMo.*vementDu.*rationMs'
-                $tc.Output | Should -Match 'MouseControl.MinCl.*ickDownD.*urationRan.*geMs'
-                $tc.Output | Should -Match '(?s)MaxCl.*ickDownD.*urationRan.*geMs'
-                $tc.Output | Should -Match '(?s)MinCl.*ickPrede.*elayRangeMs'
-                $tc.Output | Should -Match '(?s)MaxCl.*ickPrede.*elayRangeMs'
-                $tc.Output | Should -Match '(?s)MinCl.*ickPostd.*elayRangeMs'
-                $tc.Output | Should -Match '(?s)MaxCl.*ickPostd.*elayRangeMs'
+                $tc.Output | Should -Match '(?s)MouseControl.MinCl.*ickDownD.*urationMs'
+                $tc.Output | Should -Match '(?s)MaxCl.*ickDown.*DurationMs'
+                $tc.Output | Should -Match '(?s)MinCl.*ickPreD.*elayMs'
+                $tc.Output | Should -Match '(?s)MaxCl.*ickPreD.*elayMs'
+                $tc.Output | Should -Match '(?s)MinCl.*ickPostD.*elayMs'
+                $tc.Output | Should -Match '(?s)MaxCl.*ickPostD.*elayMs'
                 $tc.Output | Should -Match '(?s)PathP.*ointCount'
             }
         }
@@ -131,7 +132,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -158,8 +160,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -210,7 +212,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -237,8 +240,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -277,7 +280,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -304,8 +308,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -346,7 +350,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -373,8 +378,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -413,7 +418,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -440,8 +446,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -486,7 +492,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -513,8 +520,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -555,7 +562,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -582,8 +590,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -630,7 +638,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -657,8 +666,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -705,7 +714,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -732,8 +742,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('400')        # MaxMovementDurationMs = 400
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # PathPointCount
@@ -782,7 +792,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -809,8 +820,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
@@ -859,7 +870,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 2000
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -886,8 +898,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs → keep current (2000)
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
@@ -931,7 +943,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 500
                             MaxClickDownDurationMs    = 1000
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -958,8 +971,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationMs (keep 500)
                 $tc.Input.PushTextWithEnter('[Reset to default]')  # MaxClickDownDurationMs → reset to default (150)
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
@@ -1008,7 +1021,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -1035,8 +1049,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -1077,7 +1091,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 2000
                             MinClickDownDurationMs    = 300
                             MaxClickDownDurationMs    = 500
-                            ClickPreDelayRangeMs           = @(300, 600)
+                            MinClickPreDelayMs             = 300
+                            MaxClickPreDelayMs             = 600
                             ClickPostDelayRangeMs          = @(400, 700)
                             PathPointCount                 = 100
                         }
@@ -1104,8 +1119,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -1151,7 +1166,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -1178,8 +1194,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
@@ -1219,7 +1235,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxMovementDurationMs          = 600
                             MinClickDownDurationMs    = 50
                             MaxClickDownDurationMs    = 150
-                            ClickPreDelayRangeMs           = @(50, 200)
+                            MinClickPreDelayMs             = 50
+                            MaxClickPreDelayMs             = 200
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
                         }
@@ -1246,8 +1263,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount

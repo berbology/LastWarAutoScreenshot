@@ -53,7 +53,8 @@ function Get-DefaultModuleSettings {
             MaxMovementDurationMs          = 600
             MinClickDownDurationMs         = 50
             MaxClickDownDurationMs         = 150
-            ClickPreDelayRangeMs           = @(50, 200)
+            MinClickPreDelayMs             = 50
+            MaxClickPreDelayMs             = 200
             ClickPostDelayRangeMs          = @(100, 300)
             PathPointCount                 = 20
         }
@@ -230,11 +231,18 @@ $script:ConfigValidationSchema = @{
         Description = 'Maximum mouse-button hold duration in ms during click (0-5000)'
         Nullable    = $false
     }
-    'MouseControl.ClickPreDelayRangeMs'           = @{
-        Type        = 'intArray'
+    'MouseControl.MinClickPreDelayMs'             = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for delay before each mouse click (each element 0-5000, min ≤ max)'
+        Description = 'Minimum delay in ms before each mouse click (0-5000)'
+        Nullable    = $false
+    }
+    'MouseControl.MaxClickPreDelayMs'             = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum delay in ms before each mouse click (0-5000)'
         Nullable    = $false
     }
     'MouseControl.ClickPostDelayRangeMs'          = @{

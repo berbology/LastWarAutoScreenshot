@@ -121,7 +121,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     MaxMovementDurationMs = 2000
                     MinClickDownDurationMs = 100
                     MaxClickDownDurationMs = 200
-                    ClickPreDelayRangeMs = @(100, 300)
+                    MinClickPreDelayMs = 100
+                    MaxClickPreDelayMs = 300
                     ClickPostDelayRangeMs = @(200, 400)
                     PathPointCount = 50
                 }
@@ -175,7 +176,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.MouseControl.MaxMovementDurationMs | Should -Be 2000
                 $config.MouseControl.MinClickDownDurationMs | Should -Be 100
                 $config.MouseControl.MaxClickDownDurationMs | Should -Be 200
-                $config.MouseControl.ClickPreDelayRangeMs | Should -Be @(100, 300)
+                $config.MouseControl.MinClickPreDelayMs | Should -Be 100
+                $config.MouseControl.MaxClickPreDelayMs | Should -Be 300
                 $config.MouseControl.ClickPostDelayRangeMs | Should -Be @(200, 400)
                 $config.MouseControl.PathPointCount | Should -Be 50
             }

@@ -18,7 +18,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
@@ -52,7 +53,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
@@ -79,7 +81,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
@@ -113,7 +116,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
@@ -142,7 +146,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)

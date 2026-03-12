@@ -50,7 +50,8 @@ function Invoke-MouseDragClick {
     $config      = Get-ModuleConfiguration
     $mouseConfig = $config.MouseControl
 
-    $preDelayRange  = $mouseConfig.ClickPreDelayRangeMs
+    $minPreDelay    = $mouseConfig.MinClickPreDelayMs
+    $maxPreDelay    = $mouseConfig.MaxClickPreDelayMs
     $minHold        = $mouseConfig.MinClickDownDurationMs
     $maxHold        = $mouseConfig.MaxClickDownDurationMs
     $postDelayRange = $mouseConfig.ClickPostDelayRangeMs
@@ -75,9 +76,7 @@ function Invoke-MouseDragClick {
     }
 
     # Step 3 — Pre-click delay
-    if ($null -ne $preDelayRange -and $preDelayRange.Count -eq 2) {
-        Start-Sleep -Milliseconds (Get-Random -Minimum $preDelayRange[0] -Maximum ($preDelayRange[1] + 1))
-    }
+    Start-Sleep -Milliseconds (Get-Random -Minimum $minPreDelay -Maximum ($maxPreDelay + 1))
 
     $buttonDownSent = $false
     $success        = $true

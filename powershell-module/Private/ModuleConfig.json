@@ -23,7 +23,8 @@
 		"MaxMovementDurationMs": 600,
 		"MinClickDownDurationMs": 50,
 		"MaxClickDownDurationMs": 150,
-		"ClickPreDelayRangeMs": [50, 200],
+		"MinClickPreDelayMs": 50,
+		"MaxClickPreDelayMs": 200,
 		"ClickPostDelayRangeMs": [100, 300],
 		"PathPointCount": 20
 	},
