@@ -69,8 +69,8 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $m.BezierControlPointOffsetFactor | Should -Be 0.3
                 $m.MinMovementDurationMs | Should -Be 200
                 $m.MaxMovementDurationMs | Should -Be 600
-                $m.MinClickDownDurationRangeMs | Should -Be 50
-                $m.MaxClickDownDurationRangeMs | Should -Be 150
+                $m.MinClickDownDurationMs | Should -Be 50
+                $m.MaxClickDownDurationMs | Should -Be 150
                 $m.ClickPreDelayRangeMs | Should -Be @(50, 200)
                 $m.ClickPostDelayRangeMs | Should -Be @(100, 300)
                 $m.PathPointCount | Should -Be 20

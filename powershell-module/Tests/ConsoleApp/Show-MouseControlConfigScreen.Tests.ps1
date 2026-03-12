@@ -40,8 +40,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -68,8 +68,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -129,8 +129,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -156,8 +156,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -208,8 +208,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -235,8 +235,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -275,8 +275,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -302,8 +302,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -344,8 +344,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -371,8 +371,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -411,8 +411,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -438,8 +438,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -484,8 +484,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -511,8 +511,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -553,8 +553,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -580,8 +580,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -628,8 +628,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -655,8 +655,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -703,8 +703,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -730,8 +730,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # BezierControlPointOffsetFactor
                 $tc.Input.PushTextWithEnter('100')        # MinMovementDurationMs = 100
                 $tc.Input.PushTextWithEnter('400')        # MaxMovementDurationMs = 400
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
@@ -780,8 +780,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -807,8 +807,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
@@ -857,8 +857,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 1000
                             MaxMovementDurationMs          = 2000
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -884,8 +884,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
                 $tc.Input.PushTextWithEnter('[Reset to default]')  # MinMovementDurationMs → reset to default (200)
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs → keep current (2000)
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
@@ -903,9 +903,9 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
             }
         }
 
-        It 'Pressing [Reset to default] on MaxClickDownDurationRangeMs resets that key to its default' {
+        It 'Pressing [Reset to default] on MaxClickDownDurationMs resets that key to its default' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                # Use non-default MinClickDownDurationRangeMs/MaxClickDownDurationRangeMs values to make the reset detectable
+                # Use non-default MinClickDownDurationMs/MaxClickDownDurationMs values to make the reset detectable
                 $mockConfigNonDefault = {
                     [PSCustomObject]@{
                         Logging = [PSCustomObject]@{
@@ -929,8 +929,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 500
-                            MaxClickDownDurationRangeMs    = 1000
+                            MinClickDownDurationMs    = 500
+                            MaxClickDownDurationMs    = 1000
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -956,8 +956,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationRangeMs (keep 500)
-                $tc.Input.PushTextWithEnter('[Reset to default]')  # MaxClickDownDurationRangeMs → reset to default (150)
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickDownDurationMs (keep 500)
+                $tc.Input.PushTextWithEnter('[Reset to default]')  # MaxClickDownDurationMs → reset to default (150)
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
@@ -967,10 +967,10 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 Show-MouseControlConfigScreen -Console $tc
 
-                # MinClickDownDurationRangeMs (500) is kept; MaxClickDownDurationRangeMs is reset to default (150)
+                # MinClickDownDurationMs (500) is kept; MaxClickDownDurationMs is reset to default (150)
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.MouseControl.MinClickDownDurationRangeMs -eq 500 -and
-                    $Config.MouseControl.MaxClickDownDurationRangeMs -eq 150
+                    $Config.MouseControl.MinClickDownDurationMs -eq 500 -and
+                    $Config.MouseControl.MaxClickDownDurationMs -eq 150
                 }
             }
         }
@@ -1006,8 +1006,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -1033,8 +1033,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -1075,8 +1075,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 1.5
                             MinMovementDurationMs          = 1000
                             MaxMovementDurationMs          = 2000
-                            MinClickDownDurationRangeMs    = 300
-                            MaxClickDownDurationRangeMs    = 500
+                            MinClickDownDurationMs    = 300
+                            MaxClickDownDurationMs    = 500
                             ClickPreDelayRangeMs           = @(300, 600)
                             ClickPostDelayRangeMs          = @(400, 700)
                             PathPointCount                 = 100
@@ -1102,8 +1102,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -1149,8 +1149,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -1176,8 +1176,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
@@ -1217,8 +1217,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             BezierControlPointOffsetFactor = 0.3
                             MinMovementDurationMs          = 200
                             MaxMovementDurationMs          = 600
-                            MinClickDownDurationRangeMs    = 50
-                            MaxClickDownDurationRangeMs    = 150
+                            MinClickDownDurationMs    = 50
+                            MaxClickDownDurationMs    = 150
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
                             PathPointCount                 = 20
@@ -1244,8 +1244,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationRangeMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationRangeMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickDownDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min

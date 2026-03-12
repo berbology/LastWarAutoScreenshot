@@ -21,8 +21,8 @@
 		"BezierControlPointOffsetFactor": 0.3,
 		"MinMovementDurationMs": 200,
 		"MaxMovementDurationMs": 600,
-		"MinClickDownDurationRangeMs": 50,
-		"MaxClickDownDurationRangeMs": 150,
+		"MinClickDownDurationMs": 50,
+		"MaxClickDownDurationMs": 150,
 		"ClickPreDelayRangeMs": [50, 200],
 		"ClickPostDelayRangeMs": [100, 300],
 		"PathPointCount": 20

@@ -44,7 +44,7 @@ function Show-MouseControlConfigScreen {
           EasingEnabled, OvershootEnabled, OvershootFactor, MicroPausesEnabled,
           MicroPauseChance, MinMicroPauseDurationMs, MaxMicroPauseDurationMs, JitterEnabled,
           JitterRadiusPx, BezierControlPointOffsetFactor, MinMovementDurationMs,
-          MaxMovementDurationMs, MinClickDownDurationRangeMs, MaxClickDownDurationRangeMs,
+          MaxMovementDurationMs, MinClickDownDurationMs, MaxClickDownDurationMs,
           ClickPreDelayRangeMs,
           ClickPostDelayRangeMs, PathPointCount
 
@@ -179,18 +179,18 @@ function Show-MouseControlConfigScreen {
             DefGet = { param($d) $d.MouseControl.MaxMovementDurationMs }
         },
         @{
-            Key    = 'MouseControl.MinClickDownDurationRangeMs'
+            Key    = 'MouseControl.MinClickDownDurationMs'
             Type   = 'int'
-            Get    = { param($c) $c.MouseControl.MinClickDownDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.MinClickDownDurationRangeMs = [int]$v }
-            DefGet = { param($d) $d.MouseControl.MinClickDownDurationRangeMs }
+            Get    = { param($c) $c.MouseControl.MinClickDownDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MinClickDownDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinClickDownDurationMs }
         },
         @{
-            Key    = 'MouseControl.MaxClickDownDurationRangeMs'
+            Key    = 'MouseControl.MaxClickDownDurationMs'
             Type   = 'int'
-            Get    = { param($c) $c.MouseControl.MaxClickDownDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.MaxClickDownDurationRangeMs = [int]$v }
-            DefGet = { param($d) $d.MouseControl.MaxClickDownDurationRangeMs }
+            Get    = { param($c) $c.MouseControl.MaxClickDownDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxClickDownDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxClickDownDurationMs }
         },
         @{
             Key    = 'MouseControl.ClickPreDelayRangeMs'

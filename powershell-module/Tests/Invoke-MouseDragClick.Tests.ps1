@@ -19,8 +19,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
                         ClickPreDelayRangeMs     = @(10, 20)
-                        MinClickDownDurationRangeMs = 50
-                        MaxClickDownDurationRangeMs = 100
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
                     }
                 }
@@ -53,8 +53,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
                         ClickPreDelayRangeMs     = @(10, 20)
-                        MinClickDownDurationRangeMs = 50
-                        MaxClickDownDurationRangeMs = 100
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
                     }
                 }
@@ -80,8 +80,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
                         ClickPreDelayRangeMs     = @(10, 20)
-                        MinClickDownDurationRangeMs = 50
-                        MaxClickDownDurationRangeMs = 100
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
                     }
                 }
@@ -114,8 +114,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
                         ClickPreDelayRangeMs     = @(10, 20)
-                        MinClickDownDurationRangeMs = 50
-                        MaxClickDownDurationRangeMs = 100
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
                     }
                 }
@@ -143,8 +143,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
                         ClickPreDelayRangeMs     = @(10, 20)
-                        MinClickDownDurationRangeMs = 50
-                        MaxClickDownDurationRangeMs = 100
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
                         ClickPostDelayRangeMs    = @(10, 20)
                     }
                 }

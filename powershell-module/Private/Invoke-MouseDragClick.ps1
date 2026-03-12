@@ -51,8 +51,8 @@ function Invoke-MouseDragClick {
     $mouseConfig = $config.MouseControl
 
     $preDelayRange  = $mouseConfig.ClickPreDelayRangeMs
-    $minHold        = $mouseConfig.MinClickDownDurationRangeMs
-    $maxHold        = $mouseConfig.MaxClickDownDurationRangeMs
+    $minHold        = $mouseConfig.MinClickDownDurationMs
+    $maxHold        = $mouseConfig.MaxClickDownDurationMs
     $postDelayRange = $mouseConfig.ClickPostDelayRangeMs
 
     # Step 1 — Move to start position

@@ -130,7 +130,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                     SavedDate           = (Get-Date -Format 'o')
                     SavedBy             = $env:USERNAME
                     ComputerName        = $env:COMPUTERNAME
-                    MouseControl        = [PSCustomObject]@{ MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150 }
+                    MouseControl        = [PSCustomObject]@{ MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150 }
                 }
                 $minimalConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $testConfigPath -Force
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
@@ -147,8 +147,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
                 $mouse.MinMovementDurationMs | Should -Be 200
                 $mouse.MaxMovementDurationMs | Should -Be 600
-                $mouse.MinClickDownDurationRangeMs | Should -Be 50
-                $mouse.MaxClickDownDurationRangeMs | Should -Be 150
+                $mouse.MinClickDownDurationMs | Should -Be 50
+                $mouse.MaxClickDownDurationMs | Should -Be 150
                 $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
                 $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
                 $mouse.PathPointCount | Should -Be 20
@@ -173,8 +173,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
                 $mouse.MinMovementDurationMs | Should -Be 200
                 $mouse.MaxMovementDurationMs | Should -Be 600
-                $mouse.MinClickDownDurationRangeMs | Should -Be 50
-                $mouse.MaxClickDownDurationRangeMs | Should -Be 150
+                $mouse.MinClickDownDurationMs | Should -Be 50
+                $mouse.MaxClickDownDurationMs | Should -Be 150
                 $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
                 $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
                 $mouse.PathPointCount | Should -Be 20
@@ -337,7 +337,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         MicroPausesEnabled = $true; MicroPauseChance = 0.2
                         MinMicroPauseDurationMs = 20; MaxMicroPauseDurationMs = 80; JitterEnabled = $true; JitterRadiusPx = 2
                         BezierControlPointOffsetFactor = 0.3; MinMovementDurationMs = 200; MaxMovementDurationMs = 600
-                        MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150
+                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         ClickPreDelayRangeMs = @(50, 200)
                         ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
                     }
