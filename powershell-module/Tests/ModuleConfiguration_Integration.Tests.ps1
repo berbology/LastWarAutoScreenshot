@@ -151,7 +151,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.MaxClickDownDurationMs | Should -Be 150
                 $mouse.MinClickPreDelayMs | Should -Be 50
                 $mouse.MaxClickPreDelayMs | Should -Be 200
-                $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
+                $mouse.MinClickPostDelayMs | Should -Be 100
+                $mouse.MaxClickPostDelayMs | Should -Be 300
                 $mouse.PathPointCount | Should -Be 20
             }
         }
@@ -178,7 +179,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.MaxClickDownDurationMs | Should -Be 150
                 $mouse.MinClickPreDelayMs | Should -Be 50
                 $mouse.MaxClickPreDelayMs | Should -Be 200
-                $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
+                $mouse.MinClickPostDelayMs | Should -Be 100
+                $mouse.MaxClickPostDelayMs | Should -Be 300
                 $mouse.PathPointCount | Should -Be 20
             }
         }
@@ -341,7 +343,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         BezierControlPointOffsetFactor = 0.3; MinMovementDurationMs = 200; MaxMovementDurationMs = 600
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
                         MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
-                        ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
+                        MinClickPostDelayMs = 100; MaxClickPostDelayMs = 300; PathPointCount = 20
                     }
                     EmergencyStop      = [PSCustomObject]@{
                         AutoStart = $true; HotkeyVKeyCodes = @(17, 16, 220)

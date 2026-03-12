@@ -22,7 +22,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                         MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -57,7 +58,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                         MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -85,7 +87,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                         MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -120,7 +123,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                         MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -150,7 +154,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                         MaxClickPreDelayMs     = 20
                         MinClickDownDurationMs = 50
                         MaxClickDownDurationMs = 100
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot

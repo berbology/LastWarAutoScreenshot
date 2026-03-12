@@ -395,7 +395,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                     MouseControl = @{ 
                         MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        ClickPostDelayRangeMs = @(100, 300)
+                        MinClickPostDelayMs = 100
+                        MaxClickPostDelayMs = 300
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -422,7 +423,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                     MouseControl = @{ 
                         MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        ClickPostDelayRangeMs = @(100, 300)
+                        MinClickPostDelayMs = 100
+                        MaxClickPostDelayMs = 300
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -449,7 +451,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                     MouseControl = @{ 
                         MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        ClickPostDelayRangeMs = @(100, 300)
+                        MinClickPostDelayMs = 100
+                        MaxClickPostDelayMs = 300
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -473,7 +476,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                     MouseControl = @{ 
                         MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        ClickPostDelayRangeMs = @(100, 300)
+                        MinClickPostDelayMs = 100
+                        MaxClickPostDelayMs = 300
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -501,7 +505,8 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                     MouseControl = @{ 
                         MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
                         MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        ClickPostDelayRangeMs = @(100, 300)
+                        MinClickPostDelayMs = 100
+                        MaxClickPostDelayMs = 300
                     }
                 }
             } -ModuleName LastWarAutoScreenshot

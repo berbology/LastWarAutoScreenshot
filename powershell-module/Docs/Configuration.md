@@ -42,7 +42,8 @@ Controls how the cursor moves to avoid looking like a bot.
 | `MaxMovementDurationMs` | int | `600` | Maximum total move time (ms) |
 | `ClickDownDurationRangeMs` | int[] | `[50, 150]` | Mouse-down hold time range (ms) |
 | `ClickPreDelayRangeMs` | int[] | `[50, 200]` | Delay before click (ms) |
-| `ClickPostDelayRangeMs` | int[] | `[100, 300]` | Delay after click (ms) |
+| `MinClickPostDelayMs` | int | `100` | Minimum delay after click (ms) |
+| `MaxClickPostDelayMs` | int | `300` | Maximum delay after click (ms) |
 | `PathPointCount` | int | `20` | Base Bezier point count (5-200) |
 
 **Example (ModuleConfig.json excerpt):**

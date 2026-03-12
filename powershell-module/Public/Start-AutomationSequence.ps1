@@ -130,11 +130,10 @@ function Start-AutomationSequence {
         }
 
         # Click post-delay
-        $postDelayRange = $config.MouseControl.ClickPostDelayRangeMs
-        if ($postDelayRange -and $postDelayRange.Count -eq 2) {
-            $postDelayMs = Get-Random -Minimum $postDelayRange[0] -Maximum ($postDelayRange[1] + 1)
-            Start-Sleep -Milliseconds $postDelayMs
-        }
+        $minPostDelay = $config.MouseControl.MinClickPostDelayMs
+        $maxPostDelay = $config.MouseControl.MaxClickPostDelayMs
+        $postDelayMs  = Get-Random -Minimum $minPostDelay -Maximum ($maxPostDelay + 1)
+        Start-Sleep -Milliseconds $postDelayMs
 
         return [PSCustomObject]@{
             Success = $true

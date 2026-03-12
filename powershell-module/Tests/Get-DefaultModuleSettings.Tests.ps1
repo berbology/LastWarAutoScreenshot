@@ -48,7 +48,7 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.MouseControl | Should -Not -BeNullOrEmpty
-                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 17
+                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 18
             }
         }
 
@@ -73,7 +73,8 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $m.MaxClickDownDurationMs | Should -Be 150
                 $m.MinClickPreDelayMs | Should -Be 50
                 $m.MaxClickPreDelayMs | Should -Be 200
-                $m.ClickPostDelayRangeMs | Should -Be @(100, 300)
+                $m.MinClickPostDelayMs | Should -Be 100
+                $m.MaxClickPostDelayMs | Should -Be 300
                 $m.PathPointCount | Should -Be 20
             }
         }

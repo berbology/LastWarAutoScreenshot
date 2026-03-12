@@ -55,7 +55,8 @@ function Get-DefaultModuleSettings {
             MaxClickDownDurationMs         = 150
             MinClickPreDelayMs             = 50
             MaxClickPreDelayMs             = 200
-            ClickPostDelayRangeMs          = @(100, 300)
+            MinClickPostDelayMs            = 100
+            MaxClickPostDelayMs            = 300
             PathPointCount                 = 20
         }
         EmergencyStop = [PSCustomObject]@{
@@ -245,11 +246,18 @@ $script:ConfigValidationSchema = @{
         Description = 'Maximum delay in ms before each mouse click (0-5000)'
         Nullable    = $false
     }
-    'MouseControl.ClickPostDelayRangeMs'          = @{
-        Type        = 'intArray'
+    'MouseControl.MinClickPostDelayMs'            = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for delay after each mouse click (each element 0-5000, min ≤ max)'
+        Description = 'Minimum delay in ms after each mouse click (0-5000)'
+        Nullable    = $false
+    }
+    'MouseControl.MaxClickPostDelayMs'            = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum delay in ms after each mouse click (0-5000)'
         Nullable    = $false
     }
 

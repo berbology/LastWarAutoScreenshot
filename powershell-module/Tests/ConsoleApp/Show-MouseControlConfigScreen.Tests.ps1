@@ -44,7 +44,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -73,8 +74,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -83,25 +84,25 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Show-MouseControlConfigScreen -Console $tc
 
                 # Patterns use (?s) to match across newlines (table text wraps due to column width)
-                $tc.Output | Should -Match '(?s)Easin.*gEnabled'
-                $tc.Output | Should -Match '(?s)Overs.*hootEnab.*led'
-                $tc.Output | Should -Match '(?s)Overs.*hootFactor'
-                $tc.Output | Should -Match '(?s)Micro.*Pause.*Enabled'
-                $tc.Output | Should -Match '(?s)Micro.*Pause.*Chance'
-                $tc.Output | Should -Match '(?s)MinMi.*croPause.*DurationMs'
-                $tc.Output | Should -Match '(?s)MaxMi.*croPause.*DurationMs'
-                $tc.Output | Should -Match '(?s)Jitte.*rEnabled'
-                $tc.Output | Should -Match '(?s)Jitte.*rRadiusPx'
-                $tc.Output | Should -Match '(?s)Bezie.*rControl.*PointOffse.*tFactor'
-                $tc.Output | Should -Match '(?s)MinMo.*vementDu.*rationMs'
-                $tc.Output | Should -Match '(?s)MaxMo.*vementDu.*rationMs'
-                $tc.Output | Should -Match '(?s)MouseControl.MinCl.*ickDownD.*urationMs'
-                $tc.Output | Should -Match '(?s)MaxCl.*ickDown.*DurationMs'
-                $tc.Output | Should -Match '(?s)MinCl.*ickPreD.*elayMs'
-                $tc.Output | Should -Match '(?s)MaxCl.*ickPreD.*elayMs'
-                $tc.Output | Should -Match '(?s)MinCl.*ickPostD.*elayMs'
-                $tc.Output | Should -Match '(?s)MaxCl.*ickPostD.*elayMs'
-                $tc.Output | Should -Match '(?s)PathP.*ointCount'
+                $tc.Output | Should -Match '(?s)EasingE.*nabled'
+                $tc.Output | Should -Match '(?s)Oversho.*otEnab.*led'
+                $tc.Output | Should -Match '(?s)Oversho.*otFactor'
+                $tc.Output | Should -Match '(?s)MicroPa.*use.*Enabled'
+                $tc.Output | Should -Match '(?s)MicroPa.*use.*Chance'
+                $tc.Output | Should -Match '(?s)MinMicr.*oPause.*DurationMs'
+                $tc.Output | Should -Match '(?s)MaxMicr.*oPause.*DurationMs'
+                $tc.Output | Should -Match '(?s)JitterE.*nabled'
+                $tc.Output | Should -Match '(?s)JitterR.*adiusPx'
+                $tc.Output | Should -Match '(?s)BezierC.*ontrol.*PointOffsetFac.*tor'
+                $tc.Output | Should -Match '(?s)MinMove.*mentDu.*rationMs'
+                $tc.Output | Should -Match '(?s)MaxMove.*mentDu.*rationMs'
+                $tc.Output | Should -Match '(?s)MouseCo.*ntrol.MinClic.*kDownD.*urationMs'
+                $tc.Output | Should -Match '(?s)MaxClic.*kDown.*DurationMs'
+                $tc.Output | Should -Match '(?s)MinClic.*kPreD.*elayMs'
+                $tc.Output | Should -Match '(?s)MaxClic.*kPreD.*elayMs'
+                $tc.Output | Should -Match '(?s)MinClic.*kPostD.*elayMs'
+                $tc.Output | Should -Match '(?s)MaxClic.*kPostD.*elayMs'
+                $tc.Output | Should -Match '(?s)PathPoi.*ntCount'
             }
         }
 
@@ -134,7 +135,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -162,8 +164,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -214,7 +216,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -242,8 +245,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
@@ -282,7 +285,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -310,8 +314,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
@@ -352,7 +356,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -380,8 +385,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
@@ -420,7 +425,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -448,8 +454,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
@@ -494,7 +500,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -522,8 +529,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -564,7 +571,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -592,8 +600,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -640,7 +648,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -668,8 +677,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes - save now
 
@@ -716,7 +725,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -744,8 +754,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # Yes - save now
 
@@ -794,7 +804,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -822,8 +833,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes - save now
 
@@ -872,7 +883,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -900,8 +912,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes - save now
 
@@ -945,7 +957,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 1000
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -973,8 +986,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('[Reset to default]')  # MaxClickDownDurationMs → reset to default (150)
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # Yes - save now
 
@@ -1023,7 +1036,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -1051,8 +1065,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL MouseControl settings to defaults
@@ -1093,7 +1107,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 500
                             MinClickPreDelayMs             = 300
                             MaxClickPreDelayMs             = 600
-                            ClickPostDelayRangeMs          = @(400, 700)
+                            MinClickPostDelayMs            = 400
+                            MaxClickPostDelayMs            = 700
                             PathPointCount                 = 100
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -1121,8 +1136,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL MouseControl settings to defaults
@@ -1168,7 +1183,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -1196,8 +1212,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL MouseControl settings to defaults
@@ -1237,7 +1253,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             MaxClickDownDurationMs    = 150
                             MinClickPreDelayMs             = 50
                             MaxClickPreDelayMs             = 200
-                            ClickPostDelayRangeMs          = @(100, 300)
+                            MinClickPostDelayMs            = 100
+                            MaxClickPostDelayMs            = 300
                             PathPointCount                 = 20
                         }
                         EmergencyStop = [PSCustomObject]@{}
@@ -1265,8 +1282,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickDownDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPreDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPreDelayMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPostDelayRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinClickPostDelayMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxClickPostDelayMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PathPointCount
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL MouseControl settings to defaults

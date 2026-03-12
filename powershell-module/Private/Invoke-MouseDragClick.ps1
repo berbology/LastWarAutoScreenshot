@@ -54,7 +54,8 @@ function Invoke-MouseDragClick {
     $maxPreDelay    = $mouseConfig.MaxClickPreDelayMs
     $minHold        = $mouseConfig.MinClickDownDurationMs
     $maxHold        = $mouseConfig.MaxClickDownDurationMs
-    $postDelayRange = $mouseConfig.ClickPostDelayRangeMs
+    $minPostDelay   = $mouseConfig.MinClickPostDelayMs
+    $maxPostDelay   = $mouseConfig.MaxClickPostDelayMs
 
     # Step 1 — Move to start position
     $currentPos = Invoke-GetCursorPosition
@@ -125,8 +126,8 @@ function Invoke-MouseDragClick {
     }
 
     # Step 9 — Post-click delay
-    if ($success -and $null -ne $postDelayRange -and $postDelayRange.Count -eq 2) {
-        Start-Sleep -Milliseconds (Get-Random -Minimum $postDelayRange[0] -Maximum ($postDelayRange[1] + 1))
+    if ($success) {
+        Start-Sleep -Milliseconds (Get-Random -Minimum $minPostDelay -Maximum ($maxPostDelay + 1))
     }
 
     return [PSCustomObject]@{ Success = $success; Message = $message }

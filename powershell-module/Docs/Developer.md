@@ -212,7 +212,7 @@ control infrastructure.
 6. Check emergency stop.
 7. Drag to the end position via a second Bézier path (button held).
 8. Send `MOUSEEVENTF_LEFTUP` (always, even on error — wrapped in `finally`).
-9. Post-click delay (random within `ClickPostDelayRangeMs`).
+9. Post-click delay (random within `MinClickPostDelayMs`–`MaxClickPostDelayMs`).
 
 ```powershell
 # Called internally by Invoke-MacroAction for DragClick sequence actions.

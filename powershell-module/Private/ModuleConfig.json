@@ -25,7 +25,8 @@
 		"MaxClickDownDurationMs": 150,
 		"MinClickPreDelayMs": 50,
 		"MaxClickPreDelayMs": 200,
-		"ClickPostDelayRangeMs": [100, 300],
+		"MinClickPostDelayMs": 100,
+		"MaxClickPostDelayMs": 300,
 		"PathPointCount": 20
 	},
 	"EmergencyStop": {
