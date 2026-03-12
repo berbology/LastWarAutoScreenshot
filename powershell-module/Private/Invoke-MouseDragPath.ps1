@@ -35,7 +35,8 @@ function Invoke-MouseDragPath {
     $config                    = Get-ModuleConfiguration
     $MovementDurationRangeMs   = $config.MouseControl.MovementDurationRangeMs
     $MicroPauseChance          = $config.MouseControl.MicroPauseChance
-    $MicroPauseDurationRangeMs = $config.MouseControl.MicroPauseDurationRangeMs
+    $MinMicroPauseDurationMs   = $config.MouseControl.MinMicroPauseDurationMs
+    $MaxMicroPauseDurationMs   = $config.MouseControl.MaxMicroPauseDurationMs
 
     $numSteps = $Points.Count
     if ($numSteps -lt 2) {
@@ -67,7 +68,7 @@ function Invoke-MouseDragPath {
         }
         Start-Sleep -Milliseconds ([int]$stepDelays[$i])
         if ((Get-Random -Minimum 0.0 -Maximum 1.0) -lt $MicroPauseChance) {
-            $pauseMs = Get-Random -Minimum $MicroPauseDurationRangeMs[0] -Maximum ($MicroPauseDurationRangeMs[1] + 1)
+            $pauseMs = Get-Random -Minimum $MinMicroPauseDurationMs -Maximum ($MaxMicroPauseDurationMs + 1)
             Start-Sleep -Milliseconds $pauseMs
         }
     }

@@ -42,9 +42,9 @@ function Show-MouseControlConfigScreen {
 
         MouseControl keys covered (in order):
           EasingEnabled, OvershootEnabled, OvershootFactor, MicroPausesEnabled,
-          MicroPauseChance, MicroPauseDurationRangeMs, JitterEnabled, JitterRadiusPx,
-          BezierControlPointOffsetFactor, MovementDurationRangeMs, ClickDownDurationRangeMs,
-          ClickPreDelayRangeMs, ClickPostDelayRangeMs, PathPointCount
+          MicroPauseChance, MinMicroPauseDurationMs, MaxMicroPauseDurationMs, JitterEnabled,
+          JitterRadiusPx, BezierControlPointOffsetFactor, MovementDurationRangeMs,
+          ClickDownDurationRangeMs, ClickPreDelayRangeMs, ClickPostDelayRangeMs, PathPointCount
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -128,11 +128,18 @@ function Show-MouseControlConfigScreen {
             DefGet = { param($d) $d.MouseControl.MicroPauseChance }
         },
         @{
-            Key    = 'MouseControl.MicroPauseDurationRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.MicroPauseDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.MicroPauseDurationRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.MicroPauseDurationRangeMs }
+            Key    = 'MouseControl.MinMicroPauseDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinMicroPauseDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MinMicroPauseDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinMicroPauseDurationMs }
+        },
+        @{
+            Key    = 'MouseControl.MaxMicroPauseDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxMicroPauseDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxMicroPauseDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxMicroPauseDurationMs }
         },
         @{
             Key    = 'MouseControl.JitterEnabled'

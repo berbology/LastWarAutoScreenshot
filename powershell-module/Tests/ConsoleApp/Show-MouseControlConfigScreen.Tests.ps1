@@ -33,7 +33,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -52,14 +53,14 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # Bool keys: y × 4, non-bool keys: Enter × 15 (3 double+2 int+5×2 intArray)
+                # Bool keys: y × 4, non-bool keys: Enter × 15 (3 double+4 int+4×2 intArray)
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -81,7 +82,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 # Patterns use (?s) to match across newlines (table text wraps due to column width)
                 $tc.Output | Should -Match '(?s)Easin.*gEnabled'
                 $tc.Output | Should -Match '(?s)Overs.*hootFactor'
-                $tc.Output | Should -Match '(?s)Micro.*PauseDurationRange.*Ms'
+                $tc.Output | Should -Match '(?s)MinMi.*croPause.*DurationMs'
                 $tc.Output | Should -Match '(?s)Movem.*entDurationRangeMs'
                 $tc.Output | Should -Match '(?s)PathP.*ointCount'
             }
@@ -105,7 +106,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -129,8 +131,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -151,7 +153,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 # Numeric values and array values should appear in the rendered table
                 $tc.Output | Should -Match '0.1'    # OvershootFactor
-                $tc.Output | Should -Match '20'     # part of MicroPauseDurationRangeMs
+                $tc.Output | Should -Match '20'     # part of MinMicroPauseDurationMs
                 $tc.Output | Should -Match '200'    # part of MovementDurationRangeMs
                 $tc.Output | Should -Match '20'     # PathPointCount
             }
@@ -181,7 +183,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -205,8 +208,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -245,7 +248,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -269,8 +273,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -311,7 +315,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -335,8 +340,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -375,7 +380,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -399,8 +405,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -445,7 +451,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -469,8 +476,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -511,7 +518,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -535,8 +543,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -583,7 +591,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -607,8 +616,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -627,153 +636,6 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
                     $Config.MouseControl.EasingEnabled -eq $false
-                }
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Context: intArray validation error when min > max
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters invalid intArray values with min greater than max' {
-
-        It 'Error message appears in console output' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50
-                                MaxAgeDays = 30; MaxLogFileCount = 500
-                            }
-                        }
-                        MouseControl = [PSCustomObject]@{
-                            EasingEnabled                  = $true
-                            OvershootEnabled               = $true
-                            OvershootFactor                = 0.1
-                            MicroPausesEnabled             = $true
-                            MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
-                            JitterEnabled                  = $true
-                            JitterRadiusPx                 = 2
-                            BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
-                            ClickDownDurationRangeMs       = @(50, 150)
-                            ClickPreDelayRangeMs           = @(50, 200)
-                            ClickPostDelayRangeMs          = @(100, 300)
-                            PathPointCount                 = 20
-                        }
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('y')          # EasingEnabled
-                $tc.Input.PushTextWithEnter('y')          # OvershootEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # OvershootFactor
-                $tc.Input.PushTextWithEnter('y')          # MicroPausesEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MicroPauseChance
-                # MicroPauseDurationRangeMs: invalid pair (500 > 100)
-                $tc.Input.PushTextWithEnter('500')        # min - invalid: 500 > 100
-                $tc.Input.PushTextWithEnter('100')        # max
-                # Re-prompt after error: keep current values (20, 80)
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # min (keep 20)
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # max (keep 80)
-                $tc.Input.PushTextWithEnter('y')          # JitterEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # JitterRadiusPx
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MovementDurationRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickDownDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickDownDurationRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # Discard
-
-                Show-MouseControlConfigScreen -Console $tc
-
-                $tc.Output | Should -Match 'must not exceed'
-            }
-        }
-
-        It 'After invalid pair the valid retry pair is saved correctly' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB = 50
-                                MaxAgeDays = 30; MaxLogFileCount = 500
-                            }
-                        }
-                        MouseControl = [PSCustomObject]@{
-                            EasingEnabled                  = $true
-                            OvershootEnabled               = $true
-                            OvershootFactor                = 0.1
-                            MicroPausesEnabled             = $true
-                            MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
-                            JitterEnabled                  = $true
-                            JitterRadiusPx                 = 2
-                            BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
-                            ClickDownDurationRangeMs       = @(50, 150)
-                            ClickPreDelayRangeMs           = @(50, 200)
-                            ClickPostDelayRangeMs          = @(100, 300)
-                            PathPointCount                 = 20
-                        }
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('y')          # EasingEnabled
-                $tc.Input.PushTextWithEnter('y')          # OvershootEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # OvershootFactor
-                $tc.Input.PushTextWithEnter('y')          # MicroPausesEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MicroPauseChance
-                # MicroPauseDurationRangeMs: first attempt invalid (500 > 100)
-                $tc.Input.PushTextWithEnter('500')        # min (invalid)
-                $tc.Input.PushTextWithEnter('100')        # max (pair fails: 500 > 100)
-                # Second attempt: valid pair (30, 90)
-                $tc.Input.PushTextWithEnter('30')         # min = 30
-                $tc.Input.PushTextWithEnter('90')         # max = 90 → valid pair
-                $tc.Input.PushTextWithEnter('y')          # JitterEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # JitterRadiusPx
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MovementDurationRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickDownDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickDownDurationRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPostDelayRangeMs max
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # PathPointCount
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # Yes - save now
-
-                Show-MouseControlConfigScreen -Console $tc
-
-                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.MouseControl.MicroPauseDurationRangeMs[0] -eq 30 -and
-                    $Config.MouseControl.MicroPauseDurationRangeMs[1] -eq 90
                 }
             }
         }
@@ -802,7 +664,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -826,8 +689,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')          # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MicroPauseDurationRangeMs min (keep 20)
-                $tc.Input.PushKey([ConsoleKey]::Enter)    # MicroPauseDurationRangeMs max (keep 80)
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MinMicroPauseDurationMs (keep 20)
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # MaxMicroPauseDurationMs (keep 80)
                 $tc.Input.PushTextWithEnter('y')          # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # BezierControlPointOffsetFactor
@@ -876,7 +739,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.9
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -900,8 +764,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('[Reset to default]')  # OvershootFactor → reset to 0.1
                 $tc.Input.PushTextWithEnter('y')                   # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')                   # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
@@ -950,7 +814,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -974,8 +839,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')                   # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')                   # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
@@ -1018,7 +883,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -1042,8 +908,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')                   # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')                   # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
@@ -1092,7 +958,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -1116,8 +983,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -1158,7 +1025,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.9
                             MicroPausesEnabled             = $false
                             MicroPauseChance               = 0.9
-                            MicroPauseDurationRangeMs      = @(500, 1000)
+                            MinMicroPauseDurationMs        = 500
+                            MaxMicroPauseDurationMs        = 1000
                             JitterEnabled                  = $false
                             JitterRadiusPx                 = 15
                             BezierControlPointOffsetFactor = 1.5
@@ -1182,8 +1050,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('n')       # MicroPausesEnabled (confirm current false)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('n')       # JitterEnabled (confirm current false)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -1229,7 +1097,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -1253,8 +1122,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
@@ -1294,7 +1163,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             OvershootFactor                = 0.1
                             MicroPausesEnabled             = $true
                             MicroPauseChance               = 0.2
-                            MicroPauseDurationRangeMs      = @(20, 80)
+                            MinMicroPauseDurationMs        = 20
+                            MaxMicroPauseDurationMs        = 80
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
@@ -1318,8 +1188,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
                 $tc.Input.PushTextWithEnter('y')       # MicroPausesEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseChance
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MicroPauseDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMicroPauseDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMicroPauseDurationMs
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor

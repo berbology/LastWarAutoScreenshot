@@ -44,7 +44,8 @@ function Get-DefaultModuleSettings {
             OvershootFactor                = 0.1
             MicroPausesEnabled             = $true
             MicroPauseChance               = 0.2
-            MicroPauseDurationRangeMs      = @(20, 80)
+            MinMicroPauseDurationMs        = 20
+            MaxMicroPauseDurationMs        = 80
             JitterEnabled                  = $true
             JitterRadiusPx                 = 2
             BezierControlPointOffsetFactor = 0.3
@@ -128,22 +129,22 @@ $script:ConfigValidationSchema = @{
     # --- MouseControl bool toggles ---
     'MouseControl.EasingEnabled'                  = @{
         Type        = 'bool'
-        Description = 'Whether ease-in/ease-out is applied to mouse movement speed'
+        Description = 'Apply ease-in/ease-out to mouse movement speed'
         Nullable    = $false
     }
     'MouseControl.OvershootEnabled'               = @{
         Type        = 'bool'
-        Description = 'Whether the cursor overshoots the target then corrects back'
+        Description = 'Cursor overshoots target then corrects'
         Nullable    = $false
     }
     'MouseControl.MicroPausesEnabled'             = @{
         Type        = 'bool'
-        Description = 'Whether random micro-pauses are inserted during movement'
+        Description = 'Random micro-pauses inserted during movement'
         Nullable    = $false
     }
     'MouseControl.JitterEnabled'                  = @{
         Type        = 'bool'
-        Description = 'Whether random pixel jitter is applied to each Bezier path point'
+        Description = 'Random pixel jitter applied to each Bezier path point'
         Nullable    = $false
     }
 
@@ -159,21 +160,21 @@ $script:ConfigValidationSchema = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 1.0
-        Description = 'Probability (0.0-1.0) of inserting a micro-pause after each movement step'
+        Description = 'Probability (0.0-1.0) of micro-pause after each movement step'
         Nullable    = $false
     }
     'MouseControl.JitterRadiusPx'                 = @{
         Type        = 'int'
         Min         = 0
         Max         = 20
-        Description = 'Maximum pixel radius of jitter applied to Bezier path points - 0 disables jitter (0-20)'
+        Description = 'Jitter max pixel radius applied to Bezier path points - 0 to disable (0-20)'
         Nullable    = $false
     }
     'MouseControl.BezierControlPointOffsetFactor' = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 2.0
-        Description = 'Multiplier applied to path length when positioning the Bezier control point (0.0-2.0)'
+        Description = 'Path length multiplier for positioning Bezier control point (0.0-2.0)'
         Nullable    = $false
     }
     'MouseControl.PathPointCount'                 = @{
@@ -185,11 +186,18 @@ $script:ConfigValidationSchema = @{
     }
 
     # --- MouseControl intArray ranges ---
-    'MouseControl.MicroPauseDurationRangeMs'      = @{
-        Type        = 'intArray'
+    'MouseControl.MinMicroPauseDurationMs'        = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for micro-pause delays (each element 0-5000, min <= max)'
+        Description = 'Minimum micro-pause delay duration in ms (0-5000)'
+        Nullable    = $false
+    }
+    '.MouseControlMaxMicroPauseDurationMs'        = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum micro-pause delay duration in ms (0-5000)'
         Nullable    = $false
     }
     'MouseControl.MovementDurationRangeMs'        = @{

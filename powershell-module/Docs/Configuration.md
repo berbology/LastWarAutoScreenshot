@@ -33,7 +33,8 @@ Controls how the cursor moves to avoid looking like a bot.
 | `OvershootFactor` | double | `0.1` | Overshoot scale (0.0-1.0) |
 | `MicroPausesEnabled` | bool | `true` | Random hesitation pauses |
 | `MicroPauseChance` | double | `0.2` | Probability of pause per step (0.0-1.0) |
-| `MicroPauseDurationRangeMs` | int[] | `[20, 80]` | Pause duration range (ms) |
+| `MinMicroPauseDurationMs` | int | `20` | Minimum micro-pause duration (ms) |
+| `MaxMicroPauseDurationMs` | int | `80` | Maximum micro-pause duration (ms) |
 | `JitterEnabled` | bool | `true` | Slight path wobble |
 | `JitterRadiusPx` | int | `2` | Wobble radius in pixels (0-20) |
 | `BezierControlPointOffsetFactor` | double | `0.3` | Curve sharpness (0.0-2.0) |
@@ -52,7 +53,8 @@ Controls how the cursor moves to avoid looking like a bot.
   "OvershootFactor": 0.1,
   "MicroPausesEnabled": true,
   "MicroPauseChance": 0.2,
-  "MicroPauseDurationRangeMs": [20, 80],
+  "MinMicroPauseDurationMs": 20,
+  "MaxMicroPauseDurationMs": 80,
   "JitterEnabled": true,
   "JitterRadiusPx": 2,
   "MovementDurationRangeMs": [200, 600],

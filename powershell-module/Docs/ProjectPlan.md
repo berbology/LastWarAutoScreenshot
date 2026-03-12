@@ -258,7 +258,8 @@
           "OvershootFactor": 0.1,
           "MicroPausesEnabled": true,
           "MicroPauseChance": 0.2,
-          "MicroPauseDurationRangeMs": [20, 80],
+          "MinMicroPauseDurationMs": 20,
+          "MaxMicroPauseDurationMs": 80,
           "JitterEnabled": true,
           "JitterRadiusPx": 2,
           "BezierControlPointOffsetFactor": 0.3,
@@ -288,7 +289,7 @@
       - Total move duration: random within `MovementDurationRangeMs` config range
       - Ease-in/out: per-step delay derived from sinusoidal curve so movement is slow at start and end, fast mid-path
       - At each step: compute delta from previous point → `Invoke-SendMouseInput` → sleep step delay
-      - Micro-pauses: after each step delay, with probability `MicroPauseChance` add an extra random sleep within `MicroPauseDurationRangeMs`
+      - Micro-pauses: after each step delay, with probability `MicroPauseChance` add an extra random sleep between `MinMicroPauseDurationMs` and `MaxMicroPauseDurationMs`
       - Overshoot: after main path completes, if `OvershootEnabled`, compute a small vector past the final point (scaled by `OvershootFactor × last-step-length`); execute a mini correction path back to the target using a second Bezier (no further overshoot on the correction move)
       - Returns $true/$false; logs any SendInput errors; red ANSI footer on failure
    6. [x] 2.6: Update `powershell-module/Public/Start-AutomationSequence.ps1`
@@ -516,7 +517,8 @@
         - `'MouseControl.ClickDownDurationRangeMs'` - `intArray`; same constraints as above
         - `'MouseControl.ClickPreDelayRangeMs'` - `intArray`; same
         - `'MouseControl.ClickPostDelayRangeMs'` - `intArray`; same
-        - `'MouseControl.MicroPauseDurationRangeMs'` - `intArray`; same
+        - `'MouseControl.MinMicroPauseDurationMs'` - `int`; `Min = 0`, `Max = 5000`
+        - `'MouseControl.MaxMicroPauseDurationMs'` - `int`; `Min = 0`, `Max = 5000`
         - `'MouseControl.PathPointCount'` - `int`; `Min = 5`, `Max = 200`
         - `'EmergencyStop.PollIntervalMs'` - `int`; `Min = 10`, `Max = 5000`
         - `'EmergencyStop.MouseGestureHoldDurationMs'` - `int`; `Min = 500`, `Max = 30000`

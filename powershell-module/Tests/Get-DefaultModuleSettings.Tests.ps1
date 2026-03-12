@@ -48,7 +48,7 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.MouseControl | Should -Not -BeNullOrEmpty
-                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 14
+                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 15
             }
         }
 
@@ -62,7 +62,8 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $m.OvershootFactor | Should -Be 0.1
                 $m.MicroPausesEnabled | Should -Be $true
                 $m.MicroPauseChance | Should -Be 0.2
-                $m.MicroPauseDurationRangeMs | Should -Be @(20, 80)
+                $m.MinMicroPauseDurationMs | Should -Be 20
+                $m.MaxMicroPauseDurationMs | Should -Be 80
                 $m.JitterEnabled | Should -Be $true
                 $m.JitterRadiusPx | Should -Be 2
                 $m.BezierControlPointOffsetFactor | Should -Be 0.3

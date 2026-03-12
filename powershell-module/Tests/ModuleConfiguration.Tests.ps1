@@ -112,7 +112,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     OvershootFactor = 0.5
                     MicroPausesEnabled = $false
                     MicroPauseChance = 0.5
-                    MicroPauseDurationRangeMs = @(100, 200)
+                    MinMicroPauseDurationMs = 100
+                    MaxMicroPauseDurationMs = 200
                     JitterEnabled = $false
                     JitterRadiusPx = 5
                     BezierControlPointOffsetFactor = 0.5
@@ -163,7 +164,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.MouseControl.OvershootFactor | Should -Be 0.5
                 $config.MouseControl.MicroPausesEnabled | Should -Be $false
                 $config.MouseControl.MicroPauseChance | Should -Be 0.5
-                $config.MouseControl.MicroPauseDurationRangeMs | Should -Be @(100, 200)
+                $config.MouseControl.MinMicroPauseDurationMs | Should -Be 100
+                $config.MouseControl.MaxMicroPauseDurationMs | Should -Be 200
                 $config.MouseControl.JitterEnabled | Should -Be $false
                 $config.MouseControl.JitterRadiusPx | Should -Be 5
                 $config.MouseControl.BezierControlPointOffsetFactor | Should -Be 0.5

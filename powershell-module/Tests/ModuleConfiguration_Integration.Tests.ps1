@@ -140,7 +140,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.OvershootFactor | Should -Be 0.1
                 $mouse.MicroPausesEnabled | Should -Be $true
                 $mouse.MicroPauseChance | Should -Be 0.2
-                $mouse.MicroPauseDurationRangeMs | Should -Be @(20, 80)
+                $mouse.MinMicroPauseDurationMs | Should -Be 20
+                $mouse.MaxMicroPauseDurationMs | Should -Be 80
                 $mouse.JitterEnabled | Should -Be $true
                 $mouse.JitterRadiusPx | Should -Be 2
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
@@ -163,7 +164,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.OvershootFactor | Should -Be 0.1
                 $mouse.MicroPausesEnabled | Should -Be $true
                 $mouse.MicroPauseChance | Should -Be 0.2
-                $mouse.MicroPauseDurationRangeMs | Should -Be @(20, 80)
+                $mouse.MinMicroPauseDurationMs | Should -Be 20
+                $mouse.MaxMicroPauseDurationMs | Should -Be 80
                 $mouse.JitterEnabled | Should -Be $true
                 $mouse.JitterRadiusPx | Should -Be 2
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
@@ -329,7 +331,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                     MouseControl       = [PSCustomObject]@{
                         EasingEnabled = $true; OvershootEnabled = $true; OvershootFactor = 0.1
                         MicroPausesEnabled = $true; MicroPauseChance = 0.2
-                        MicroPauseDurationRangeMs = @(20, 80); JitterEnabled = $true; JitterRadiusPx = 2
+                        MinMicroPauseDurationMs = 20; MaxMicroPauseDurationMs = 80; JitterEnabled = $true; JitterRadiusPx = 2
                         BezierControlPointOffsetFactor = 0.3; MovementDurationRangeMs = @(200, 600)
                         ClickDownDurationRangeMs = @(50, 150); ClickPreDelayRangeMs = @(50, 200)
                         ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
