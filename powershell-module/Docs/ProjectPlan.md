@@ -523,7 +523,7 @@
         - `'EmergencyStop.AutoStart'` - `bool`
         - `'EmergencyStop.MouseGestureEnabled'` - `bool`
         - `'MouseControl.EasingEnabled'`, `'MouseControl.OvershootEnabled'`, `'MouseControl.MicroPausesEnabled'`, `'MouseControl.JitterEnabled'` - all `bool`
-   2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/ConfigValidation.ps1`
+   2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/Test-ConfigValue.ps1`
       - `Test-ConfigValue -Key [string] -Value [object]`
       - Looks up `$script:ConfigValidationSchema[$Key]` - returns `[PSCustomObject]@{Valid=$true; Message=''}` if key not in schema (unknown keys pass through silently)
       - Validates `Type`, `Min`/`Max` (for numerics and each element of intArray), `AllowedValues` (case-insensitive for stringEnum), `Nullable`
