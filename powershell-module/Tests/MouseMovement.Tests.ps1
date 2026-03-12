@@ -180,7 +180,7 @@ Describe 'Invoke-MouseClick' -Tag 'Unit' {
             Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 20 } } -ModuleName LastWarAutoScreenshot
             Mock Invoke-SendMouseInput { 1 } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration { @{ MouseControl = @{ ClickDownDurationRangeMs = @(50, 150) } } } -ModuleName LastWarAutoScreenshot
+            Mock Get-ModuleConfiguration { @{ MouseControl = @{ MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150 } } } -ModuleName LastWarAutoScreenshot
             Invoke-MouseClick -X 30 -Y 40 -DownDurationMs 100 | Should -Be $true
             Should -Invoke Move-MouseToPoint -Exactly 1
         }
@@ -192,7 +192,7 @@ Describe 'Invoke-MouseClick' -Tag 'Unit' {
             Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 30; Y = 40 } } -ModuleName LastWarAutoScreenshot
             Mock Invoke-SendMouseInput { 1 } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration { @{ MouseControl = @{ ClickDownDurationRangeMs = @(50, 150) } } } -ModuleName LastWarAutoScreenshot
+            Mock Get-ModuleConfiguration { @{ MouseControl = @{ MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150 } } } -ModuleName LastWarAutoScreenshot
             Invoke-MouseClick -X 30 -Y 40 -DownDurationMs 100 | Should -Be $true
             Should -Invoke Move-MouseToPoint -Exactly 0
         }
@@ -204,7 +204,7 @@ Describe 'Invoke-MouseClick' -Tag 'Unit' {
             Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 20 } } -ModuleName LastWarAutoScreenshot
             Mock Invoke-SendMouseInput { 1 } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration { @{ MouseControl = @{ ClickDownDurationRangeMs = @(50, 150) } } } -ModuleName LastWarAutoScreenshot
+            Mock Get-ModuleConfiguration { @{ MouseControl = @{ MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150 } } } -ModuleName LastWarAutoScreenshot
             Invoke-MouseClick -X 30 -Y 40 -DownDurationMs 100 | Should -Be $true
             # Verify LEFTDOWN and LEFTUP were each sent exactly once via ParameterFilter
             Should -Invoke Invoke-SendMouseInput -Exactly 1 -ParameterFilter { $ButtonFlags -eq [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_LEFTDOWN }
@@ -219,7 +219,7 @@ Describe 'Invoke-MouseClick' -Tag 'Unit' {
             Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 20 } } -ModuleName LastWarAutoScreenshot
             Mock Invoke-SendMouseInput { 1 } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration { @{ MouseControl = @{ ClickDownDurationRangeMs = @(50, 150) } } } -ModuleName LastWarAutoScreenshot
+            Mock Get-ModuleConfiguration { @{ MouseControl = @{ MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150 } } } -ModuleName LastWarAutoScreenshot
             Mock Get-Random { 75 } -ModuleName LastWarAutoScreenshot
             Invoke-MouseClick -X 30 -Y 40 | Should -Be $true
             Should -Invoke Start-Sleep -Exactly 1 -ParameterFilter { $Milliseconds -eq 75 }
@@ -232,7 +232,7 @@ Describe 'Invoke-MouseClick' -Tag 'Unit' {
             Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 20 } } -ModuleName LastWarAutoScreenshot
             Mock Invoke-SendMouseInput { 0 } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration { @{ MouseControl = @{ ClickDownDurationRangeMs = @(50, 150) } } } -ModuleName LastWarAutoScreenshot
+            Mock Get-ModuleConfiguration { @{ MouseControl = @{ MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150 } } } -ModuleName LastWarAutoScreenshot
             Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
             Invoke-MouseClick -X 30 -Y 40 -DownDurationMs 100 | Should -Be $false
             Should -Invoke Write-LastWarLog -Exactly 1
@@ -394,7 +394,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 @{ 
                     MouseControl = @{ 
                         ClickPreDelayRangeMs = @(50, 200)
-                        ClickDownDurationRangeMs = @(50, 150)
+                        MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
                 }
@@ -421,7 +421,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 @{ 
                     MouseControl = @{ 
                         ClickPreDelayRangeMs = @(50, 200)
-                        ClickDownDurationRangeMs = @(50, 150)
+                        MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
                 }
@@ -448,7 +448,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 @{ 
                     MouseControl = @{ 
                         ClickPreDelayRangeMs = @(50, 200)
-                        ClickDownDurationRangeMs = @(50, 150)
+                        MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
                 }
@@ -472,7 +472,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 @{ 
                     MouseControl = @{ 
                         ClickPreDelayRangeMs = @(50, 200)
-                        ClickDownDurationRangeMs = @(50, 150)
+                        MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
                 }
@@ -500,7 +500,7 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
                 @{ 
                     MouseControl = @{ 
                         ClickPreDelayRangeMs = @(50, 200)
-                        ClickDownDurationRangeMs = @(50, 150)
+                        MinClickDownDurationRangeMs = 50; MaxClickDownDurationRangeMs = 150
                         ClickPostDelayRangeMs = @(100, 300)
                     }
                 }

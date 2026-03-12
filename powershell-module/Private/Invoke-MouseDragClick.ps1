@@ -51,7 +51,8 @@ function Invoke-MouseDragClick {
     $mouseConfig = $config.MouseControl
 
     $preDelayRange  = $mouseConfig.ClickPreDelayRangeMs
-    $holdRange      = $mouseConfig.ClickDownDurationRangeMs
+    $minHold        = $mouseConfig.MinClickDownDurationRangeMs
+    $maxHold        = $mouseConfig.MaxClickDownDurationRangeMs
     $postDelayRange = $mouseConfig.ClickPostDelayRangeMs
 
     # Step 1 — Move to start position
@@ -94,9 +95,7 @@ function Invoke-MouseDragClick {
         $buttonDownSent = $true
 
         # Step 5 — Hold delay
-        if ($null -ne $holdRange -and $holdRange.Count -eq 2) {
-            Start-Sleep -Milliseconds (Get-Random -Minimum $holdRange[0] -Maximum ($holdRange[1] + 1))
-        }
+        Start-Sleep -Milliseconds (Get-Random -Minimum $minHold -Maximum ($maxHold + 1))
 
         # Step 6 — Emergency stop check after button is down
         if ($script:EmergencyStopRequested) {

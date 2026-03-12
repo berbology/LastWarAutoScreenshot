@@ -48,7 +48,7 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.MouseControl | Should -Not -BeNullOrEmpty
-                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 16
+                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 17
             }
         }
 
@@ -69,7 +69,8 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $m.BezierControlPointOffsetFactor | Should -Be 0.3
                 $m.MinMovementDurationMs | Should -Be 200
                 $m.MaxMovementDurationMs | Should -Be 600
-                $m.ClickDownDurationRangeMs | Should -Be @(50, 150)
+                $m.MinClickDownDurationRangeMs | Should -Be 50
+                $m.MaxClickDownDurationRangeMs | Should -Be 150
                 $m.ClickPreDelayRangeMs | Should -Be @(50, 200)
                 $m.ClickPostDelayRangeMs | Should -Be @(100, 300)
                 $m.PathPointCount | Should -Be 20

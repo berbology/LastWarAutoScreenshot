@@ -51,7 +51,8 @@ function Get-DefaultModuleSettings {
             BezierControlPointOffsetFactor = 0.3
             MinMovementDurationMs          = 200
             MaxMovementDurationMs          = 600
-            ClickDownDurationRangeMs       = @(50, 150)
+            MinClickDownDurationRangeMs    = 50
+            MaxClickDownDurationRangeMs    = 150
             ClickPreDelayRangeMs           = @(50, 200)
             ClickPostDelayRangeMs          = @(100, 300)
             PathPointCount                 = 20
@@ -194,7 +195,7 @@ $script:ConfigValidationSchema = @{
         Description = 'Minimum micro-pause delay duration in ms (0-5000)'
         Nullable    = $false
     }
-    '.MouseControlMaxMicroPauseDurationMs'        = @{
+    'MouseControl.MaxMicroPauseDurationMs'        = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
@@ -215,11 +216,18 @@ $script:ConfigValidationSchema = @{
         Description = 'Maximum duration in ms for total mouse movement (0-5000)'
         Nullable    = $false
     }
-    'MouseControl.ClickDownDurationRangeMs'       = @{
-        Type        = 'intArray'
+    'MouseControl.MinClickDownDurationRangeMs'     = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for mouse-button hold during click (each element 0-5000, min ≤ max)'
+        Description = 'Minimum mouse-button hold duration in ms during click (0-5000)'
+        Nullable    = $false
+    }
+    'MouseControl.MaxClickDownDurationRangeMs'     = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum mouse-button hold duration in ms during click (0-5000)'
         Nullable    = $false
     }
     'MouseControl.ClickPreDelayRangeMs'           = @{

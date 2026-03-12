@@ -119,7 +119,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     BezierControlPointOffsetFactor = 0.5
                     MinMovementDurationMs = 1000
                     MaxMovementDurationMs = 2000
-                    ClickDownDurationRangeMs = @(100, 200)
+                    MinClickDownDurationRangeMs = 100
+                    MaxClickDownDurationRangeMs = 200
                     ClickPreDelayRangeMs = @(100, 300)
                     ClickPostDelayRangeMs = @(200, 400)
                     PathPointCount = 50
@@ -172,7 +173,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.MouseControl.BezierControlPointOffsetFactor | Should -Be 0.5
                 $config.MouseControl.MinMovementDurationMs | Should -Be 1000
                 $config.MouseControl.MaxMovementDurationMs | Should -Be 2000
-                $config.MouseControl.ClickDownDurationRangeMs | Should -Be @(100, 200)
+                $config.MouseControl.MinClickDownDurationRangeMs | Should -Be 100
+                $config.MouseControl.MaxClickDownDurationRangeMs | Should -Be 200
                 $config.MouseControl.ClickPreDelayRangeMs | Should -Be @(100, 300)
                 $config.MouseControl.ClickPostDelayRangeMs | Should -Be @(200, 400)
                 $config.MouseControl.PathPointCount | Should -Be 50
