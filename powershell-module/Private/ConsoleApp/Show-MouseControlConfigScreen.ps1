@@ -43,8 +43,9 @@ function Show-MouseControlConfigScreen {
         MouseControl keys covered (in order):
           EasingEnabled, OvershootEnabled, OvershootFactor, MicroPausesEnabled,
           MicroPauseChance, MinMicroPauseDurationMs, MaxMicroPauseDurationMs, JitterEnabled,
-          JitterRadiusPx, BezierControlPointOffsetFactor, MovementDurationRangeMs,
-          ClickDownDurationRangeMs, ClickPreDelayRangeMs, ClickPostDelayRangeMs, PathPointCount
+          JitterRadiusPx, BezierControlPointOffsetFactor, MinMovementDurationMs,
+          MaxMovementDurationMs, ClickDownDurationRangeMs, ClickPreDelayRangeMs,
+          ClickPostDelayRangeMs, PathPointCount
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -163,11 +164,18 @@ function Show-MouseControlConfigScreen {
             DefGet = { param($d) $d.MouseControl.BezierControlPointOffsetFactor }
         },
         @{
-            Key    = 'MouseControl.MovementDurationRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.MovementDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.MovementDurationRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.MovementDurationRangeMs }
+            Key    = 'MouseControl.MinMovementDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinMovementDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MinMovementDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinMovementDurationMs }
+        },
+        @{
+            Key    = 'MouseControl.MaxMovementDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxMovementDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxMovementDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxMovementDurationMs }
         },
         @{
             Key    = 'MouseControl.ClickDownDurationRangeMs'

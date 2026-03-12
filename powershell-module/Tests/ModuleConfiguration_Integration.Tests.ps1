@@ -145,7 +145,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.JitterEnabled | Should -Be $true
                 $mouse.JitterRadiusPx | Should -Be 2
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
-                $mouse.MovementDurationRangeMs | Should -Be @(200, 600)
+                $mouse.MinMovementDurationMs | Should -Be 200
+                $mouse.MaxMovementDurationMs | Should -Be 600
                 $mouse.ClickDownDurationRangeMs | Should -Be @(50, 150)
                 $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
                 $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
@@ -169,7 +170,8 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.JitterEnabled | Should -Be $true
                 $mouse.JitterRadiusPx | Should -Be 2
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
-                $mouse.MovementDurationRangeMs | Should -Be @(200, 600)
+                $mouse.MinMovementDurationMs | Should -Be 200
+                $mouse.MaxMovementDurationMs | Should -Be 600
                 $mouse.ClickDownDurationRangeMs | Should -Be @(50, 150)
                 $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
                 $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
@@ -332,7 +334,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         EasingEnabled = $true; OvershootEnabled = $true; OvershootFactor = 0.1
                         MicroPausesEnabled = $true; MicroPauseChance = 0.2
                         MinMicroPauseDurationMs = 20; MaxMicroPauseDurationMs = 80; JitterEnabled = $true; JitterRadiusPx = 2
-                        BezierControlPointOffsetFactor = 0.3; MovementDurationRangeMs = @(200, 600)
+                        BezierControlPointOffsetFactor = 0.3; MinMovementDurationMs = 200; MaxMovementDurationMs = 600
                         ClickDownDurationRangeMs = @(50, 150); ClickPreDelayRangeMs = @(50, 200)
                         ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
                     }

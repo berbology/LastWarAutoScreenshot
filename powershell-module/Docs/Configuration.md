@@ -38,7 +38,8 @@ Controls how the cursor moves to avoid looking like a bot.
 | `JitterEnabled` | bool | `true` | Slight path wobble |
 | `JitterRadiusPx` | int | `2` | Wobble radius in pixels (0-20) |
 | `BezierControlPointOffsetFactor` | double | `0.3` | Curve sharpness (0.0-2.0) |
-| `MovementDurationRangeMs` | int[] | `[200, 600]` | Total move time range (ms) |
+| `MinMovementDurationMs` | int | `200` | Minimum total move time (ms) |
+| `MaxMovementDurationMs` | int | `600` | Maximum total move time (ms) |
 | `ClickDownDurationRangeMs` | int[] | `[50, 150]` | Mouse-down hold time range (ms) |
 | `ClickPreDelayRangeMs` | int[] | `[50, 200]` | Delay before click (ms) |
 | `ClickPostDelayRangeMs` | int[] | `[100, 300]` | Delay after click (ms) |
@@ -57,7 +58,8 @@ Controls how the cursor moves to avoid looking like a bot.
   "MaxMicroPauseDurationMs": 80,
   "JitterEnabled": true,
   "JitterRadiusPx": 2,
-  "MovementDurationRangeMs": [200, 600],
+  "MinMovementDurationMs": 200,
+  "MaxMovementDurationMs": 600,
   "ClickDownDurationRangeMs": [50, 150],
   "PathPointCount": 20
 }

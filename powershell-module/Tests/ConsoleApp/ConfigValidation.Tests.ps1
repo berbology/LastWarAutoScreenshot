@@ -257,21 +257,21 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
     Context 'intArray type validation' {
         It 'Should return Valid=$true for a valid two-element array within bounds' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(200, 600)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(200, 600)
                 $result.Valid | Should -BeTrue
             }
         }
 
         It 'Should return Valid=$true when element[0] equals element[1] (min equals max)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(300, 300)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(300, 300)
                 $result.Valid | Should -BeTrue
             }
         }
 
         It 'Should return Valid=$false with a non-empty message when element[0] exceeds element[1]' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(600, 200)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(600, 200)
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -279,7 +279,7 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$false with a non-empty message when element[0] is below Min' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(-1, 200)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(-1, 200)
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -287,7 +287,7 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$false with a non-empty message when element[1] exceeds Max' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(200, 5001)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(200, 5001)
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -295,7 +295,7 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$false with a non-empty message for an array with more than two elements' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(100, 200, 300)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(100, 200, 300)
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -303,7 +303,7 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$false with a non-empty message for a single-element array' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value @(200)
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value @(200)
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -311,14 +311,14 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$true for a comma-separated string with valid values' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value '200, 600'
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value '200, 600'
                 $result.Valid | Should -BeTrue
             }
         }
 
         It 'Should return Valid=$false for a comma-separated string where min exceeds max' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value '600, 200'
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value '600, 200'
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -326,7 +326,7 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$false for a comma-separated string with non-integer values' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value '200.5, 600.5'
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value '200.5, 600.5'
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }
@@ -334,7 +334,7 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
 
         It 'Should return Valid=$false for a plain non-array, non-string object' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value ([hashtable]@{})
+                $result = Test-ConfigValue -Key 'MouseControl.ClickDownDurationRangeMs' -Value ([hashtable]@{})
                 $result.Valid | Should -BeFalse
                 $result.Message | Should -Not -BeNullOrEmpty
             }

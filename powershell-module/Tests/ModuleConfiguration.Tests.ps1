@@ -117,7 +117,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     JitterEnabled = $false
                     JitterRadiusPx = 5
                     BezierControlPointOffsetFactor = 0.5
-                    MovementDurationRangeMs = @(1000, 2000)
+                    MinMovementDurationMs = 1000
+                    MaxMovementDurationMs = 2000
                     ClickDownDurationRangeMs = @(100, 200)
                     ClickPreDelayRangeMs = @(100, 300)
                     ClickPostDelayRangeMs = @(200, 400)
@@ -169,7 +170,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.MouseControl.JitterEnabled | Should -Be $false
                 $config.MouseControl.JitterRadiusPx | Should -Be 5
                 $config.MouseControl.BezierControlPointOffsetFactor | Should -Be 0.5
-                $config.MouseControl.MovementDurationRangeMs | Should -Be @(1000, 2000)
+                $config.MouseControl.MinMovementDurationMs | Should -Be 1000
+                $config.MouseControl.MaxMovementDurationMs | Should -Be 2000
                 $config.MouseControl.ClickDownDurationRangeMs | Should -Be @(100, 200)
                 $config.MouseControl.ClickPreDelayRangeMs | Should -Be @(100, 300)
                 $config.MouseControl.ClickPostDelayRangeMs | Should -Be @(200, 400)

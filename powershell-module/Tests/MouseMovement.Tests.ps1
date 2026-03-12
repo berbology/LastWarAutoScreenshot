@@ -100,7 +100,7 @@ Describe 'Invoke-MouseMovePath' -Tag 'Unit' {
             Mock Invoke-SetCursorPos { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
             } -ModuleName LastWarAutoScreenshot
             Invoke-MouseMovePath -Points $points | Should -Be $true
             Should -Invoke Invoke-SetCursorPos -Exactly ($points.Count-1)
@@ -114,7 +114,7 @@ Describe 'Invoke-MouseMovePath' -Tag 'Unit' {
             Mock Invoke-SetCursorPos { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep { param($Milliseconds) $script:sleepArgs += $Milliseconds } -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(700, 700); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 700; MaxMovementDurationMs = 700; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
             } -ModuleName LastWarAutoScreenshot
             $script:sleepArgs = @()
             Invoke-MouseMovePath -Points $points | Out-Null
@@ -132,7 +132,7 @@ Describe 'Invoke-MouseMovePath' -Tag 'Unit' {
             Mock Invoke-SetCursorPos { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 1.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 1.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
             } -ModuleName LastWarAutoScreenshot
             Invoke-MouseMovePath -Points $points | Out-Null
             # For n points, n-1 steps, so n-1 main sleeps + n-1 micro-pauses
@@ -146,7 +146,7 @@ Describe 'Invoke-MouseMovePath' -Tag 'Unit' {
             Mock Invoke-SetCursorPos { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $true; OvershootFactor = 0.5 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $true; OvershootFactor = 0.5 } }
             } -ModuleName LastWarAutoScreenshot
             Mock Get-BezierPoints {
                 @( [PSCustomObject]@{ X = 10; Y = 10 }, [PSCustomObject]@{ X = 5; Y = 5 } )
@@ -164,7 +164,7 @@ Describe 'Invoke-MouseMovePath' -Tag 'Unit' {
             Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1; OvershootEnabled = $false; OvershootFactor = 0.1 } }
             } -ModuleName LastWarAutoScreenshot
             $result = Invoke-MouseMovePath -Points $points
             $result | Should -Be $false
@@ -298,7 +298,7 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             Mock Invoke-SendMouseMoveAbsolute { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
             } -ModuleName LastWarAutoScreenshot
             Invoke-MouseDragPath -Points $points | Should -Be $true
             Should -Invoke Invoke-SendMouseMoveAbsolute -Exactly ($points.Count-1)
@@ -312,7 +312,7 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             Mock Invoke-SendMouseMoveAbsolute { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep { param($Milliseconds) $script:sleepArgs += $Milliseconds } -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(700, 700); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 700; MaxMovementDurationMs = 700; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
             } -ModuleName LastWarAutoScreenshot
             $script:sleepArgs = @()
             Invoke-MouseDragPath -Points $points | Out-Null
@@ -329,7 +329,7 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             Mock Invoke-SendMouseMoveAbsolute { $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 1.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 1.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
             } -ModuleName LastWarAutoScreenshot
             Invoke-MouseDragPath -Points $points | Out-Null
             # n points = n-1 steps = n-1 main sleeps + n-1 micro-pauses
@@ -344,7 +344,7 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
             } -ModuleName LastWarAutoScreenshot
             $result = Invoke-MouseDragPath -Points $points
             $result | Should -Be $false
@@ -358,7 +358,7 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             $points = @( [PSCustomObject]@{ X = 10; Y = 20 } )
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
             } -ModuleName LastWarAutoScreenshot
             { Invoke-MouseDragPath -Points $points } | Should -Throw
         }
@@ -371,7 +371,7 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             Mock Invoke-SendMouseMoveAbsolute { $script:moveCount++; $true } -ModuleName LastWarAutoScreenshot
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration {
-                @{ MouseControl = @{ MovementDurationRangeMs = @(100, 100); MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
+                @{ MouseControl = @{ MinMovementDurationMs = 100; MaxMovementDurationMs = 100; MicroPauseChance = 0.0; MinMicroPauseDurationMs = 1; MaxMicroPauseDurationMs = 1 } }
             } -ModuleName LastWarAutoScreenshot
             $script:moveCount = 0
             Invoke-MouseDragPath -Points $points | Out-Null

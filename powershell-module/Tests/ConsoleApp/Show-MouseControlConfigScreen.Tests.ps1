@@ -38,7 +38,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -64,8 +65,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -81,9 +82,23 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 # Patterns use (?s) to match across newlines (table text wraps due to column width)
                 $tc.Output | Should -Match '(?s)Easin.*gEnabled'
+                $tc.Output | Should -Match '(?s)Overs.*hootEnab.*led'
                 $tc.Output | Should -Match '(?s)Overs.*hootFactor'
+                $tc.Output | Should -Match '(?s)Micro.*Pause.*Enabled'
+                $tc.Output | Should -Match '(?s)Micro.*Pause.*Chance'
                 $tc.Output | Should -Match '(?s)MinMi.*croPause.*DurationMs'
-                $tc.Output | Should -Match '(?s)Movem.*entDurationRangeMs'
+                $tc.Output | Should -Match '(?s)MaxMi.*croPause.*DurationMs'
+                $tc.Output | Should -Match '(?s)Jitte.*rEnabled'
+                $tc.Output | Should -Match '(?s)Jitte.*rRadiusPx'
+                $tc.Output | Should -Match '(?s)Bezie.*rControl.*PointOffse.*tFactor'
+                $tc.Output | Should -Match '(?s)MinMo.*vementDu.*rationMs'
+                $tc.Output | Should -Match '(?s)MaxMo.*vementDu.*rationMs'
+                $tc.Output | Should -Match '(?s)MinCl.*ickDownD.*urationRan.*geMs'
+                $tc.Output | Should -Match '(?s)MaxCl.*ickDownD.*urationRan.*geMs'
+                $tc.Output | Should -Match '(?s)MinCl.*ickPrede.*elayRangeMs'
+                $tc.Output | Should -Match '(?s)MaxCl.*ickPrede.*elayRangeMs'
+                $tc.Output | Should -Match '(?s)MinCl.*ickPostd.*elayRangeMs'
+                $tc.Output | Should -Match '(?s)MaxCl.*ickPostd.*elayRangeMs'
                 $tc.Output | Should -Match '(?s)PathP.*ointCount'
             }
         }
@@ -111,7 +126,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -136,8 +152,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -154,7 +170,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 # Numeric values and array values should appear in the rendered table
                 $tc.Output | Should -Match '0.1'    # OvershootFactor
                 $tc.Output | Should -Match '20'     # part of MinMicroPauseDurationMs
-                $tc.Output | Should -Match '200'    # part of MovementDurationRangeMs
+                $tc.Output | Should -Match '200'    # part of MinMovementDurationMs
                 $tc.Output | Should -Match '20'     # PathPointCount
             }
         }
@@ -188,7 +204,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -213,8 +230,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -253,7 +270,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -278,8 +296,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -320,7 +338,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -345,8 +364,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -385,7 +404,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -410,8 +430,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -456,7 +476,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -481,8 +502,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -523,7 +544,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -548,8 +570,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -596,7 +618,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -621,8 +644,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -642,11 +665,11 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Valid new intArray values for MovementDurationRangeMs
+    # Context: Valid new int values for MinMovementDurationMs and MaxMovementDurationMs
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters valid new intArray values for MovementDurationRangeMs' {
+    Context 'When the user enters valid new int values for MinMovementDurationMs and MaxMovementDurationMs' {
 
-        It 'The saved config contains the new array values' {
+        It 'The saved config contains the new scalar values' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -669,7 +692,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -694,8 +718,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')          # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # BezierControlPointOffsetFactor
-                $tc.Input.PushTextWithEnter('100')        # MovementDurationRangeMs min = 100
-                $tc.Input.PushTextWithEnter('400')        # MovementDurationRangeMs max = 400
+                $tc.Input.PushTextWithEnter('100')        # MinMovementDurationMs = 100
+                $tc.Input.PushTextWithEnter('400')        # MaxMovementDurationMs = 400
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # ClickPreDelayRangeMs min
@@ -708,8 +732,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Show-MouseControlConfigScreen -Console $tc
 
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.MouseControl.MovementDurationRangeMs[0] -eq 100 -and
-                    $Config.MouseControl.MovementDurationRangeMs[1] -eq 400
+                    $Config.MouseControl.MinMovementDurationMs -eq 100 -and
+                    $Config.MouseControl.MaxMovementDurationMs -eq 400
                 }
             }
         }
@@ -744,7 +768,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -769,8 +794,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')                   # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
@@ -791,13 +816,13 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: [Reset to default] sentinel for an intArray key
+    # Context: [Reset to default] sentinel for the MinMovementDurationMs int key
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters [Reset to default] for the MovementDurationRangeMs intArray key' {
+    Context 'When the user enters [Reset to default] for the MinMovementDurationMs int key' {
 
-        It 'The saved config contains the schema default value for MovementDurationRangeMs' {
+        It 'The saved config contains the schema default value for MinMovementDurationMs' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                # Use non-default MovementDurationRangeMs value to make the reset detectable
+                # Use non-default MinMovementDurationMs value to make the reset detectable
                 $mockConfigNonDefault = {
                     [PSCustomObject]@{
                         Logging = [PSCustomObject]@{
@@ -819,7 +844,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(1000, 2000)
+                            MinMovementDurationMs          = 1000
+                            MaxMovementDurationMs          = 2000
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -844,7 +870,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')                   # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
-                $tc.Input.PushTextWithEnter('[Reset to default]')  # MovementDurationRangeMs min → reset entire array
+                $tc.Input.PushTextWithEnter('[Reset to default]')  # MinMovementDurationMs → reset to default (200)
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs → keep current (2000)
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
@@ -856,10 +883,10 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 Show-MouseControlConfigScreen -Console $tc
 
-                # Default MovementDurationRangeMs is @(200, 600) (from Get-DefaultModuleSettings)
+                # Default MinMovementDurationMs is 200 (from Get-DefaultModuleSettings)
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.MouseControl.MovementDurationRangeMs[0] -eq 200 -and
-                    $Config.MouseControl.MovementDurationRangeMs[1] -eq 600
+                    $Config.MouseControl.MinMovementDurationMs -eq 200 -and
+                    $Config.MouseControl.MaxMovementDurationMs -eq 2000
                 }
             }
         }
@@ -888,7 +915,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(500, 1000)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -913,8 +941,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')                   # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter)             # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)             # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickDownDurationRangeMs min
                 $tc.Input.PushTextWithEnter('[Reset to default]')  # ClickDownDurationRangeMs max → reset entire array
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # ClickPreDelayRangeMs min
@@ -963,7 +991,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -988,8 +1017,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -1030,7 +1059,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $false
                             JitterRadiusPx                 = 15
                             BezierControlPointOffsetFactor = 1.5
-                            MovementDurationRangeMs        = @(1000, 2000)
+                            MinMovementDurationMs          = 1000
+                            MaxMovementDurationMs          = 2000
                             ClickDownDurationRangeMs       = @(300, 500)
                             ClickPreDelayRangeMs           = @(300, 600)
                             ClickPostDelayRangeMs          = @(400, 700)
@@ -1055,8 +1085,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('n')       # JitterEnabled (confirm current false)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -1102,7 +1132,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -1127,8 +1158,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min
@@ -1168,7 +1199,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                             JitterEnabled                  = $true
                             JitterRadiusPx                 = 2
                             BezierControlPointOffsetFactor = 0.3
-                            MovementDurationRangeMs        = @(200, 600)
+                            MinMovementDurationMs          = 200
+                            MaxMovementDurationMs          = 600
                             ClickDownDurationRangeMs       = @(50, 150)
                             ClickPreDelayRangeMs           = @(50, 200)
                             ClickPostDelayRangeMs          = @(100, 300)
@@ -1193,8 +1225,8 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # JitterEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # JitterRadiusPx
                 $tc.Input.PushKey([ConsoleKey]::Enter) # BezierControlPointOffsetFactor
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs min
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MovementDurationRangeMs max
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MinMovementDurationMs
+                $tc.Input.PushKey([ConsoleKey]::Enter) # MaxMovementDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs min
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickDownDurationRangeMs max
                 $tc.Input.PushKey([ConsoleKey]::Enter) # ClickPreDelayRangeMs min

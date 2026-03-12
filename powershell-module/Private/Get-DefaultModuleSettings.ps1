@@ -49,7 +49,8 @@ function Get-DefaultModuleSettings {
             JitterEnabled                  = $true
             JitterRadiusPx                 = 2
             BezierControlPointOffsetFactor = 0.3
-            MovementDurationRangeMs        = @(200, 600)
+            MinMovementDurationMs          = 200
+            MaxMovementDurationMs          = 600
             ClickDownDurationRangeMs       = @(50, 150)
             ClickPreDelayRangeMs           = @(50, 200)
             ClickPostDelayRangeMs          = @(100, 300)
@@ -200,11 +201,18 @@ $script:ConfigValidationSchema = @{
         Description = 'Maximum micro-pause delay duration in ms (0-5000)'
         Nullable    = $false
     }
-    'MouseControl.MovementDurationRangeMs'        = @{
-        Type        = 'intArray'
+    'MouseControl.MinMovementDurationMs'          = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for total mouse movement (each element 0-5000, min <= max)'
+        Description = 'Minimum duration in ms for total mouse movement (0-5000)'
+        Nullable    = $false
+    }
+    'MouseControl.MaxMovementDurationMs'          = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum duration in ms for total mouse movement (0-5000)'
         Nullable    = $false
     }
     'MouseControl.ClickDownDurationRangeMs'       = @{

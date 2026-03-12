@@ -33,7 +33,8 @@ function Invoke-MouseDragPath {
     )
 
     $config                    = Get-ModuleConfiguration
-    $MovementDurationRangeMs   = $config.MouseControl.MovementDurationRangeMs
+    $MinMovementDurationMs     = $config.MouseControl.MinMovementDurationMs
+    $MaxMovementDurationMs     = $config.MouseControl.MaxMovementDurationMs
     $MicroPauseChance          = $config.MouseControl.MicroPauseChance
     $MinMicroPauseDurationMs   = $config.MouseControl.MinMicroPauseDurationMs
     $MaxMicroPauseDurationMs   = $config.MouseControl.MaxMicroPauseDurationMs
@@ -43,7 +44,7 @@ function Invoke-MouseDragPath {
         throw 'Invoke-MouseDragPath: At least 2 points required.'
     }
 
-    $totalDurationMs = Get-Random -Minimum $MovementDurationRangeMs[0] -Maximum ($MovementDurationRangeMs[1] + 1)
+    $totalDurationMs = Get-Random -Minimum $MinMovementDurationMs -Maximum ($MaxMovementDurationMs + 1)
 
     # Ease-in/out: same |cos(πt)| curve as Invoke-MouseMovePath
     $numActualSteps = $numSteps - 1
