@@ -640,7 +640,7 @@
       - Loads current config via `Get-ModuleConfiguration`
       - Displays a `Table` showing current values for all `Logging.*` and `Logging.FileBackend.*` keys, their current values, allowed values / range, and a description sourced from `$script:ConfigValidationSchema`
       - For each key in turn (via a `TextPrompt` loop):
-        - Prompt: `"<Description> [current: <value>] (<constraints>):"`
+        - Prompt: `"<Description> [<value>] (<constraints>):"`
         - If the user enters an empty string (just presses Enter), keep the existing value
         - If the user types a value, call `Test-ConfigValue`; if invalid, display the error message in red and re-prompt the same key (do not advance to the next key until valid input is given or user accepts the current value)
         - Offer `"[Reset to default]"` as a recognised input string that substitutes the default value from `Get-DefaultModuleSettings`

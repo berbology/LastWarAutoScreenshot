@@ -39,7 +39,7 @@ function Show-ScreenshotConfigScreen {
 
              All other keys (int, double):
                TextPrompt (identical pattern to Show-LoggingConfigScreen):
-                 "<Description> [current: <value>] (<constraints>)"
+                 "<Description> [<value>] (<constraints>)"
                Empty input → keep current; '[Reset to default]' → restore default;
                any other input is validated via Test-ConfigValue and re-prompted if invalid.
 
