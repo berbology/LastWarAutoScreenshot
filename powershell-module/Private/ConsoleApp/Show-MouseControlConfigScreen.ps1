@@ -15,8 +15,8 @@ function Show-MouseControlConfigScreen {
           3. Iterates each MouseControl key in order.  The prompt type depends on the key type:
 
              Bool keys (EasingEnabled, OvershootEnabled, MicroPausesEnabled, JitterEnabled):
-               Uses a ConfirmationPrompt (yes/no).  DefaultValue is set to the current value
-               so pressing Enter keeps it unchanged.
+               Uses a TextPrompt (y/n).  Empty input keeps the current value unchanged.
+               Invalid input shows an error and re-prompts.
 
              intArray keys (range pairs - all duration/delay range keys):
                Shows two separate TextPrompts labelled:
@@ -29,8 +29,8 @@ function Show-MouseControlConfigScreen {
                entire array key to its schema default and moves to the next key.
 
              All other keys (int, double):
-               Uses a TextPrompt (identical pattern to Show-LoggingConfigScreen):
-                 "<Description> [<value>] (<constraints>):"
+               Uses a TextPrompt:
+                 "<Description> [blue][<min>-<max>][/] [green](<value>)[/]:"
                Empty input → keep current; '[Reset to default]' → restore default;
                any other input is validated and re-prompted if invalid.
 
@@ -65,10 +65,9 @@ function Show-MouseControlConfigScreen {
         is routed through this interface so Pester tests can inject a TestConsole and assert
         on its Output property without requiring a live terminal.
 
-        Bool keys use ConfirmationPrompt.  In tests, push 'y' or 'n' explicitly using
-        $tc.Input.PushTextWithEnter('y') / PushTextWithEnter('n') rather than relying on
-        PushKey(Enter), as DefaultValue enforcement for empty input depends on the
-        TestConsole/Spectre.Console version in use.
+        Bool keys use a TextPrompt with y/n parsing (same pattern as Show-ScreenshotConfigScreen).
+        In tests, push 'y' or 'n' explicitly using $tc.Input.PushTextWithEnter('y') or
+        PushTextWithEnter('n').  Empty input (PushKey(Enter)) keeps the current value.
 
         intArray '[Reset to default]' sentinel: entering '[Reset to default]' on either
         the min or max prompt resets the ENTIRE array key to its default - not just one
@@ -230,6 +229,7 @@ function Show-MouseControlConfigScreen {
     )
 
     # ── Helper: build a human-readable constraint string from a schema rule ───
+    # Used for the summary table only; returns plain text (no markup).
     $buildConstraintString = {
         param($rule)
         if ($null -eq $rule) { return '' }
@@ -237,24 +237,57 @@ function Show-MouseControlConfigScreen {
             'stringEnum' { return "one of: $($rule.AllowedValues -join ' | ')" }
             'int' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "integer $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'integer'
             }
             'double' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "decimal $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'decimal'
             }
-            'bool'     { return 'yes or no' }
-            'intArray' {
-                if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "min, max (each $($rule.Min)-$($rule.Max); min ≤ max)"
-                }
-                return 'min, max'
-            }
-            default { return '' }
+            'bool'   { return 'yes or no' }
+            default  { return '' }
+        }
+    }
+
+    # ── Helper: build bool prompt text ───────────────────────────────────────────
+    # Format: "Description [blue][[y/n]][/] [green](y)[/]: "
+    $buildBoolPromptText = {
+        param($description, $currentValue)
+        $displayValue = if ($currentValue) { 'y' } else { 'n' }
+        return "$description [blue][[y/n]][/] [green]($displayValue)[/]: "
+    }
+
+    # ── Helper: build numeric prompt text ────────────────────────────────────────
+    # Format: "Description [blue][[min-max]][/] [green](value)[/]: "
+    $buildNumericPromptText = {
+        param($description, $rule, $currentValue)
+        $rangeStr = ''
+        if ($rule -and $rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+            $rangeStr = "$($rule.Min)-$($rule.Max)"
+        }
+
+        if ($rangeStr) {
+            return "$description [blue][[$rangeStr]][/] [green]($currentValue)[/]: "
+        } else {
+            return "$description [green]($currentValue)[/]: "
+        }
+    }
+
+    # ── Helper: parse yes/no user input to boolean ───────────────────────────────
+    $parseBoolInput = {
+        param($userInput)
+        $lower = $userInput.ToLowerInvariant().Trim()
+        if ($lower -in @('y', 'yes', 'true', '1')) {
+            return $true
+        }
+        elseif ($lower -in @('n', 'no', 'false', '0')) {
+            return $false
+        }
+        else {
+            return $null  # Invalid input
         }
     }
 
@@ -285,17 +318,38 @@ function Show-MouseControlConfigScreen {
 
     # ── Step 2: Prompt for each MouseControl key in turn ─────────────────────
     foreach ($def in $mouseControlKeyDefs) {
-        $rule          = $script:ConfigValidationSchema[$def.Key]
-        $description   = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
-        $constraintStr = & $buildConstraintString $rule
+        $rule        = $script:ConfigValidationSchema[$def.Key]
+        $description = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
 
         if ($def.Type -eq 'bool') {
-            # ── Bool: ConfirmationPrompt (yes/no) ─────────────────────────────
-            $currentValue  = & $def.Get $config
-            $promptText    = "$description [blue]$constraintStr[/] [green][[$currentValue]][/]:"
-            $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
-            $confirmPrompt.DefaultValue = [bool]$currentValue
-            $newValue = $confirmPrompt.Show($Console)
+            # ── Bool: TextPrompt with y/n parsing ────────────────────────────
+            $currentValue = & $def.Get $config
+            $promptText   = & $buildBoolPromptText $description $currentValue
+
+            while ($true) {
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty input → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    $newValue = $currentValue
+                    break
+                }
+
+                # Parse y/n/yes/no input
+                $parsed = & $parseBoolInput $answer
+                if ($null -eq $parsed) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Please enter y/yes/true/1 or n/no/false/0.`n[/]")
+                    )
+                    continue
+                }
+
+                $newValue = $parsed
+                break
+            }
+
             & $def.Set $config $newValue
         }
         elseif ($def.Type -eq 'intArray') {
@@ -353,10 +407,10 @@ function Show-MouseControlConfigScreen {
             }
         }
         else {
-            # ── int / double: TextPrompt (identical to Show-LoggingConfigScreen) ──
+            # ── int / double: TextPrompt with standard format and validation ──
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [blue]$constraintStr[/] [green][[$currentValue]][/]:"
+                $promptText   = & $buildNumericPromptText $description $rule $currentValue
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true

@@ -57,7 +57,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                # Bool keys: y × 4, non-bool keys: Enter × 15 (3 double+6 int+2×2 intArray)
+                # Bool keys: y × 4, non-bool keys: Enter × 15 (3 double + 12 int)
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -617,7 +617,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     # Context: Bool key set to false via ConfirmationPrompt
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user sets a bool key to false via ConfirmationPrompt' {
+    Context 'When the user sets a bool key to false via y/n input' {
 
         It 'EasingEnabled is saved as false when the user enters n' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
