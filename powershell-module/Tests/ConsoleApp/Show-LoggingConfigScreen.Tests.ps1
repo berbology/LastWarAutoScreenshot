@@ -300,87 +300,9 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Invalid value entered for a key re-prompts
+    # Context: Valid selection for MinimumLogLevel via SelectionPrompt
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters an invalid value for MinimumLogLevel' {
-
-        It 'Error message appears in console output' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxAgeDays         = 30
-                                MaxLogFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('InvalidLevel')
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
-                $tc.Output | Should -Match 'must be one of'
-            }
-        }
-
-        It 'After invalid input, accepting empty input keeps the original value in the saved config' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxAgeDays         = 30
-                                MaxLogFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('BADVALUE')
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
-                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.Logging.MinimumLogLevel -eq 'Info'
-                }
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Context: Valid value entered for a key is persisted
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters a valid new value for MinimumLogLevel' {
+    Context 'When the user selects a different MinimumLogLevel from the SelectionPrompt' {
 
         It 'The saved config contains the updated MinimumLogLevel value' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
@@ -405,55 +327,17 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('Warning')
-                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Move to 'Verbose (noisy...)'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Move to 'Warning (recoverable...)'
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select 'Warning'
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Accept default for Backend
+                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }  # Accept defaults for next 3 keys
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Save: 'Yes - save now'
 
                 Show-LoggingConfigScreen -Console $tc
 
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
                     $Config.Logging.MinimumLogLevel -eq 'Warning'
-                }
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Context: [Reset to default] sentinel on an individual key
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters [Reset to default] for the MinimumLogLevel key' {
-
-        It 'The saved config contains the schema default value for MinimumLogLevel' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfigWarning = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Warning'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxAgeDays         = 30
-                                MaxLogFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfigWarning
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('[Reset to default]')
-                for ($i = 0; $i -lt 4; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
-                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.Logging.MinimumLogLevel -eq 'Info'
                 }
             }
         }

@@ -12,17 +12,19 @@ function Show-LoggingConfigScreen {
           2. Renders a Spectre.Console Table showing each Logging key with its current
              value, allowed values or range, and a human-readable description sourced
              from $script:ConfigValidationSchema.
-          3. Iterates each Logging key in order.  For each key a TextPrompt is shown:
-               "Description [range] (current value): "
-             where the range bracket is rendered in blue and the current value in green.
-             - Empty input (just Enter) → current value kept unchanged.
-             - '[Reset to default]'     → value replaced with the default from
-                                          Get-DefaultModuleSettings.
-             - Any other input          → validated via Test-ConfigValue.  If invalid,
-                                          the error message is written to $Console in red
-                                          and the same prompt is repeated until the user
-                                          enters a valid value or accepts the current value
-                                          via Enter.
+          3. Iterates each Logging key in order.  For each key a prompt is shown:
+             - MinimumLogLevel & Backend: SelectionPrompt with display-friendly choices
+               that map back to raw config values via switch statement.
+             - All other keys (int): TextPrompt with format:
+               "<Description> [range] (current value): "
+               - Empty input (just Enter) → current value kept unchanged.
+               - '[Reset to default]'     → value replaced with the default from
+                                            Get-DefaultModuleSettings.
+               - Any other input          → validated via Test-ConfigValue.  If invalid,
+                                            the error message is written to $Console in red
+                                            and the same prompt is repeated until the user
+                                            enters a valid value or accepts the current value
+                                            via Enter.
           4. After all keys, renders a SelectionPrompt "Save changes?" with choices:
                - 'Yes - save now'                 → calls Save-ModuleSettings; success panel.
                - 'Reset ALL Logging settings to defaults' → replaces entire Logging section
@@ -51,6 +53,9 @@ function Show-LoggingConfigScreen {
         is routed through this interface so Pester tests can inject a TestConsole and assert
         on its Output property without requiring a live terminal.
 
+        MinimumLogLevel and Backend keys use SelectionPrompt with display-friendly choices
+        that map to raw config values. All other keys use TextPrompt.
+
         TextPrompt input is captured via $Console so TestConsole.Input.PushTextWithEnter()
         can pre-queue answers for automated tests.
 
@@ -77,34 +82,39 @@ function Show-LoggingConfigScreen {
     $defaults = Get-DefaultModuleSettings
 
     # ── Ordered list of Logging keys with their config navigation helpers ─────
-    # Each entry: [key, getter scriptblock, setter scriptblock]
+    # Each entry: [key, getter scriptblock, setter scriptblock, type]
     $loggingKeyDefs = @(
         @{
             Key    = 'Logging.MinimumLogLevel'
+            Type   = 'stringEnum'
             Get    = { param($c) $c.Logging.MinimumLogLevel }
             Set    = { param($c, $v) $c.Logging.MinimumLogLevel = $v }
             DefGet = { param($d) $d.Logging.MinimumLogLevel }
         },
         @{
             Key    = 'Logging.Backend'
+            Type   = 'stringEnum'
             Get    = { param($c) $c.Logging.Backend }
             Set    = { param($c, $v) $c.Logging.Backend = $v }
             DefGet = { param($d) $d.Logging.Backend }
         },
         @{
             Key    = 'Logging.FileBackend.MaxSizeMB'
+            Type   = 'int'
             Get    = { param($c) $c.Logging.FileBackend.MaxSizeMB }
             Set    = { param($c, $v) $c.Logging.FileBackend.MaxSizeMB = [int]$v }
             DefGet = { param($d) $d.Logging.FileBackend.MaxSizeMB }
         },
         @{
             Key    = 'Logging.FileBackend.MaxAgeDays'
+            Type   = 'int'
             Get    = { param($c) $c.Logging.FileBackend.MaxAgeDays }
             Set    = { param($c, $v) $c.Logging.FileBackend.MaxAgeDays = [int]$v }
             DefGet = { param($d) $d.Logging.FileBackend.MaxAgeDays }
         },
         @{
             Key    = 'Logging.FileBackend.MaxLogFileCount'
+            Type   = 'int'
             Get    = { param($c) $c.Logging.FileBackend.MaxLogFileCount }
             Set    = { param($c, $v) $c.Logging.FileBackend.MaxLogFileCount = [int]$v }
             DefGet = { param($d) $d.Logging.FileBackend.MaxLogFileCount }
@@ -193,37 +203,80 @@ function Show-LoggingConfigScreen {
         $rule        = $script:ConfigValidationSchema[$def.Key]
         $description = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
 
-        while ($true) {
-            $currentValue = & $def.Get $config
-            $promptText   = & $buildPromptText $description $rule $currentValue
-
-            $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
-            $textPrompt.AllowEmpty = $true
-            $answer = $textPrompt.Show($Console)
-
-            # Empty → keep current value
-            if ([string]::IsNullOrEmpty($answer)) {
-                break
+        if ($def.Type -eq 'stringEnum') {
+            if ($def.Key -eq 'Logging.MinimumLogLevel') {
+                # ── MinimumLogLevel: SelectionPrompt with display-mapped choices ──
+                $levelDisplayChoices = @(
+                    'Info (normal operations)',
+                    'Verbose (noisy; useful for debugging)',
+                    'Warning (recoverable issues)',
+                    'Error (failures and exceptions)'
+                )
+                $levelPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                    'Logging level:', $levelDisplayChoices
+                )
+                $displayChoice = $levelPrompt.Show($Console)
+                $rawValue = switch ($displayChoice) {
+                    'Info (normal operations)'              { 'Info' }
+                    'Verbose (noisy; useful for debugging)' { 'Verbose' }
+                    'Warning (recoverable issues)'          { 'Warning' }
+                    default                                 { 'Error' }
+                }
+                & $def.Set $config $rawValue
             }
-
-            # Reset sentinel (case-insensitive)
-            if ($answer -ieq '[Reset to default]') {
-                $defaultValue = & $def.DefGet $defaults
-                & $def.Set $config $defaultValue
-                break
+            elseif ($def.Key -eq 'Logging.Backend') {
+                # ── Backend: SelectionPrompt with display-mapped choices ────────
+                $backendDisplayChoices = @(
+                    'File,EventLog (both simultaneously)',
+                    'File (LastWarAutoScreenshot.log)',
+                    'EventLog (Windows Event Log)'
+                )
+                $backendPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                    'Log target:', $backendDisplayChoices
+                )
+                $displayChoice = $backendPrompt.Show($Console)
+                $rawValue = switch ($displayChoice) {
+                    'File,EventLog (both simultaneously)' { 'File,EventLog' }
+                    'File (LastWarAutoScreenshot.log)'    { 'File' }
+                    default                                { 'EventLog' }
+                }
+                & $def.Set $config $rawValue
             }
+        }
+        else {
+            # ── Non-stringEnum types: TextPrompt ─────────────────────────────
+            while ($true) {
+                $currentValue = & $def.Get $config
+                $promptText   = & $buildPromptText $description $rule $currentValue
 
-            # Validate entered value
-            $validation = Test-ConfigValue -Key $def.Key -Value $answer
-            if ($validation.Valid) {
-                & $def.Set $config $answer
-                break
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    break
+                }
+
+                # Reset sentinel (case-insensitive)
+                if ($answer -ieq '[Reset to default]') {
+                    $defaultValue = & $def.DefGet $defaults
+                    & $def.Set $config $defaultValue
+                    break
+                }
+
+                # Validate entered value
+                $validation = Test-ConfigValue -Key $def.Key -Value $answer
+                if ($validation.Valid) {
+                    & $def.Set $config $answer
+                    break
+                }
+
+                # Invalid - show error and re-prompt
+                $Console.Write(
+                    [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
+                )
             }
-
-            # Invalid - show error and re-prompt
-            $Console.Write(
-                [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($validation.Message))[/]`n")
-            )
         }
     }
 

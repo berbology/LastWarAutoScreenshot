@@ -105,7 +105,7 @@ $script:ConfigValidationSchema = @{
     'Logging.Backend'                             = @{
         Type          = 'stringEnum'
         AllowedValues = @('File', 'EventLog', 'File,EventLog')
-        Description   = "Log target'"
+        Description   = "Log target"
         Nullable      = $false
     }
     'Logging.FileBackend.MaxSizeMB'               = @{
