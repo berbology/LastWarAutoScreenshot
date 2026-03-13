@@ -48,7 +48,7 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.MouseControl | Should -Not -BeNullOrEmpty
-                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 18
+                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 19
             }
         }
 
