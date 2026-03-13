@@ -157,7 +157,7 @@ $script:ConfigValidationSchema = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 1.0
-        Description = 'Fraction of the last path step used as extra overshoot distance (0.0-1.0)'
+        Description = 'Fraction of the last path step used as extra overshoot distance'
         Nullable    = $false
     }
     'MouseControl.MicroPauseChance'               = @{
@@ -171,21 +171,21 @@ $script:ConfigValidationSchema = @{
         Type        = 'int'
         Min         = 0
         Max         = 20
-        Description = 'Jitter max pixel radius applied to Bezier path points - 0 to disable (0-20)'
+        Description = 'Jitter max pixel radius applied to Bezier path points - 0 to disable'
         Nullable    = $false
     }
     'MouseControl.BezierControlPointOffsetFactor' = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 2.0
-        Description = 'Path length multiplier for positioning Bezier control point (0.0-2.0)'
+        Description = 'Path length multiplier for positioning Bezier control point'
         Nullable    = $false
     }
     'MouseControl.PathPointCount'                 = @{
         Type        = 'int'
         Min         = 5
         Max         = 200
-        Description = 'Base number of intermediate points on each Bezier movement path (5-200)'
+        Description = 'Base number of intermediate points on each Bezier movement path'
         Nullable    = $false
     }
 
@@ -194,70 +194,70 @@ $script:ConfigValidationSchema = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Minimum micro-pause delay duration in ms (0-5000)'
+        Description = 'Minimum micro-pause delay duration in ms'
         Nullable    = $false
     }
     'MouseControl.MaxMicroPauseDurationMs'        = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Maximum micro-pause delay duration in ms (0-5000)'
+        Description = 'Maximum micro-pause delay duration in ms'
         Nullable    = $false
     }
     'MouseControl.MinMovementDurationMs'          = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Minimum duration in ms for total mouse movement (0-5000)'
+        Description = 'Minimum duration in ms for total mouse movement'
         Nullable    = $false
     }
     'MouseControl.MaxMovementDurationMs'          = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Maximum duration in ms for total mouse movement (0-5000)'
+        Description = 'Maximum duration in ms for total mouse movement'
         Nullable    = $false
     }
     'MouseControl.MinClickDownDurationMs'     = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Minimum mouse-button hold duration in ms during click (0-5000)'
+        Description = 'Minimum mouse-button hold duration in ms during click'
         Nullable    = $false
     }
     'MouseControl.MaxClickDownDurationMs'     = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Maximum mouse-button hold duration in ms during click (0-5000)'
+        Description = 'Maximum mouse-button hold duration in ms during click'
         Nullable    = $false
     }
     'MouseControl.MinClickPreDelayMs'             = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Minimum delay in ms before each mouse click (0-5000)'
+        Description = 'Minimum delay in ms before each mouse click'
         Nullable    = $false
     }
     'MouseControl.MaxClickPreDelayMs'             = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Maximum delay in ms before each mouse click (0-5000)'
+        Description = 'Maximum delay in ms before each mouse click'
         Nullable    = $false
     }
     'MouseControl.MinClickPostDelayMs'            = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Minimum delay in ms after each mouse click (0-5000)'
+        Description = 'Minimum delay in ms after each mouse click'
         Nullable    = $false
     }
     'MouseControl.MaxClickPostDelayMs'            = @{
         Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Maximum delay in ms after each mouse click (0-5000)'
+        Description = 'Maximum delay in ms after each mouse click'
         Nullable    = $false
     }
 
@@ -276,14 +276,14 @@ $script:ConfigValidationSchema = @{
         Type        = 'int'
         Min         = 10
         Max         = 5000
-        Description = 'Interval in ms between emergency stop key-state polls (10-5000)'
+        Description = 'Interval in ms between emergency stop key-state polls'
         Nullable    = $false
     }
     'EmergencyStop.MouseGestureHoldDurationMs'    = @{
         Type        = 'int'
         Min         = 500
         Max         = 30000
-        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop (500-30000)'
+        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop'
         Nullable    = $false
     }
 
@@ -327,7 +327,7 @@ $script:ConfigValidationSchema = @{
         Type        = 'double'
         Min         = 0.01
         Max         = 1.0
-        Description = 'Duplicate trigger threshold (0-1.0, 1.0 = 100% identical). Recommend: 0.98'
+        Description = 'Duplicate trigger threshold (1.0 = 100% identical). Recommend: 0.98'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.SampleCount'    = @{

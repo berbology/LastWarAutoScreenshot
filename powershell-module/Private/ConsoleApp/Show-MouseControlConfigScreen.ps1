@@ -20,8 +20,8 @@ function Show-MouseControlConfigScreen {
 
              intArray keys (range pairs - all duration/delay range keys):
                Shows two separate TextPrompts labelled:
-                 "<Key> minimum (ms) [current: <min>]. Press Enter to keep:"
-                 "<Key> maximum (ms) [current: <max>]. Press Enter to keep:"
+                 "<Key> minimum (ms) [current: <min>]:"
+                 "<Key> maximum (ms) [current: <max>]:"
                After both values are entered (or kept), the pair is validated as a unit via
                Test-ConfigValue.  If invalid (e.g. min > max, out-of-range), the error
                message is written to $Console in red and BOTH prompts repeat.
@@ -30,7 +30,7 @@ function Show-MouseControlConfigScreen {
 
              All other keys (int, double):
                Uses a TextPrompt (identical pattern to Show-LoggingConfigScreen):
-                 "<Description> [current: <value>] (<constraints>). Press Enter to keep:"
+                 "<Description> [current: <value>] (<constraints>):"
                Empty input → keep current; '[Reset to default]' → restore default;
                any other input is validated and re-prompted if invalid.
 
@@ -309,7 +309,7 @@ function Show-MouseControlConfigScreen {
                 $currentMax = $currentArr[1]
 
                 # - Min prompt ----------------------------------------------
-                $minPromptText = "$shortKey minimum (ms) [[current: $currentMin]]. Press Enter to keep:"
+                $minPromptText = "$shortKey minimum (ms) [[current: $currentMin]]:"
                 $minPrompt     = [Spectre.Console.TextPrompt[string]]::new($minPromptText)
                 $minPrompt.AllowEmpty = $true
                 $minAnswer = $minPrompt.Show($Console)
@@ -324,7 +324,7 @@ function Show-MouseControlConfigScreen {
                 }
 
                 # - Max prompt ----------------------------------------------
-                $maxPromptText = "$shortKey maximum (ms) [[current: $currentMax]]. Press Enter to keep:"
+                $maxPromptText = "$shortKey maximum (ms) [[current: $currentMax]]:"
                 $maxPrompt     = [Spectre.Console.TextPrompt[string]]::new($maxPromptText)
                 $maxPrompt.AllowEmpty = $true
                 $maxAnswer = $maxPrompt.Show($Console)
@@ -356,7 +356,7 @@ function Show-MouseControlConfigScreen {
             # ── int / double: TextPrompt (identical to Show-LoggingConfigScreen) ──
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $currentValue]] ($constraintStr). Press Enter to keep:"
+                $promptText   = "$description [[current: $currentValue]] ($constraintStr):"
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true

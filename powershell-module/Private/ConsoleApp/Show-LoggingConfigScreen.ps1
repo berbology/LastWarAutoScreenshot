@@ -125,16 +125,16 @@ function Show-LoggingConfigScreen {
     $buildConstraintString = {
         param($rule)
         switch ($rule.Type) {
-            'stringEnum' { return "one of: $($rule.AllowedValues -join ' | ')" }
+            'stringEnum' { return "$($rule.AllowedValues -join ' | ')" }
             'int' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "integer $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'integer'
             }
             'double' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "decimal $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'decimal'
             }
@@ -207,38 +207,38 @@ function Show-LoggingConfigScreen {
             if ($def.Key -eq 'Logging.MinimumLogLevel') {
                 # ── MinimumLogLevel: SelectionPrompt with display-mapped choices ──
                 $levelDisplayChoices = @(
-                    'Info (normal operations)',
-                    'Verbose (noisy; useful for debugging)',
-                    'Warning (recoverable issues)',
-                    'Error (failures and exceptions)'
+                    'Info',
+                    'Verbose',
+                    'Warning',
+                    'Error'
                 )
                 $levelPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
                     'Logging level:', $levelDisplayChoices
                 )
                 $displayChoice = $levelPrompt.Show($Console)
                 $rawValue = switch ($displayChoice) {
-                    'Info (normal operations)'              { 'Info' }
-                    'Verbose (noisy; useful for debugging)' { 'Verbose' }
-                    'Warning (recoverable issues)'          { 'Warning' }
-                    default                                 { 'Error' }
+                    'Info'    { 'Info' }
+                    'Verbose' { 'Verbose' }
+                    'Warning' { 'Warning' }
+                    default   { 'Error' }
                 }
                 & $def.Set $config $rawValue
             }
             elseif ($def.Key -eq 'Logging.Backend') {
                 # ── Backend: SelectionPrompt with display-mapped choices ────────
                 $backendDisplayChoices = @(
-                    'File,EventLog (both simultaneously)',
-                    'File (LastWarAutoScreenshot.log)',
-                    'EventLog (Windows Event Log)'
+                    'File',
+                    'EventLog',
+                    'File,EventLog'
                 )
                 $backendPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
                     'Log target:', $backendDisplayChoices
                 )
                 $displayChoice = $backendPrompt.Show($Console)
                 $rawValue = switch ($displayChoice) {
-                    'File,EventLog (both simultaneously)' { 'File,EventLog' }
-                    'File (LastWarAutoScreenshot.log)'    { 'File' }
-                    default                                { 'EventLog' }
+                    'File,EventLog' { 'File,EventLog' }
+                    'File'          { 'File' }
+                    default         { 'EventLog' }
                 }
                 & $def.Set $config $rawValue
             }
