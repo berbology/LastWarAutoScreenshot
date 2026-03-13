@@ -4,7 +4,11 @@ function Start-LastWarAutoScreenshot {
         Launches the Last War Auto Screenshot interactive console application.
 
     .DESCRIPTION
-        Entry point for the console application.  On startup it:
+        Entry point for the console application. On startup it:
+          0. Checks for event log source initialization failure. If the event log source
+             'LastWarAutoScreenshot' could not be created during module load, displays a
+             critical error panel with remediation instructions and waits for user acknowledgement
+             before exiting. This prevents logs from being silently discarded.
           1. Validates the saved module configuration (Invoke-StartupConfigValidation) and
              displays any errors or warnings as a Spectre.Console Panel. If validation issues
              are found, the user is presented with a selection prompt offering two options:
@@ -42,6 +46,14 @@ function Start-LastWarAutoScreenshot {
         Start-LastWarAutoScreenshot -Console $testConsole
 
     .NOTES
+        Event log source initialization:
+          If the event log source 'LastWarAutoScreenshot' fails to initialise during module
+          load (e.g. because the module was not run as Administrator), the global flag
+          $global:LastWarAutoScreenshot_LoggingInitFailed is set. This function checks
+          that flag at startup and displays a critical error panel with remediation
+          instructions before exiting. This prevents silent failures where logs are
+          discarded without the user knowing.
+
         $Console injection pattern:
           Every screen function in Private\ConsoleApp\ accepts -Console [IAnsiConsole].
           This single injection point allows all rendering to be tested without a live
@@ -74,8 +86,46 @@ function Start-LastWarAutoScreenshot {
         [Spectre.Console.IAnsiConsole]$Console = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
     )
 
+    # Check for critical event log source initialization failure
+    if ($global:LastWarAutoScreenshot_LoggingInitFailed) {
+        $errorMsg = @"
+[red][[CRITICAL ERROR]][/]
+
+Event Log source 'LastWarAutoScreenshot' could not be created.
+
+To enable event logging, rerun Start-LastWarAutoScreenshot in an admin window once, or manually run the following command in PowerShell as Administrator:
+
+    New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
+
+Until this is resolved, logs will be written to file instead.
+"@
+        $errorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($errorMsg, '[red]Event Log Initialization Failed[/]')
+        $Console.Write($errorPanel) | Out-Null
+        $null = Read-Host 'Press Enter to exit'
+        return
+    }
+
     # Run startup config validation; any panels are written inside this function
     $validationResult = Invoke-StartupConfigValidation -Console $Console
+
+    # Check again for event log initialization failure (may have occurred during validation)
+    if ($global:LastWarAutoScreenshot_LoggingInitFailed) {
+        $errorMsg = @"
+[red][[CRITICAL ERROR]][/]
+
+Event Log source 'LastWarAutoScreenshot' could not be created.
+
+To enable event logging, rerun Start-LastWarAutoScreenshot in an admin window once, or manually run the following command in PowerShell as Administrator:
+
+    New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
+
+Until this is resolved, logs will be written to file instead.
+"@
+        $errorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($errorMsg, '[red]Event Log Initialization Failed[/]')
+        $Console.Write($errorPanel) | Out-Null
+        $null = Read-Host 'Press Enter to exit'
+        return
+    }
 
     # Handle user action from validation warnings/errors
     if ($validationResult.UserAction -eq "Exit") {

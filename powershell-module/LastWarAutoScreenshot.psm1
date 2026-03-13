@@ -7,7 +7,8 @@ $mouseControlAPISourcecodePath = "$PSScriptRoot\src\MouseControlAPI.cs"
 $screenCaptureApiPath = "$PSScriptRoot\src\ScreenCaptureAPI.cs"
 $consoleAppBridgePath = "$PSScriptRoot\src\ConsoleAppBridge.cs"
 
-$spectreConsolePath = "$PSScriptRoot\lib\Spectre.Console.dll"
+$spectreConsolePath        = "$PSScriptRoot\lib\Spectre.Console.dll"
+$spectreTestingConsolePath = "$PSScriptRoot\lib\test\Spectre.Console.Testing.dll"
 
 $script:ModuleRootPath = $PSScriptRoot
 
@@ -17,6 +18,56 @@ $publicScriptRoot = Join-Path $PSScriptRoot 'Public'
 # Check for fatal logging initialization flag
 if ($global:LastWarAutoScreenshot_LoggingInitFailed) {
     return
+}
+
+# Dependency checks before loading C# types
+# Check .NET 9 runtime using environment/version info (avoids type loading issues)
+$dotNetOk = $false
+$currentRuntime = "Unknown"
+
+try {
+    # Try to detect .NET 9 from $PSHOME path or PSVersionTable
+    if ($PSHOME -like "*9*" -or $PSVersionTable.PSVersion.Major -ge 7) {
+        # For PS 7.4+, check if we can access System.Runtime
+        $dotNetOk = $true
+        try {
+            # Load System.Runtime to get accurate version info
+            Add-Type -AssemblyName 'System.Runtime'
+            $runtimeInfo = [System.Runtime.RuntimeInformation]::FrameworkDescription
+            $currentRuntime = $runtimeInfo
+            $dotNetOk = $runtimeInfo -like "*.NET 9*"
+        } catch {
+            # If we can't load the type, assume we're on a compatible runtime
+            $currentRuntime = "PowerShell $($PSVersionTable.PSVersion)"
+            $dotNetOk = $true
+        }
+    }
+} catch {
+    $dotNetOk = $false
+    $currentRuntime = "Unable to determine runtime"
+}
+
+if (-not $dotNetOk) {
+    $errorMsg = @"
+Missing dependency: .NET 9 or Spectre.Console.dll
+Run Install-LastWarAutoScreenshot to fix.
+Current runtime: $currentRuntime
+"@
+    Write-Error $errorMsg.Trim()
+    $global:LastWarAutoScreenshot_LoggingInitFailed = $true
+    return
+}
+
+# Check Spectre.Console.dll exists
+if (-not (Test-Path $spectreConsolePath)) {
+    Write-Error "Missing dependency: .NET 9 or Spectre.Console.dll. Run Install-LastWarAutoScreenshot to fix."
+    $global:LastWarAutoScreenshot_LoggingInitFailed = $true
+    return
+}
+
+# Check Spectre.Console.Testing.dll exists (required by the test suite only)
+if (-not (Test-Path $spectreTestingConsolePath)) {
+    Write-Warning "Spectre.Console.Testing.dll not found. Tests will not run. Run Install-LastWarAutoScreenshot to install it."
 }
 
 # 1. Check all files exist
