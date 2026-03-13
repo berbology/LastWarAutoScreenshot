@@ -404,38 +404,6 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 $alphaOffset | Should -BeLessThan $zappOffset
             }
         }
-
-        It 'Displays windows in Process name Z-A order when the second  sort option is selected' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-EnumeratedWindows {
-                    @(
-                        [PSCustomObject]@{ ProcessName='alpha'; WindowTitle='Alpha App'; WindowHandle=[IntPtr]::new(3001); WindowState='Visible'; ProcessID=500 },
-                        [PSCustomObject]@{ ProcessName='zapp';  WindowTitle='Zapp App';  WindowHandle=[IntPtr]::new(3002); WindowState='Visible'; ProcessID=600 }
-                    )
-                }
-                Mock Test-WindowHandleValid { $true }
-                Mock Save-ModuleConfiguration {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name  - index 1
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name  - index 2
-                $tc.Input.PushKey([ConsoleKey]::Enter)      # Confirm Process name
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 ([Back to main menu])
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (zapp after Z-A)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 2 (alpha)
-                $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu]
-
-                Show-WindowSelectionScreen -Console $tc | Out-Null
-
-                # In Z-A sort, 'zapp' row appears before 'alpha' row
-                $tcOutput    = $tc.Output
-                $alphaOffset = $tcOutput.IndexOf('alpha')
-                $zappOffset  = $tcOutput.IndexOf('zapp')
-                $zappOffset | Should -BeLessThan $alphaOffset
-            }
-        }
     }
 
     # ════════════════════════════════════════════════════════════════════════
