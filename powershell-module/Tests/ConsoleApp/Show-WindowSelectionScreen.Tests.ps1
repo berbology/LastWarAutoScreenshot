@@ -22,8 +22,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
                 $result = Show-WindowSelectionScreen -Console $tc
                 $result | Should -BeNullOrEmpty
@@ -37,8 +37,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 $tc.Output | Should -Match 'No windows found'
@@ -52,8 +52,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Error' } -Exactly 1
@@ -80,8 +80,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Choices: [0] [Back to main menu], [1] 1: calc, [2] 2: notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu] (index 0, default)
 
@@ -108,8 +108,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Choices: [0] [Back to main menu], [1] 1: notepad
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
@@ -133,8 +133,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
@@ -160,8 +160,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select [Back to main menu] (both window titles are rendered above)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
@@ -181,8 +181,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
@@ -203,8 +203,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
@@ -248,8 +248,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Loop 1: handle invalid - select notepad (index 1, past [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -278,8 +278,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 1 - invalid)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
@@ -305,8 +305,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 1 - invalid)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
@@ -332,8 +332,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 1 - invalid)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
@@ -373,7 +373,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When sort selection is propagated to the window table' {
 
-        It 'Displays windows in Process name A-Z order when the first (A-Z) sort option is confirmed' {
+        It 'Displays windows in Process name A-Z order when the first  sort option is confirmed' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 # Intentionally reversed order in mock to confirm sort is applied
                 Mock Get-EnumeratedWindows {
@@ -388,7 +388,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name (A-Z) - second option (index 1)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name  - second option (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 ([Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (alpha after A-Z)
@@ -405,7 +405,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
             }
         }
 
-        It 'Displays windows in Process name Z-A order when the second (Z-A) sort option is selected' {
+        It 'Displays windows in Process name Z-A order when the second  sort option is selected' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-EnumeratedWindows {
                     @(
@@ -419,9 +419,9 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z) - index 1
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (Z-A) - index 2
-                $tc.Input.PushKey([ConsoleKey]::Enter)      # Confirm Process name (Z-A)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name  - index 1
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name  - index 2
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 ([Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (zapp after Z-A)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 2 (alpha)
@@ -454,8 +454,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
@@ -484,8 +484,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
@@ -506,8 +506,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
@@ -528,8 +528,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
@@ -550,8 +550,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
@@ -572,8 +572,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
@@ -601,8 +601,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Discard changes (index 1 in save prompt)
@@ -624,8 +624,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Discard changes (index 1 in save prompt)
@@ -647,8 +647,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
                 $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Discard changes (index 1 in save prompt)
@@ -660,4 +660,6 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
         }
     }
 }
+
+
 

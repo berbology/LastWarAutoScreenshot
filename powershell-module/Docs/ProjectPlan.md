@@ -595,7 +595,7 @@
    1. [x] 4.1: Create `powershell-module/Private/ConsoleApp/Show-WindowSelectionScreen.ps1`
       - `Show-WindowSelectionScreen -Console [Spectre.Console.IAnsiConsole]`
       - **Step 1 - Sort/filter selection:**
-        - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name (A-Z)'`, `'Process name (Z-A)'`, `'Window title (A-Z)'`, `'Window title (Z-A)'`, `'Minimised first'`, `'Minimised last'`
+        - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name'`, `'Window title'`
         - Map choice to a sort expression used in step 2
       - **Step 2 - Enumerate and display windows:**
         - Call `Get-EnumeratedWindows` (with no filters - same behaviour as current `Select-TargetWindowFromMenu` with no parameters)

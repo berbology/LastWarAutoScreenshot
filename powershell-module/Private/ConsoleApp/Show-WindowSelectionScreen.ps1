@@ -48,8 +48,7 @@ function Show-WindowSelectionScreen {
         placed in the SelectionPrompt choices, preventing rendering errors.
 
         Sorting: the sort order is chosen once (before the loop) and re-applied on
-        each iteration. Sort options: Process name A-Z, Process name Z-A,
-        Window title A-Z, Window title Z-A, Minimised first, Minimised last.
+        each iteration. Sort options: Process name, Window title.
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -63,12 +62,8 @@ function Show-WindowSelectionScreen {
         'Sort windows by:',
         @(
             '[[Back to main menu]]',
-            'Process name (A-Z)',
-            'Process name (Z-A)',
-            'Window title (A-Z)',
-            'Window title (Z-A)',
-            'Minimised first',
-            'Minimised last'
+            'Process name',
+            'Window title'
         )
     )
     $sortChoice = $sortPrompt.Show($Console)
@@ -99,13 +94,9 @@ function Show-WindowSelectionScreen {
 
         # Apply the sort chosen in step 1
         $sortedWindows = switch ($sortChoice) {
-            'Process name (A-Z)' { @($allWindows | Sort-Object ProcessName) }
-            'Process name (Z-A)' { @($allWindows | Sort-Object ProcessName -Descending) }
-            'Window title (A-Z)' { @($allWindows | Sort-Object WindowTitle) }
-            'Window title (Z-A)' { @($allWindows | Sort-Object WindowTitle -Descending) }
-            'Minimised first'    { @($allWindows | Sort-Object WindowState) }
-            'Minimised last'     { @($allWindows | Sort-Object WindowState -Descending) }
-            default              { @($allWindows | Sort-Object WindowTitle) }
+            'Process name' { @($allWindows | Sort-Object ProcessName) }
+            'Window title' { @($allWindows | Sort-Object WindowTitle) }
+            default        { @($allWindows | Sort-Object WindowTitle) }
         }
 
         # ── Step 3: Window selection prompt ────────────────────────────────────
