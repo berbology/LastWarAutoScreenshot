@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
@@ -20,8 +29,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
@@ -35,8 +43,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
@@ -50,8 +57,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
@@ -78,8 +84,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Choices: [0] [Back to main menu], [1] 1: calc, [2] 2: notepad
@@ -106,8 +111,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Choices: [0] [Back to main menu], [1] 1: notepad
@@ -131,8 +135,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -158,8 +161,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select [Back to main menu] (both window titles are rendered above)
@@ -179,8 +181,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -201,8 +202,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -246,8 +246,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Loop 1: handle invalid - select notepad (index 1, past [Back to main menu])
@@ -276,8 +275,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
@@ -303,8 +301,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
@@ -330,8 +327,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
@@ -357,8 +353,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu] (first option in sort prompt)
 
                 $result = Show-WindowSelectionScreen -Console $tc
@@ -386,8 +381,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name  - second option (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 ([Back to main menu])
@@ -420,8 +414,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -450,8 +443,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -472,8 +464,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -494,8 +485,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -516,8 +506,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -538,8 +527,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -567,8 +555,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -590,8 +577,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
@@ -613,8 +599,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)

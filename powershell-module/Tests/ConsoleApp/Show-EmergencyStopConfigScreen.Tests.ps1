@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
@@ -49,8 +58,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -62,11 +70,11 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 Show-EmergencyStopConfigScreen -Console $tc
 
-                # Use partial key names to match despite table cell wrapping (same approach as Show-LoggingConfigScreen.Tests.ps1)
-                $tc.Output | Should -Match 'EmergencyStop.Aut'    # AutoStart: "Aut" + (wrapped) "oStart"
-                $tc.Output | Should -Match 'seGestureEnabled'     # MouseGestureEnabled: "Mou" + (wrapped) "seGestureEnabled"
-                $tc.Output | Should -Match 'lIntervalMs'          # PollIntervalMs: "Pol" + (wrapped) "lIntervalMs"
-                $tc.Output | Should -Match '0x11'                 # HotkeyVKeyCodes: "Hot" + (wrapped) "keyVKeyCodes"; match hex value on single line
+                # With a 2560px-wide console the table does not wrap; assert full key names.
+                $tc.Output | Should -Match 'EmergencyStop.AutoStart'
+                $tc.Output | Should -Match 'MouseGestureEnabled'
+                $tc.Output | Should -Match 'PollIntervalMs'
+                $tc.Output | Should -Match '0x11'                 # HotkeyVKeyCodes hex value
             }
         }
 
@@ -96,8 +104,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -147,8 +154,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -188,8 +194,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart = keep true
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -231,8 +236,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -272,8 +276,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -319,8 +322,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -362,8 +364,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -411,8 +412,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -454,8 +454,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('n')       # AutoStart (confirm current false)
                 $tc.Input.PushTextWithEnter('n')       # MouseGestureEnabled (confirm current false)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -502,8 +501,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -544,8 +542,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
@@ -592,8 +589,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')                    # AutoStart
                 $tc.Input.PushTextWithEnter('y')                    # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)              # PollIntervalMs
@@ -643,8 +639,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')             # AutoStart
                 $tc.Input.PushTextWithEnter('y')             # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # PollIntervalMs
@@ -687,8 +682,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')             # AutoStart
                 $tc.Input.PushTextWithEnter('y')             # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # PollIntervalMs
@@ -740,8 +734,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs

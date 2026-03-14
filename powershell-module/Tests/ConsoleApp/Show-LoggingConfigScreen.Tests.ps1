@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
@@ -36,8 +45,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -45,11 +53,11 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
 
                 Show-LoggingConfigScreen -Console $tc
 
-                $tc.Output | Should -Match 'MinimumLog'
+                $tc.Output | Should -Match 'MinimumLogLevel'
                 $tc.Output | Should -Match 'Backend'
                 $tc.Output | Should -Match 'MaxSizeMB'
                 $tc.Output | Should -Match 'MaxAgeDays'
-                $tc.Output | Should -Match 'MaxLogFileCou'
+                $tc.Output | Should -Match 'MaxLogFileCount'
             }
         }
 
@@ -74,8 +82,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -115,8 +122,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -147,8 +153,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -181,8 +186,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -213,8 +217,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -251,8 +254,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -285,8 +287,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -325,8 +326,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Move to 'Verbose (noisy...)'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Move to 'Warning (recoverable...)'
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select 'Warning'
@@ -369,8 +369,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -402,8 +401,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -438,8 +436,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -471,8 +468,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -510,8 +506,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('100')
@@ -553,8 +548,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('0')
@@ -598,8 +592,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -632,8 +625,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)

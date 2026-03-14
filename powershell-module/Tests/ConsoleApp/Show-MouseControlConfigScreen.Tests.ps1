@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
@@ -55,8 +64,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Bool keys: y × 4, non-bool keys: Enter × 15 (3 double + 12 int)
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
@@ -83,26 +91,26 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
 
                 Show-MouseControlConfigScreen -Console $tc
 
-                # Patterns use (?s) to match across newlines (table text wraps due to column width)
-                $tc.Output | Should -Match '(?s)EasingE.*nabled'
-                $tc.Output | Should -Match '(?s)Oversho.*otEnab.*led'
-                $tc.Output | Should -Match '(?s)Oversho.*otFactor'
-                $tc.Output | Should -Match '(?s)MicroPa.*use.*Enabled'
-                $tc.Output | Should -Match '(?s)MicroPa.*use.*Chance'
-                $tc.Output | Should -Match '(?s)MinMicr.*oPause.*DurationMs'
-                $tc.Output | Should -Match '(?s)MaxMicr.*oPause.*DurationMs'
-                $tc.Output | Should -Match '(?s)JitterE.*nabled'
-                $tc.Output | Should -Match '(?s)JitterR.*adiusPx'
-                $tc.Output | Should -Match '(?s)BezierC.*ontrol.*PointOffsetFac.*tor'
-                $tc.Output | Should -Match '(?s)MinMove.*mentDu.*rationMs'
-                $tc.Output | Should -Match '(?s)MaxMove.*mentDu.*rationMs'
-                $tc.Output | Should -Match '(?s)MouseCo.*ntrol.MinClic.*kDownD.*urationMs'
-                $tc.Output | Should -Match '(?s)MaxClic.*kDown.*DurationMs'
-                $tc.Output | Should -Match '(?s)MinClic.*kPreD.*elayMs'
-                $tc.Output | Should -Match '(?s)MaxClic.*kPreD.*elayMs'
-                $tc.Output | Should -Match '(?s)MinClic.*kPostD.*elayMs'
-                $tc.Output | Should -Match '(?s)MaxClic.*kPostD.*elayMs'
-                $tc.Output | Should -Match '(?s)PathPoi.*ntCount'
+                # With a 2560px-wide console the table does not wrap; assert full key names.
+                $tc.Output | Should -Match 'EasingEnabled'
+                $tc.Output | Should -Match 'OvershootEnabled'
+                $tc.Output | Should -Match 'OvershootFactor'
+                $tc.Output | Should -Match 'MicroPausesEnabled'
+                $tc.Output | Should -Match 'MicroPauseChance'
+                $tc.Output | Should -Match 'MinMicroPauseDurationMs'
+                $tc.Output | Should -Match 'MaxMicroPauseDurationMs'
+                $tc.Output | Should -Match 'JitterEnabled'
+                $tc.Output | Should -Match 'JitterRadiusPx'
+                $tc.Output | Should -Match 'BezierControlPointOffsetFactor'
+                $tc.Output | Should -Match 'MinMovementDurationMs'
+                $tc.Output | Should -Match 'MaxMovementDurationMs'
+                $tc.Output | Should -Match 'MouseControl.MinClickDownDurationMs'
+                $tc.Output | Should -Match 'MaxClickDownDurationMs'
+                $tc.Output | Should -Match 'MinClickPreDelayMs'
+                $tc.Output | Should -Match 'MaxClickPreDelayMs'
+                $tc.Output | Should -Match 'MinClickPostDelayMs'
+                $tc.Output | Should -Match 'MaxClickPostDelayMs'
+                $tc.Output | Should -Match 'PathPointCount'
             }
         }
 
@@ -146,8 +154,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -227,8 +234,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -296,8 +302,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled = keep true
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -367,8 +372,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -436,8 +440,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -511,8 +514,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -582,8 +584,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -659,8 +660,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('n')       # EasingEnabled → false
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -736,8 +736,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')          # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')          # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)    # OvershootFactor
@@ -815,8 +814,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')                   # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')                   # OvershootEnabled
                 $tc.Input.PushTextWithEnter('[Reset to default]')  # OvershootFactor → reset to 0.1
@@ -894,8 +892,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')                   # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')                   # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # OvershootFactor
@@ -968,8 +965,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')                   # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')                   # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)             # OvershootFactor
@@ -1047,8 +1043,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -1118,8 +1113,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('n')       # EasingEnabled (confirm current false)
                 $tc.Input.PushTextWithEnter('n')       # OvershootEnabled (confirm current false)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -1194,8 +1188,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor
@@ -1264,8 +1257,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # EasingEnabled
                 $tc.Input.PushTextWithEnter('y')       # OvershootEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # OvershootFactor

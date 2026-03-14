@@ -175,6 +175,13 @@ if (Test-Path "$privateScriptRoot") {
     }
 }
 
+# ── Test console dimensions ────────────────────────────────────────────────────
+# Width and height for the Spectre.Console TestConsole injected by Pester tests.
+# Wide dimensions prevent table cell wrapping, eliminating regex test flakiness.
+# Change these values here to affect all test files simultaneously.
+$script:TestConsoleWidth  = 2560
+$script:TestConsoleHeight = 1440
+
 # Explicitly export Get-MonitorProcess first for testability
 Export-ModuleMember -Function Get-MonitorProcess
 # Explicitly export main entry point (Phase 3)

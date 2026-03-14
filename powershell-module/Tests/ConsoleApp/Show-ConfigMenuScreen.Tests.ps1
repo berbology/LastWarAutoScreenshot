@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
@@ -22,8 +31,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Choices: [0] [Back to main menu], [1] Logging, [2] Mouse control, [3] Emergency stop, [4] Screenshot
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Select [Back to main menu] (index 0, default)
 
@@ -38,8 +46,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
 
                 Show-ConfigMenuScreen -Console $tc
@@ -61,8 +68,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: choose 'Logging settings' (index 1, 1 down from [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -82,8 +88,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: choose 'Logging settings' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -111,8 +116,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: Mouse control settings (index 2, 2 downs from [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -139,8 +143,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: Emergency stop settings (index 3, 3 downs from [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -168,8 +171,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # [Back to main menu] is index 0; just Enter exits and causes output to render
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -190,8 +192,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
 
                 Show-ConfigMenuScreen -Console $tc
@@ -213,8 +214,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
 
                 Show-ConfigMenuScreen -Console $tc
@@ -230,8 +230,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: Screenshot settings (index 4, 4 downs from [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -254,8 +253,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: Screenshot settings (index 4)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -284,8 +282,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-EmergencyStopConfigScreen  {}
                 Mock Show-ScreenshotConfigScreen     {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: Logging settings (index 1, 1 down from [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)

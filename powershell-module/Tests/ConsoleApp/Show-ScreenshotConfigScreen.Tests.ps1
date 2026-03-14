@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
@@ -63,8 +72,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Calls Save-ModuleSettings exactly once' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent: keep
@@ -87,8 +95,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'The config passed to Save-ModuleSettings retains FileFormat=PNG' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -122,8 +129,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 # Test-Path returns false for the parent directory check
                 Mock Test-Path { $false }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('C:\NonExistent\Screenshots')  # 1st StoragePath: invalid parent
                 $tc.Input.PushKey([ConsoleKey]::Enter)                     # 2nd StoragePath: keep and break
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
@@ -155,8 +161,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Console output contains Only PNG is supported' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -187,8 +192,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Console output contains the example filename returned by Resolve-ScreenshotFilename' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # StorageWarningThresholdPercent
@@ -228,8 +232,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                     return 'my-macro_screenshot_20260101_120000_0001.png'
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # StorageWarningThresholdPercent
@@ -262,8 +265,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Console output contains PNG format info note' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -294,8 +296,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Console output contains may be slow warning' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -326,8 +327,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'The saved config contains Action = StopLoop (raw value, not display string)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -358,8 +358,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'The saved config contains ConsecutiveThreshold = 3' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -390,8 +389,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Calls Save-ModuleSettings exactly once' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -437,8 +435,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                     }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -466,8 +463,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Writes a panel containing reset to the console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -497,8 +493,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Does not call Save-ModuleSettings' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -523,8 +518,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Writes a No changes saved panel to the console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -555,8 +549,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Console output contains full file path error and prompt re-displays' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('MyFolder')          # 1st StoragePath: relative → error, re-prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # 2nd StoragePath: keep and break
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # MaxStorageGB
@@ -598,8 +591,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 }
                 Mock New-Item {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushTextWithEnter('C:\Screenshots')    # StoragePath: absolute path
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
@@ -626,8 +618,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 Mock Test-Path { $true }
                 Mock New-Item {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # StoragePath: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
@@ -656,8 +647,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Does not throw under normal conditions' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
@@ -680,8 +670,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
         It 'Calls Get-ModuleConfiguration exactly once to load current settings' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent

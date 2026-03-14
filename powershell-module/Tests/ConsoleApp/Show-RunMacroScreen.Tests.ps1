@@ -6,9 +6,21 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
 }
 
 Describe 'Show-RunMacroScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: No macros saved
@@ -20,8 +32,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFileList -MockWith { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $result = Show-RunMacroScreen -Console $tc
                 $result | Should -BeNullOrEmpty
@@ -71,8 +82,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Choices: [0] test-macro (01/01/24 12:00:00), [1] [Back to main menu]
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -110,8 +120,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First pass: select the macro → error shown → loop back to step 1
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Second pass: select Back to main menu
@@ -157,8 +166,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First pass: select the macro → validation errors shown → loop back
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Second pass: Back to main menu
@@ -225,8 +233,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → confirm run → complete → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -281,8 +288,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First pass: select macro → window error → loop back
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Second pass: Back to main menu
@@ -339,8 +345,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Continue anyway at mismatch → Yes, run now → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -389,8 +394,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First pass: select macro → Cancel at mismatch → loop back
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Mismatch prompt: select Cancel (index 1, down from default Continue)
@@ -449,8 +453,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Yes, run now → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -503,8 +506,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Yes, run now → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -571,8 +573,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Continue (screenshots will be skipped) → Yes, run now → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -633,8 +634,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Continue (screenshots will be skipped) → Yes, run now → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -693,8 +693,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Cancel at pre-flight prompt → loop back → Back to main menu
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -756,8 +755,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Yes, run now (no pre-flight prompt) → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -812,8 +810,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro → Yes, run now → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -866,8 +863,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First pass: select macro → Cancel at run prompt → loop back
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)

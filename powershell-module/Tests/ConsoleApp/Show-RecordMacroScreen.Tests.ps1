@@ -6,9 +6,21 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
 }
 
 Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Config validation failures
@@ -22,8 +34,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $result = Show-RecordMacroScreen -Console $tc
                 $result | Should -BeNullOrEmpty
@@ -42,8 +53,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 Mock Test-WindowHandleValid -MockWith { $false }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $result = Show-RecordMacroScreen -Console $tc
                 $result | Should -BeNullOrEmpty
@@ -70,8 +80,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro name
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -115,8 +124,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro name
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -168,8 +176,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 1 DownArrow → index 1 'Move mouse to region (box)'
@@ -221,8 +228,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 2 DownArrows → index 2 'Move mouse to region (circle)'
@@ -265,8 +271,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 3 DownArrows → index 3 'Left-click'
@@ -314,8 +319,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 4 DownArrows → index 4 'Drag-click'
@@ -365,8 +369,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 5 DownArrows → index 5 'Screenshot region'
@@ -405,8 +408,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 6 DownArrows → index 6 'Add delay'
@@ -451,8 +453,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro name
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -520,8 +521,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Add unnamed LeftClick: 3 DownArrows + Enter
@@ -553,8 +553,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Add named LeftClick 'action-one': 3 DownArrows + Enter
@@ -590,8 +589,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Discard immediately (sequence empty): 7 DownArrows → 'Discard and exit'
@@ -621,8 +619,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Add unnamed LeftClick: 3 DownArrows + Enter
@@ -657,8 +654,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Add unnamed LeftClick
@@ -711,8 +707,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $true; FilePath = 'C:\dummy.json' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro name with spaces
                 $tc.Input.PushText('my macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -754,8 +749,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     @{ Success = $false; Message = 'Disk full' }
                 }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Add unnamed LeftClick
@@ -802,8 +796,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 3 DownArrows → index 3 'Left-click'
@@ -837,8 +830,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu: 3 DownArrows → index 3 'Left-click'
