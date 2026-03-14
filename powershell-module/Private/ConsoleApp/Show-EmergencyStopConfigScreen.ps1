@@ -157,7 +157,7 @@ function Show-EmergencyStopConfigScreen {
         [Spectre.Console.TableExtensions]::AddRow(
             $table,
             [string[]]@(
-                $def.Key,
+                ($def.Key -replace '^.*\.', ''),
                 [Spectre.Console.Markup]::Escape("$currentValue"),
                 [Spectre.Console.Markup]::Escape($constraintStr),
                 [Spectre.Console.Markup]::Escape($descriptionStr)
@@ -172,7 +172,7 @@ function Show-EmergencyStopConfigScreen {
     [Spectre.Console.TableExtensions]::AddRow(
         $table,
         [string[]]@(
-            'EmergencyStop.HotkeyVKeyCodes',
+            'HotkeyVKeyCodes',
             [Spectre.Console.Markup]::Escape($hotkeysDisplay),
             'comma-separated hex or decimal; each 0x01-0xFE',
             'Virtual key codes that must all be held simultaneously to trigger emergency stop'

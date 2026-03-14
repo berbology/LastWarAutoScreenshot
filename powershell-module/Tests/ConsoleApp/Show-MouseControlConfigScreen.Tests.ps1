@@ -104,7 +104,7 @@ Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match 'BezierControlPointOffsetFactor'
                 $tc.Output | Should -Match 'MinMovementDurationMs'
                 $tc.Output | Should -Match 'MaxMovementDurationMs'
-                $tc.Output | Should -Match 'MouseControl.MinClickDownDurationMs'
+                $tc.Output | Should -Match 'MinClickDownDurationMs'
                 $tc.Output | Should -Match 'MaxClickDownDurationMs'
                 $tc.Output | Should -Match 'MinClickPreDelayMs'
                 $tc.Output | Should -Match 'MaxClickPreDelayMs'

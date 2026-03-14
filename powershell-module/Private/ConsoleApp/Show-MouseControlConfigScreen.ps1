@@ -306,7 +306,7 @@ function Show-MouseControlConfigScreen {
         [Spectre.Console.TableExtensions]::AddRow(
             $table,
             [string[]]@(
-                $def.Key,
+                ($def.Key -replace '^.*\.', ''),
                 [Spectre.Console.Markup]::Escape($displayValue),
                 [Spectre.Console.Markup]::Escape($constraintStr),
                 [Spectre.Console.Markup]::Escape($descriptionStr)

@@ -188,7 +188,7 @@ function Show-LoggingConfigScreen {
         [Spectre.Console.TableExtensions]::AddRow(
             $table,
             [string[]]@(
-                $def.Key,
+                ($def.Key -replace '^.*\.', ''),
                 [Spectre.Console.Markup]::Escape("$currentValue"),
                 [Spectre.Console.Markup]::Escape($constraintStr),
                 [Spectre.Console.Markup]::Escape($descriptionStr)

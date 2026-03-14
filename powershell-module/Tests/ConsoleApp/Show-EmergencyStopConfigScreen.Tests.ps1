@@ -71,7 +71,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Show-EmergencyStopConfigScreen -Console $tc
 
                 # With a 2560px-wide console the table does not wrap; assert full key names.
-                $tc.Output | Should -Match 'EmergencyStop.AutoStart'
+                $tc.Output | Should -Match 'AutoStart'
                 $tc.Output | Should -Match 'MouseGestureEnabled'
                 $tc.Output | Should -Match 'PollIntervalMs'
                 $tc.Output | Should -Match '0x11'                 # HotkeyVKeyCodes hex value
