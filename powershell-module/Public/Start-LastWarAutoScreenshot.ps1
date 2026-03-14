@@ -187,11 +187,7 @@ Until this is resolved, logs will be written to file instead.
                 }
 
                 'ManageMacros' {
-                    $screenBlock = {
-                        param([Spectre.Console.IAnsiConsole]$Console)
-                        Show-ManageMacrosScreen -Console $Console
-                    }
-                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+                    Show-ManageMacrosScreen -Console $Console
                 }
 
                 'Exit' {

@@ -8,9 +8,10 @@ function Show-MainMenu {
           - Select target window
           - Configure module
           - Record macro
-          - Run macro (disabled and shown as a non-selectable group header when no *.json files
-            exist in the module's Private\Macros\ folder; a normal selectable choice otherwise)
-          - Manage macros (always visible regardless of whether macros exist)
+          - Run macro (only shows when *.json files exist in the module's
+            Private\Macros\ folder)
+          - Manage macros (only shows when *.json files exist in the module's
+            Private\Macros\ folder)
           - View module storage info
           - Exit
 
@@ -72,13 +73,14 @@ function Show-MainMenu {
 
     if ($hasMacros) {
         $choices.Add('Run macro')
+        $choices.Add('Manage macros')
     }
-
-    $choices.Add('Manage macros')
+    
     $choices.Add('View module storage info')
     $choices.Add('Exit')
 
-    $prompt     = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt('What would you like to do?', $choices.ToArray())
+    $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt('What would you like to do?', $choices.ToArray())
+
     $selection  = $prompt.Show($Console)
 
     switch ($selection) {

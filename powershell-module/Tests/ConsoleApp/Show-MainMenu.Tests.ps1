@@ -57,14 +57,13 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with 5 DownArrows when no macros present' {
+        It 'Returns Exit when Exit is selected with 4 DownArrows when no macros present' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
-                # Selectable order: [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage macros, [4] View module storage info, [5] Exit
-                # (Run macro is not a choice when no macros exist)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order (no macros, Manage macros disabled/skipped):
+                # [0] Select target window, [1] Configure module, [2] Record macro,
+                # (disabled) Manage macros, [3] View module storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -92,10 +91,11 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Navigating 3 DownArrows confirms Exit is selected (RunMacro not available when no macros)' {
+        It 'Navigating 3 DownArrows does not select RunMacro (RunMacro not available when no macros)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
+                # With no macros, Manage macros is disabled/skipped; 3 DownArrows reaches ViewStorageInfo
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -195,32 +195,33 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns ManageMacros when Manage macros is selected with no macros present' {
+        It 'Manage macros is not selectable when no macros present: 3 DownArrows reaches ViewStorageInfo' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
+                # Manage macros is disabled so arrow navigation skips it.
                 # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage macros, [4] View module storage info, [5] Exit
+                # [2] Record macro, (disabled) Manage macros, [3] View module storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Show-MainMenu -Console $tc
-                $result | Should -Be 'ManageMacros'
+                $result | Should -Be 'ViewStorageInfo'
             }
         }
     }
 
     Context 'When the user selects View module storage info' {
 
-        It 'Returns ViewStorageInfo when View module storage info is selected with no macros present (4 DownArrows)' {
+        It 'Returns ViewStorageInfo when View module storage info is selected with no macros present (3 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
+                # Manage macros is disabled so arrow navigation skips it.
                 # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage macros, [4] View module storage info, [5] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # [2] Record macro, (disabled) Manage macros, [3] View module storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
