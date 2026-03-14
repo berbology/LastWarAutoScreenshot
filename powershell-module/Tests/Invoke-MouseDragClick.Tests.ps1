@@ -18,9 +18,12 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
-                        ClickDownDurationRangeMs = @(50, 100)
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -51,9 +54,12 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
-                        ClickDownDurationRangeMs = @(50, 100)
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -77,9 +83,12 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
-                        ClickDownDurationRangeMs = @(50, 100)
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -110,9 +119,12 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
-                        ClickDownDurationRangeMs = @(50, 100)
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot
@@ -138,9 +150,12 @@ Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
                     MouseControl = [PSCustomObject]@{
-                        ClickPreDelayRangeMs     = @(10, 20)
-                        ClickDownDurationRangeMs = @(50, 100)
-                        ClickPostDelayRangeMs    = @(10, 20)
+                        MinClickPreDelayMs     = 10
+                        MaxClickPreDelayMs     = 20
+                        MinClickDownDurationMs = 50
+                        MaxClickDownDurationMs = 100
+                        MinClickPostDelayMs      = 10
+                        MaxClickPostDelayMs      = 20
                     }
                 }
             } -ModuleName LastWarAutoScreenshot

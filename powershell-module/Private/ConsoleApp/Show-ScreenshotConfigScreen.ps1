@@ -25,10 +25,11 @@ function Show-ScreenshotConfigScreen {
                that are mapped back to raw config values via a switch statement.
 
              StoragePath (string with path validation):
-               TextPrompt with AllowEmpty=$true.  Empty input clears the path (sets to '').
-               Non-empty input is validated by checking that the parent directory exists via
-               Test-Path.  If the parent does not exist, an error is displayed and the prompt
-               repeats.  The directory is NOT created here — auto-creation occurs at capture time.
+               TextPrompt with AllowEmpty=$true.  Empty input keeps the current value (default).
+               Non-empty input must be an absolute path; relative paths are rejected with an
+               error.  The parent directory is also checked via Test-Path.  The directory is
+               also created on disk immediately when the user saves (in addition to
+               auto-creation at first capture time).
 
              FilenamePattern (string with example display):
                TextPrompt with AllowEmpty=$true.  After the user enters a non-empty value,
@@ -38,7 +39,7 @@ function Show-ScreenshotConfigScreen {
 
              All other keys (int, double):
                TextPrompt (identical pattern to Show-LoggingConfigScreen):
-                 "<Description> [current: <value>] (<constraints>). Press Enter to keep:"
+                 "<Description> [<value>] (<constraints>)"
                Empty input → keep current; '[Reset to default]' → restore default;
                any other input is validated via Test-ConfigValue and re-prompted if invalid.
 
@@ -82,8 +83,8 @@ function Show-ScreenshotConfigScreen {
         TestConsole/Spectre.Console version in use.
 
         SimilarityCheck.Action display vs raw values:
-          Display: 'StopNestedMacro (exit current loop, parent sequence continues)'
-          Raw:     'StopNestedMacro'
+          Display: 'StopLoop (exit current loop, parent sequence continues)'
+          Raw:     'StopLoop'
           Display: 'StopMacro (halt entire macro; reported as success)'
           Raw:     'StopMacro'
           Display: 'Warn (log warning and continue)'
@@ -98,9 +99,8 @@ function Show-ScreenshotConfigScreen {
         (int or double) before being stored on the config object, matching ConvertFrom-Json
         behaviour.
 
-        StoragePath empty input behaviour: pressing Enter without typing clears the path
-        (sets StoragePath = '').  This differs from other TextPrompt keys where empty input
-        keeps the current value.  The prompt title text communicates this difference.
+        StoragePath empty input behaviour: pressing Enter without typing keeps the current value.
+        This is the standard behaviour for TextPrompt keys.
     #>
     [CmdletBinding()]
     param(
@@ -226,6 +226,45 @@ function Show-ScreenshotConfigScreen {
         }
     }
 
+    # ── Helper: build bool prompt text ───────────────────────────────────────────
+    # Format: "Description [blue][[y/n]][/] [green](Default)[/]: "
+    $buildBoolPromptText = {
+        param($description, $currentValue)
+        $displayValue = if ($currentValue) { 'y' } else { 'n' }
+        return "$description [blue][[y/n]][/] [green]($displayValue)[/]: "
+    }
+
+    # ── Helper: build numeric prompt text ────────────────────────────────────────
+    # Format: "Description [blue][[min-max]][/] [green](Default)[/]: "
+    $buildNumericPromptText = {
+        param($description, $rule, $currentValue)
+        $rangeStr = ''
+        if ($rule -and $rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+            $rangeStr = "$($rule.Min)-$($rule.Max)"
+        }
+
+        if ($rangeStr) {
+            return "$description [blue][[$rangeStr]][/] [green]($currentValue)[/]: "
+        } else {
+            return "$description [green]($currentValue)[/]: "
+        }
+    }
+
+    # ── Helper: parse yes/no user input to boolean ───────────────────────────────
+    $parseBoolInput = {
+        param($userInput)
+        $lower = $userInput.ToLowerInvariant().Trim()
+        if ($lower -in @('y', 'yes', 'true', '1')) {
+            return $true
+        }
+        elseif ($lower -in @('n', 'no', 'false', '0')) {
+            return $false
+        }
+        else {
+            return $null  # Invalid input
+        }
+    }
+
     # ── Step 1: Render summary table of current values ────────────────────────
     $table = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(
         @('Setting', 'Current Value', 'Allowed / Range', 'Description')
@@ -240,7 +279,7 @@ function Show-ScreenshotConfigScreen {
         [Spectre.Console.TableExtensions]::AddRow(
             $table,
             [string[]]@(
-                $def.Key,
+                ($def.Key -replace '^.*\.', ''),
                 [Spectre.Console.Markup]::Escape("$currentValue"),
                 [Spectre.Console.Markup]::Escape($constraintStr),
                 [Spectre.Console.Markup]::Escape($descriptionStr)
@@ -256,12 +295,34 @@ function Show-ScreenshotConfigScreen {
         $description = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
 
         if ($def.Type -eq 'bool') {
-            # ── Bool: ConfirmationPrompt (yes/no) ─────────────────────────────
+            # ── Bool: TextPrompt with y/n parsing and standard format ────────────
             $currentValue  = & $def.Get $config
-            $promptText    = "$description [[current: $currentValue]]:"
-            $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
-            $confirmPrompt.DefaultValue = [bool]$currentValue
-            $newValue = $confirmPrompt.Show($Console)
+            $promptText    = & $buildBoolPromptText $description $currentValue
+
+            while ($true) {
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty input → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    $newValue = $currentValue
+                    break
+                }
+
+                # Parse y/n/yes/no input
+                $parsed = & $parseBoolInput $answer
+                if ($null -eq $parsed) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Please enter y/yes/true/1 or n/no/false/0.`n[/]")
+                    )
+                    continue
+                }
+
+                $newValue = $parsed
+                break
+            }
+
             & $def.Set $config $newValue
 
             # Per-key post-prompt information notes
@@ -291,38 +352,45 @@ function Show-ScreenshotConfigScreen {
             elseif ($def.Key -eq 'Screenshots.SimilarityCheck.Action') {
                 # ── Action: SelectionPrompt with display-mapped choices ────────
                 $actionDisplayChoices = @(
-                    'StopNestedMacro (exit current loop, parent sequence continues)',
+                    'StopLoop (exit current loop, parent sequence continues)',
                     'StopMacro (halt entire macro; reported as success)',
                     'Warn (log warning and continue)'
                 )
                 $actionPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
-                    'Similarity stop action:', $actionDisplayChoices
+                    'Duplicate detected trigger action:', $actionDisplayChoices
                 )
                 $displayChoice = $actionPrompt.Show($Console)
                 $rawValue = switch ($displayChoice) {
-                    'StopNestedMacro (exit current loop, parent sequence continues)' { 'StopNestedMacro' }
-                    'StopMacro (halt entire macro; reported as success)'             { 'StopMacro' }
-                    default                                                          { 'Warn' }
+                    'StopLoop (exit current loop, parent sequence continues)' { 'StopLoop' }
+                    'StopMacro (halt entire macro; reported as success)'     { 'StopMacro' }
+                    default                                                  { 'Warn' }
                 }
                 & $def.Set $config $rawValue
             }
         }
         elseif ($def.Key -eq 'Screenshots.StoragePath') {
             # ── StoragePath: TextPrompt with path parent validation ────────────
-            # Empty input clears the path (sets to ''); this differs from other TextPrompt
-            # keys where empty input retains the current value.
+            # Empty input keeps the current value (default behaviour for TextPrompt).
+            # This differs from FilenamePattern which also supports empty input to keep.
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $([Spectre.Console.Markup]::Escape("$currentValue"))]]. Enter path or press Enter to clear:"
+                $promptText   = "$description [green]($([Spectre.Console.Markup]::Escape("$currentValue")))[/]: "
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
                 $answer = $textPrompt.Show($Console)
 
-                # Empty → clear path
+                # Empty → keep current value
                 if ([string]::IsNullOrEmpty($answer)) {
-                    & $def.Set $config ''
                     break
+                }
+
+                # Validate that the path is absolute (not a relative path)
+                if (-not [System.IO.Path]::IsPathRooted($answer)) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Please enter a full file path, e.g. 'C:\LastWar\Screenshots'.`n[/]")
+                    )
+                    continue
                 }
 
                 # Validate that the parent directory exists
@@ -340,10 +408,9 @@ function Show-ScreenshotConfigScreen {
         }
         elseif ($def.Key -eq 'Screenshots.FilenamePattern') {
             # ── FilenamePattern: TextPrompt with example display ───────────────
-            $constraintStr = & $buildConstraintString $rule
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $([Spectre.Console.Markup]::Escape("$currentValue"))]] ($constraintStr). Press Enter to keep:"
+                $promptText   = "$description [green]($([Spectre.Console.Markup]::Escape("$currentValue")))[/]: "
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -385,27 +452,11 @@ function Show-ScreenshotConfigScreen {
             }
         }
         else {
-            # ── int / double: TextPrompt (same as Show-LoggingConfigScreen) ────
-            # Per-key custom hint text overrides the generic constraint string for keys
-            # where the raw constraint string is less informative than a plain-English hint.
-            $hintText = switch ($def.Key) {
-                'Screenshots.SimilarityCheck.Threshold' {
-                    '(0.0 to 1.0, where 1.0 = 100% identical)'
-                }
-                'Screenshots.SimilarityCheck.TolerancePerChannel' {
-                    '(0 = exact match, 255 = any pixel counts as matching)'
-                }
-                'Screenshots.SimilarityCheck.ConsecutiveThreshold' {
-                    '(1 = trigger on first match; higher values require N consecutive similar screenshots)'
-                }
-                default {
-                    "($(& $buildConstraintString $rule))"
-                }
-            }
-
+            # ── int / double: TextPrompt with standard format and validation ──────
+            # Prompt format: "Description [min-max) (Default): "
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $currentValue]] $hintText. Press Enter to keep:"
+                $promptText   = & $buildNumericPromptText $description $rule $currentValue
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -453,6 +504,18 @@ function Show-ScreenshotConfigScreen {
 
         'Yes - save now' {
             Save-ModuleSettings -Config $config
+
+            # Create screenshot directory immediately if it is configured but not yet on disk.
+            # Directory is also created at first capture time by Invoke-CaptureScreenRegion,
+            # but creating it here gives the user immediate confirmation that the path is usable.
+            $storagePath = $config.Screenshots.StoragePath
+            if (-not [string]::IsNullOrEmpty($storagePath) -and
+                -not (Test-Path -Path $storagePath -PathType Container)) {
+                New-Item -Path $storagePath -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+                Write-LastWarLog -Level Info `
+                    -Message "Created screenshot storage directory: $storagePath" `
+                    -FunctionName 'Show-ScreenshotConfigScreen'
+            }
 
             $successPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
                 'Screenshot settings saved successfully.',

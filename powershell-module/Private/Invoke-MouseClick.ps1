@@ -50,12 +50,9 @@ function Invoke-MouseClick {
     # Determine click down duration
     if (-not $PSBoundParameters.ContainsKey('DownDurationMs')) {
         $config = Get-ModuleConfiguration
-        $range = $config.MouseControl.ClickDownDurationRangeMs
-        if ($null -eq $range -or $range.Count -ne 2) {
-            $DownDurationMs = 100
-        } else {
-            $DownDurationMs = Get-Random -Minimum $range[0] -Maximum ($range[1] + 1)
-        }
+        $minDown = $config.MouseControl.MinClickDownDurationMs
+        $maxDown = $config.MouseControl.MaxClickDownDurationMs
+        $DownDurationMs = Get-Random -Minimum $minDown -Maximum ($maxDown + 1)
     }
 
     # Send left button down

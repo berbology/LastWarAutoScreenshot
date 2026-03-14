@@ -1,5 +1,6 @@
 using System;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace LastWarAutoScreenshot
 {
@@ -166,6 +167,66 @@ namespace LastWarAutoScreenshot
                 // No ANSI sequences are written; output accumulates as before.
                 action();
             }
+        }
+
+        /// <summary>
+        /// Creates a <see cref="Columns"/> layout containing the two supplied
+        /// renderables.  Spectre.Console will arrange them side-by-side when the
+        /// terminal is wide enough, and fall back to stacking them vertically in
+        /// narrower terminals.
+        /// </summary>
+        /// <param name="left">The renderable to place in the left column.</param>
+        /// <param name="right">The renderable to place in the right column.</param>
+        /// <returns>A configured <see cref="Columns"/> instance.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="left"/> or <paramref name="right"/> is <c>null</c>.
+        /// </exception>
+        public static Columns CreateColumns(IRenderable left, IRenderable right)
+        {
+            if (left == null) throw new ArgumentNullException(nameof(left));
+            if (right == null) throw new ArgumentNullException(nameof(right));
+
+            return new Columns(new[] { left, right });
+        }
+
+        /// <summary>
+        /// Writes a blank line to the console (useful for separating sections).
+        /// </summary>
+        /// <param name="console">
+        /// The <see cref="IAnsiConsole"/> instance to write to.
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="console"/> is <c>null</c>.
+        /// </exception>
+        public static void WriteBlankLine(IAnsiConsole console)
+        {
+            if (console == null) throw new ArgumentNullException(nameof(console));
+            console.Write(new Text("\n"));
+        }
+
+        /// <summary>
+        /// Returns a centred renderable by wrapping it in an expanded borderless panel.
+        /// The panel expands to fill the terminal width, with the content centred inside.
+        /// </summary>
+        /// <param name="renderable">
+        /// The <see cref="IRenderable"/> instance to centre.
+        /// </param>
+        /// <returns>An expanded <see cref="Panel"/> with the renderable centred inside.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="renderable"/> is <c>null</c>.
+        /// </exception>
+        public static IRenderable CenterRenderable(IRenderable renderable)
+        {
+            if (renderable == null) throw new ArgumentNullException(nameof(renderable));
+            
+            // Wrap in Align.Center, then in an expanded borderless Panel
+            var centeredContent = Align.Center(renderable);
+            var panel = new Panel(centeredContent);
+            panel.Border = BoxBorder.None;
+            panel.Padding = new Padding(0, 0, 0, 0);
+            panel.Expand();
+            
+            return panel;
         }
     }
 }

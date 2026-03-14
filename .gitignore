@@ -41,6 +41,8 @@ dotnet-uninstall-debian-packages.sh
 # Ignore binaries and symbols
 *.pdb
 *.dll
+!powershell-module/lib/Spectre.Console.dll
+!powershell-module/lib/test/Spectre.Console.Testing.dll
 *.wixpdb
 
 # Ignore packages

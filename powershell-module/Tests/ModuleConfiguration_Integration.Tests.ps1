@@ -130,7 +130,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                     SavedDate           = (Get-Date -Format 'o')
                     SavedBy             = $env:USERNAME
                     ComputerName        = $env:COMPUTERNAME
-                    MouseControl        = [PSCustomObject]@{ ClickDownDurationRangeMs = @(50, 150) }
+                    MouseControl        = [PSCustomObject]@{ MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150 }
                 }
                 $minimalConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $testConfigPath -Force
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
@@ -140,14 +140,19 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.OvershootFactor | Should -Be 0.1
                 $mouse.MicroPausesEnabled | Should -Be $true
                 $mouse.MicroPauseChance | Should -Be 0.2
-                $mouse.MicroPauseDurationRangeMs | Should -Be @(20, 80)
+                $mouse.MinMicroPauseDurationMs | Should -Be 20
+                $mouse.MaxMicroPauseDurationMs | Should -Be 80
                 $mouse.JitterEnabled | Should -Be $true
                 $mouse.JitterRadiusPx | Should -Be 2
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
-                $mouse.MovementDurationRangeMs | Should -Be @(200, 600)
-                $mouse.ClickDownDurationRangeMs | Should -Be @(50, 150)
-                $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
-                $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
+                $mouse.MinMovementDurationMs | Should -Be 200
+                $mouse.MaxMovementDurationMs | Should -Be 600
+                $mouse.MinClickDownDurationMs | Should -Be 50
+                $mouse.MaxClickDownDurationMs | Should -Be 150
+                $mouse.MinClickPreDelayMs | Should -Be 50
+                $mouse.MaxClickPreDelayMs | Should -Be 200
+                $mouse.MinClickPostDelayMs | Should -Be 100
+                $mouse.MaxClickPostDelayMs | Should -Be 300
                 $mouse.PathPointCount | Should -Be 20
             }
         }
@@ -163,14 +168,19 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $mouse.OvershootFactor | Should -Be 0.1
                 $mouse.MicroPausesEnabled | Should -Be $true
                 $mouse.MicroPauseChance | Should -Be 0.2
-                $mouse.MicroPauseDurationRangeMs | Should -Be @(20, 80)
+                $mouse.MinMicroPauseDurationMs | Should -Be 20
+                $mouse.MaxMicroPauseDurationMs | Should -Be 80
                 $mouse.JitterEnabled | Should -Be $true
                 $mouse.JitterRadiusPx | Should -Be 2
                 $mouse.BezierControlPointOffsetFactor | Should -Be 0.3
-                $mouse.MovementDurationRangeMs | Should -Be @(200, 600)
-                $mouse.ClickDownDurationRangeMs | Should -Be @(50, 150)
-                $mouse.ClickPreDelayRangeMs | Should -Be @(50, 200)
-                $mouse.ClickPostDelayRangeMs | Should -Be @(100, 300)
+                $mouse.MinMovementDurationMs | Should -Be 200
+                $mouse.MaxMovementDurationMs | Should -Be 600
+                $mouse.MinClickDownDurationMs | Should -Be 50
+                $mouse.MaxClickDownDurationMs | Should -Be 150
+                $mouse.MinClickPreDelayMs | Should -Be 50
+                $mouse.MaxClickPreDelayMs | Should -Be 200
+                $mouse.MinClickPostDelayMs | Should -Be 100
+                $mouse.MaxClickPostDelayMs | Should -Be 300
                 $mouse.PathPointCount | Should -Be 20
             }
         }
@@ -257,7 +267,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
 
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 $config.Screenshots | Should -Not -BeNullOrEmpty
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
                 $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }
@@ -290,10 +300,10 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
 
         It 'Should save and load Screenshots.StoragePath round-trip' {
             InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
-                # Save defaults (StoragePath = '')
+                # Save defaults (StoragePath = 'C:\LastWarAutoScreenshot\Screenshots')
                 Save-ModuleConfiguration -WindowObject $mockWindow -ConfigurationPath $testConfigPath -Force
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
             }
         }
 
@@ -323,16 +333,17 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         Backend         = 'File'
                         MinimumLogLevel = 'Info'
                         FileBackend     = [PSCustomObject]@{
-                            MaxSizeMB = 50; MaxFileCount = 50; MaxAgeDays = 30; RetentionFileCount = 500
+                            MaxSizeMB = 50; MaxAgeDays = 30; MaxLogFileCount = 500
                         }
                     }
                     MouseControl       = [PSCustomObject]@{
                         EasingEnabled = $true; OvershootEnabled = $true; OvershootFactor = 0.1
                         MicroPausesEnabled = $true; MicroPauseChance = 0.2
-                        MicroPauseDurationRangeMs = @(20, 80); JitterEnabled = $true; JitterRadiusPx = 2
-                        BezierControlPointOffsetFactor = 0.3; MovementDurationRangeMs = @(200, 600)
-                        ClickDownDurationRangeMs = @(50, 150); ClickPreDelayRangeMs = @(50, 200)
-                        ClickPostDelayRangeMs = @(100, 300); PathPointCount = 20
+                        MinMicroPauseDurationMs = 20; MaxMicroPauseDurationMs = 80; JitterEnabled = $true; JitterRadiusPx = 2
+                        BezierControlPointOffsetFactor = 0.3; MinMovementDurationMs = 200; MaxMovementDurationMs = 600
+                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
+                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
+                        MinClickPostDelayMs = 100; MaxClickPostDelayMs = 300; PathPointCount = 20
                     }
                     EmergencyStop      = [PSCustomObject]@{
                         AutoStart = $true; HotkeyVKeyCodes = @(17, 16, 220)

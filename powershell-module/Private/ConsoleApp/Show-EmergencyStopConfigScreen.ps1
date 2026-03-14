@@ -24,7 +24,7 @@ function Show-EmergencyStopConfigScreen {
 
              Int keys (PollIntervalMs, MouseGestureHoldDurationMs):
                Uses a TextPrompt (identical pattern to Show-LoggingConfigScreen):
-                 "<Description> [current: <value>] (<constraints>). Press Enter to keep:"
+                 "<Description> [<value>] (<constraints>):"
                Empty input -> keep current; '[Reset to default]' -> restore default;
                any other input is validated via Test-ConfigValue and re-prompted if invalid.
 
@@ -135,7 +135,7 @@ function Show-EmergencyStopConfigScreen {
             'bool' { return 'yes or no' }
             'int'  {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "integer $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'integer'
             }
@@ -157,7 +157,7 @@ function Show-EmergencyStopConfigScreen {
         [Spectre.Console.TableExtensions]::AddRow(
             $table,
             [string[]]@(
-                $def.Key,
+                ($def.Key -replace '^.*\.', ''),
                 [Spectre.Console.Markup]::Escape("$currentValue"),
                 [Spectre.Console.Markup]::Escape($constraintStr),
                 [Spectre.Console.Markup]::Escape($descriptionStr)
@@ -172,7 +172,7 @@ function Show-EmergencyStopConfigScreen {
     [Spectre.Console.TableExtensions]::AddRow(
         $table,
         [string[]]@(
-            'EmergencyStop.HotkeyVKeyCodes',
+            'HotkeyVKeyCodes',
             [Spectre.Console.Markup]::Escape($hotkeysDisplay),
             'comma-separated hex or decimal; each 0x01-0xFE',
             'Virtual key codes that must all be held simultaneously to trigger emergency stop'
@@ -190,7 +190,7 @@ function Show-EmergencyStopConfigScreen {
         if ($def.Type -eq 'bool') {
             # -- Bool: ConfirmationPrompt (yes/no) ----------------------------
             $currentValue  = & $def.Get $config
-            $promptText    = "$description [[current: $currentValue]]:"
+            $promptText    = "${description}:"
             $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
             $confirmPrompt.DefaultValue = [bool]$currentValue
             $newValue = $confirmPrompt.Show($Console)
@@ -200,7 +200,7 @@ function Show-EmergencyStopConfigScreen {
             # -- int: TextPrompt (same pattern as Show-LoggingConfigScreen) ---
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $currentValue]] ($constraintStr). Press Enter to keep:"
+                $promptText   = "$description [blue]($constraintStr)[/] [green][[$currentValue]][/]:"
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true
@@ -243,8 +243,8 @@ function Show-EmergencyStopConfigScreen {
 
     while ($true) {
         $currentHotkeyArr = $config.EmergencyStop.HotkeyVKeyCodes
-        $hexDisplay       = ($currentHotkeyArr | ForEach-Object { '0x{0:X2}' -f $_ }) -join ', '
-        $vkeyPromptText   = "Hotkey VKey codes (comma-separated hex or decimal; each 0x01-0xFE) [[current: $hexDisplay]]. Press Enter to keep:"
+        $hexDisplay       = ($currentHotkeyArr | ForEach-Object { '0x{0:X2}' -f $_ }) -join '+'
+        $vkeyPromptText   = "Hotkey VKey codes (comma-separated hex or decimal; each 0x01-0xFE) [green][[$hexDisplay]][/]:"
 
         $vkeyPrompt            = [Spectre.Console.TextPrompt[string]]::new($vkeyPromptText)
         $vkeyPrompt.AllowEmpty = $true

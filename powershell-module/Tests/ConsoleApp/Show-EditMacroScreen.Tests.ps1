@@ -6,9 +6,21 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
 }
 
 Describe 'Show-EditMacroScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Shared helper: scriptblock that returns a fresh 3-action macro each
@@ -45,8 +57,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 }
                 Mock Get-MacroFile -MockWith $mockMacroData
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Edit menu (no changes): [0]Rename macro [1]Edit steps [2][[Back]]
                 # Navigate to [Back] (index 2)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -90,8 +101,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select 'Rename macro' (index 0)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Provide new name
@@ -138,8 +148,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
                 $tc.Input.PushTextWithEnter('new-name')         # enter new name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -175,8 +184,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -217,8 +225,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Rename-MacroFile {}
                 Mock Save-MacroFile   {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # empty input — keep current
                 # No changes: [0]Rename [1]Edit steps [2][[Back]]
@@ -253,8 +260,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # empty input
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -294,8 +300,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Navigate to 'Edit steps' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -345,8 +350,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # select step 1 (#1: MoveToPoint)
@@ -389,8 +393,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # step 1
@@ -437,8 +440,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Navigate to 'Edit steps' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -493,8 +495,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -550,8 +551,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -605,8 +605,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 }
                 Mock Get-MacroFile -MockWith $mockMacroData
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -659,8 +658,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 }
                 Mock Get-MacroFile -MockWith $mockMacroData
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -716,8 +714,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Make a step change (add name to LeftClick) then save
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
@@ -766,8 +763,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $false; FilePath = ''; Message = 'Disk full.' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Make a step change then attempt save (which fails)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
@@ -816,8 +812,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $false; FilePath = ''; Message = 'Disk full.' } }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -872,8 +867,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile   {}
                 Mock Rename-MacroFile {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Make a change (rename macro)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
                 $tc.Input.PushTextWithEnter('new-name')
@@ -912,8 +906,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFileList { @() }
                 Mock Rename-MacroFile {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -956,8 +949,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFileList { @() }
                 Mock Save-MacroFile   {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Make a change (rename macro)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
@@ -993,8 +985,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-MacroFile { $null }
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 { Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\missing.json' } | Should -Not -Throw
 

@@ -11,9 +11,8 @@ namespace LastWarAutoScreenshot
         private readonly string _logDir;
         private readonly string _logBaseName;
         private readonly int _maxSizeMB;
-        private readonly int _maxFileCount;
         private readonly int _maxAgeDays;
-        private readonly int _retentionFileCount;
+        private readonly int _maxLogFileCount;
 
         public FileLogBackend(string logFilePath)
         {
@@ -29,9 +28,8 @@ namespace LastWarAutoScreenshot
 
             // Default settings
             _maxSizeMB = 50;
-            _maxFileCount = 50;
             _maxAgeDays = 30;
-            _retentionFileCount = 500;
+            _maxLogFileCount = 500;
 
             // Load settings from configuration file if available
             string configPath = Path.Combine(_logDir, "ModuleConfig.json");
@@ -46,9 +44,8 @@ namespace LastWarAutoScreenshot
                         if (fileBackend != null)
                         {
                             _maxSizeMB = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxSizeMB", _maxSizeMB));
-                            _maxFileCount = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxFileCount", _maxFileCount));
                             _maxAgeDays = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxAgeDays", _maxAgeDays));
-                            _retentionFileCount = Convert.ToInt32(fileBackend.GetValueOrDefault("RetentionFileCount", _retentionFileCount));
+                            _maxLogFileCount = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxLogFileCount", _maxLogFileCount));
                         }
                     }
                 }
@@ -93,7 +90,7 @@ namespace LastWarAutoScreenshot
             double sizeMB = fileInfo.Length / (1024.0 * 1024.0);
             double ageDays = (DateTime.UtcNow - fileInfo.CreationTimeUtc).TotalDays;
 
-            if (sizeMB >= _maxSizeMB || ageDays >= _maxAgeDays || Directory.GetFiles(_logDir, _logBaseName + "*").Length >= _maxFileCount)
+            if (sizeMB >= _maxSizeMB || ageDays >= _maxAgeDays)
             {
                 string rolloverFileName = Path.Combine(_logDir, _logBaseName + $".{DateTime.UtcNow:yyyyMMddHHmmss}");
                 File.Move(_logFilePath, rolloverFileName);
@@ -107,9 +104,9 @@ namespace LastWarAutoScreenshot
                                      .OrderBy(f => f.LastWriteTimeUtc)
                                      .ToList();
 
-            if (logFiles.Count <= _retentionFileCount) return;
+            if (logFiles.Count <= _maxLogFileCount) return;
 
-            foreach (var file in logFiles.Take(logFiles.Count - _retentionFileCount))
+            foreach (var file in logFiles.Take(logFiles.Count - _maxLogFileCount))
             {
                 try
                 {

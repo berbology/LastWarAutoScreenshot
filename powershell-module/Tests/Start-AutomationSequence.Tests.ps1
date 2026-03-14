@@ -22,7 +22,7 @@ Describe 'Start-AutomationSequence' -Tag 'Unit' {
         Mock Get-ModuleConfiguration {
             @{ 
                 EmergencyStop = @{ AutoStart = $false }
-                MouseControl = @{ ClickPreDelayRangeMs = @(50, 200); ClickPostDelayRangeMs = @(100, 300) }
+                MouseControl = @{ MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200; MinClickPostDelayMs = 100; MaxClickPostDelayMs = 300 }
             }
         } -ModuleName LastWarAutoScreenshot
     }
@@ -36,7 +36,7 @@ Describe 'Start-AutomationSequence' -Tag 'Unit' {
                 Mock Get-ModuleConfiguration {
                     @{ 
                         EmergencyStop = @{ AutoStart = $false }
-                        MouseControl = @{ ClickPreDelayRangeMs = @(50, 200); ClickPostDelayRangeMs = @(100, 300) }
+                        MouseControl = @{ MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200; MinClickPostDelayMs = 100; MaxClickPostDelayMs = 300 }
                     }
                 } -ModuleName LastWarAutoScreenshot
                 Start-AutomationSequence -WindowHandle 123 -RelativeX 0.5 -RelativeY 0.5 | Out-Null
@@ -54,7 +54,7 @@ Describe 'Start-AutomationSequence' -Tag 'Unit' {
                 Mock Get-ModuleConfiguration {
                     @{ 
                         EmergencyStop = @{ AutoStart = $false }
-                        MouseControl = @{ ClickPreDelayRangeMs = @(50, 50); ClickPostDelayRangeMs = @(100, 100) }
+                        MouseControl = @{ MinClickPreDelayMs = 50; MaxClickPreDelayMs = 50; MinClickPostDelayMs = 100; MaxClickPostDelayMs = 100 }
                     }
                 } -ModuleName LastWarAutoScreenshot
                 $script:sleepCalls = @()

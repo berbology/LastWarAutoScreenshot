@@ -82,12 +82,10 @@ function Write-LastWarLog {
                     Add-EventLogSource -Source 'LastWarAutoScreenshot' -LogName 'Application'
                     Write-Verbose "Created Event Log source 'LastWarAutoScreenshot'"
                 } catch {
-                    $adminMsg = "Run module as Administrator at least once to create the event log source 'LastWarAutoScreenshot'"
-                    $eqLine = '=' * ($adminMsg.Length + 1)
-                    Write-Host $eqLine -ForegroundColor Red
-                    Write-Host $adminMsg -ForegroundColor Red
-                    Write-Host $eqLine -ForegroundColor Red
-                    Write-Host "`n`n"
+                    # Event log source creation failed (typically requires administrator privileges).
+                    # Set flag so Start-LastWarAutoScreenshot can display error via Spectre.Console.
+                    # Do not write directly to host here; error will be shown to user in the
+                    # console app startup flow with proper UI.
                     $global:LastWarAutoScreenshot_LoggingInitFailed = $true
                     # Fallback to module root log file
                     try {

@@ -50,9 +50,12 @@ function Invoke-MouseDragClick {
     $config      = Get-ModuleConfiguration
     $mouseConfig = $config.MouseControl
 
-    $preDelayRange  = $mouseConfig.ClickPreDelayRangeMs
-    $holdRange      = $mouseConfig.ClickDownDurationRangeMs
-    $postDelayRange = $mouseConfig.ClickPostDelayRangeMs
+    $minPreDelay    = $mouseConfig.MinClickPreDelayMs
+    $maxPreDelay    = $mouseConfig.MaxClickPreDelayMs
+    $minHold        = $mouseConfig.MinClickDownDurationMs
+    $maxHold        = $mouseConfig.MaxClickDownDurationMs
+    $minPostDelay   = $mouseConfig.MinClickPostDelayMs
+    $maxPostDelay   = $mouseConfig.MaxClickPostDelayMs
 
     # Step 1 — Move to start position
     $currentPos = Invoke-GetCursorPosition
@@ -74,9 +77,7 @@ function Invoke-MouseDragClick {
     }
 
     # Step 3 — Pre-click delay
-    if ($null -ne $preDelayRange -and $preDelayRange.Count -eq 2) {
-        Start-Sleep -Milliseconds (Get-Random -Minimum $preDelayRange[0] -Maximum ($preDelayRange[1] + 1))
-    }
+    Start-Sleep -Milliseconds (Get-Random -Minimum $minPreDelay -Maximum ($maxPreDelay + 1))
 
     $buttonDownSent = $false
     $success        = $true
@@ -94,9 +95,7 @@ function Invoke-MouseDragClick {
         $buttonDownSent = $true
 
         # Step 5 — Hold delay
-        if ($null -ne $holdRange -and $holdRange.Count -eq 2) {
-            Start-Sleep -Milliseconds (Get-Random -Minimum $holdRange[0] -Maximum ($holdRange[1] + 1))
-        }
+        Start-Sleep -Milliseconds (Get-Random -Minimum $minHold -Maximum ($maxHold + 1))
 
         # Step 6 — Emergency stop check after button is down
         if ($script:EmergencyStopRequested) {
@@ -127,8 +126,8 @@ function Invoke-MouseDragClick {
     }
 
     # Step 9 — Post-click delay
-    if ($success -and $null -ne $postDelayRange -and $postDelayRange.Count -eq 2) {
-        Start-Sleep -Milliseconds (Get-Random -Minimum $postDelayRange[0] -Maximum ($postDelayRange[1] + 1))
+    if ($success) {
+        Start-Sleep -Milliseconds (Get-Random -Minimum $minPostDelay -Maximum ($maxPostDelay + 1))
     }
 
     return [PSCustomObject]@{ Success = $success; Message = $message }

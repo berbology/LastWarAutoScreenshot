@@ -33,10 +33,9 @@ function Get-DefaultModuleSettings {
             Backend         = 'File,EventLog'
             MinimumLogLevel = 'Info'
             FileBackend     = [PSCustomObject]@{
-                MaxSizeMB          = 50
-                MaxFileCount       = 50
-                MaxAgeDays         = 30
-                RetentionFileCount = 500
+                MaxSizeMB        = 50
+                MaxAgeDays       = 30
+                MaxLogFileCount  = 500
             }
         }
         MouseControl = [PSCustomObject]@{
@@ -45,14 +44,19 @@ function Get-DefaultModuleSettings {
             OvershootFactor                = 0.1
             MicroPausesEnabled             = $true
             MicroPauseChance               = 0.2
-            MicroPauseDurationRangeMs      = @(20, 80)
+            MinMicroPauseDurationMs        = 20
+            MaxMicroPauseDurationMs        = 80
             JitterEnabled                  = $true
             JitterRadiusPx                 = 2
             BezierControlPointOffsetFactor = 0.3
-            MovementDurationRangeMs        = @(200, 600)
-            ClickDownDurationRangeMs       = @(50, 150)
-            ClickPreDelayRangeMs           = @(50, 200)
-            ClickPostDelayRangeMs          = @(100, 300)
+            MinMovementDurationMs          = 200
+            MaxMovementDurationMs          = 600
+            MinClickDownDurationMs         = 50
+            MaxClickDownDurationMs         = 150
+            MinClickPreDelayMs             = 50
+            MaxClickPreDelayMs             = 200
+            MinClickPostDelayMs            = 100
+            MaxClickPostDelayMs            = 300
             PathPointCount                 = 20
         }
         EmergencyStop = [PSCustomObject]@{
@@ -66,8 +70,7 @@ function Get-DefaultModuleSettings {
             MouseGestureHoldDurationMs = 3000
         }
         Screenshots = [PSCustomObject]@{
-            # Empty string = not yet configured; the storage info screen handles this state.
-            StoragePath                    = ''
+            StoragePath                    = 'C:\LastWarAutoScreenshot\Screenshots'
             MaxStorageGB                   = 2.0
             StorageWarningThresholdPercent = 90
             FileFormat                     = 'PNG'
@@ -78,7 +81,7 @@ function Get-DefaultModuleSettings {
                 SampleCount          = 1000
                 FullScan             = $false
                 TolerancePerChannel  = 10
-                Action               = 'StopNestedMacro'
+                Action               = 'StopLoop'
                 ConsecutiveThreshold = 1
             }
         }
@@ -96,63 +99,56 @@ $script:ConfigValidationSchema = @{
     'Logging.MinimumLogLevel'                     = @{
         Type          = 'stringEnum'
         AllowedValues = @('Verbose', 'Info', 'Warning', 'Error')
-        Description   = 'Minimum log level for all logging backends'
+        Description   = 'Logging level'
         Nullable      = $false
     }
     'Logging.Backend'                             = @{
         Type          = 'stringEnum'
         AllowedValues = @('File', 'EventLog', 'File,EventLog')
-        Description   = "Active logging backend(s); use 'File', 'EventLog', or 'File,EventLog'"
+        Description   = "Log target"
         Nullable      = $false
     }
     'Logging.FileBackend.MaxSizeMB'               = @{
         Type        = 'int'
         Min         = 1
         Max         = 10240
-        Description = 'Maximum size in MB per log file before rollover is triggered (1-10240)'
-        Nullable    = $false
-    }
-    'Logging.FileBackend.MaxFileCount'            = @{
-        Type        = 'int'
-        Min         = 1
-        Max         = 10000
-        Description = 'Maximum number of log files to retain per rollover cycle (1-10000)'
+        Description = 'Log file rollover MB'
         Nullable    = $false
     }
     'Logging.FileBackend.MaxAgeDays'              = @{
         Type        = 'int'
         Min         = 1
         Max         = 3650
-        Description = 'Maximum age in days of log files before they are purged (1-3650)'
+        Description = 'Log file retention days'
         Nullable    = $false
     }
-    'Logging.FileBackend.RetentionFileCount'      = @{
+    'Logging.FileBackend.MaxLogFileCount'         = @{
         Type        = 'int'
         Min         = 1
         Max         = 100000
-        Description = 'Total number of log files to keep across all rollover archives (1-100000)'
+        Description = 'Max log files to keep; once reached, the oldest is deleted when a new one is created'
         Nullable    = $false
     }
 
     # --- MouseControl bool toggles ---
     'MouseControl.EasingEnabled'                  = @{
         Type        = 'bool'
-        Description = 'Whether ease-in/ease-out is applied to mouse movement speed'
+        Description = 'Apply ease-in/ease-out to mouse movement speed'
         Nullable    = $false
     }
     'MouseControl.OvershootEnabled'               = @{
         Type        = 'bool'
-        Description = 'Whether the cursor overshoots the target then corrects back'
+        Description = 'Cursor overshoots target then corrects'
         Nullable    = $false
     }
     'MouseControl.MicroPausesEnabled'             = @{
         Type        = 'bool'
-        Description = 'Whether random micro-pauses are inserted during movement'
+        Description = 'Random micro-pauses inserted during movement'
         Nullable    = $false
     }
     'MouseControl.JitterEnabled'                  = @{
         Type        = 'bool'
-        Description = 'Whether random pixel jitter is applied to each Bezier path point'
+        Description = 'Random pixel jitter applied to each Bezier path point'
         Nullable    = $false
     }
 
@@ -161,72 +157,107 @@ $script:ConfigValidationSchema = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 1.0
-        Description = 'Fraction of the last path step used as extra overshoot distance (0.0-1.0)'
+        Description = 'Fraction of the last path step used as extra overshoot distance'
         Nullable    = $false
     }
     'MouseControl.MicroPauseChance'               = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 1.0
-        Description = 'Probability (0.0-1.0) of inserting a micro-pause after each movement step'
+        Description = 'Probability (0.0-1.0) of micro-pause after each movement step'
         Nullable    = $false
     }
     'MouseControl.JitterRadiusPx'                 = @{
         Type        = 'int'
         Min         = 0
         Max         = 20
-        Description = 'Maximum pixel radius of jitter applied to Bezier path points - 0 disables jitter (0-20)'
+        Description = 'Jitter max pixel radius applied to Bezier path points - 0 to disable'
         Nullable    = $false
     }
     'MouseControl.BezierControlPointOffsetFactor' = @{
         Type        = 'double'
         Min         = 0.0
         Max         = 2.0
-        Description = 'Multiplier applied to path length when positioning the Bezier control point (0.0-2.0)'
+        Description = 'Path length multiplier for positioning Bezier control point'
         Nullable    = $false
     }
     'MouseControl.PathPointCount'                 = @{
         Type        = 'int'
         Min         = 5
         Max         = 200
-        Description = 'Base number of intermediate points on each Bezier movement path (5-200)'
+        Description = 'Base number of intermediate points on each Bezier movement path'
         Nullable    = $false
     }
 
     # --- MouseControl intArray ranges ---
-    'MouseControl.MicroPauseDurationRangeMs'      = @{
-        Type        = 'intArray'
+    'MouseControl.MinMicroPauseDurationMs'        = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for micro-pause delays (each element 0-5000, min <= max)'
+        Description = 'Minimum micro-pause delay duration in ms'
         Nullable    = $false
     }
-    'MouseControl.MovementDurationRangeMs'        = @{
-        Type        = 'intArray'
+    'MouseControl.MaxMicroPauseDurationMs'        = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for total mouse movement (each element 0-5000, min <= max)'
+        Description = 'Maximum micro-pause delay duration in ms'
         Nullable    = $false
     }
-    'MouseControl.ClickDownDurationRangeMs'       = @{
-        Type        = 'intArray'
+    'MouseControl.MinMovementDurationMs'          = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for mouse-button hold during click (each element 0-5000, min ≤ max)'
+        Description = 'Minimum duration in ms for total mouse movement'
         Nullable    = $false
     }
-    'MouseControl.ClickPreDelayRangeMs'           = @{
-        Type        = 'intArray'
+    'MouseControl.MaxMovementDurationMs'          = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for delay before each mouse click (each element 0-5000, min ≤ max)'
+        Description = 'Maximum duration in ms for total mouse movement'
         Nullable    = $false
     }
-    'MouseControl.ClickPostDelayRangeMs'          = @{
-        Type        = 'intArray'
+    'MouseControl.MinClickDownDurationMs'     = @{
+        Type        = 'int'
         Min         = 0
         Max         = 5000
-        Description = 'Duration range [min, max] in ms for delay after each mouse click (each element 0-5000, min ≤ max)'
+        Description = 'Minimum mouse-button hold duration in ms during click'
+        Nullable    = $false
+    }
+    'MouseControl.MaxClickDownDurationMs'     = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum mouse-button hold duration in ms during click'
+        Nullable    = $false
+    }
+    'MouseControl.MinClickPreDelayMs'             = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Minimum delay in ms before each mouse click'
+        Nullable    = $false
+    }
+    'MouseControl.MaxClickPreDelayMs'             = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum delay in ms before each mouse click'
+        Nullable    = $false
+    }
+    'MouseControl.MinClickPostDelayMs'            = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Minimum delay in ms after each mouse click'
+        Nullable    = $false
+    }
+    'MouseControl.MaxClickPostDelayMs'            = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 5000
+        Description = 'Maximum delay in ms after each mouse click'
         Nullable    = $false
     }
 
@@ -245,35 +276,35 @@ $script:ConfigValidationSchema = @{
         Type        = 'int'
         Min         = 10
         Max         = 5000
-        Description = 'Interval in ms between emergency stop key-state polls (10-5000)'
+        Description = 'Interval in ms between emergency stop key-state polls'
         Nullable    = $false
     }
     'EmergencyStop.MouseGestureHoldDurationMs'    = @{
         Type        = 'int'
         Min         = 500
         Max         = 30000
-        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop (500-30000)'
+        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop'
         Nullable    = $false
     }
 
     # --- Screenshots ---
     'Screenshots.StoragePath'                     = @{
         Type        = 'string'
-        Description = 'Folder path where screenshots are stored; empty string = not yet configured'
+        Description = 'Screenshot save location'
         Nullable    = $true
     }
     'Screenshots.MaxStorageGB'                    = @{
         Type        = 'double'
         Min         = 0.1
         Max         = 2048.0
-        Description = 'Maximum storage allocated to screenshots in GB (0.1-2048.0)'
+        Description = 'Max size of screenshot folder (GB)'
         Nullable    = $false
     }
     'Screenshots.StorageWarningThresholdPercent' = @{
         Type        = 'int'
         Min         = 1
         Max         = 99
-        Description = 'Warn when screenshot storage usage exceeds this percentage of the configured MaxStorageGB limit'
+        Description = 'Storage space used warning (%)'
         Nullable    = $false
     }
     'Screenshots.FileFormat'                     = @{
@@ -284,51 +315,51 @@ $script:ConfigValidationSchema = @{
     }
     'Screenshots.FilenamePattern'                = @{
         Type        = 'string'
-        Description = 'Filename pattern. Placeholders: {MacroName}, {ActionName}, {Timestamp}, {Date}, {Time}, {Index}. Resolved filename must not exceed 200 characters'
+        Description = 'Placeholders: {MacroName}, {ActionName}, {Timestamp}, {Date}, {Time}, {Index}'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Enabled'        = @{
         Type        = 'bool'
-        Description = 'Enable similarity detection to automatically stop macro execution when consecutive screenshots match (scroll-end detection)'
+        Description = 'Consecutive duplicate screenshot detection'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Threshold'      = @{
         Type        = 'double'
         Min         = 0.01
         Max         = 1.0
-        Description = 'Similarity ratio required to trigger the configured Action (0.0 to 1.0, where 1.0 = 100% identical). Recommended: 0.98'
+        Description = 'Duplicate trigger threshold (1.0 = 100% identical). Recommend: 0.98'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.SampleCount'    = @{
         Type        = 'int'
         Min         = 100
         Max         = 100000
-        Description = 'Number of pixels sampled for comparison. Ignored when FullScan is true'
+        Description = 'Pixels per sample (Ignored when FullScan enabled)'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.FullScan'       = @{
         Type        = 'bool'
-        Description = 'Compare every pixel instead of a sample. More accurate but slower for large screenshots'
+        Description = 'Compare every pixel. (More accurate but much slower)'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.TolerancePerChannel' = @{
         Type        = 'int'
         Min         = 0
         Max         = 255
-        Description = 'Maximum per-channel (R/G/B) difference that still counts as a matching pixel. 0 = exact match required'
+        Description = 'Max per-channel (R/G/B) difference that counts as a matching pixel. 0 = exact match'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Action'         = @{
         Type          = 'stringEnum'
-        AllowedValues = @('StopNestedMacro', 'StopMacro', 'Warn')
-        Description   = 'Action when threshold is reached. StopNestedMacro exits the current loop and continues the parent sequence. StopMacro halts the entire macro. Warn logs and continues'
+        AllowedValues = @('StopLoop', 'StopMacro', 'Warn')
+        Description   = 'Duplicate detected trigger action. (StopLoop|StopMacro|Warn)'
         Nullable      = $false
     }
     'Screenshots.SimilarityCheck.ConsecutiveThreshold' = @{
         Type        = 'int'
         Min         = 1
         Max         = 100
-        Description = 'Number of consecutive screenshots that must each exceed the similarity threshold before the configured Action fires. 1 = trigger on first match (default). Use a higher value to avoid false positives on briefly static content'
+        Description = 'Consecutive duplicates required to trigger action. Higher value may reduce false positives'
         Nullable    = $false
     }
 }

@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
@@ -20,10 +29,9 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
                 $result = Show-WindowSelectionScreen -Console $tc
                 $result | Should -BeNullOrEmpty
@@ -35,10 +43,9 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 $tc.Output | Should -Match 'No windows found'
@@ -50,10 +57,9 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Error' } -Exactly 1
@@ -78,10 +84,9 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Choices: [0] [Back to main menu], [1] 1: calc, [2] 2: notepad
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu] (index 0, default)
 
@@ -106,13 +111,13 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Choices: [0] [Back to main menu], [1] 1: notepad
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 $result = Show-WindowSelectionScreen -Console $tc
                 $result | Should -Not -BeNullOrEmpty
@@ -130,12 +135,12 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 Should -Invoke Save-ModuleConfiguration -Exactly 1 -ParameterFilter {
@@ -156,10 +161,9 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select [Back to main menu] (both window titles are rendered above)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
@@ -168,7 +172,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
             }
         }
 
-        It 'Writes a success panel containing "selected and saved" to the console' {
+        It 'Writes a success panel containing "selected" to the console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-EnumeratedWindows {
                     @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
@@ -177,15 +181,15 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
-                $tc.Output | Should -Match 'selected and saved'
+                $tc.Output | Should -Match 'selected'
             }
         }
 
@@ -198,12 +202,12 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 $tc.Output | Should -Match 'Untitled - Notepad'
@@ -242,16 +246,16 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 # Loop 1: handle invalid - select notepad (index 1, past [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Loop 2: handle valid - select notepad again (index 1, past [Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 $result = Show-WindowSelectionScreen -Console $tc
                 $result | Should -Not -BeNullOrEmpty
@@ -271,14 +275,14 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 1 - invalid)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 2 - valid)
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 Should -Invoke Test-WindowHandleValid -Exactly 2
@@ -297,14 +301,14 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 1 - invalid)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 2 - valid)
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Error' } -Exactly 1
@@ -323,14 +327,14 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 1 - invalid)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad (loop 2 - valid)
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 Show-WindowSelectionScreen -Console $tc | Out-Null
                 # Called once per loop iteration: first (invalid) + second (valid) = 2 calls
@@ -349,8 +353,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Get-EnumeratedWindows {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu] (first option in sort prompt)
 
                 $result = Show-WindowSelectionScreen -Console $tc
@@ -365,7 +368,7 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When sort selection is propagated to the window table' {
 
-        It 'Displays windows in Process name A-Z order when the first (A-Z) sort option is confirmed' {
+        It 'Displays windows in Process name A-Z order when the first  sort option is confirmed' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 # Intentionally reversed order in mock to confirm sort is applied
                 Mock Get-EnumeratedWindows {
@@ -378,9 +381,8 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name (A-Z) - second option (index 1)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Process name  - second option (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 ([Back to main menu])
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (alpha after A-Z)
@@ -394,38 +396,6 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 $alphaOffset = $tcOutput.IndexOf('alpha')
                 $zappOffset  = $tcOutput.IndexOf('zapp')
                 $alphaOffset | Should -BeLessThan $zappOffset
-            }
-        }
-
-        It 'Displays windows in Process name Z-A order when the second (Z-A) sort option is selected' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-EnumeratedWindows {
-                    @(
-                        [PSCustomObject]@{ ProcessName='alpha'; WindowTitle='Alpha App'; WindowHandle=[IntPtr]::new(3001); WindowState='Visible'; ProcessID=500 },
-                        [PSCustomObject]@{ ProcessName='zapp';  WindowTitle='Zapp App';  WindowHandle=[IntPtr]::new(3002); WindowState='Visible'; ProcessID=600 }
-                    )
-                }
-                Mock Test-WindowHandleValid { $true }
-                Mock Save-ModuleConfiguration {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z) - index 1
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (Z-A) - index 2
-                $tc.Input.PushKey([ConsoleKey]::Enter)      # Confirm Process name (Z-A)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 0 ([Back to main menu])
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 1 (zapp after Z-A)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past choice 2 (alpha)
-                $tc.Input.PushKey([ConsoleKey]::Enter)      # Select [Back to main menu]
-
-                Show-WindowSelectionScreen -Console $tc | Out-Null
-
-                # In Z-A sort, 'zapp' row appears before 'alpha' row
-                $tcOutput    = $tc.Output
-                $alphaOffset = $tcOutput.IndexOf('alpha')
-                $zappOffset  = $tcOutput.IndexOf('zapp')
-                $zappOffset | Should -BeLessThan $alphaOffset
             }
         }
     }
@@ -444,12 +414,12 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
                 Mock Save-ModuleConfiguration {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name (A-Z)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name (A-Z)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)      # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)      # Yes - save now (first option)
 
                 $result = Show-WindowSelectionScreen -Console $tc
                 $result.PSObject.Properties.Name | Should -Contain 'ProcessName'
@@ -458,5 +428,191 @@ Describe 'Show-WindowSelectionScreen' -Tag 'Unit' {
             }
         }
     }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Save confirmation prompt — Yes - save now
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user selects a valid window and chooses Yes - save now' {
+
+        It 'Calls Save-ModuleConfiguration exactly once' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
+
+                Show-WindowSelectionScreen -Console $tc | Out-Null
+                Should -Invoke Save-ModuleConfiguration -Exactly 1
+            }
+        }
+
+        It 'Writes a "Saved" panel containing "selected" to the console' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
+
+                Show-WindowSelectionScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'selected'
+            }
+        }
+
+        It 'The "Saved" panel output contains the selected window title' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
+
+                Show-WindowSelectionScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'Untitled - Notepad'
+            }
+        }
+
+        It 'Calls Write-LastWarLog with Level Info on successful save' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
+
+                Show-WindowSelectionScreen -Console $tc | Out-Null
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Info' } -Exactly 1
+            }
+        }
+
+        It 'Returns the selected window object' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes - save now (first option)
+
+                $result = Show-WindowSelectionScreen -Console $tc
+                $result | Should -Not -BeNullOrEmpty
+                $result.WindowTitle | Should -Be 'Untitled - Notepad'
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Save confirmation prompt — Discard changes
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user selects a valid window and chooses Discard changes' {
+
+        It 'Does not call Save-ModuleConfiguration' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Discard changes (index 1 in save prompt)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Discard changes
+
+                Show-WindowSelectionScreen -Console $tc | Out-Null
+                Should -Not -Invoke Save-ModuleConfiguration
+            }
+        }
+
+        It 'Writes a "No changes saved" panel to the console' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Discard changes (index 1 in save prompt)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Discard changes
+
+                Show-WindowSelectionScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'No changes saved'
+            }
+        }
+
+        It 'Returns $null' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-EnumeratedWindows {
+                    @([PSCustomObject]@{ ProcessName='notepad'; WindowTitle='Untitled - Notepad'; WindowHandle=[IntPtr]::new(1001); WindowState='Visible'; ProcessID=100 })
+                }
+                Mock Test-WindowHandleValid { $true }
+                Mock Save-ModuleConfiguration {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Sort: Move to Process name
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Confirm Process name
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move past [Back to main menu] to notepad (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select notepad
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)  # Move to Discard changes (index 1 in save prompt)
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Discard changes
+
+                $result = Show-WindowSelectionScreen -Console $tc
+                $result | Should -BeNullOrEmpty
+            }
+        }
+    }
 }
+
+
 

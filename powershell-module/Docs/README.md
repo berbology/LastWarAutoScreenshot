@@ -1,12 +1,15 @@
-# Last War AutoScript
+# Last War AutoScript — User Guide
 
 PowerShell 7+ module that automates human-like mouse interactions and screen
-captures in Windows game windows - built specifically for Last War: Survival,
+captures in Windows game windows — built specifically for Last War: Survival,
 adaptable to any application.
 
-> **Anti-cheat warning:** Automating input may violate the game's ToS and
-> could trigger anti-cheat systems. Use at your own risk. The authors take
-> no responsibility for bans or account actions.
+> **Anti-cheat warning:** Automating input may violate the game's terms of
+> service and could trigger anti-cheat systems. Use at your own risk. The
+> authors take no responsibility for bans or account actions.
+
+> **Contributing?** See [Developer.md](Developer.md) for the module
+> architecture, testing guide, and how to add new screens.
 
 ## Requirements
 
@@ -71,17 +74,6 @@ New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
 | [WindowManagement.md](WindowManagement.md) | Window state functions, monitoring, emergency stop |
 | [Logging.md](Logging.md) | Log backends, levels, troubleshooting, Event Log registration |
 | [ProjectPlan.md](ProjectPlan.md) | Full phase-by-phase task list and architecture decisions |
-
-## Testing
-
-Tests use [Pester v5](https://pester.dev). Run the full suite from the repo root:
-
-```powershell
-Invoke-Pester -Path .\powershell-module\Tests -Output Detailed
-```
-
-All tests must pass with 0 failures before any phase is marked complete.
-See `Tests/ConsoleApp/README.md` for notes on the console UI test harness.
 
 ## Macro Recording
 
@@ -241,40 +233,6 @@ Each macro file is a JSON object with four top-level keys:
 
 See [MacroFormat.md](MacroFormat.md) for the full schema, annotated example,
 and action type reference.
-
----
-
-## `Invoke-MouseDragClick`
-
-Private helper that implements a drag-click action using the existing mouse
-control infrastructure.
-
-**Execution order:**
-
-1. Move to the start position via a Bezier path.
-2. Check emergency stop.
-3. Pre-click delay (random within `ClickPreDelayRangeMs`).
-4. Send `MOUSEEVENTF_LEFTDOWN`.
-5. Hold delay (random within `ClickDownDurationRangeMs`).
-6. Check emergency stop.
-7. Drag to the end position via a second Bezier path (button held).
-8. Send `MOUSEEVENTF_LEFTUP` (always, even on error — in a `finally` block).
-9. Post-click delay (random within `ClickPostDelayRangeMs`).
-
-```powershell
-# Called internally by Invoke-MacroAction for DragClick sequence actions.
-# Direct usage example (absolute screen coordinates):
-$result = Invoke-MouseDragClick -StartX 400 -StartY 600 -EndX 400 -EndY 200
-if (-not $result.Success) {
-    Write-Warning "Drag-click failed: $($result.Message)"
-}
-```
-
-Returns `[PSCustomObject]@{Success=[bool]; Message=[string]}`.
-
-The `MOUSEEVENTF_LEFTUP` send is wrapped in a `finally` block to ensure the
-mouse button is always released, even on an unhandled exception or emergency
-stop — a stuck button would otherwise make the system unusable.
 
 ---
 

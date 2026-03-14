@@ -4,9 +4,8 @@
 		"MinimumLogLevel": "Info",
 		"FileBackend": {
 			"MaxSizeMB": 50,
-			"MaxFileCount": 50,
 			"MaxAgeDays": 30,
-			"RetentionFileCount": 500
+			"MaxLogFileCount": 500
 		}
 	},
 	"MouseControl": {
@@ -15,14 +14,19 @@
 		"OvershootFactor": 0.1,
 		"MicroPausesEnabled": true,
 		"MicroPauseChance": 0.2,
-		"MicroPauseDurationRangeMs": [20, 80],
+		"MinMicroPauseDurationMs": 20,
+		"MaxMicroPauseDurationMs": 80,
 		"JitterEnabled": true,
 		"JitterRadiusPx": 2,
 		"BezierControlPointOffsetFactor": 0.3,
-		"MovementDurationRangeMs": [200, 600],
-		"ClickDownDurationRangeMs": [50, 150],
-		"ClickPreDelayRangeMs": [50, 200],
-		"ClickPostDelayRangeMs": [100, 300],
+		"MinMovementDurationMs": 200,
+		"MaxMovementDurationMs": 600,
+		"MinClickDownDurationMs": 50,
+		"MaxClickDownDurationMs": 150,
+		"MinClickPreDelayMs": 50,
+		"MaxClickPreDelayMs": 200,
+		"MinClickPostDelayMs": 100,
+		"MaxClickPostDelayMs": 300,
 		"PathPointCount": 20
 	},
 	"EmergencyStop": {
@@ -44,7 +48,7 @@
 			"SampleCount": 1000,
 			"FullScan": false,
 			"TolerancePerChannel": 10,
-			"Action": "StopNestedMacro",
+			"Action": "StopLoop",
 			"ConsecutiveThreshold": 1
 		}
 	}

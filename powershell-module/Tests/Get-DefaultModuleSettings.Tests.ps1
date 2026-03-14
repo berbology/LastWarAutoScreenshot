@@ -37,9 +37,8 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.Logging.FileBackend | Should -Not -BeNullOrEmpty
                 $defaults.Logging.FileBackend.MaxSizeMB | Should -Be 50
-                $defaults.Logging.FileBackend.MaxFileCount | Should -Be 50
                 $defaults.Logging.FileBackend.MaxAgeDays | Should -Be 30
-                $defaults.Logging.FileBackend.RetentionFileCount | Should -Be 500
+                $defaults.Logging.FileBackend.MaxLogFileCount | Should -Be 500
             }
         }
     }
@@ -49,7 +48,7 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.MouseControl | Should -Not -BeNullOrEmpty
-                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 14
+                @($defaults.MouseControl.PSObject.Properties).Count | Should -Be 19
             }
         }
 
@@ -63,14 +62,19 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $m.OvershootFactor | Should -Be 0.1
                 $m.MicroPausesEnabled | Should -Be $true
                 $m.MicroPauseChance | Should -Be 0.2
-                $m.MicroPauseDurationRangeMs | Should -Be @(20, 80)
+                $m.MinMicroPauseDurationMs | Should -Be 20
+                $m.MaxMicroPauseDurationMs | Should -Be 80
                 $m.JitterEnabled | Should -Be $true
                 $m.JitterRadiusPx | Should -Be 2
                 $m.BezierControlPointOffsetFactor | Should -Be 0.3
-                $m.MovementDurationRangeMs | Should -Be @(200, 600)
-                $m.ClickDownDurationRangeMs | Should -Be @(50, 150)
-                $m.ClickPreDelayRangeMs | Should -Be @(50, 200)
-                $m.ClickPostDelayRangeMs | Should -Be @(100, 300)
+                $m.MinMovementDurationMs | Should -Be 200
+                $m.MaxMovementDurationMs | Should -Be 600
+                $m.MinClickDownDurationMs | Should -Be 50
+                $m.MaxClickDownDurationMs | Should -Be 150
+                $m.MinClickPreDelayMs | Should -Be 50
+                $m.MaxClickPreDelayMs | Should -Be 200
+                $m.MinClickPostDelayMs | Should -Be 100
+                $m.MaxClickPostDelayMs | Should -Be 300
                 $m.PathPointCount | Should -Be 20
             }
         }

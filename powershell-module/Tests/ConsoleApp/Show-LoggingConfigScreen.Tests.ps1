@@ -6,6 +6,15 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
+    # Create a single shared TestConsole for all tests in this file.
+    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+    InModuleScope 'LastWarAutoScreenshot' {
+        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+        $script:tc.Profile.Width  = $script:TestConsoleWidth
+        $script:tc.Profile.Height = $script:TestConsoleHeight
+        $script:tc.Profile.Capabilities.Interactive = $true
+    }
 }
 
 Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
@@ -15,7 +24,7 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'Initial table display' {
 
-        It 'Console output contains all six Logging key names' {
+        It 'Console output contains all five Logging key names' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -24,9 +33,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -37,21 +45,19 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
 
-                $tc.Output | Should -Match 'MinimumLog'
+                $tc.Output | Should -Match 'MinimumLogLevel'
                 $tc.Output | Should -Match 'Backend'
                 $tc.Output | Should -Match 'MaxSizeMB'
-                $tc.Output | Should -Match 'MaxFileCount'
                 $tc.Output | Should -Match 'MaxAgeDays'
-                $tc.Output | Should -Match 'RetentionFileCou'
+                $tc.Output | Should -Match 'MaxLogFileCount'
             }
         }
 
@@ -64,9 +70,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -77,9 +82,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -106,9 +110,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -119,9 +122,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -139,9 +141,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -152,9 +153,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -174,9 +174,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -187,9 +186,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -207,9 +205,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -220,9 +217,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -246,9 +242,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -259,9 +254,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -281,9 +275,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -294,9 +287,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -309,89 +301,9 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Invalid value entered for a key re-prompts
+    # Context: Valid selection for MinimumLogLevel via SelectionPrompt
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters an invalid value for MinimumLogLevel' {
-
-        It 'Error message appears in console output' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxFileCount       = 50
-                                MaxAgeDays         = 30
-                                RetentionFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('InvalidLevel')
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
-                $tc.Output | Should -Match 'must be one of'
-            }
-        }
-
-        It 'After invalid input, accepting empty input keeps the original value in the saved config' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxFileCount       = 50
-                                MaxAgeDays         = 30
-                                RetentionFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('BADVALUE')
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
-                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.Logging.MinimumLogLevel -eq 'Info'
-                }
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Context: Valid value entered for a key is persisted
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters a valid new value for MinimumLogLevel' {
+    Context 'When the user selects a different MinimumLogLevel from the SelectionPrompt' {
 
         It 'The saved config contains the updated MinimumLogLevel value' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
@@ -402,9 +314,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -415,58 +326,18 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('Warning')
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Move to 'Verbose (noisy...)'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Move to 'Warning (recoverable...)'
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Select 'Warning'
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Accept default for Backend
+                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }  # Accept defaults for next 3 keys
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Save: 'Yes - save now'
 
                 Show-LoggingConfigScreen -Console $tc
 
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
                     $Config.Logging.MinimumLogLevel -eq 'Warning'
-                }
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Context: [Reset to default] sentinel on an individual key
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters [Reset to default] for the MinimumLogLevel key' {
-
-        It 'The saved config contains the schema default value for MinimumLogLevel' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfigWarning = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Warning'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxFileCount       = 50
-                                MaxAgeDays         = 30
-                                RetentionFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfigWarning
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushTextWithEnter('[Reset to default]')
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
-                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.Logging.MinimumLogLevel -eq 'Info'
                 }
             }
         }
@@ -486,9 +357,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -499,9 +369,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -520,9 +389,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'EventLog'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 99
-                                MaxFileCount       = 99
                                 MaxAgeDays         = 99
-                                RetentionFileCount = 999
+                                MaxLogFileCount = 999
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -533,9 +401,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -557,9 +424,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -570,9 +436,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -591,9 +456,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -604,9 +468,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -631,9 +494,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -644,12 +506,11 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('100')
-                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 2; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -675,9 +536,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -688,13 +548,12 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('0')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                for ($i = 0; $i -lt 2; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-LoggingConfigScreen -Console $tc
@@ -721,9 +580,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -734,9 +592,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -756,9 +613,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                             Backend         = 'File'
                             FileBackend     = [PSCustomObject]@{
                                 MaxSizeMB          = 50
-                                MaxFileCount       = 50
                                 MaxAgeDays         = 30
-                                RetentionFileCount = 500
+                                MaxLogFileCount = 500
                             }
                         }
                         MouseControl  = [PSCustomObject]@{}
@@ -769,9 +625,8 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 Mock Save-ModuleSettings {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                for ($i = 0; $i -lt 6; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
+                $tc = $script:tc
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)

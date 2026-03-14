@@ -22,7 +22,7 @@ function Test-ConfigValue {
 
     .PARAMETER Key
         The dot-notation configuration key to validate, e.g.
-        'Logging.MinimumLogLevel' or 'MouseControl.MovementDurationRangeMs'.
+        'Logging.MinimumLogLevel' or 'MouseControl.MinClickDownDurationMs'.
 
     .PARAMETER Value
         The configuration value to validate.  May be a typed value (as returned
@@ -41,8 +41,8 @@ function Test-ConfigValue {
         if (-not $result.Valid) { Write-Host $result.Message -ForegroundColor Red }
 
     .EXAMPLE
-        # Validates user-entered string for an intArray key
-        $result = Test-ConfigValue -Key 'MouseControl.MovementDurationRangeMs' -Value '200, 600'
+        # Validates user-entered string for an int key
+        $result = Test-ConfigValue -Key 'MouseControl.MinClickDownDurationMs' -Value '50'
 
     .NOTES
         Pure PowerShell - no Add-Type calls.  All logic is based on the

@@ -33,14 +33,17 @@ Controls how the cursor moves to avoid looking like a bot.
 | `OvershootFactor` | double | `0.1` | Overshoot scale (0.0-1.0) |
 | `MicroPausesEnabled` | bool | `true` | Random hesitation pauses |
 | `MicroPauseChance` | double | `0.2` | Probability of pause per step (0.0-1.0) |
-| `MicroPauseDurationRangeMs` | int[] | `[20, 80]` | Pause duration range (ms) |
+| `MinMicroPauseDurationMs` | int | `20` | Minimum micro-pause duration (ms) |
+| `MaxMicroPauseDurationMs` | int | `80` | Maximum micro-pause duration (ms) |
 | `JitterEnabled` | bool | `true` | Slight path wobble |
 | `JitterRadiusPx` | int | `2` | Wobble radius in pixels (0-20) |
 | `BezierControlPointOffsetFactor` | double | `0.3` | Curve sharpness (0.0-2.0) |
-| `MovementDurationRangeMs` | int[] | `[200, 600]` | Total move time range (ms) |
+| `MinMovementDurationMs` | int | `200` | Minimum total move time (ms) |
+| `MaxMovementDurationMs` | int | `600` | Maximum total move time (ms) |
 | `ClickDownDurationRangeMs` | int[] | `[50, 150]` | Mouse-down hold time range (ms) |
 | `ClickPreDelayRangeMs` | int[] | `[50, 200]` | Delay before click (ms) |
-| `ClickPostDelayRangeMs` | int[] | `[100, 300]` | Delay after click (ms) |
+| `MinClickPostDelayMs` | int | `100` | Minimum delay after click (ms) |
+| `MaxClickPostDelayMs` | int | `300` | Maximum delay after click (ms) |
 | `PathPointCount` | int | `20` | Base Bezier point count (5-200) |
 
 **Example (ModuleConfig.json excerpt):**
@@ -52,10 +55,12 @@ Controls how the cursor moves to avoid looking like a bot.
   "OvershootFactor": 0.1,
   "MicroPausesEnabled": true,
   "MicroPauseChance": 0.2,
-  "MicroPauseDurationRangeMs": [20, 80],
+  "MinMicroPauseDurationMs": 20,
+  "MaxMicroPauseDurationMs": 80,
   "JitterEnabled": true,
   "JitterRadiusPx": 2,
-  "MovementDurationRangeMs": [200, 600],
+  "MinMovementDurationMs": 200,
+  "MaxMovementDurationMs": 600,
   "ClickDownDurationRangeMs": [50, 150],
   "PathPointCount": 20
 }
@@ -142,5 +147,5 @@ Full details in [Logging.md](Logging.md). Quick reference:
 | `Logging.Backend` | string | `"EventLog"` | `File`, `EventLog`, or `File,EventLog` |
 | `Logging.MinimumLogLevel` | string | `"Info"` | `Verbose`, `Info`, `Warning`, `Error` |
 | `Logging.FileBackend.MaxSizeMB` | int | `10` | Max log file size before rollover (1-10240) |
-| `Logging.FileBackend.MaxFileCount` | int | `5` | Max rotated log files to keep (1-10000) |
 | `Logging.FileBackend.MaxAgeDays` | int | `30` | Delete log files older than this (1-3650) |
+| `Logging.FileBackend.MaxLogFileCount` | int | `500` | Max log files to keep; oldest deleted when reached (1-100000) |

@@ -38,8 +38,9 @@ production-style runs; `Verbose` when debugging a problem.
 - **Location:** Module directory (same folder as the `.psm1`)
 - **Filename:** `LastWarAutoScreenshot.log`
 - **Format:** JSON — one entry per line, easy to parse or `grep`
-- **Rollover:** Configurable by size (`MaxSizeMB`), count (`MaxFileCount`),
-  and age (`MaxAgeDays`) — see [Configuration.md](Configuration.md)
+- **Rollover:** A new file is created when the current file reaches `MaxSizeMB` or `MaxAgeDays`.
+  Log files are capped at `MaxLogFileCount`; the oldest is deleted when the limit is reached.
+  See [Configuration.md](Configuration.md)
 
 To test logging from a PowerShell session:
 

@@ -44,7 +44,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                             SampleCount          = 1000
                             TolerancePerChannel  = 10
                             FullScan             = $false
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 1
                         }
                     }
@@ -238,7 +238,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
         }
     }
 
-    It 'Screenshot: StopNestedMacro, ConsecutiveThreshold=1, similar; returns SimilarityStop=$true; ConsecutiveSimilarCount=1' {
+    It 'Screenshot: StopLoop, ConsecutiveThreshold=1, similar; returns SimilarityStop=$true; ConsecutiveSimilarCount=1' {
         InModuleScope LastWarAutoScreenshot {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
@@ -249,7 +249,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                             SampleCount          = 1000
                             TolerancePerChannel  = 10
                             FullScan             = $false
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 1
                         }
                     }
@@ -289,7 +289,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                             SampleCount          = 1000
                             TolerancePerChannel  = 10
                             FullScan             = $false
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 3
                         }
                     }
@@ -328,7 +328,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                             SampleCount          = 1000
                             TolerancePerChannel  = 10
                             FullScan             = $false
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 3
                         }
                     }
@@ -366,7 +366,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                             SampleCount          = 1000
                             TolerancePerChannel  = 10
                             FullScan             = $false
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 1
                         }
                     }
@@ -500,7 +500,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
         }
     }
 
-    It 'Loop: StopNestedMacro consumed — returns Success=$true SimilarityStop=$false; logs Info containing exiting loop' {
+    It 'Loop: StopLoop consumed — returns Success=$true SimilarityStop=$false; logs Info containing exiting loop' {
         InModuleScope LastWarAutoScreenshot {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
@@ -511,7 +511,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                             SampleCount          = 1000
                             TolerancePerChannel  = 10
                             FullScan             = $false
-                            Action               = 'StopNestedMacro'
+                            Action               = 'StopLoop'
                             ConsecutiveThreshold = 1
                         }
                     }

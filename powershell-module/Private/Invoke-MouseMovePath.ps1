@@ -10,14 +10,16 @@ function Invoke-MouseMovePath {
 
     # Load config values
     $config = Get-ModuleConfiguration
-    $MovementDurationRangeMs = $config.MouseControl.MovementDurationRangeMs
+    $MinMovementDurationMs = $config.MouseControl.MinMovementDurationMs
+    $MaxMovementDurationMs = $config.MouseControl.MaxMovementDurationMs
     $MicroPauseChance = $config.MouseControl.MicroPauseChance
-    $MicroPauseDurationRangeMs = $config.MouseControl.MicroPauseDurationRangeMs
+    $MinMicroPauseDurationMs = $config.MouseControl.MinMicroPauseDurationMs
+    $MaxMicroPauseDurationMs = $config.MouseControl.MaxMicroPauseDurationMs
     $OvershootEnabled = $config.MouseControl.OvershootEnabled
     $OvershootFactor = $config.MouseControl.OvershootFactor
 
     # Calculate total move duration
-    $totalDurationMs = Get-Random -Minimum $MovementDurationRangeMs[0] -Maximum ($MovementDurationRangeMs[1] + 1)
+    $totalDurationMs = Get-Random -Minimum $MinMovementDurationMs -Maximum ($MaxMovementDurationMs + 1)
     $numSteps = $Points.Count
     if ($numSteps -lt 2) {
         Write-Error "Invoke-MouseMovePath: At least 2 points required."
@@ -48,7 +50,7 @@ function Invoke-MouseMovePath {
         }
         Start-Sleep -Milliseconds ([int]$stepDelays[$i])
         if ((Get-Random -Minimum 0.0 -Maximum 1.0) -lt $MicroPauseChance) {
-            $pauseMs = Get-Random -Minimum $MicroPauseDurationRangeMs[0] -Maximum ($MicroPauseDurationRangeMs[1] + 1)
+            $pauseMs = Get-Random -Minimum $MinMicroPauseDurationMs -Maximum ($MaxMicroPauseDurationMs + 1)
             Start-Sleep -Milliseconds $pauseMs
         }
     }

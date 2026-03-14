@@ -15,13 +15,13 @@ function Show-MouseControlConfigScreen {
           3. Iterates each MouseControl key in order.  The prompt type depends on the key type:
 
              Bool keys (EasingEnabled, OvershootEnabled, MicroPausesEnabled, JitterEnabled):
-               Uses a ConfirmationPrompt (yes/no).  DefaultValue is set to the current value
-               so pressing Enter keeps it unchanged.
+               Uses a TextPrompt (y/n).  Empty input keeps the current value unchanged.
+               Invalid input shows an error and re-prompts.
 
              intArray keys (range pairs - all duration/delay range keys):
                Shows two separate TextPrompts labelled:
-                 "<Key> minimum (ms) [current: <min>]. Press Enter to keep:"
-                 "<Key> maximum (ms) [current: <max>]. Press Enter to keep:"
+                 "<Key> minimum (ms) [<min>]:"
+                 "<Key> maximum (ms) [<max>]:"
                After both values are entered (or kept), the pair is validated as a unit via
                Test-ConfigValue.  If invalid (e.g. min > max, out-of-range), the error
                message is written to $Console in red and BOTH prompts repeat.
@@ -29,8 +29,8 @@ function Show-MouseControlConfigScreen {
                entire array key to its schema default and moves to the next key.
 
              All other keys (int, double):
-               Uses a TextPrompt (identical pattern to Show-LoggingConfigScreen):
-                 "<Description> [current: <value>] (<constraints>). Press Enter to keep:"
+               Uses a TextPrompt:
+                 "<Description> [blue][<min>-<max>][/] [green](<value>)[/]:"
                Empty input → keep current; '[Reset to default]' → restore default;
                any other input is validated and re-prompted if invalid.
 
@@ -42,9 +42,11 @@ function Show-MouseControlConfigScreen {
 
         MouseControl keys covered (in order):
           EasingEnabled, OvershootEnabled, OvershootFactor, MicroPausesEnabled,
-          MicroPauseChance, MicroPauseDurationRangeMs, JitterEnabled, JitterRadiusPx,
-          BezierControlPointOffsetFactor, MovementDurationRangeMs, ClickDownDurationRangeMs,
-          ClickPreDelayRangeMs, ClickPostDelayRangeMs, PathPointCount
+          MicroPauseChance, MinMicroPauseDurationMs, MaxMicroPauseDurationMs, JitterEnabled,
+          JitterRadiusPx, BezierControlPointOffsetFactor, MinMovementDurationMs,
+          MaxMovementDurationMs, MinClickDownDurationMs, MaxClickDownDurationMs,
+          MinClickPreDelayMs, MaxClickPreDelayMs, MinClickPostDelayMs, MaxClickPostDelayMs,
+          PathPointCount
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -63,10 +65,9 @@ function Show-MouseControlConfigScreen {
         is routed through this interface so Pester tests can inject a TestConsole and assert
         on its Output property without requiring a live terminal.
 
-        Bool keys use ConfirmationPrompt.  In tests, push 'y' or 'n' explicitly using
-        $tc.Input.PushTextWithEnter('y') / PushTextWithEnter('n') rather than relying on
-        PushKey(Enter), as DefaultValue enforcement for empty input depends on the
-        TestConsole/Spectre.Console version in use.
+        Bool keys use a TextPrompt with y/n parsing (same pattern as Show-ScreenshotConfigScreen).
+        In tests, push 'y' or 'n' explicitly using $tc.Input.PushTextWithEnter('y') or
+        PushTextWithEnter('n').  Empty input (PushKey(Enter)) keeps the current value.
 
         intArray '[Reset to default]' sentinel: entering '[Reset to default]' on either
         the min or max prompt resets the ENTIRE array key to its default - not just one
@@ -128,11 +129,18 @@ function Show-MouseControlConfigScreen {
             DefGet = { param($d) $d.MouseControl.MicroPauseChance }
         },
         @{
-            Key    = 'MouseControl.MicroPauseDurationRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.MicroPauseDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.MicroPauseDurationRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.MicroPauseDurationRangeMs }
+            Key    = 'MouseControl.MinMicroPauseDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinMicroPauseDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MinMicroPauseDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinMicroPauseDurationMs }
+        },
+        @{
+            Key    = 'MouseControl.MaxMicroPauseDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxMicroPauseDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxMicroPauseDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxMicroPauseDurationMs }
         },
         @{
             Key    = 'MouseControl.JitterEnabled'
@@ -156,32 +164,60 @@ function Show-MouseControlConfigScreen {
             DefGet = { param($d) $d.MouseControl.BezierControlPointOffsetFactor }
         },
         @{
-            Key    = 'MouseControl.MovementDurationRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.MovementDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.MovementDurationRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.MovementDurationRangeMs }
+            Key    = 'MouseControl.MinMovementDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinMovementDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MinMovementDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinMovementDurationMs }
         },
         @{
-            Key    = 'MouseControl.ClickDownDurationRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.ClickDownDurationRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.ClickDownDurationRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.ClickDownDurationRangeMs }
+            Key    = 'MouseControl.MaxMovementDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxMovementDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxMovementDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxMovementDurationMs }
         },
         @{
-            Key    = 'MouseControl.ClickPreDelayRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.ClickPreDelayRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.ClickPreDelayRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.ClickPreDelayRangeMs }
+            Key    = 'MouseControl.MinClickDownDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinClickDownDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MinClickDownDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinClickDownDurationMs }
         },
         @{
-            Key    = 'MouseControl.ClickPostDelayRangeMs'
-            Type   = 'intArray'
-            Get    = { param($c) $c.MouseControl.ClickPostDelayRangeMs }
-            Set    = { param($c, $v) $c.MouseControl.ClickPostDelayRangeMs = $v }
-            DefGet = { param($d) $d.MouseControl.ClickPostDelayRangeMs }
+            Key    = 'MouseControl.MaxClickDownDurationMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxClickDownDurationMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxClickDownDurationMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxClickDownDurationMs }
+        },
+        @{
+            Key    = 'MouseControl.MinClickPreDelayMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinClickPreDelayMs }
+            Set    = { param($c, $v) $c.MouseControl.MinClickPreDelayMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinClickPreDelayMs }
+        },
+        @{
+            Key    = 'MouseControl.MaxClickPreDelayMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxClickPreDelayMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxClickPreDelayMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxClickPreDelayMs }
+        },
+        @{
+            Key    = 'MouseControl.MinClickPostDelayMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MinClickPostDelayMs }
+            Set    = { param($c, $v) $c.MouseControl.MinClickPostDelayMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MinClickPostDelayMs }
+        },
+        @{
+            Key    = 'MouseControl.MaxClickPostDelayMs'
+            Type   = 'int'
+            Get    = { param($c) $c.MouseControl.MaxClickPostDelayMs }
+            Set    = { param($c, $v) $c.MouseControl.MaxClickPostDelayMs = [int]$v }
+            DefGet = { param($d) $d.MouseControl.MaxClickPostDelayMs }
         },
         @{
             Key    = 'MouseControl.PathPointCount'
@@ -193,6 +229,7 @@ function Show-MouseControlConfigScreen {
     )
 
     # ── Helper: build a human-readable constraint string from a schema rule ───
+    # Used for the summary table only; returns plain text (no markup).
     $buildConstraintString = {
         param($rule)
         if ($null -eq $rule) { return '' }
@@ -200,24 +237,57 @@ function Show-MouseControlConfigScreen {
             'stringEnum' { return "one of: $($rule.AllowedValues -join ' | ')" }
             'int' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "integer $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'integer'
             }
             'double' {
                 if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "decimal $($rule.Min)-$($rule.Max)"
+                    return "$($rule.Min)-$($rule.Max)"
                 }
                 return 'decimal'
             }
-            'bool'     { return 'yes or no' }
-            'intArray' {
-                if ($rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
-                    return "min, max (each $($rule.Min)-$($rule.Max); min ≤ max)"
-                }
-                return 'min, max'
-            }
-            default { return '' }
+            'bool'   { return 'yes or no' }
+            default  { return '' }
+        }
+    }
+
+    # ── Helper: build bool prompt text ───────────────────────────────────────────
+    # Format: "Description [blue][[y/n]][/] [green](y)[/]: "
+    $buildBoolPromptText = {
+        param($description, $currentValue)
+        $displayValue = if ($currentValue) { 'y' } else { 'n' }
+        return "$description [blue][[y/n]][/] [green]($displayValue)[/]: "
+    }
+
+    # ── Helper: build numeric prompt text ────────────────────────────────────────
+    # Format: "Description [blue][[min-max]][/] [green](value)[/]: "
+    $buildNumericPromptText = {
+        param($description, $rule, $currentValue)
+        $rangeStr = ''
+        if ($rule -and $rule.ContainsKey('Min') -and $rule.ContainsKey('Max')) {
+            $rangeStr = "$($rule.Min)-$($rule.Max)"
+        }
+
+        if ($rangeStr) {
+            return "$description [blue][[$rangeStr]][/] [green]($currentValue)[/]: "
+        } else {
+            return "$description [green]($currentValue)[/]: "
+        }
+    }
+
+    # ── Helper: parse yes/no user input to boolean ───────────────────────────────
+    $parseBoolInput = {
+        param($userInput)
+        $lower = $userInput.ToLowerInvariant().Trim()
+        if ($lower -in @('y', 'yes', 'true', '1')) {
+            return $true
+        }
+        elseif ($lower -in @('n', 'no', 'false', '0')) {
+            return $false
+        }
+        else {
+            return $null  # Invalid input
         }
     }
 
@@ -236,7 +306,7 @@ function Show-MouseControlConfigScreen {
         [Spectre.Console.TableExtensions]::AddRow(
             $table,
             [string[]]@(
-                $def.Key,
+                ($def.Key -replace '^.*\.', ''),
                 [Spectre.Console.Markup]::Escape($displayValue),
                 [Spectre.Console.Markup]::Escape($constraintStr),
                 [Spectre.Console.Markup]::Escape($descriptionStr)
@@ -248,17 +318,38 @@ function Show-MouseControlConfigScreen {
 
     # ── Step 2: Prompt for each MouseControl key in turn ─────────────────────
     foreach ($def in $mouseControlKeyDefs) {
-        $rule          = $script:ConfigValidationSchema[$def.Key]
-        $description   = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
-        $constraintStr = & $buildConstraintString $rule
+        $rule        = $script:ConfigValidationSchema[$def.Key]
+        $description = if ($rule -and $rule.Description) { $rule.Description } else { $def.Key }
 
         if ($def.Type -eq 'bool') {
-            # ── Bool: ConfirmationPrompt (yes/no) ─────────────────────────────
-            $currentValue  = & $def.Get $config
-            $promptText    = "$description [[current: $currentValue]]:"
-            $confirmPrompt = [Spectre.Console.ConfirmationPrompt]::new($promptText)
-            $confirmPrompt.DefaultValue = [bool]$currentValue
-            $newValue = $confirmPrompt.Show($Console)
+            # ── Bool: TextPrompt with y/n parsing ────────────────────────────
+            $currentValue = & $def.Get $config
+            $promptText   = & $buildBoolPromptText $description $currentValue
+
+            while ($true) {
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty input → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    $newValue = $currentValue
+                    break
+                }
+
+                # Parse y/n/yes/no input
+                $parsed = & $parseBoolInput $answer
+                if ($null -eq $parsed) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Please enter y/yes/true/1 or n/no/false/0.`n[/]")
+                    )
+                    continue
+                }
+
+                $newValue = $parsed
+                break
+            }
+
             & $def.Set $config $newValue
         }
         elseif ($def.Type -eq 'intArray') {
@@ -272,7 +363,7 @@ function Show-MouseControlConfigScreen {
                 $currentMax = $currentArr[1]
 
                 # - Min prompt ----------------------------------------------
-                $minPromptText = "$shortKey minimum (ms) [[current: $currentMin]]. Press Enter to keep:"
+                $minPromptText = "$shortKey minimum (ms) [green][[$currentMin]][/]:"
                 $minPrompt     = [Spectre.Console.TextPrompt[string]]::new($minPromptText)
                 $minPrompt.AllowEmpty = $true
                 $minAnswer = $minPrompt.Show($Console)
@@ -287,7 +378,7 @@ function Show-MouseControlConfigScreen {
                 }
 
                 # - Max prompt ----------------------------------------------
-                $maxPromptText = "$shortKey maximum (ms) [[current: $currentMax]]. Press Enter to keep:"
+                $maxPromptText = "$shortKey maximum (ms) [green][[$currentMax]][/]:"
                 $maxPrompt     = [Spectre.Console.TextPrompt[string]]::new($maxPromptText)
                 $maxPrompt.AllowEmpty = $true
                 $maxAnswer = $maxPrompt.Show($Console)
@@ -316,10 +407,10 @@ function Show-MouseControlConfigScreen {
             }
         }
         else {
-            # ── int / double: TextPrompt (identical to Show-LoggingConfigScreen) ──
+            # ── int / double: TextPrompt with standard format and validation ──
             while ($true) {
                 $currentValue = & $def.Get $config
-                $promptText   = "$description [[current: $currentValue]] ($constraintStr). Press Enter to keep:"
+                $promptText   = & $buildNumericPromptText $description $rule $currentValue
 
                 $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
                 $textPrompt.AllowEmpty = $true

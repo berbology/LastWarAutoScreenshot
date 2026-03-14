@@ -42,7 +42,7 @@ Describe 'FileLogBackend Logging Enhancements' -Tag 'Integration' {
                 $backend.Log("Msg $i", 'Info', 'TestFunc', 'TestContext', 'TestStack')
             }
             $allLogs = Get-ChildItem -Path $testLogDir | Where-Object { -not $_.PSIsContainer -and $_.Name -like 'TestLog.log*' }
-            # RetentionFileCount is 2, but main log file may be present, so expect 2 or 3 files
+            # MaxLogFileCount is 2, but main log file may be present, so expect 2 or 3 files
             $allLogs.Count | Should -BeLessOrEqual 3
         }
     }

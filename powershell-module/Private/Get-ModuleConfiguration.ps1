@@ -161,6 +161,17 @@ function Get-ModuleConfiguration {
                 }
             }
 
+            # Inject missing FileBackend sub-object and its keys
+            if (-not $configData.Logging.PSObject.Properties['FileBackend']) {
+                $configData.Logging | Add-Member -MemberType NoteProperty -Name FileBackend -Value $defaults.Logging.FileBackend
+            } else {
+                foreach ($key in $defaults.Logging.FileBackend.PSObject.Properties.Name) {
+                    if (-not $configData.Logging.FileBackend.PSObject.Properties[$key]) {
+                        $configData.Logging.FileBackend | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.Logging.FileBackend.$key
+                    }
+                }
+            }
+
             # Inject missing Screenshots keys (Phase 3 task 6.1; Phase 5 task 1.4)
             if (-not $configData.PSObject.Properties['Screenshots']) {
                 $configData | Add-Member -MemberType NoteProperty -Name Screenshots -Value $defaults.Screenshots

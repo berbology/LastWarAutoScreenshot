@@ -112,14 +112,19 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     OvershootFactor = 0.5
                     MicroPausesEnabled = $false
                     MicroPauseChance = 0.5
-                    MicroPauseDurationRangeMs = @(100, 200)
+                    MinMicroPauseDurationMs = 100
+                    MaxMicroPauseDurationMs = 200
                     JitterEnabled = $false
                     JitterRadiusPx = 5
                     BezierControlPointOffsetFactor = 0.5
-                    MovementDurationRangeMs = @(1000, 2000)
-                    ClickDownDurationRangeMs = @(100, 200)
-                    ClickPreDelayRangeMs = @(100, 300)
-                    ClickPostDelayRangeMs = @(200, 400)
+                    MinMovementDurationMs = 1000
+                    MaxMovementDurationMs = 2000
+                    MinClickDownDurationMs = 100
+                    MaxClickDownDurationMs = 200
+                    MinClickPreDelayMs = 100
+                    MaxClickPreDelayMs = 300
+                    MinClickPostDelayMs = 200
+                    MaxClickPostDelayMs = 400
                     PathPointCount = 50
                 }
                 EmergencyStop = @{
@@ -132,9 +137,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                     MinimumLogLevel = 'Warning'
                     FileBackend = @{
                         MaxSizeMB = 100
-                        MaxFileCount = 100
                         MaxAgeDays = 60
-                        RetentionFileCount = 1000
+                        MaxLogFileCount = 1000
                     }
                 }
             } | ConvertTo-Json -Depth 5
@@ -164,14 +168,19 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.MouseControl.OvershootFactor | Should -Be 0.5
                 $config.MouseControl.MicroPausesEnabled | Should -Be $false
                 $config.MouseControl.MicroPauseChance | Should -Be 0.5
-                $config.MouseControl.MicroPauseDurationRangeMs | Should -Be @(100, 200)
+                $config.MouseControl.MinMicroPauseDurationMs | Should -Be 100
+                $config.MouseControl.MaxMicroPauseDurationMs | Should -Be 200
                 $config.MouseControl.JitterEnabled | Should -Be $false
                 $config.MouseControl.JitterRadiusPx | Should -Be 5
                 $config.MouseControl.BezierControlPointOffsetFactor | Should -Be 0.5
-                $config.MouseControl.MovementDurationRangeMs | Should -Be @(1000, 2000)
-                $config.MouseControl.ClickDownDurationRangeMs | Should -Be @(100, 200)
-                $config.MouseControl.ClickPreDelayRangeMs | Should -Be @(100, 300)
-                $config.MouseControl.ClickPostDelayRangeMs | Should -Be @(200, 400)
+                $config.MouseControl.MinMovementDurationMs | Should -Be 1000
+                $config.MouseControl.MaxMovementDurationMs | Should -Be 2000
+                $config.MouseControl.MinClickDownDurationMs | Should -Be 100
+                $config.MouseControl.MaxClickDownDurationMs | Should -Be 200
+                $config.MouseControl.MinClickPreDelayMs | Should -Be 100
+                $config.MouseControl.MaxClickPreDelayMs | Should -Be 300
+                $config.MouseControl.MinClickPostDelayMs | Should -Be 200
+                $config.MouseControl.MaxClickPostDelayMs | Should -Be 400
                 $config.MouseControl.PathPointCount | Should -Be 50
             }
         }
@@ -199,9 +208,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 $config.Logging.Backend | Should -Be 'EventLog'
                 $config.Logging.MinimumLogLevel | Should -Be 'Warning'
                 $config.Logging.FileBackend.MaxSizeMB | Should -Be 100
-                $config.Logging.FileBackend.MaxFileCount | Should -Be 100
                 $config.Logging.FileBackend.MaxAgeDays | Should -Be 60
-                $config.Logging.FileBackend.RetentionFileCount | Should -Be 1000
+                $config.Logging.FileBackend.MaxLogFileCount | Should -Be 1000
             }
         }
 
@@ -403,7 +411,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                 Mock Write-Host {}
                 $config = Get-ModuleConfiguration -ConfigurationPath $nonExistentPath
                 $config.Screenshots | Should -Not -BeNullOrEmpty
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
                 $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }
@@ -551,7 +559,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
 
                 $config.Screenshots | Should -Not -BeNullOrEmpty
-                $config.Screenshots.StoragePath | Should -Be ''
+                $config.Screenshots.StoragePath | Should -Be 'C:\LastWarAutoScreenshot\Screenshots'
                 $config.Screenshots.MaxStorageGB | Should -Be 2.0
             }
         }
@@ -758,10 +766,10 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             }
         }
 
-        It 'Should inject SimilarityCheck.Action with default StopNestedMacro' {
+        It 'Should inject SimilarityCheck.Action with default StopLoop' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopNestedMacro'
+                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopLoop'
             }
         }
 
@@ -820,10 +828,10 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             $partialConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $script:testConfigPath -Force
         }
 
-        It 'Should inject Action as StopNestedMacro' {
+        It 'Should inject Action as StopLoop' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopNestedMacro'
+                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopLoop'
             }
         }
 
@@ -859,7 +867,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                         SampleCount         = 1000
                         FullScan            = $false
                         TolerancePerChannel = 10
-                        Action              = 'StopNestedMacro'
+                        Action              = 'StopLoop'
                         # ConsecutiveThreshold is intentionally omitted
                     }
                 }

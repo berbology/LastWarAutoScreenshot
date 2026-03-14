@@ -6,9 +6,21 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
+
 }
 
 Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Shared mock helpers (defined inline per test to avoid $script: scope issues)
@@ -27,8 +39,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Get-MacroFileList { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 Show-ManageMacrosScreen -Console $tc
 
@@ -41,8 +52,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Get-MacroFileList { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $result = Show-ManageMacrosScreen -Console $tc
 
@@ -71,8 +81,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro list: [0] [Back to main menu], [1] test-macro — select back (index 0, default)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -97,8 +106,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select back button at index 0
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -150,8 +158,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # 1. Select macro from list (index 0) — Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # 2. Select 'View details' (index 0) — Enter
@@ -211,8 +218,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro list: [0] [Back to main menu], [1] test-macro — select macro
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -272,8 +278,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro list: [0] [Back to main menu], [1] test-macro — select macro
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -319,8 +324,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Remove-MacroFile { $true }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro list: [0] [Back to main menu], [1] test-macro — select macro (1 DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -355,8 +359,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Remove-MacroFile { $true }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro at index 1
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -393,8 +396,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Remove-MacroFile { $true }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro (DownArrow to index 1)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -435,8 +437,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Remove-MacroFile { $true }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # 1. Select macro — Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # 2. Select 'Delete macro' (index 2) — 2 DownArrows + Enter
@@ -483,8 +484,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Show-EditMacroScreen {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Macro list: [0] [Back to main menu], [1] test-macro — select macro
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -516,8 +516,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Mock Show-EditMacroScreen {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select macro at index 1
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -556,8 +555,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select '[[Back to main menu]]' (index 0)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -583,8 +581,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Select '[[Back to main menu]]' (index 0)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 

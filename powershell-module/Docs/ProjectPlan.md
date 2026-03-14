@@ -258,7 +258,8 @@
           "OvershootFactor": 0.1,
           "MicroPausesEnabled": true,
           "MicroPauseChance": 0.2,
-          "MicroPauseDurationRangeMs": [20, 80],
+          "MinMicroPauseDurationMs": 20,
+          "MaxMicroPauseDurationMs": 80,
           "JitterEnabled": true,
           "JitterRadiusPx": 2,
           "BezierControlPointOffsetFactor": 0.3,
@@ -288,7 +289,7 @@
       - Total move duration: random within `MovementDurationRangeMs` config range
       - Ease-in/out: per-step delay derived from sinusoidal curve so movement is slow at start and end, fast mid-path
       - At each step: compute delta from previous point → `Invoke-SendMouseInput` → sleep step delay
-      - Micro-pauses: after each step delay, with probability `MicroPauseChance` add an extra random sleep within `MicroPauseDurationRangeMs`
+      - Micro-pauses: after each step delay, with probability `MicroPauseChance` add an extra random sleep between `MinMicroPauseDurationMs` and `MaxMicroPauseDurationMs`
       - Overshoot: after main path completes, if `OvershootEnabled`, compute a small vector past the final point (scaled by `OvershootFactor × last-step-length`); execute a mini correction path back to the target using a second Bezier (no further overshoot on the correction move)
       - Returns $true/$false; logs any SendInput errors; red ANSI footer on failure
    6. [x] 2.6: Update `powershell-module/Public/Start-AutomationSequence.ps1`
@@ -506,9 +507,8 @@
         - `'Logging.MinimumLogLevel'` - `stringEnum`; `AllowedValues = @('Verbose','Info','Warning','Error')`
         - `'Logging.Backend'` - `stringEnum`; `AllowedValues = @('File','EventLog','File,EventLog')`
         - `'Logging.FileBackend.MaxSizeMB'` - `int`; `Min = 1`, `Max = 10240`
-        - `'Logging.FileBackend.MaxFileCount'` - `int`; `Min = 1`, `Max = 10000`
         - `'Logging.FileBackend.MaxAgeDays'` - `int`; `Min = 1`, `Max = 3650`
-        - `'Logging.FileBackend.RetentionFileCount'` - `int`; `Min = 1`, `Max = 100000`
+        - `'Logging.FileBackend.MaxLogFileCount'` - `int`; `Min = 1`, `Max = 100000`
         - `'MouseControl.OvershootFactor'` - `double`; `Min = 0.0`, `Max = 1.0`
         - `'MouseControl.MicroPauseChance'` - `double`; `Min = 0.0`, `Max = 1.0`
         - `'MouseControl.JitterRadiusPx'` - `int`; `Min = 0`, `Max = 20`
@@ -517,14 +517,15 @@
         - `'MouseControl.ClickDownDurationRangeMs'` - `intArray`; same constraints as above
         - `'MouseControl.ClickPreDelayRangeMs'` - `intArray`; same
         - `'MouseControl.ClickPostDelayRangeMs'` - `intArray`; same
-        - `'MouseControl.MicroPauseDurationRangeMs'` - `intArray`; same
+        - `'MouseControl.MinMicroPauseDurationMs'` - `int`; `Min = 0`, `Max = 5000`
+        - `'MouseControl.MaxMicroPauseDurationMs'` - `int`; `Min = 0`, `Max = 5000`
         - `'MouseControl.PathPointCount'` - `int`; `Min = 5`, `Max = 200`
         - `'EmergencyStop.PollIntervalMs'` - `int`; `Min = 10`, `Max = 5000`
         - `'EmergencyStop.MouseGestureHoldDurationMs'` - `int`; `Min = 500`, `Max = 30000`
         - `'EmergencyStop.AutoStart'` - `bool`
         - `'EmergencyStop.MouseGestureEnabled'` - `bool`
         - `'MouseControl.EasingEnabled'`, `'MouseControl.OvershootEnabled'`, `'MouseControl.MicroPausesEnabled'`, `'MouseControl.JitterEnabled'` - all `bool`
-   2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/ConfigValidation.ps1`
+   2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/Test-ConfigValue.ps1`
       - `Test-ConfigValue -Key [string] -Value [object]`
       - Looks up `$script:ConfigValidationSchema[$Key]` - returns `[PSCustomObject]@{Valid=$true; Message=''}` if key not in schema (unknown keys pass through silently)
       - Validates `Type`, `Min`/`Max` (for numerics and each element of intArray), `AllowedValues` (case-insensitive for stringEnum), `Nullable`
@@ -594,7 +595,7 @@
    1. [x] 4.1: Create `powershell-module/Private/ConsoleApp/Show-WindowSelectionScreen.ps1`
       - `Show-WindowSelectionScreen -Console [Spectre.Console.IAnsiConsole]`
       - **Step 1 - Sort/filter selection:**
-        - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name (A-Z)'`, `'Process name (Z-A)'`, `'Window title (A-Z)'`, `'Window title (Z-A)'`, `'Minimised first'`, `'Minimised last'`
+        - Display a `SelectionPrompt` "Sort windows by:" with choices: `'Process name'`, `'Window title'`
         - Map choice to a sort expression used in step 2
       - **Step 2 - Enumerate and display windows:**
         - Call `Get-EnumeratedWindows` (with no filters - same behaviour as current `Select-TargetWindowFromMenu` with no parameters)
@@ -639,7 +640,7 @@
       - Loads current config via `Get-ModuleConfiguration`
       - Displays a `Table` showing current values for all `Logging.*` and `Logging.FileBackend.*` keys, their current values, allowed values / range, and a description sourced from `$script:ConfigValidationSchema`
       - For each key in turn (via a `TextPrompt` loop):
-        - Prompt: `"<Description> [current: <value>] (<constraints>). Press Enter to keep current:"`
+        - Prompt: `"<Description> [<value>] (<constraints>):"`
         - If the user enters an empty string (just presses Enter), keep the existing value
         - If the user types a value, call `Test-ConfigValue`; if invalid, display the error message in red and re-prompt the same key (do not advance to the next key until valid input is given or user accepts the current value)
         - Offer `"[Reset to default]"` as a recognised input string that substitutes the default value from `Get-DefaultModuleSettings`
@@ -2246,16 +2247,16 @@ test cases throughout Phase 4 implementation.
 - **Screenshot context:** A `$screenshotContext` hashtable `@{ Index=[int]; MacroName=[string]; ActionName=[string]; PreviousScreenshotPath=[string or $null]; ConsecutiveSimilarCount=[int] }` is initialised in `Invoke-MacroSequence` and passed to every `Invoke-MacroAction` call. Because PowerShell hashtables are reference types, mutations (incrementing `Index`, updating `PreviousScreenshotPath`, setting `ActionName`, incrementing/resetting `ConsecutiveSimilarCount`) propagate without `[ref]` parameters. Loop iterations share the same hashtable so screenshot index and previous-path tracking are continuous across loop repetitions. `ConsecutiveSimilarCount` counts how many successive Screenshot actions in a row have triggered the similarity threshold; it is incremented when similar and reset to `0` when not similar. The stop action only fires when `ConsecutiveSimilarCount` reaches `Screenshots.SimilarityCheck.ConsecutiveThreshold` (default `1`, meaning trigger on the first match — backward compatible).
 - **Similarity detection algorithm:** `N` sample pixel coordinates are computed deterministically using evenly-distributed grid traversal (`x = (int)((double)i / sampleCount * bmp.Width) % bmp.Width`, `y = (int)((double)i / sampleCount * bmp.Height)`) — no randomness — so results are reproducible across test runs without seeding. Per-pixel comparison is against R, G, B channels; alpha is ignored. A pixel matches when all three channels differ by ≤ `TolerancePerChannel`. `MatchRatio = matchingPixels / sampleCount`. Implemented as a static C# method to avoid per-pixel PowerShell loop overhead. `FullScan = $true` computes `sampleCount = width * height` and iterates every pixel.
 - **Similarity stop action options** (controlled by `Screenshots.SimilarityCheck.Action`):
-  - `StopNestedMacro` (default): when the Screenshot action is executing **inside a Loop action**, exits the loop cleanly and the parent macro sequence **continues with the next step** after the loop. When not inside any loop (top-level Screenshot), behaves identically to `StopMacro`. Reported as success.
+  - `StopLoop` (default): when the Screenshot action is executing **inside a Loop action**, exits the loop cleanly and the parent macro sequence **continues with the next step** after the loop. When not inside any loop (top-level Screenshot), behaves identically to `StopMacro`. Reported as success.
   - `StopMacro`: halts the entire macro sequence regardless of nesting. Reported as **success** — similarity detection stopping the macro is the intended outcome (scroll end detected), not an error.
   - `Warn`: logs a `Warning` and continues execution; `SimilarityStop` is never set to `$true`.
-  - **Implementation contract:** `SimilarityStop=$true` is returned from the Screenshot case in `Invoke-MacroAction` for both `StopNestedMacro` and `StopMacro`. The `Loop` dispatch in `Invoke-MacroAction` inspects `Action` when it receives `SimilarityStop=$true` from a sub-action: for `StopNestedMacro` it breaks the iteration loop and returns `SimilarityStop=$false` (parent continues); for `StopMacro` it propagates `SimilarityStop=$true` upward. `Invoke-MacroSequence` always treats a `SimilarityStop=$true` result from any top-level action as "stop macro, report success".
+  - **Implementation contract:** `SimilarityStop=$true` is returned from the Screenshot case in `Invoke-MacroAction` for both `StopLoop` and `StopMacro`. The `Loop` dispatch in `Invoke-MacroAction` inspects `Action` when it receives `SimilarityStop=$true` from a sub-action: for `StopLoop` it breaks the iteration loop and returns `SimilarityStop=$false` (parent continues); for `StopMacro` it propagates `SimilarityStop=$true` upward. `Invoke-MacroSequence` always treats a `SimilarityStop=$true` result from any top-level action as "stop macro, report success".
 - **Storage guard:** Before each screenshot capture, `Get-StorageInfo` is called. If `UsedPercent >= 100.0` of `MaxStorageGB`, the screenshot is skipped with a logged `Error` and `Success=$false` returned (execution halts). If actual disk free space (`[System.IO.DriveInfo]`) is ≤ 0 bytes, execution halts entirely with an error panel. `StorageWarningThresholdPercent` (default 90) controls the warning-only band: `>= threshold and < 100%` logs `Warning` but capture continues.
 - **Storage path auto-creation:** If `StoragePath` is configured but the directory does not exist, it is created automatically at first capture via `New-Item -ItemType Directory -Force` with an `Info` log. If `StoragePath` is empty/unconfigured, screenshot actions are skipped with a `Warning` and `Skipped=$true` returned (not an error — consistent with Phase 4 deferred behaviour).
 
 ### Phase 5 scope (what is and is not included)
 
-**Included:** `ScreenCaptureAPI.cs` (Win32 `PrintWindow(PW_RENDERFULLCONTENT)` + `System.Drawing` PNG save; C# similarity comparison via deterministic grid sampling), `Invoke-CaptureWindowRegion.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion` — required for Pester mockability), `Invoke-CompareImages.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CompareImages` — required for Pester mockability), `Resolve-ScreenshotFilename.ps1` (with 200-character resolved-length validation), `Invoke-CaptureScreenRegion.ps1`, `Test-ScreenshotSimilarity.ps1`, `Invoke-MacroAction.ps1` updated (Screenshot action now captures; N-consecutive similarity threshold; Loop dispatch handles `SimilarityStop` for `StopNestedMacro`), `Invoke-MacroSequence.ps1` updated (context initialisation, `SimilarityStop` success messaging), `Show-ScreenshotConfigScreen.ps1`, `Show-ConfigMenuScreen.ps1` updated, `Get-StorageInfo.ps1` enhanced (disk free space, screenshot count, date range), `Show-StorageInfoScreen.ps1` enhanced (Explorer shortcut, disk free warning, screenshot count display), `Show-RunMacroScreen.ps1` pre-flight screenshot check, full Pester test coverage, documentation.
+**Included:** `ScreenCaptureAPI.cs` (Win32 `PrintWindow(PW_RENDERFULLCONTENT)` + `System.Drawing` PNG save; C# similarity comparison via deterministic grid sampling), `Invoke-CaptureWindowRegion.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion` — required for Pester mockability), `Invoke-CompareImages.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CompareImages` — required for Pester mockability), `Resolve-ScreenshotFilename.ps1` (with 200-character resolved-length validation), `Invoke-CaptureScreenRegion.ps1`, `Test-ScreenshotSimilarity.ps1`, `Invoke-MacroAction.ps1` updated (Screenshot action now captures; N-consecutive similarity threshold; Loop dispatch handles `SimilarityStop` for `StopLoop`), `Invoke-MacroSequence.ps1` updated (context initialisation, `SimilarityStop` success messaging), `Show-ScreenshotConfigScreen.ps1`, `Show-ConfigMenuScreen.ps1` updated, `Get-StorageInfo.ps1` enhanced (disk free space, screenshot count, date range), `Show-StorageInfoScreen.ps1` enhanced (Explorer shortcut, disk free warning, screenshot count display), `Show-RunMacroScreen.ps1` pre-flight screenshot check, full Pester test coverage, documentation.
 
 **Explicitly out of scope for Phase 5:** JPEG and other file formats, Azure upload (Phase 9), OCR processing, visual overlay showing capture regions on screen, exclusive-fullscreen DirectX/Vulkan window capture.
 
@@ -2277,7 +2278,7 @@ test cases throughout Phase 4 implementation.
               "SampleCount": 1000,
               "FullScan": false,
               "TolerancePerChannel": 10,
-              "Action": "StopNestedMacro",
+              "Action": "StopLoop",
               "ConsecutiveThreshold": 1
           }
       }
@@ -2285,7 +2286,7 @@ test cases throughout Phase 4 implementation.
 
       - `FileFormat` accepts only `'PNG'` in Phase 5; the key is retained as a string for future extensibility
       - `Threshold` is a decimal in the range 0.0–1.0; `0.98` means 98% of sampled pixels must match
-      - `Action` valid values: `'StopNestedMacro'`, `'StopMacro'`, `'Warn'`
+      - `Action` valid values: `'StopLoop'`, `'StopMacro'`, `'Warn'`
    2. [x] 1.2: Add all new keys to `$script:ConfigValidationSchema` in `powershell-module/Private/Get-DefaultModuleSettings.ps1` alongside the existing `Screenshots.StoragePath` and `Screenshots.MaxStorageGB` entries:
       - `'Screenshots.StorageWarningThresholdPercent'` — `int`; `Min = 1`; `Max = 99`; `Description = 'Warn when screenshot storage usage exceeds this percentage of the configured MaxStorageGB limit'`
       - `'Screenshots.FileFormat'` — `stringEnum`; `AllowedValues = @('PNG')`; `Description = 'Screenshot file format. Only PNG is supported in this release'`
@@ -2295,7 +2296,7 @@ test cases throughout Phase 4 implementation.
       - `'Screenshots.SimilarityCheck.SampleCount'` — `int`; `Min = 100`; `Max = 100000`; `Description = 'Number of pixels sampled for comparison. Ignored when FullScan is true'`
       - `'Screenshots.SimilarityCheck.FullScan'` — `bool`; `Description = 'Compare every pixel instead of a sample. More accurate but slower for large screenshots'`
       - `'Screenshots.SimilarityCheck.TolerancePerChannel'` — `int`; `Min = 0`; `Max = 255`; `Description = 'Maximum per-channel (R/G/B) difference that still counts as a matching pixel. 0 = exact match required'`
-      - `'Screenshots.SimilarityCheck.Action'` — `stringEnum`; `AllowedValues = @('StopNestedMacro', 'StopMacro', 'Warn')`; `Description = 'Action when threshold is reached. StopNestedMacro exits the current loop and continues the parent sequence. StopMacro halts the entire macro. Warn logs and continues'`
+      - `'Screenshots.SimilarityCheck.Action'` — `stringEnum`; `AllowedValues = @('StopLoop', 'StopMacro', 'Warn')`; `Description = 'Action when threshold is reached. StopLoop exits the current loop and continues the parent sequence. StopMacro halts the entire macro. Warn logs and continues'`
       - `'Screenshots.SimilarityCheck.ConsecutiveThreshold'` — `int`; `Min = 1`; `Max = 100`; `Description = 'Number of consecutive screenshots that must each exceed the similarity threshold before the configured Action fires. 1 = trigger on first match (default). Use a higher value to avoid false positives on briefly static content'`
    3. [x] 1.3: Update the `Get-DefaultModuleSettings` function body in `powershell-module/Private/Get-DefaultModuleSettings.ps1` — extend the existing `Screenshots` defaults hashtable to include all new keys with the values from step 1.1. Preserve existing `StoragePath` and `MaxStorageGB` defaults unchanged. The `SimilarityCheck` value is a nested hashtable:
 
@@ -2312,7 +2313,7 @@ test cases throughout Phase 4 implementation.
               SampleCount          = 1000
               FullScan             = $false
               TolerancePerChannel  = 10
-              Action               = 'StopNestedMacro'
+              Action               = 'StopLoop'
               ConsecutiveThreshold = 1
           }
       }
@@ -2323,7 +2324,7 @@ test cases throughout Phase 4 implementation.
    6. [x] 1.6: Update `powershell-module/Tests/ModuleConfiguration.Tests.ps1`:
       - Add round-trip save/load tests for each new key at both levels: `StorageWarningThresholdPercent`, `FileFormat`, `FilenamePattern`, and all seven `SimilarityCheck.*` keys (including `ConsecutiveThreshold`)
       - Add default-injection test: load a config file whose `Screenshots` section contains only `StoragePath` and `MaxStorageGB` (simulating a Phase 3 config file); verify all new keys are injected with defaults; verify `SimilarityCheck` sub-object is created
-      - Add default-injection test: `SimilarityCheck` sub-object exists but is missing `Action`; verify `Action` is injected as `'StopNestedMacro'`
+      - Add default-injection test: `SimilarityCheck` sub-object exists but is missing `Action`; verify `Action` is injected as `'StopLoop'`
       - Add default-injection test: `SimilarityCheck` sub-object exists but is missing `ConsecutiveThreshold`; verify `ConsecutiveThreshold` is injected as `1`
       - Run full Pester suite; confirm count increases
 
@@ -2646,7 +2647,7 @@ test cases throughout Phase 4 implementation.
            b. If `$similarityResult.Skipped -eq $true`: log `Write-LastWarLog -Level Warning "Similarity check skipped: $($similarityResult.Message)"`; reset `$ScreenshotContext.ConsecutiveSimilarCount = 0`; return `Success=$true`, `SimilarityStop=$false`
            c. If `$similarityResult.Similar -eq $true`: increment `$ScreenshotContext.ConsecutiveSimilarCount` by 1
               - If `$ScreenshotContext.ConsecutiveSimilarCount -ge $simConfig.ConsecutiveThreshold`:
-                - If `$simConfig.Action -ieq 'StopNestedMacro'` OR `$simConfig.Action -ieq 'StopMacro'`: log `Write-LastWarLog -Level Info "Similarity threshold reached ($([int]($similarityResult.MatchPercent * 100))% match, $($ScreenshotContext.ConsecutiveSimilarCount) consecutive) — signalling similarity stop"`; return `[PSCustomObject]@{ Success=$true; Skipped=$false; SimilarityStop=$true; Message='Similarity threshold reached' }`
+                - If `$simConfig.Action -ieq 'StopLoop'` OR `$simConfig.Action -ieq 'StopMacro'`: log `Write-LastWarLog -Level Info "Similarity threshold reached ($([int]($similarityResult.MatchPercent * 100))% match, $($ScreenshotContext.ConsecutiveSimilarCount) consecutive) — signalling similarity stop"`; return `[PSCustomObject]@{ Success=$true; Skipped=$false; SimilarityStop=$true; Message='Similarity threshold reached' }`
                 - If `$simConfig.Action -ieq 'Warn'`: log `Write-LastWarLog -Level Warning "Screenshot similarity above threshold ($([int]($similarityResult.MatchPercent * 100))% match, $($ScreenshotContext.ConsecutiveSimilarCount) consecutive) — possible scroll end; continuing"`; return `Success=$true`, `SimilarityStop=$false`
               - If below threshold (accumulating): return `Success=$true`, `SimilarityStop=$false` (continue without action)
            d. If `$similarityResult.Similar -eq $false`: reset `$ScreenshotContext.ConsecutiveSimilarCount = 0`; return `Success=$true`, `SimilarityStop=$false`
@@ -2656,7 +2657,7 @@ test cases throughout Phase 4 implementation.
         ```powershell
         if ($subResult.SimilarityStop -eq $true) {
             $loopSimConfig = (Get-ModuleConfiguration).Screenshots.SimilarityCheck
-            if ($loopSimConfig.Action -ieq 'StopNestedMacro') {
+            if ($loopSimConfig.Action -ieq 'StopLoop') {
                 Write-LastWarLog -Level Info `
                     "Similarity threshold reached inside loop '$($Action.name)' — exiting loop and continuing parent sequence"
                 # Break out of ALL loop iterations; return SimilarityStop=$false so the parent sequence continues
@@ -2664,7 +2665,7 @@ test cases throughout Phase 4 implementation.
                     Success       = $true
                     Skipped       = $false
                     SimilarityStop = $false
-                    Message       = 'Similarity stop consumed by loop (StopNestedMacro)'
+                    Message       = 'Similarity stop consumed by loop (StopLoop)'
                 }
             }
             elseif ($loopSimConfig.Action -ieq 'StopMacro') {
@@ -2683,7 +2684,7 @@ test cases throughout Phase 4 implementation.
 
       - Add `SimilarityStop=[bool]` (default `$false`) to **every** `[PSCustomObject]` return statement in this function for uniformity — including the emergency stop early-return and unknown-type error return
       - Update `$Depth` guard comment to note that Loop actions pass `$ScreenshotContext` unchanged to recursive calls (same hashtable reference, ensuring index and previous-path tracking are continuous across loop iterations)
-      - Update comment-based help: add `$ScreenshotContext` parameter description; update the dispatch table to reflect that Screenshot now captures; add `.NOTES` explaining the `StopNestedMacro` vs `StopMacro` contract and the `SimilarityStop=$false` return from the Loop case for `StopNestedMacro`
+      - Update comment-based help: add `$ScreenshotContext` parameter description; update the dispatch table to reflect that Screenshot now captures; add `.NOTES` explaining the `StopLoop` vs `StopMacro` contract and the `SimilarityStop=$false` return from the Loop case for `StopLoop`
 
    2. [x] 7.2: Update `powershell-module/Tests/MacroExecution.Tests.ps1` — replace the existing Screenshot action tests with the following (keep all existing non-Screenshot tests unchanged):
       - Common additional mocks: `Invoke-CaptureScreenRegion`, `Test-ScreenshotSimilarity`
@@ -2700,9 +2701,9 @@ test cases throughout Phase 4 implementation.
       - **Screenshot action — capture fails (e.g. storage full):**
         - Mock `Invoke-CaptureScreenRegion` returning `Success=$false`, `Skipped=$false`
         - Returns `Success=$false`, `Skipped=$false`
-      - **Similarity detection — `StopNestedMacro` on similar screenshots, `ConsecutiveThreshold = 1`:**
+      - **Similarity detection — `StopLoop` on similar screenshots, `ConsecutiveThreshold = 1`:**
         - Set `$ScreenshotContext.PreviousScreenshotPath = 'TestDrive:\Screenshots\prev.png'` (non-null, so comparison runs); `$ScreenshotContext.ConsecutiveSimilarCount = 0`
-        - Mock config with `SimilarityCheck.Enabled = $true`, `Action = 'StopNestedMacro'`, `ConsecutiveThreshold = 1`
+        - Mock config with `SimilarityCheck.Enabled = $true`, `Action = 'StopLoop'`, `ConsecutiveThreshold = 1`
         - Mock `Test-ScreenshotSimilarity` returning `Similar=$true`
         - Returns `Success=$true`, `SimilarityStop=$true`; `Write-LastWarLog` called with `Level = 'Info'`; `$ScreenshotContext.ConsecutiveSimilarCount` is `1`
       - **Similarity detection — `ConsecutiveThreshold = 3`, only 2 consecutive matches so far — no stop yet:**
@@ -2727,10 +2728,10 @@ test cases throughout Phase 4 implementation.
         - `$ScreenshotContext.PreviousScreenshotPath = 'TestDrive:\prev.png'` (non-null)
         - Mock config with `SimilarityCheck.Enabled = $false`
         - `Test-ScreenshotSimilarity` NOT called
-      - **Loop action — `StopNestedMacro` consumed by loop:**
+      - **Loop action — `StopLoop` consumed by loop:**
         - Build a Loop action with 3 iterations referencing a named Screenshot action
         - Mock the recursive `Invoke-MacroAction` call to return `SimilarityStop=$true` on the 2nd iteration
-        - Mock config with `Action = 'StopNestedMacro'`
+        - Mock config with `Action = 'StopLoop'`
         - Loop returns `Success=$true`, `SimilarityStop=$false` (loop exited, parent continues)
         - `Write-LastWarLog` called with `Level = 'Info'` containing 'exits loop'
       - **Loop action — `StopMacro` propagated through loop:**
@@ -2814,7 +2815,7 @@ test cases throughout Phase 4 implementation.
         - `SimilarityCheck.SampleCount` (`int`): `TextPrompt` with `AllowEmpty = $true`; validate via `Test-ConfigValue`
         - `SimilarityCheck.FullScan` (`bool`): `ConfirmationPrompt` as above. When user answers `$true`, display warning via `$Console.Write([Spectre.Console.Markup]::new("[yellow]Full scan mode compares every pixel. This may be slow for large screenshots.`n[/]"))` before setting the value
         - `SimilarityCheck.TolerancePerChannel` (`int`): `TextPrompt` with prompt title including hint `"(0 = exact match, 255 = any pixel counts as matching)"`; validate via `Test-ConfigValue`
-        - `SimilarityCheck.Action` (`stringEnum`): `SelectionPrompt` with display choices — use a hashtable `$actionDisplayMap` to map raw→display and display→raw; choices array: `@('StopNestedMacro (exit current loop, parent sequence continues)', 'StopMacro (halt entire macro; reported as success)', 'Warn (log warning and continue)')`. After prompt returns, map back to raw value using `switch ($displayChoice) { 'StopNestedMacro (exit current loop, parent sequence continues)' { 'StopNestedMacro' } 'StopMacro (halt entire macro; reported as success)' { 'StopMacro' } default { 'Warn' } }` — use exact `-ieq`-style switch matching (no `-split` or substring extraction)
+        - `SimilarityCheck.Action` (`stringEnum`): `SelectionPrompt` with display choices — use a hashtable `$actionDisplayMap` to map raw→display and display→raw; choices array: `@('StopLoop (exit current loop, parent sequence continues)', 'StopMacro (halt entire macro; reported as success)', 'Warn (log warning and continue)')`. After prompt returns, map back to raw value using `switch ($displayChoice) { 'StopLoop (exit current loop, parent sequence continues)' { 'StopLoop' } 'StopMacro (halt entire macro; reported as success)' { 'StopMacro' } default { 'Warn' } }` — use exact `-ieq`-style switch matching (no `-split` or substring extraction)
         - `SimilarityCheck.ConsecutiveThreshold` (`int`): `TextPrompt` with prompt title including hint `"(1 = trigger on first match; higher values require N consecutive similar screenshots)"`; validate via `Test-ConfigValue`
         - For `'[Reset to default]'` sentinel on `TextPrompt` keys: recognise `$answer -ieq '[Reset to default]'` (single brackets — this is the raw text the user types, not a Spectre markup string). When displaying the sentinel hint in the prompt title, escape it as `[[Reset to default]]` so Spectre renders it as literal text `[Reset to default]`
       - **Save/Reset/Discard `SelectionPrompt`:** `'Yes - save now'`, `'Reset ALL Screenshot settings to defaults'`, `'Discard changes'` — identical contract to `Show-LoggingConfigScreen.ps1`
@@ -2845,8 +2846,8 @@ test cases throughout Phase 4 implementation.
         - Queue `'y'` for `FullScan`
         - `$testConsole.Output` contains `'may be slow'`
       - **`SimilarityCheck.Action` selection mapped correctly:**
-        - Queue `'StopNestedMacro (exit current loop, parent sequence continues)'` at selection prompt
-        - Saved config `SimilarityCheck.Action = 'StopNestedMacro'` (raw value, not display string — confirms the switch mapping extracts raw value from full display string)
+        - Queue `'StopLoop (exit current loop, parent sequence continues)'` at selection prompt
+        - Saved config `SimilarityCheck.Action = 'StopLoop'` (raw value, not display string — confirms the switch mapping extracts raw value from full display string)
       - **`SimilarityCheck.ConsecutiveThreshold` saved correctly:**
         - Queue `'3'` for `ConsecutiveThreshold` TextPrompt; verify saved config `SimilarityCheck.ConsecutiveThreshold = 3`
       - **`Reset ALL Screenshot settings to defaults` at save prompt:**
@@ -2968,7 +2969,7 @@ test cases throughout Phase 4 implementation.
        - **Config screen:** Navigate to `Configure module` → `Screenshot settings`; confirm `'[[Back to main menu]]'` is the first option in the config menu; select `Screenshot settings`; set `StoragePath` to `C:\Temp\TestScreenshots`; verify `FileFormat` selection shows `'PNG'` with the "Only PNG is supported in this release" note; set a custom `FilenamePattern` and verify the example filename is displayed; enable `SimilarityCheck` and confirm the info note appears; set `Threshold = 0.95`; set `ConsecutiveThreshold = 3`; save; close config; reopen `Screenshot settings` and verify all saved values are displayed including `ConsecutiveThreshold = 3`
        - **Pre-flight warning:** record a macro with at least one `Screenshot` action; clear `StoragePath` (set to empty); run the macro; confirm the pre-flight warning panel appears with the two choices; choose `'Cancel'`; verify you return to the macro list (not the main menu)
        - **Screenshot capture:** set a valid `StoragePath`; open Notepad or any windowed app; select it as the target window; run the macro; verify PNG files appear in the configured storage folder with filenames matching the configured pattern; verify correct region is captured (not the entire screen)
-       - **Similarity detection:** enable `SimilarityCheck`, `Action = 'StopNestedMacro'`; record a macro with a Loop action that captures screenshots; run the macro on a static window (nothing changing on screen); confirm the loop exits when the threshold is reached and the parent sequence continues; confirm the run result is reported as success with "Scroll end detected" message
+       - **Similarity detection:** enable `SimilarityCheck`, `Action = 'StopLoop'`; record a macro with a Loop action that captures screenshots; run the macro on a static window (nothing changing on screen); confirm the loop exits when the threshold is reached and the parent sequence continues; confirm the run result is reported as success with "Scroll end detected" message
        - **`StopMacro` action:** change `Action = 'StopMacro'`; run same macro; confirm the entire macro halts at similarity detection; confirm reported as success
        - **Storage info screen:** navigate to `Configure module` → `Storage & log file info`; verify screenshot count, disk free space, and file date range are displayed correctly; confirm `'Open storage folder in Explorer'` opens Windows Explorer; confirm `'Configure screenshot settings'` navigates to the screenshot config screen
        - **Storage limit:** set `MaxStorageGB` to `0.0001` (a tiny value below current usage); run macro; confirm storage-limit warning appears for each Screenshot action and screenshots are skipped without halting the rest of the macro; confirm the run is reported as a failure at the first non-skipped error
@@ -2987,10 +2988,10 @@ test cases throughout Phase 4 implementation.
          - Purpose: automatically detecting scroll-list end without OCR
          - How to enable (`SimilarityCheck.Enabled = true`) and configure in the config screen
          - What each `Action` value does:
-           - `StopNestedMacro` (default): exits the current loop, parent sequence continues — ideal for scroll loops
+           - `StopLoop` (default): exits the current loop, parent sequence continues — ideal for scroll loops
            - `StopMacro`: halts the entire macro — use when the screenshot is at the top level, not inside a loop
            - `Warn`: logs a warning and continues — useful for monitoring without stopping
-         - Why `StopMacro` and `StopNestedMacro` are reported as **success** (scroll end is the intended outcome)
+         - Why `StopMacro` and `StopLoop` are reported as **success** (scroll end is the intended outcome)
          - `Threshold` is entered and stored as a decimal (0.0–1.0); `0.98` means 98% of sampled pixels match
          - `ConsecutiveThreshold`: how many consecutive similar screenshots must occur before the action fires; default `1` (first match); set higher (e.g. `3`) to avoid false positives on briefly static content
          - Sampling is deterministic (grid-based, not random) — results are reproducible across runs
@@ -3004,6 +3005,11 @@ test cases throughout Phase 4 implementation.
        - Update the "Current status" line from "Phase 3 (Console App) complete. Phase 4 (Macro Recording) is next." to "Phase 4 (Macro Recording) complete. Phase 5 (Screenshot Management) is next."
 
 ## Phase 6
+
+> **UX note:** `Show-StorageInfoScreen` has been moved from Configure Module → Storage & log file info
+> to the top-level main menu as **"View module storage info"**.  The screen now shows two sections:
+> Screenshot Storage and Log Files (disk usage when `Logging.Backend` includes `File`, or an
+> EventLog-only info panel otherwise).  No new backend functions were required.
 
 ## Phase 6: Configuration & Scheduling
 
