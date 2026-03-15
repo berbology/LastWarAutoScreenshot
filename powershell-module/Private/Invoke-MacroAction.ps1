@@ -180,6 +180,7 @@ function Invoke-MacroAction {
                 -RegionTopLeftRelativeY     $Action.region.topLeft.relativeY `
                 -RegionBottomRightRelativeX $Action.region.bottomRight.relativeX `
                 -RegionBottomRightRelativeY $Action.region.bottomRight.relativeY `
+                -MaskRegions                $Action.maskRegions `
                 -ScreenshotContext          $ScreenshotContext
 
             # StoragePath not configured — intentional skip, not an error

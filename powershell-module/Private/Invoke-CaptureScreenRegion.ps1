@@ -30,6 +30,13 @@ function Invoke-CaptureScreenRegion {
         Bottom edge of the capture region as a fraction of window height (0.0-1.0).
         Must be greater than RegionTopLeftRelativeY.
 
+    .PARAMETER MaskRegions
+        Optional array of window-relative mask region objects. Each element must have
+        topLeft.relativeX, topLeft.relativeY, bottomRight.relativeX, bottomRight.relativeY
+        (all 0.0–1.0). Regions are clipped to the screenshot region before being converted
+        to pixel-space rectangles passed to Invoke-CaptureWindowRegion. Defaults to empty
+        (no masking).
+
     .PARAMETER ScreenshotContext
         Hashtable with keys: Index (int), MacroName (string), ActionName (string),
         PreviousScreenshotPath (string or $null).  Mutated in-place on success:
@@ -72,6 +79,9 @@ function Invoke-CaptureScreenRegion {
 
         [Parameter(Mandatory)]
         [double]$RegionBottomRightRelativeY,
+
+        [AllowNull()]
+        [object[]]$MaskRegions = @(),
 
         [Parameter(Mandatory)]
         [hashtable]$ScreenshotContext
@@ -212,13 +222,65 @@ function Invoke-CaptureScreenRegion {
         }
     }
 
+    # ── 9. Compute pixel-space mask rectangles from window-relative mask regions ─
+    $maskPixelRects = [System.Drawing.Rectangle[]]@()
+    $maskColour     = [System.Drawing.Color]::Black
+
+    if ($null -ne $MaskRegions -and $MaskRegions.Count -gt 0) {
+        $resolvedColour = Resolve-MaskColour -ColourString $config.Screenshots.MaskColour
+        if ($null -eq $resolvedColour) {
+            Write-Warning "MaskColour '$($config.Screenshots.MaskColour)' could not be parsed — using black."
+            $resolvedColour = [System.Drawing.Color]::Black
+        }
+        $maskColour = $resolvedColour
+
+        $windowBounds = Get-WindowBounds -WindowHandle $hWnd
+        $ssLeft   = $RegionTopLeftRelativeX
+        $ssTop    = $RegionTopLeftRelativeY
+        $ssRight  = $RegionBottomRightRelativeX
+        $ssBottom = $RegionBottomRightRelativeY
+        $bmpWidth  = [int]($relativeWidth  * $windowBounds.Width)
+        $bmpHeight = [int]($relativeHeight * $windowBounds.Height)
+
+        $rectList = [System.Collections.Generic.List[System.Drawing.Rectangle]]::new()
+        foreach ($maskRegion in $MaskRegions) {
+            $mLeft   = $maskRegion.topLeft.relativeX
+            $mTop    = $maskRegion.topLeft.relativeY
+            $mRight  = $maskRegion.bottomRight.relativeX
+            $mBottom = $maskRegion.bottomRight.relativeY
+
+            $overlapLeft   = [Math]::Max($ssLeft,   $mLeft)
+            $overlapTop    = [Math]::Max($ssTop,    $mTop)
+            $overlapRight  = [Math]::Min($ssRight,  $mRight)
+            $overlapBottom = [Math]::Min($ssBottom, $mBottom)
+
+            if ($overlapLeft -ge $overlapRight -or $overlapTop -ge $overlapBottom) {
+                Write-Verbose "Mask region has no overlap with screenshot region — skipping."
+                continue
+            }
+
+            $pixelX = [int](($overlapLeft   - $ssLeft) / $relativeWidth  * $bmpWidth)
+            $pixelY = [int](($overlapTop    - $ssTop)  / $relativeHeight * $bmpHeight)
+            $pixelW = [int](($overlapRight  - $overlapLeft) / $relativeWidth  * $bmpWidth)
+            $pixelH = [int](($overlapBottom - $overlapTop)  / $relativeHeight * $bmpHeight)
+
+            if ($pixelW -gt 0 -and $pixelH -gt 0) {
+                $rectList.Add([System.Drawing.Rectangle]::new($pixelX, $pixelY, $pixelW, $pixelH))
+            }
+        }
+        $maskPixelRects = $rectList.ToArray()
+    }
+
+    # ── 10. Capture ───────────────────────────────────────────────────────────
     $captured = Invoke-CaptureWindowRegion `
-        -WindowHandle  $hWnd `
-        -RelativeX     $RegionTopLeftRelativeX `
-        -RelativeY     $RegionTopLeftRelativeY `
-        -RelativeWidth $relativeWidth `
+        -WindowHandle   $hWnd `
+        -RelativeX      $RegionTopLeftRelativeX `
+        -RelativeY      $RegionTopLeftRelativeY `
+        -RelativeWidth  $relativeWidth `
         -RelativeHeight $relativeHeight `
-        -OutputPath    $fullPath
+        -OutputPath     $fullPath `
+        -MaskPixelRects $maskPixelRects `
+        -MaskColour     $maskColour
 
     if (-not $captured) {
         Write-LastWarLog -Level Error -FunctionName 'Invoke-CaptureScreenRegion' `
@@ -231,10 +293,10 @@ function Invoke-CaptureScreenRegion {
         }
     }
 
-    # ── 9. Update context ─────────────────────────────────────────────────────
+    # ── 11. Update context ────────────────────────────────────────────────────
     $ScreenshotContext.PreviousScreenshotPath = $fullPath
 
-    # ── 10. Log success and return ────────────────────────────────────────────
+    # ── 12. Log success and return ────────────────────────────────────────────
     Write-LastWarLog -Level Info -FunctionName 'Invoke-CaptureScreenRegion' `
         -Message "Screenshot saved: $fullPath"
 

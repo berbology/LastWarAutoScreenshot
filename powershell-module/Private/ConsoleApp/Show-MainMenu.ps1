@@ -7,17 +7,18 @@ function Show-MainMenu {
         Renders a Spectre.Console SelectionPrompt with the following choices:
           - Select target window
           - Configure module
-          - Record macro
-          - Run macro (only shows when *.json files exist in the module's
-            Private\Macros\ folder)
-          - Manage macros (only shows when *.json files exist in the module's
-            Private\Macros\ folder)
+          - Record macro        (only shown when a target window has been configured)
+          - Run macro           (only shown when a target window is configured AND *.json
+                                 files exist in the module's Private\Macros\ folder)
+          - Manage macros       (only shown when *.json files exist in the module's
+                                 Private\Macros\ folder)
           - Storage info
           - Exit
 
-        The function checks the Private\Macros\ folder for saved macro files before building
-        the prompt.  A macro is any file matching *.json in that folder (naming convention:
-        yyyyMMdd_HHmmss_<name>.json).
+        The function calls Get-ModuleConfiguration to determine whether a target window has
+        been configured (ProcessName is non-empty).  It also checks the Private\Macros\
+        folder for saved macro files before building the prompt.  A macro is any file
+        matching *.json in that folder (naming convention: yyyyMMdd_HHmmss_<name>.json).
 
         Returns a string identifier corresponding to the user's selection:
           'SelectWindow' | 'Configure' | 'RecordMacro' | 'RunMacro' | 'ManageMacros' |
@@ -57,6 +58,11 @@ function Show-MainMenu {
         [Spectre.Console.IAnsiConsole]$Console
     )
 
+    # Detect whether a target window has been configured for this session
+    $config = Get-ModuleConfiguration
+    $hasTargetWindow = $config.PSObject.Properties['ProcessName'] -and
+                       -not [string]::IsNullOrEmpty($config.ProcessName)
+
     # Detect saved macros
     $macroFolder = Join-Path $script:ModuleRootPath 'Private\Macros'
     $macroFiles  = @()
@@ -69,10 +75,16 @@ function Show-MainMenu {
     $choices = [System.Collections.Generic.List[string]]::new()
     $choices.Add('Select target window')
     $choices.Add('Configure module')
-    $choices.Add('Record macro')
+
+    if ($hasTargetWindow) {
+        $choices.Add('Record macro')
+    }
+
+    if ($hasTargetWindow -and $hasMacros) {
+        $choices.Add('Run macro')
+    }
 
     if ($hasMacros) {
-        $choices.Add('Run macro')
         $choices.Add('Manage macros')
     }
     

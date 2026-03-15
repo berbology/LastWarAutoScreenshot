@@ -240,3 +240,73 @@ Describe 'ScreenCaptureAPI wrapper functions exist in module scope' {
         }
     }
 }
+
+Describe 'Invoke-CaptureWindowRegion mask parameters' {
+    It 'has MaskPixelRects parameter of type System.Drawing.Rectangle[]' {
+        InModuleScope LastWarAutoScreenshot {
+            $params = (Get-Command Invoke-CaptureWindowRegion).Parameters
+            $params.ContainsKey('MaskPixelRects') | Should -BeTrue
+            $params['MaskPixelRects'].ParameterType | Should -Be ([System.Drawing.Rectangle[]])
+        }
+    }
+
+    It 'has MaskColour parameter of type System.Drawing.Color' {
+        InModuleScope LastWarAutoScreenshot {
+            $params = (Get-Command Invoke-CaptureWindowRegion).Parameters
+            $params.ContainsKey('MaskColour') | Should -BeTrue
+            $params['MaskColour'].ParameterType | Should -Be ([System.Drawing.Color])
+        }
+    }
+
+    It 'returns $false when WindowHandle is [IntPtr]::Zero (new mask params do not change validation behaviour)' {
+        InModuleScope LastWarAutoScreenshot {
+            $rect = [System.Drawing.Rectangle]::new(0, 0, 50, 50)
+            $result = Invoke-CaptureWindowRegion `
+                -WindowHandle   ([IntPtr]::Zero) `
+                -RelativeX      0.0 -RelativeY 0.0 `
+                -RelativeWidth  1.0 -RelativeHeight 1.0 `
+                -OutputPath     'C:\Temp\out.png' `
+                -MaskPixelRects @($rect) `
+                -MaskColour     ([System.Drawing.Color]::Red)
+            $result | Should -BeFalse
+        }
+    }
+}
+
+Describe 'System.Drawing masking smoke test' {
+    It 'FillRectangle paints the expected pixels on a white bitmap' {
+        $bmpPath = Join-Path $TestDrive 'mask_smoke.png'
+
+        # Create a 200x200 all-white bitmap and save it
+        $bmp = [System.Drawing.Bitmap]::new(200, 200)
+        $g   = [System.Drawing.Graphics]::FromImage($bmp)
+        $g.Clear([System.Drawing.Color]::White)
+        $g.Dispose()
+
+        # Apply a 50x50 red rectangle at (10,20)
+        $g2    = [System.Drawing.Graphics]::FromImage($bmp)
+        $brush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::Red)
+        $g2.FillRectangle($brush, [System.Drawing.Rectangle]::new(10, 20, 50, 50))
+        $brush.Dispose()
+        $g2.Dispose()
+
+        $bmp.Save($bmpPath, [System.Drawing.Imaging.ImageFormat]::Png)
+        $bmp.Dispose()
+
+        # Reload and verify pixel colours at known coordinates
+        $loaded = [System.Drawing.Bitmap]::new($bmpPath)
+
+        $insideMask  = $loaded.GetPixel(35, 45)   # inside  (10+25, 20+25)
+        $outsideMask = $loaded.GetPixel(100, 100)  # outside the rectangle
+
+        $loaded.Dispose()
+
+        $insideMask.R  | Should -Be 255
+        $insideMask.G  | Should -Be 0
+        $insideMask.B  | Should -Be 0
+
+        $outsideMask.R | Should -Be 255
+        $outsideMask.G | Should -Be 255
+        $outsideMask.B | Should -Be 255
+    }
+}

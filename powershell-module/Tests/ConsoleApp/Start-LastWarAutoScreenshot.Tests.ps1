@@ -10,6 +10,25 @@ BeforeAll {
 
 Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
 
+    BeforeEach {
+        # All tests need deterministic mocks for the window-clearing calls that now
+        # run on every invocation of Start-LastWarAutoScreenshot.
+        InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+            Mock Get-ModuleConfiguration -MockWith {
+                [PSCustomObject]@{
+                    ProcessName   = 'LastWar'
+                    WindowTitle   = 'Last War: Survival'
+                    Logging       = [PSCustomObject]@{}
+                    MouseControl  = [PSCustomObject]@{}
+                    EmergencyStop = [PSCustomObject]@{}
+                    Screenshots   = [PSCustomObject]@{}
+                    CodeEditor    = ''
+                }
+            }
+            Mock Save-ModuleSettings -MockWith { $true }
+        }
+    }
+
     Context 'Loop lifecycle' {
 
         It 'Exits cleanly without exception when Show-MainMenu returns Exit immediately' {
@@ -61,6 +80,53 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Start-LastWarAutoScreenshot -Console $tc
 
                 Should -Invoke Invoke-StartupConfigValidation -Exactly 1
+            }
+        }
+    }
+
+    Context 'Window config reset on startup' {
+
+        It 'Calls Save-ModuleSettings exactly once to clear the window target before entering the loop' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-MainMenu -MockWith { 'Exit' }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LastWarAutoScreenshot -Console $tc
+
+                Should -Invoke Save-ModuleSettings -Exactly 1
+            }
+        }
+
+        It 'Saves a settings-only config (no ProcessName) to clear the window target' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-MainMenu -MockWith { 'Exit' }
+                $savedConfig = $null
+                Mock Save-ModuleSettings -MockWith {
+                    param([PSCustomObject]$Config)
+                    $script:savedConfig = $Config
+                    $true
+                }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LastWarAutoScreenshot -Console $tc
+
+                $script:savedConfig | Should -Not -BeNullOrEmpty
+                $script:savedConfig.PSObject.Properties['ProcessName'] | Should -BeNullOrEmpty
+                $script:savedConfig.PSObject.Properties['WindowTitle']  | Should -BeNullOrEmpty
             }
         }
     }

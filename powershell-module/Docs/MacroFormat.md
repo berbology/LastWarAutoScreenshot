@@ -236,7 +236,13 @@ during execution (non-fatal — the macro continues normally).
     "region": {
         "topLeft":     { "relativeX": 0.10, "relativeY": 0.15 },
         "bottomRight": { "relativeX": 0.90, "relativeY": 0.85 }
-    }
+    },
+    "maskRegions": [
+        {
+            "topLeft":     { "relativeX": 0.30, "relativeY": 0.40 },
+            "bottomRight": { "relativeX": 0.55, "relativeY": 0.50 }
+        }
+    ]
 }
 ```
 
@@ -246,6 +252,15 @@ during execution (non-fatal — the macro continues normally).
 | `region.topLeft.relativeY` | double | 0.0–1.0 | Top edge of the capture region. |
 | `region.bottomRight.relativeX` | double | 0.0–1.0 | Right edge. Must be greater than `topLeft.relativeX`. |
 | `region.bottomRight.relativeY` | double | 0.0–1.0 | Bottom edge. Must be greater than `topLeft.relativeY`. |
+| `maskRegions` | array | optional, max 10 | Regions filled with the configured mask colour before the file is saved. Same window-relative coordinate space as `region`. Omit or use `[]` for no masking. |
+| `maskRegions[i].topLeft.relativeX` | double | 0.0–1.0 | Left edge of the mask region. |
+| `maskRegions[i].topLeft.relativeY` | double | 0.0–1.0 | Top edge of the mask region. |
+| `maskRegions[i].bottomRight.relativeX` | double | 0.0–1.0 | Right edge of the mask region. Must be greater than `topLeft.relativeX`. |
+| `maskRegions[i].bottomRight.relativeY` | double | 0.0–1.0 | Bottom edge of the mask region. Must be greater than `topLeft.relativeY`. |
+
+The fill colour for all mask regions is controlled by `Screenshots.MaskColour` in module
+configuration (default: `"0,0,0"` — pure black). Mask regions that do not overlap the
+screenshot `region` have no visible effect but are not a validation error.
 
 Naming screenshot actions is recommended when they will be referenced by loops.
 
@@ -330,6 +345,9 @@ Repeat a set of named actions N times.
 | Required property missing | `"'<property>' is required for <type> actions"` |
 | Numeric property out of range | `"'<property>' must be between <min> and <max>"` |
 | `Screenshot` bottom-right not below/right of top-left | `"bottomRight must be below and to the right of topLeft"` |
+| `Screenshot.maskRegions` length exceeds 10 | `"Screenshot action '<name>': maskRegions must contain at most 10 entries"` |
+| `Screenshot.maskRegions[i].bottomRight.relativeX` ≤ `topLeft.relativeX` | `"Screenshot action '<name>': maskRegions[i].bottomRight.relativeX must be greater than topLeft.relativeX"` |
+| `Screenshot.maskRegions[i].bottomRight.relativeY` ≤ `topLeft.relativeY` | `"Screenshot action '<name>': maskRegions[i].bottomRight.relativeY must be greater than topLeft.relativeY"` |
 | `Loop.actionNames` references non-existent name | `"Loop references unknown action: '<name>'"` |
 | `Loop.actionNames` references a `Loop` action | `"Loop cannot reference another Loop action: '<name>'"` |
 | `Loop.actionNames` empty | `"'actionNames' must contain at least one entry"` |

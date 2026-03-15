@@ -15,7 +15,9 @@ function Start-LastWarAutoScreenshot {
              'Configure Module' (opens the configuration screen) or 'Exit' (exits the app).
              If 'Exit' is selected, the function returns immediately. If 'Configure Module' is
              selected, the config menu is shown.
-          2. Once validation is complete (or config is updated and validated), enters an
+          2. Clears window-target fields from the saved configuration so the user must
+             select a fresh target window on each invocation.
+          3. Once validation is complete (or config is updated and validated), enters an
              infinite loop rendering the main menu via Show-MainMenu.
           3. Dispatches each selection to the relevant screen function:
                SelectWindow     → Show-WindowSelectionScreen   (Phase 1)
@@ -138,6 +140,18 @@ Until this is resolved, logs will be written to file instead.
     elseif ($validationResult.UserAction -eq "ConfigureModule") {
         $null = Show-ConfigMenuScreen -Console $Console
     }
+
+    # Clear window-target fields from config on every invocation so the user must
+    # select a fresh target window each time the application starts.
+    $startupConfig = Get-ModuleConfiguration
+    $settingsOnlyConfig = [PSCustomObject]@{
+        Logging       = $startupConfig.Logging
+        MouseControl  = $startupConfig.MouseControl
+        EmergencyStop = $startupConfig.EmergencyStop
+        Screenshots   = $startupConfig.Screenshots
+        CodeEditor    = $startupConfig.CodeEditor
+    }
+    Save-ModuleSettings -Config $settingsOnlyConfig | Out-Null
 
     # $mainBlock is defined WITHOUT GetNewClosure() so that it retains the module's parse-time
     # session state binding. GetNewClosure() strips the module session state, causing private

@@ -279,6 +279,225 @@ Describe 'Test-MacroAction' -Tag 'Unit' {
                 $result.Valid | Should -BeFalse
             }
         }
+
+        It 'accepts a Screenshot action with no maskRegions property (regression guard)' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type   = 'Screenshot'
+                    region = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeTrue
+            }
+        }
+
+        It 'accepts a Screenshot action with an empty maskRegions array' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @()
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeTrue
+            }
+        }
+
+        It 'accepts a Screenshot action with one valid maskRegion' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            topLeft     = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.2 }
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeTrue
+            }
+        }
+
+        It 'accepts a Screenshot action with exactly 10 maskRegions (boundary maximum)' {
+            InModuleScope LastWarAutoScreenshot {
+                $masks = 1..10 | ForEach-Object {
+                    [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                    }
+                }
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 1.0; relativeY = 1.0 }
+                    }
+                    maskRegions = $masks
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeTrue
+            }
+        }
+
+        It 'rejects a Screenshot action with 11 maskRegions' {
+            InModuleScope LastWarAutoScreenshot {
+                $masks = 1..11 | ForEach-Object {
+                    [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                    }
+                }
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 1.0; relativeY = 1.0 }
+                    }
+                    maskRegions = $masks
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match '11'
+            }
+        }
+
+        It 'rejects a maskRegion element missing topLeft' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'topLeft'
+            }
+        }
+
+        It 'rejects a maskRegion element missing bottomRight' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            topLeft = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'bottomRight'
+            }
+        }
+
+        It 'rejects a maskRegion with a coordinate outside 0.0-1.0' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            topLeft     = [PSCustomObject]@{ relativeX = -0.1; relativeY = 0.0 }
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.5;  relativeY = 0.5 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'range'
+            }
+        }
+
+        It 'rejects a maskRegion where bottomRight.relativeX <= topLeft.relativeX' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            topLeft     = [PSCustomObject]@{ relativeX = 0.8; relativeY = 0.1 }
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.9 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'relativeX'
+            }
+        }
+
+        It 'rejects a maskRegion where bottomRight.relativeY <= topLeft.relativeY' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.8 }
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.2 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'relativeY'
+            }
+        }
+
+        It 'reports the correct index [1] when the second maskRegion element is invalid' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type        = 'Screenshot'
+                    region      = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                    }
+                    maskRegions = @(
+                        [PSCustomObject]@{
+                            topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                        },
+                        [PSCustomObject]@{
+                            bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                        }
+                    )
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match '\[1\]'
+            }
+        }
     }
 
     Context 'Delay' {

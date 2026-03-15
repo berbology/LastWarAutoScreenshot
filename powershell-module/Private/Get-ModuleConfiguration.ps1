@@ -200,19 +200,29 @@ function Get-ModuleConfiguration {
                 $configData | Add-Member -MemberType NoteProperty -Name CodeEditor -Value $defaults.CodeEditor
             }
 
-            # Validate required properties exist
-            $requiredProperties = @('ProcessName', 'WindowTitle', 'WindowHandleString', 'WindowHandleInt64')
-            $missingProperties = $requiredProperties | Where-Object { -not $configData.PSObject.Properties[$_] }
+            # Check whether window-target properties are present.
+            # A settings-only file (saved deliberately when the app starts, so the user
+            # must pick a fresh window each session) is valid and contains no window
+            # properties.  Only log/throw when SOME but not ALL window properties are
+            # present, which indicates genuine file corruption.
+            $windowProperties = @('ProcessName', 'WindowTitle', 'WindowHandleString', 'WindowHandleInt64')
+            $presentCount = ($windowProperties | Where-Object { $configData.PSObject.Properties[$_] }).Count
 
-            if ($missingProperties.Count -gt 0) {
+            if ($presentCount -gt 0 -and $presentCount -lt $windowProperties.Count) {
+                $missingProperties = $windowProperties | Where-Object { -not $configData.PSObject.Properties[$_] }
                 $errorMsg = "Configuration file is missing required properties: $($missingProperties -join ', ')"
                 Write-Error "Error: $errorMsg"
                 Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
                 throw $errorMsg
             }
 
-            Write-Verbose "Configuration loaded successfully: ProcessName=$($configData.ProcessName), WindowTitle=$($configData.WindowTitle)"
-            Write-LastWarLog -Level Info -Message "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -FunctionName 'Get-ModuleConfiguration'
+            if ($presentCount -eq $windowProperties.Count) {
+                Write-Verbose "Configuration loaded successfully: ProcessName=$($configData.ProcessName), WindowTitle=$($configData.WindowTitle)"
+                Write-LastWarLog -Level Info -Message "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -FunctionName 'Get-ModuleConfiguration'
+            } else {
+                Write-Verbose 'Configuration loaded (settings only — no window target configured)'
+                Write-LastWarLog -Level Info -Message 'Loaded settings-only configuration (no window target)' -FunctionName 'Get-ModuleConfiguration'
+            }
 
             # Return configuration object
             return $configData

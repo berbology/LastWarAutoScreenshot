@@ -591,6 +591,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                     StorageWarningThresholdPercent = 75
                     FileFormat                     = 'PNG'
                     FilenamePattern                = '{MacroName}_{Timestamp}'
+                    MaskColour                     = 'FFAA55'
                     SimilarityCheck                = [PSCustomObject]@{
                         Enabled              = $true
                         Threshold            = 0.95
@@ -675,6 +676,13 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             }
         }
 
+        It 'Should preserve MaskColour' {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.Screenshots.MaskColour | Should -Be 'FFAA55'
+            }
+        }
+
         AfterAll {
             if (Test-Path -Path $script:testConfigPath) {
                 Remove-Item -Path $script:testConfigPath -Force
@@ -721,6 +729,13 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 $config.Screenshots.FilenamePattern | Should -Be '{MacroName}_{ActionName}_{Timestamp}_{Index}'
+            }
+        }
+
+        It 'Should inject MaskColour with default 0,0,0' {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.Screenshots.MaskColour | Should -Be '0,0,0'
             }
         }
 

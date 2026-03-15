@@ -126,6 +126,7 @@ Configured via **Configure module → Screenshot settings** in the app.
 | `StorageWarningThresholdPercent` | int | `90` | Warn when usage exceeds this percentage of `MaxStorageGB` (1–99) |
 | `FileFormat` | string | `"PNG"` | File format for captured screenshots. Only `"PNG"` is supported |
 | `FilenamePattern` | string | `"{MacroName}_{ActionName}_{Timestamp}_{Index}"` | Pattern for screenshot filenames. Supported placeholders: `{MacroName}`, `{ActionName}`, `{Timestamp}`, `{Date}`, `{Time}`, `{Index}` |
+| `MaskColour` | string | `"0,0,0"` | Colour used to fill screenshot mask regions. Accepted formats: named colour (e.g. `"red"`, `"dark blue"`, `"light green"`), RGB triplet (e.g. `"255,0,0"`), or 6-character hex code (e.g. `"FF0000"`). Default is pure black. |
 
 When `StoragePath` is empty the storage info screen prompts you to configure
 it. The app shows a usage chart and warns when usage reaches
@@ -155,6 +156,7 @@ screenshots match at or above `Threshold`, the configured `Action` fires.
   "StorageWarningThresholdPercent": 90,
   "FileFormat": "PNG",
   "FilenamePattern": "{MacroName}_{ActionName}_{Timestamp}_{Index}",
+  "MaskColour": "0,0,0",
   "SimilarityCheck": {
     "Enabled": true,
     "Threshold": 0.98,

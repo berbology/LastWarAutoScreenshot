@@ -18,6 +18,7 @@ Describe 'Invoke-CaptureScreenRegion' -Tag 'Unit' {
                         FileFormat                     = 'PNG'
                         FilenamePattern                = '{MacroName}_{ActionName}_{Timestamp}_{Index}'
                         StorageWarningThresholdPercent = 90
+                        MaskColour                     = '0,0,0'
                     }
                 }
             }
@@ -211,6 +212,281 @@ Describe 'Invoke-CaptureScreenRegion' -Tag 'Unit' {
                 -ScreenshotContext          $ctx | Out-Null
 
             $ctx.Index | Should -Be 2
+        }
+    }
+
+    Context 'Mask rectangle computation' {
+        # Window bounds: Width=1000, Height=2000
+        # Screenshot region: (0.1, 0.1) → (0.9, 0.9)
+        # bmpWidth  = int(0.8 * 1000) = 800
+        # bmpHeight = int(0.8 * 2000) = 1600
+        BeforeEach {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-WindowBounds {
+                    [PSCustomObject]@{ Left = 0; Top = 0; Right = 1000; Bottom = 2000; Width = 1000; Height = 2000 }
+                }
+                Mock Resolve-MaskColour { [System.Drawing.Color]::Red }
+            }
+        }
+
+        It 'passes one rectangle at correct pixel coords when mask fully inside screenshot region' {
+            # mask (0.2, 0.2) → (0.5, 0.5)
+            # overlapLeft=0.2, overlapTop=0.2, overlapRight=0.5, overlapBottom=0.5
+            # pixelX = int((0.2-0.1)/0.8 * 800) = 100
+            # pixelY = int((0.2-0.1)/0.8 * 1600) = 200
+            # pixelW = int((0.5-0.2)/0.8 * 800) = 300
+            # pixelH = int((0.5-0.2)/0.8 * 1600) = 600
+            InModuleScope LastWarAutoScreenshot {
+                $mask = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.2 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                }
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 1 -and
+                    $MaskPixelRects[0].X      -eq 100 -and
+                    $MaskPixelRects[0].Y      -eq 200 -and
+                    $MaskPixelRects[0].Width  -eq 300 -and
+                    $MaskPixelRects[0].Height -eq 600
+                }
+            }
+        }
+
+        It 'passes rectangle covering full bitmap when mask region equals screenshot region' {
+            # mask same as ss region → X=0, Y=0, W=800, H=1600
+            InModuleScope LastWarAutoScreenshot {
+                $mask = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                }
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 1 -and
+                    $MaskPixelRects[0].X      -eq 0 -and
+                    $MaskPixelRects[0].Y      -eq 0 -and
+                    $MaskPixelRects[0].Width  -eq 800 -and
+                    $MaskPixelRects[0].Height -eq 1600
+                }
+            }
+        }
+
+        It 'clips mask region that extends outside screenshot boundary' {
+            # mask (0.5, 0.5) → (1.5, 1.5) — extends beyond ss region (0.1→0.9)
+            # overlapLeft=0.5, overlapTop=0.5, overlapRight=0.9, overlapBottom=0.9
+            # pixelX = int((0.5-0.1)/0.8 * 800) = 400
+            # pixelY = int((0.5-0.1)/0.8 * 1600) = 800
+            # pixelW = int((0.9-0.5)/0.8 * 800) = 400
+            # pixelH = int((0.9-0.5)/0.8 * 1600) = 800
+            InModuleScope LastWarAutoScreenshot {
+                $mask = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 1.5; relativeY = 1.5 }
+                }
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 1 -and
+                    $MaskPixelRects[0].X      -eq 400 -and
+                    $MaskPixelRects[0].Y      -eq 800 -and
+                    $MaskPixelRects[0].Width  -eq 400 -and
+                    $MaskPixelRects[0].Height -eq 800
+                }
+            }
+        }
+
+        It 'passes empty rectangle array when mask region is entirely outside screenshot region' {
+            InModuleScope LastWarAutoScreenshot {
+                $mask = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.95; relativeY = 0.95 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 1.0;  relativeY = 1.0 }
+                }
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 0
+                }
+            }
+        }
+
+        It 'passes two rectangles when both mask regions are valid and overlapping' {
+            InModuleScope LastWarAutoScreenshot {
+                $mask1 = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.2 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                }
+                $mask2 = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.6; relativeY = 0.6 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 0.8; relativeY = 0.8 }
+                }
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask1, $mask2) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 2
+                }
+            }
+        }
+
+        It 'passes empty rectangle array when MaskRegions is absent (null)' {
+            InModuleScope LastWarAutoScreenshot {
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.0 `
+                    -RegionTopLeftRelativeY     0.0 `
+                    -RegionBottomRightRelativeX 1.0 `
+                    -RegionBottomRightRelativeY 1.0 `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 0
+                }
+            }
+        }
+
+        It 'passes empty rectangle array when MaskRegions is an empty array' {
+            InModuleScope LastWarAutoScreenshot {
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.0 `
+                    -RegionTopLeftRelativeY     0.0 `
+                    -RegionBottomRightRelativeX 1.0 `
+                    -RegionBottomRightRelativeY 1.0 `
+                    -MaskRegions                @() `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskPixelRects.Length -eq 0
+                }
+            }
+        }
+    }
+
+    Context 'Mask colour resolution' {
+        BeforeEach {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-WindowBounds {
+                    [PSCustomObject]@{ Left = 0; Top = 0; Right = 1000; Bottom = 2000; Width = 1000; Height = 2000 }
+                }
+            }
+        }
+
+        It 'passes the colour returned by Resolve-MaskColour to Invoke-CaptureWindowRegion' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Resolve-MaskColour { [System.Drawing.Color]::FromArgb(255, 0, 0) }
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath                    = 'TestDrive:\Pester_Tests\Screenshots'
+                            MaxStorageGB                   = 2.0
+                            FileFormat                     = 'PNG'
+                            FilenamePattern                = '{MacroName}_{ActionName}_{Timestamp}_{Index}'
+                            StorageWarningThresholdPercent = 90
+                            MaskColour                     = '255,0,0'
+                        }
+                    }
+                }
+
+                $mask = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.2 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                }
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Resolve-MaskColour -Times 1 -ParameterFilter { $ColourString -eq '255,0,0' }
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskColour.R -eq 255 -and $MaskColour.G -eq 0 -and $MaskColour.B -eq 0
+                }
+            }
+        }
+
+        It 'falls back to black and emits a warning when Resolve-MaskColour returns null' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Resolve-MaskColour { $null }
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath                    = 'TestDrive:\Pester_Tests\Screenshots'
+                            MaxStorageGB                   = 2.0
+                            FileFormat                     = 'PNG'
+                            FilenamePattern                = '{MacroName}_{ActionName}_{Timestamp}_{Index}'
+                            StorageWarningThresholdPercent = 90
+                            MaskColour                     = '0,0,0'
+                        }
+                    }
+                }
+
+                $mask = [PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.2 }
+                    bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
+                }
+                Mock Write-Warning {}
+
+                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
+                Invoke-CaptureScreenRegion `
+                    -WindowHandle               ([IntPtr]::new(1)) `
+                    -RegionTopLeftRelativeX     0.1 `
+                    -RegionTopLeftRelativeY     0.1 `
+                    -RegionBottomRightRelativeX 0.9 `
+                    -RegionBottomRightRelativeY 0.9 `
+                    -MaskRegions                @($mask) `
+                    -ScreenshotContext          $ctx | Out-Null
+
+                Should -Invoke Write-Warning -Times 1
+                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
+                    $MaskColour.R -eq 0 -and $MaskColour.G -eq 0 -and $MaskColour.B -eq 0
+                }
+            }
         }
     }
 }
