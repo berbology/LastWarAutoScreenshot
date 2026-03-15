@@ -176,10 +176,10 @@ function Invoke-MacroAction {
 
             $captureResult = Invoke-CaptureScreenRegion `
                 -WindowHandle               $WindowHandle `
-                -RegionTopLeftRelativeX     $Action.region.relativeTopLeftX `
-                -RegionTopLeftRelativeY     $Action.region.relativeTopLeftY `
-                -RegionBottomRightRelativeX $Action.region.relativeBottomRightX `
-                -RegionBottomRightRelativeY $Action.region.relativeBottomRightY `
+                -RegionTopLeftRelativeX     $Action.region.topLeft.relativeX `
+                -RegionTopLeftRelativeY     $Action.region.topLeft.relativeY `
+                -RegionBottomRightRelativeX $Action.region.bottomRight.relativeX `
+                -RegionBottomRightRelativeY $Action.region.bottomRight.relativeY `
                 -ScreenshotContext          $ScreenshotContext
 
             # StoragePath not configured — intentional skip, not an error

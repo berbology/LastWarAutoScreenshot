@@ -63,7 +63,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
                 $tc = $script:tc
                 # Selectable order (no macros, Manage macros disabled/skipped):
                 # [0] Select target window, [1] Configure module, [2] Record macro,
-                # (disabled) Manage macros, [3] View module storage info, [4] Exit
+                # (disabled) Manage macros, [3] Storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -135,7 +135,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
                 $tc = $script:tc
                 # Selectable order (macros present): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] View module storage info, [6] Exit
+                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] Storage info, [6] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -201,7 +201,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
                 $tc = $script:tc
                 # Manage macros is disabled so arrow navigation skips it.
                 # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, (disabled) Manage macros, [3] View module storage info, [4] Exit
+                # [2] Record macro, (disabled) Manage macros, [3] Storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -213,15 +213,15 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
         }
     }
 
-    Context 'When the user selects View module storage info' {
+    Context 'When the user selects Storage info' {
 
-        It 'Returns ViewStorageInfo when View module storage info is selected with no macros present (3 DownArrows)' {
+        It 'Returns ViewStorageInfo when Storage info is selected with no macros present (3 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
                 # Manage macros is disabled so arrow navigation skips it.
                 # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, (disabled) Manage macros, [3] View module storage info, [4] Exit
+                # [2] Record macro, (disabled) Manage macros, [3] Storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -232,7 +232,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns ViewStorageInfo when View module storage info is selected with macros present (5 DownArrows)' {
+        It 'Returns ViewStorageInfo when Storage info is selected with macros present (5 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
@@ -240,7 +240,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
                 $tc = $script:tc
                 # Selectable order (macros present): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] View module storage info, [6] Exit
+                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] Storage info, [6] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -253,14 +253,14 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Output contains View module storage info as a choice' {
+        It 'Output contains Storage info as a choice' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Select first item
 
                 Show-MainMenu -Console $tc | Out-Null
-                $tc.Output | Should -Match 'View module storage info'
+                $tc.Output | Should -Match 'Storage info'
             }
         }
     }

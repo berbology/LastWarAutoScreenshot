@@ -33,9 +33,12 @@ function Show-StorageInfoScreen {
         (only shown when IsConfigured = $true).
 
         Navigation:
-          '[[Back]]'                        -> returns to the calling screen.
-          'Open storage folder in Explorer' -> launches Explorer at the storage path
-                                              (only shown when IsConfigured = $true).
+          '[[Back]]'                           -> returns to the calling screen.
+          'Open log folder in Explorer'        -> launches Explorer at the module root log
+                                                 folder (only shown when Logging.Backend
+                                                 includes 'File').
+          'Open screenshot folder in Explorer' -> launches Explorer at the storage path
+                                                 (only shown when IsConfigured = $true).
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -205,8 +208,11 @@ function Show-StorageInfoScreen {
 
     $navChoices = [System.Collections.Generic.List[string]]::new()
     $navChoices.Add('[[Back]]')
+    if ($loggingBackend -like '*File*') {
+        $navChoices.Add('Open log folder in Explorer')
+    }
     if ($storageInfo.IsConfigured) {
-        $navChoices.Add('Open storage folder in Explorer')
+        $navChoices.Add('Open screenshot folder in Explorer')
     }
 
     $navPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
@@ -216,9 +222,13 @@ function Show-StorageInfoScreen {
     $navChoice = $navPrompt.Show($Console)
 
     switch ($navChoice) {
-        'Open storage folder in Explorer' {
+        'Open log folder in Explorer' {
+            Start-Process -FilePath 'explorer.exe' -ArgumentList $script:ModuleRootPath
+            $Console.Write([Spectre.Console.Markup]::new("[green]Opening log folder in Explorer...`n[/]"))
+        }
+        'Open screenshot folder in Explorer' {
             Start-Process -FilePath 'explorer.exe' -ArgumentList $storePath
-            $Console.Write([Spectre.Console.Markup]::new("[green]Opening storage folder in Explorer...`n[/]"))
+            $Console.Write([Spectre.Console.Markup]::new("[green]Opening screenshot folder in Explorer...`n[/]"))
         }
         default {
             # '[Back]' - return to calling screen

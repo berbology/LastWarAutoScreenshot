@@ -12,7 +12,7 @@ function Show-MainMenu {
             Private\Macros\ folder)
           - Manage macros (only shows when *.json files exist in the module's
             Private\Macros\ folder)
-          - View module storage info
+          - Storage info
           - Exit
 
         The function checks the Private\Macros\ folder for saved macro files before building
@@ -76,7 +76,7 @@ function Show-MainMenu {
         $choices.Add('Manage macros')
     }
     
-    $choices.Add('View module storage info')
+    $choices.Add('Storage info')
     $choices.Add('Exit')
 
     $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt('What would you like to do?', $choices.ToArray())
@@ -89,7 +89,7 @@ function Show-MainMenu {
         'Record macro'         { return 'RecordMacro'   }
         'Run macro'            { return 'RunMacro'      }
         'Manage macros'            { return 'ManageMacros'     }
-        'View module storage info' { return 'ViewStorageInfo'  }
+        'Storage info' { return 'ViewStorageInfo'  }
         default                    { return 'Exit'             }
     }
 }

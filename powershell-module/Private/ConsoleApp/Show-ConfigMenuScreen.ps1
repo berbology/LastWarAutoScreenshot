@@ -10,6 +10,8 @@ function Show-ConfigMenuScreen {
           - Mouse control settings  → Show-MouseControlConfigScreen
           - Emergency stop settings → Show-EmergencyStopConfigScreen
           - Screenshot settings     → Show-ScreenshotConfigScreen
+          - Set default code editor → opens a file dialog to select an editor executable
+          - Edit module configuration → opens the config JSON in VSCode or Notepad
           - [Back to main menu]     → exits the loop and returns
 
         The function loops continuously, returning to this menu after each sub-screen
@@ -40,6 +42,8 @@ function Show-ConfigMenuScreen {
           Show-MouseControlConfigScreen  - implemented
           Show-EmergencyStopConfigScreen - implemented
           Show-ScreenshotConfigScreen    - implemented
+          Set default code editor        - implemented (WinForms SaveFileDialog)
+          Edit module configuration      - implemented (opens JSON in VSCode or Notepad)
     #>
     [CmdletBinding()]
     param(
@@ -56,7 +60,9 @@ function Show-ConfigMenuScreen {
                 'Logging settings',
                 'Mouse control settings',
                 'Emergency stop settings',
-                'Screenshot settings'
+                'Screenshot settings',
+                'Set default code editor',
+                'Edit module configuration'
             )
         )
         $selection = $prompt.Show($Console)
@@ -77,6 +83,34 @@ function Show-ConfigMenuScreen {
 
             'Screenshot settings' {
                 Show-ScreenshotConfigScreen -Console $Console
+            }
+
+            'Set default code editor' {
+                $config = Get-ModuleConfiguration
+                $initialDir = ''
+                if ($config.CodeEditor) {
+                    $initialDir = Split-Path -Path $config.CodeEditor -Parent
+                }
+                $selectedPath = Invoke-SelectCodeEditorDialog -InitialDirectory $initialDir
+                if ($selectedPath) {
+                    $config.CodeEditor = $selectedPath
+                    Save-ModuleSettings -Config $config
+                    $safeSelectedPath = $selectedPath -replace '\[', '[[' -replace '\]', ']]'
+                    $Console.Write([Spectre.Console.Markup]::new("[green]Code editor updated to: $safeSelectedPath[/]`n")) | Out-Null
+                }
+            }
+
+            'Edit module configuration' {
+                $configPath = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot\WindowConfig.json'
+                $editorConfig = Get-ModuleConfiguration
+                $editorExe = $editorConfig.CodeEditor
+                if ($editorExe -and (Test-Path -Path $editorExe -PathType Leaf)) {
+                    # Launch via cmd.exe to suppress CLI log output (e.g. VS Code update/extension host messages)
+                    $cmdArgs = "/c `"`"$editorExe`" `"$configPath`" 2>NUL 1>NUL`""
+                    Start-Process -FilePath 'cmd.exe' -ArgumentList $cmdArgs -WindowStyle Hidden | Out-Null
+                } else {
+                    Start-Process -FilePath 'notepad.exe' -ArgumentList "`"$configPath`"" | Out-Null
+                }
             }
 
             default {

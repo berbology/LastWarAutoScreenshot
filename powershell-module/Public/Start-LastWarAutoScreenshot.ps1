@@ -20,7 +20,7 @@ function Start-LastWarAutoScreenshot {
           3. Dispatches each selection to the relevant screen function:
                SelectWindow     → Show-WindowSelectionScreen   (Phase 1)
                Configure        → Show-ConfigMenuScreen         (Phase 3)
-               ViewStorageInfo  → Show-StorageInfoScreen        (Phase 3)
+               ViewStorageInfo  → Show-StorageInfoScreen        (Phase 3, inline)
                RecordMacro      → Show-RecordMacroScreen        (Phase 4)
                RunMacro         → Show-RunMacroScreen           (Phase 4)
                ManageMacros     → Show-ManageMacrosScreen       (Phase 4)
@@ -62,13 +62,17 @@ function Start-LastWarAutoScreenshot {
 
         Alternate screen buffers:
           The entire main-menu loop (figlet + menu + dispatch) runs inside a single
-          RunInAlternateScreen call.  Sub-screens that need a clean buffer
-          (Configure, RunMacro, ManageMacros, ViewStorageInfo) open a
-          nested alternate buffer via a further RunInAlternateScreen call.
-          Show-WindowSelectionScreen and Show-RecordMacroScreen run inline in the
-          main alternate buffer (no nested buffer) so that their 'Saved' banners
-          persist above the main menu, matching the pattern used by
-          Show-LoggingConfigScreen inside Show-ConfigMenuScreen.  RunInAlternateScreen gracefully degrades — if the
+          RunInAlternateScreen call.  The buffer is cleared at the top of every loop
+          iteration so returning from any sub-screen always presents a clean slate.
+          Sub-screens that need their own isolated buffer (Configure, RunMacro,
+          ManageMacros) open a nested alternate buffer via a further
+          RunInAlternateScreen call.
+          Show-WindowSelectionScreen, Show-RecordMacroScreen, and
+          Show-StorageInfoScreen run inline in the main alternate buffer (no nested
+          buffer).  Nesting AlternateScreen calls is not supported by terminals —
+          the inner ESC[?1049l exits the alternate buffer entirely, returning to the
+          primary buffer.  Screens that do not require a fully clean buffer must
+          run inline to avoid this.  RunInAlternateScreen gracefully degrades — if the
           terminal (or injected TestConsole) does not advertise AlternateBuffer
           capability, the action is invoked directly in the current buffer without
           any ANSI sequences.  No manual TestConsole type checks are needed.
@@ -141,15 +145,19 @@ Until this is resolved, logs will be written to file instead.
     # the closure. $Console is received as a parameter; Invoke-InAlternateScreen passes it.
     $mainBlock = {
         param([Spectre.Console.IAnsiConsole]$Console)
-        # Display the application title figlet once at the start of the alternate buffer
-        $figlet = [Spectre.Console.FigletText]::new('Last War Auto Screenshot')
-        $figlet.Justification = [Spectre.Console.Justify]::Center
-        $titlePanel = [Spectre.Console.Panel]::new($figlet)
-        $titlePanel.Expand = $false
-        $titlePanel.Padding = [Spectre.Console.Padding]::new(0, 0, 0, 1)
-        $Console.Write($titlePanel) | Out-Null
-
         while ($true) {
+            # Clear the buffer on every iteration so returning from a sub-screen always
+            # starts with a clean slate rather than leftover output.
+            $Console.Clear($true)
+
+            # Re-render the application title above the menu on each iteration.
+            $figlet = [Spectre.Console.FigletText]::new('Last War Auto Screenshot')
+            $figlet.Justification = [Spectre.Console.Justify]::Center
+            $titlePanel = [Spectre.Console.Panel]::new($figlet)
+            $titlePanel.Expand = $false
+            $titlePanel.Padding = [Spectre.Console.Padding]::new(0, 0, 0, 1)
+            $Console.Write($titlePanel) | Out-Null
+
             $choice = Show-MainMenu -Console $Console
 
             switch ($choice) {
@@ -167,11 +175,7 @@ Until this is resolved, logs will be written to file instead.
                 }
 
                 'ViewStorageInfo' {
-                    $screenBlock = {
-                        param([Spectre.Console.IAnsiConsole]$Console)
-                        Show-StorageInfoScreen -Console $Console
-                    }
-                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
+                    Show-StorageInfoScreen -Console $Console
                 }
 
                 'RecordMacro' {

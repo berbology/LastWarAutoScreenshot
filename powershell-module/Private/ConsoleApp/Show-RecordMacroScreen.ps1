@@ -424,7 +424,6 @@ function Show-RecordMacroScreen {
                     }
 
                     $Console.Write([Spectre.Console.Markup]::new("Screenshot region: ($($ssTopLeft.RelativeX), $($ssTopLeft.RelativeY)) to ($($ssBottomRight.RelativeX), $($ssBottomRight.RelativeY))`n"))
-                    $Console.Write([Spectre.Console.Markup]::new("[grey]Note: Screenshot capture will be available in a future release. The region coordinates are recorded for later use.[/]`n"))
                     $Console.Write([Spectre.Console.Markup]::new("[grey]Naming screenshot actions is recommended so they can be referenced in loops.[/]`n"))
 
                     $actionName = Invoke-RecordActionName -Console $Console -ExistingNames $existingNames

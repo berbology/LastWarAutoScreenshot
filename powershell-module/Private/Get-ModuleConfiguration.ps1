@@ -100,6 +100,7 @@ function Get-ModuleConfiguration {
                     MouseControl  = $defaults.MouseControl
                     EmergencyStop = $defaults.EmergencyStop
                     Screenshots   = $defaults.Screenshots
+                    CodeEditor    = $defaults.CodeEditor
                 }
 
                 # Ensure the target directory exists before writing.
@@ -192,6 +193,11 @@ function Get-ModuleConfiguration {
                         $configData.Screenshots.SimilarityCheck | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.Screenshots.SimilarityCheck.$key
                     }
                 }
+            }
+
+            # Inject missing CodeEditor key
+            if (-not $configData.PSObject.Properties['CodeEditor']) {
+                $configData | Add-Member -MemberType NoteProperty -Name CodeEditor -Value $defaults.CodeEditor
             }
 
             # Validate required properties exist

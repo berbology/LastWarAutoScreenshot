@@ -11,6 +11,51 @@
 .OUTPUTS
     [string]
 #>
+function Invoke-SelectCodeEditorDialog {
+    <#
+    .SYNOPSIS
+        Opens a file open dialog for selecting an executable as the default code editor.
+
+    .DESCRIPTION
+        Displays a Windows OpenFileDialog filtered to .exe files, allowing the user to
+        select an executable to use as the default code editor. The dialog opens in the
+        directory of the current editor path if one is provided and valid.
+
+    .PARAMETER InitialDirectory
+        Optional path to the directory the dialog should open in. If not provided, or if the
+        path does not exist, the dialog opens in the default location.
+
+    .OUTPUTS
+        [string]
+        Returns the full path of the selected executable, or $null if the user cancelled.
+
+    .EXAMPLE
+        $path = Invoke-SelectCodeEditorDialog -InitialDirectory 'C:\Program Files\Microsoft VS Code'
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [string]$InitialDirectory = ''
+    )
+
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = [System.Windows.Forms.OpenFileDialog]::new()
+    $dialog.Title = 'Select default code editor'
+    $dialog.Filter = 'Executable files (*.exe)|*.exe'
+    $dialog.FilterIndex = 1
+
+    if ($InitialDirectory -and (Test-Path -Path $InitialDirectory -PathType Container)) {
+        $dialog.InitialDirectory = $InitialDirectory
+    }
+
+    $dialogResult = $dialog.ShowDialog()
+    if ($dialogResult -eq [System.Windows.Forms.DialogResult]::OK) {
+        return $dialog.FileName
+    }
+    return $null
+}
+
 function Get-LogCheckHint {
     $backends = Get-LoggingBackendConfig
     $hasFile     = $backends -contains 'File'

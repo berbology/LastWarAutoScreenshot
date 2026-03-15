@@ -271,6 +271,193 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
+    # Context: Set default code editor
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user selects Set default code editor' {
+
+        It 'Set default code editor option appears in console output' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Invoke-SelectCodeEditorDialog   { $null }
+                Mock Get-ModuleConfiguration         { [PSCustomObject]@{ CodeEditor = 'C:\Windows\System32\notepad.exe' } }
+                Mock Save-ModuleSettings             {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
+
+                Show-ConfigMenuScreen -Console $tc
+
+                $tc.Output | Should -Match 'Set default code editor'
+            }
+        }
+
+        It 'Calls Invoke-SelectCodeEditorDialog when Set default code editor is selected' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Invoke-SelectCodeEditorDialog   { $null }
+                Mock Get-ModuleConfiguration         { [PSCustomObject]@{ CodeEditor = 'C:\Windows\System32\notepad.exe' } }
+                Mock Save-ModuleSettings             {}
+
+                $tc = $script:tc
+                # First iteration: Set default code editor (index 5, 5 downs from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu] (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Invoke Invoke-SelectCodeEditorDialog -Exactly 1
+            }
+        }
+
+        It 'Calls Save-ModuleSettings with updated CodeEditor when dialog returns a path' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Invoke-SelectCodeEditorDialog   { 'C:\Program Files\Microsoft VS Code\Code.exe' }
+                Mock Get-ModuleConfiguration         { [PSCustomObject]@{ CodeEditor = 'C:\Windows\System32\notepad.exe' } }
+                Mock Save-ModuleSettings             {}
+
+                $tc = $script:tc
+                # First iteration: Set default code editor (index 5)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu]
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
+                    $Config.CodeEditor -eq 'C:\Program Files\Microsoft VS Code\Code.exe'
+                }
+            }
+        }
+
+        It 'Does not call Save-ModuleSettings when dialog is cancelled' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Invoke-SelectCodeEditorDialog   { $null }
+                Mock Get-ModuleConfiguration         { [PSCustomObject]@{ CodeEditor = 'C:\Windows\System32\notepad.exe' } }
+                Mock Save-ModuleSettings             {}
+
+                $tc = $script:tc
+                # First iteration: Set default code editor (index 5)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu]
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Not -Invoke Save-ModuleSettings
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Edit module configuration
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user selects Edit module configuration' {
+
+        It 'Edit module configuration option appears in console output' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Start-Process                   {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
+
+                Show-ConfigMenuScreen -Console $tc
+
+                $tc.Output | Should -Match 'Edit module configuration'
+            }
+        }
+
+        It 'Calls Start-Process with configured CodeEditor when Edit module configuration is selected' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Get-ModuleConfiguration         { [PSCustomObject]@{ CodeEditor = 'C:\editors\MyEditor.exe' } }
+                Mock Test-Path                       { $true } -ParameterFilter { $Path -eq 'C:\editors\MyEditor.exe' }
+                Mock Start-Process                   {}
+
+                $tc = $script:tc
+                # First iteration: Edit module configuration (index 6, 6 downs from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu]
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Invoke Start-Process -Exactly 1 -ParameterFilter { $FilePath -eq 'cmd.exe' }
+            }
+        }
+
+        It 'Opens notepad when CodeEditor in config is not set or does not exist' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen        {}
+                Mock Show-MouseControlConfigScreen   {}
+                Mock Show-EmergencyStopConfigScreen  {}
+                Mock Show-ScreenshotConfigScreen     {}
+                Mock Get-ModuleConfiguration         { [PSCustomObject]@{ CodeEditor = 'C:\editors\Missing.exe' } }
+                Mock Test-Path                       { $false }
+                Mock Start-Process                   {}
+
+                $tc = $script:tc
+                # First iteration: Edit module configuration (index 6)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu]
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Invoke Start-Process -Exactly 1 -ParameterFilter { $FilePath -eq 'notepad.exe' }
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
     # Context: Loop re-enters the menu after a sub-screen returns
     # ════════════════════════════════════════════════════════════════════════
     Context 'When a sub-screen is visited twice before going back' {

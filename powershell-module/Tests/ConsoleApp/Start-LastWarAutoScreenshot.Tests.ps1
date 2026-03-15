@@ -202,6 +202,29 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
             }
         }
 
+        It 'Calls Show-StorageInfoScreen exactly once when Show-MainMenu returns ViewStorageInfo then Exit' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-StorageInfoScreen -MockWith { $null }
+                $script:_storageMenuCallCount = 0
+                Mock Show-MainMenu -MockWith {
+                    $script:_storageMenuCallCount++
+                    if ($script:_storageMenuCallCount -eq 1) { 'ViewStorageInfo' } else { 'Exit' }
+                }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LastWarAutoScreenshot -Console $tc
+
+                Should -Invoke Show-StorageInfoScreen -Exactly 1
+            }
+        }
+
         It 'Calls Show-ManageMacrosScreen exactly once when Show-MainMenu returns ManageMacros then Exit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Invoke-InAlternateScreen -MockWith {

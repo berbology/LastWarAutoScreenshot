@@ -342,7 +342,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
     Context 'When recording a Screenshot region action' {
 
-        It 'Output contains "future release" and saves type = Screenshot' {
+        It 'Saves type = Screenshot with correct region coordinates' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
@@ -382,8 +382,11 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
-                $tc.Output | Should -Match 'future release'
                 $script:_savedMacroData.sequence[0].type | Should -Be 'Screenshot'
+                $script:_savedMacroData.sequence[0].region.topLeft.relativeX | Should -Be 0.1
+                $script:_savedMacroData.sequence[0].region.topLeft.relativeY | Should -Be 0.1
+                $script:_savedMacroData.sequence[0].region.bottomRight.relativeX | Should -Be 0.9
+                $script:_savedMacroData.sequence[0].region.bottomRight.relativeY | Should -Be 0.9
             }
         }
     }

@@ -2888,14 +2888,14 @@ test cases throughout Phase 4 implementation.
 
          ```powershell
          $choices = @('[[Back]]', 'Configure screenshot settings')
-         if ($info.IsConfigured) { $choices += 'Open storage folder in Explorer' }
+         if ($info.IsConfigured) { $choices += 'Open screenshot folder in Explorer' }
          $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt('Options:', $choices)
          $selection = $prompt.Show($Console)
          ```
 
        - Dispatch via `switch ($selection)`:
          - `'Configure screenshot settings'` → `Show-ScreenshotConfigScreen -Console $Console`
-         - `'Open storage folder in Explorer'` → `Start-Process -FilePath 'explorer.exe' -ArgumentList $storePath`; then display `$Console.Write([Spectre.Console.Markup]::new("[green]Opening storage folder in Explorer...`n[/]"))` (use `$Console.Write([Spectre.Console.Markup]::new(...))` — **not** `$Console.MarkupLine()` which does not exist in this project)
+         - `'Open screenshot folder in Explorer'` → `Start-Process -FilePath 'explorer.exe' -ArgumentList $storePath`; then display `$Console.Write([Spectre.Console.Markup]::new("[green]Opening storage folder in Explorer...`n[/]"))` (use `$Console.Write([Spectre.Console.Markup]::new(...))` — **not** `$Console.MarkupLine()` which does not exist in this project)
          - `default` → returns (handles `'[Back]'` — the single-bracket unescaped value returned by the prompt — and any unrecognised value; no explicit comparison against `'[[Back]]'` needed)
        - Update comment-based help; add `.NOTES` documenting that `'[[Back]]'` uses double brackets for Spectre display but the `switch default` branch handles the returned single-bracket value `'[Back]'`
     3. [ ] 11.3: Update `powershell-module/Tests/ConsoleApp/Get-StorageInfo.Tests.ps1`:
@@ -2916,9 +2916,9 @@ test cases throughout Phase 4 implementation.
          - `DiskFreeGB < 5.0` → `$testConsole.Output` contains `'running low'`
          - `DiskFreeGB >= 5.0` → `$testConsole.Output` does NOT contain `'running low'`
          - `'[[Back]]'` option appears in `$testConsole.Output` as the first choice (confirm `$testConsole.Output` contains `'[Back]'` — the rendered unescaped text)
-         - `'Open storage folder in Explorer'` option present when `IsConfigured=$true`
-         - `'Open storage folder in Explorer'` NOT present when `IsConfigured=$false`
-         - Selecting `'Open storage folder in Explorer'` → mock `Start-Process` verified called with `'explorer.exe'` and the correct path; `$testConsole.Output` contains `'Opening storage folder'`
+         - `'Open screenshot folder in Explorer'` option present when `IsConfigured=$true`
+         - `'Open screenshot folder in Explorer'` NOT present when `IsConfigured=$false`
+         - Selecting `'Open screenshot folder in Explorer'` → mock `Start-Process` verified called with `'explorer.exe'` and the correct path; `$testConsole.Output` contains `'Opening storage folder'`
          - Selecting `'Configure screenshot settings'` → `Should -Invoke Show-ScreenshotConfigScreen -Exactly 1`
        - All existing tests must continue to pass
        - Run full Pester suite; confirm count increases
@@ -2971,7 +2971,7 @@ test cases throughout Phase 4 implementation.
        - **Screenshot capture:** set a valid `StoragePath`; open Notepad or any windowed app; select it as the target window; run the macro; verify PNG files appear in the configured storage folder with filenames matching the configured pattern; verify correct region is captured (not the entire screen)
        - **Similarity detection:** enable `SimilarityCheck`, `Action = 'StopLoop'`; record a macro with a Loop action that captures screenshots; run the macro on a static window (nothing changing on screen); confirm the loop exits when the threshold is reached and the parent sequence continues; confirm the run result is reported as success with "Scroll end detected" message
        - **`StopMacro` action:** change `Action = 'StopMacro'`; run same macro; confirm the entire macro halts at similarity detection; confirm reported as success
-       - **Storage info screen:** navigate to `Configure module` → `Storage & log file info`; verify screenshot count, disk free space, and file date range are displayed correctly; confirm `'Open storage folder in Explorer'` opens Windows Explorer; confirm `'Configure screenshot settings'` navigates to the screenshot config screen
+       - **Storage info screen:** navigate to `Configure module` → `Storage & log file info`; verify screenshot count, disk free space, and file date range are displayed correctly; confirm `'Open screenshot folder in Explorer'` opens Windows Explorer; confirm `'Configure screenshot settings'` navigates to the screenshot config screen
        - **Storage limit:** set `MaxStorageGB` to `0.0001` (a tiny value below current usage); run macro; confirm storage-limit warning appears for each Screenshot action and screenshots are skipped without halting the rest of the macro; confirm the run is reported as a failure at the first non-skipped error
        - Confirm no ANSI artefacts or rendering glitches on any screen
 
@@ -3007,7 +3007,7 @@ test cases throughout Phase 4 implementation.
 ## Phase 6
 
 > **UX note:** `Show-StorageInfoScreen` has been moved from Configure Module → Storage & log file info
-> to the top-level main menu as **"View module storage info"**.  The screen now shows two sections:
+> to the top-level main menu as **"Storage info"**.  The screen now shows two sections:
 > Screenshot Storage and Log Files (disk usage when `Logging.Backend` includes `File`, or an
 > EventLog-only info panel otherwise).  No new backend functions were required.
 

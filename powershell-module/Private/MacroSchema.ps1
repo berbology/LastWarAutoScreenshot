@@ -442,13 +442,14 @@ function Test-MacroFile {
             }
         }
         foreach ($utcProp in @('createdUtc', 'modifiedUtc')) {
-            if (-not $meta.PSObject.Properties[$utcProp] -or [string]::IsNullOrEmpty($meta.$utcProp)) {
+            $utcValue = $meta.$utcProp
+            if (-not $meta.PSObject.Properties[$utcProp] -or $null -eq $utcValue -or ($utcValue -is [string] -and [string]::IsNullOrEmpty($utcValue))) {
                 $errors.Add("metadata.$utcProp is missing or empty.")
-            } else {
+            } elseif (-not ($utcValue -is [datetime])) {
                 try {
-                    [datetime]::Parse($meta.$utcProp) | Out-Null
+                    [datetime]::Parse($utcValue) | Out-Null
                 } catch {
-                    $errors.Add("metadata.$utcProp '$($meta.$utcProp)' is not a valid ISO 8601 datetime.")
+                    $errors.Add("metadata.$utcProp '$utcValue' is not a valid ISO 8601 datetime.")
                 }
             }
         }

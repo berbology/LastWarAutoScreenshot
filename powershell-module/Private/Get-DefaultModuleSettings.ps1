@@ -28,6 +28,44 @@ function Get-DefaultModuleSettings {
     [OutputType([PSCustomObject])]
     param()
 
+    # Compute default code editor: VSCode → VSCode Insiders → notepad.exe
+    $codeEditorPath = "$env:SystemRoot\System32\notepad.exe"
+    $vscodeInPath = Get-Command 'code.exe' -ErrorAction SilentlyContinue
+    if ($vscodeInPath) {
+        $codeEditorPath = $vscodeInPath.Source
+    } else {
+        $vscodeCandidates = @(
+            "$env:LOCALAPPDATA\Programs\Microsoft VS Code\Code.exe",
+            "${env:ProgramFiles}\Microsoft VS Code\Code.exe",
+            "${env:ProgramFiles(x86)}\Microsoft VS Code\Code.exe"
+        )
+        $found = $false
+        foreach ($candidate in $vscodeCandidates) {
+            if (Test-Path -Path $candidate -PathType Leaf) {
+                $codeEditorPath = $candidate
+                $found = $true
+                break
+            }
+        }
+        if (-not $found) {
+            $insidersInPath = Get-Command 'code-insiders.exe' -ErrorAction SilentlyContinue
+            if ($insidersInPath) {
+                $codeEditorPath = $insidersInPath.Source
+            } else {
+                $insidersCandidates = @(
+                    "$env:LOCALAPPDATA\Programs\Microsoft VS Code Insiders\Code - Insiders.exe",
+                    "${env:ProgramFiles}\Microsoft VS Code Insiders\Code - Insiders.exe"
+                )
+                foreach ($candidate in $insidersCandidates) {
+                    if (Test-Path -Path $candidate -PathType Leaf) {
+                        $codeEditorPath = $candidate
+                        break
+                    }
+                }
+            }
+        }
+    }
+
     return [PSCustomObject]@{
         Logging = [PSCustomObject]@{
             Backend         = 'File,EventLog'
@@ -85,6 +123,7 @@ function Get-DefaultModuleSettings {
                 ConsecutiveThreshold = 1
             }
         }
+        CodeEditor = $codeEditorPath
     }
 }
 
@@ -361,6 +400,13 @@ $script:ConfigValidationSchema = @{
         Max         = 100
         Description = 'Consecutive duplicates required to trigger action. Higher value may reduce false positives'
         Nullable    = $false
+    }
+
+    # --- General ---
+    'CodeEditor' = @{
+        Type        = 'string'
+        Description = 'Path to the executable used to open configuration files'
+        Nullable    = $true
     }
 }
 

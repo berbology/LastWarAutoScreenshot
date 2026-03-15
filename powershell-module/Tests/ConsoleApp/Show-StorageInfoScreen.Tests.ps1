@@ -4,7 +4,8 @@
 # Show-StorageInfoScreen is a read-only view screen divided into two sections:
 #   Section 1 — Screenshot Storage: info panel (not configured) or chart/table/warnings (configured)
 #   Section 2 — Log Files: log size table when Logging.Backend includes File, or EventLog info panel
-# Navigation offers [[Back]] always and 'Open storage folder in Explorer' when configured.
+# Navigation offers [[Back]] always, 'Open log folder in Explorer' when Logging.Backend includes File,
+# and 'Open screenshot folder in Explorer' when configured.
 
 BeforeAll {
     # Tests\ConsoleApp\ is two levels below the module root; go up twice to find the manifest
@@ -437,6 +438,117 @@ Describe 'Show-StorageInfoScreen' -Tag 'Unit' {
                 Show-StorageInfoScreen -Console $tc
 
                 $tc.Output | Should -Not -Match 'Event log backend is active'
+            }
+        }
+
+        It 'Shows the Open log folder in Explorer choice in the nav prompt when backend includes File' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = 'C:\Screenshots'
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'File'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured    = $true
+                        UsedGB          = 0.5
+                        MaxGB           = 2.0
+                        UsedPercent     = 25.0
+                        LogFileSizeGB   = 0.012
+                        DiskFreeGB      = 100.0
+                        DiskTotalGB     = 500.0
+                        ScreenshotCount = 0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Match 'Open log folder in Explorer'
+            }
+        }
+
+        It 'Does not show the Open log folder in Explorer choice when backend is EventLog only' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = ''
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'EventLog'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured  = $false
+                        UsedGB        = 0.0
+                        MaxGB         = 0.0
+                        UsedPercent   = 0.0
+                        LogFileSizeGB = 0.0
+                    }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)    # Nav prompt: select [[Back]]
+
+                Show-StorageInfoScreen -Console $tc
+
+                $tc.Output | Should -Not -Match 'Open log folder in Explorer'
+            }
+        }
+
+        It 'Invokes Start-Process for explorer.exe with ModuleRootPath when Open log folder in Explorer is selected' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath  = 'C:\Screenshots'
+                            MaxStorageGB = 2.0
+                        }
+                        Logging = [PSCustomObject]@{
+                            Backend = 'File'
+                        }
+                    }
+                }
+                Mock Get-StorageInfo {
+                    [PSCustomObject]@{
+                        IsConfigured    = $true
+                        UsedGB          = 0.5
+                        MaxGB           = 2.0
+                        UsedPercent     = 25.0
+                        LogFileSizeGB   = 0.012
+                        DiskFreeGB      = 100.0
+                        DiskTotalGB     = 500.0
+                        ScreenshotCount = 0
+                    }
+                }
+                Mock Write-LastWarLog {}
+                Mock Start-Process {}
+
+                $tc = $script:tc
+                # The nav prompt order is: [Back], Open log folder in Explorer, Open screenshot folder in Explorer
+                # Press Down to move to 'Open log folder in Explorer', then Enter to select it
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-StorageInfoScreen -Console $tc
+
+                Should -Invoke Start-Process -Times 1 -ParameterFilter {
+                    $FilePath -eq 'explorer.exe' -and $ArgumentList -eq $script:ModuleRootPath
+                }
             }
         }
     }
