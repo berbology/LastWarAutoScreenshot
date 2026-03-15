@@ -54,6 +54,11 @@ $script:MacroActionTypes = @{
             'region.bottomRight.relativeX' = @(0.0, 1.0)
             'region.bottomRight.relativeY' = @(0.0, 1.0)
         }
+        # maskRegions: optional array of up to 10 window-relative mask sub-regions.
+        # Each element has topLeft and bottomRight with relativeX/relativeY in [0.0, 1.0].
+        # bottomRight must be strictly to the right of and below topLeft.
+        # Absent or empty maskRegions array means no masking is applied.
+        Optional = @('maskRegions')
     }
     'Delay'       = @{
         Required = @('seconds')
@@ -352,10 +357,12 @@ function Test-MacroAction {
         }
     }
 
-    # Screenshot: bottomRight must be strictly greater than topLeft
+    # Screenshot: bottomRight must be strictly greater than topLeft; optional maskRegions validated
     if ($typeName -eq 'Screenshot') {
-        $topLeftX    = Get-NestedProperty -Object $Action -Path 'region.topLeft.relativeX'
-        $topLeftY    = Get-NestedProperty -Object $Action -Path 'region.topLeft.relativeY'
+        $name = if ($Action.PSObject.Properties['name']) { $Action.name } else { '' }
+
+        $topLeftX     = Get-NestedProperty -Object $Action -Path 'region.topLeft.relativeX'
+        $topLeftY     = Get-NestedProperty -Object $Action -Path 'region.topLeft.relativeY'
         $bottomRightX = Get-NestedProperty -Object $Action -Path 'region.bottomRight.relativeX'
         $bottomRightY = Get-NestedProperty -Object $Action -Path 'region.bottomRight.relativeY'
         if ($null -ne $topLeftX -and $null -ne $bottomRightX -and $bottomRightX -le $topLeftX) {
@@ -363,6 +370,46 @@ function Test-MacroAction {
         }
         if ($null -ne $topLeftY -and $null -ne $bottomRightY -and $bottomRightY -le $topLeftY) {
             return [PSCustomObject]@{ Valid = $false; Message = "Screenshot region.bottomRight.relativeY must be greater than region.topLeft.relativeY." }
+        }
+
+        # maskRegions: optional, validated only when present and non-null
+        if ($Action.PSObject.Properties['maskRegions'] -and $null -ne $Action.maskRegions) {
+            $maskRegions = $Action.maskRegions
+            if ($maskRegions -is [string] -or $maskRegions -isnot [System.Collections.IEnumerable]) {
+                return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions must be an array." }
+            }
+            $maskCount = @($maskRegions).Count
+            if ($maskCount -gt 10) {
+                return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions must contain at most 10 entries (got $maskCount)." }
+            }
+            $maskIndex = 0
+            foreach ($mask in $maskRegions) {
+                if (-not $mask.PSObject.Properties['topLeft'] -or $null -eq $mask.topLeft) {
+                    return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex] is missing 'topLeft'." }
+                }
+                if (-not $mask.PSObject.Properties['bottomRight'] -or $null -eq $mask.bottomRight) {
+                    return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex] is missing 'bottomRight'." }
+                }
+                foreach ($corner in @('topLeft', 'bottomRight')) {
+                    foreach ($coord in @('relativeX', 'relativeY')) {
+                        $prop = $mask.$corner.PSObject.Properties[$coord]
+                        if ($null -eq $prop -or $null -eq $prop.Value) {
+                            return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex].$corner.$coord is missing." }
+                        }
+                        $coordValue = $prop.Value
+                        if ($coordValue -lt 0.0 -or $coordValue -gt 1.0) {
+                            return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex].$corner.$coord value $coordValue is outside allowed range [0.0, 1.0]." }
+                        }
+                    }
+                }
+                if ($mask.bottomRight.relativeX -le $mask.topLeft.relativeX) {
+                    return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex].bottomRight.relativeX must be greater than topLeft.relativeX." }
+                }
+                if ($mask.bottomRight.relativeY -le $mask.topLeft.relativeY) {
+                    return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex].bottomRight.relativeY must be greater than topLeft.relativeY." }
+                }
+                $maskIndex++
+            }
         }
     }
 

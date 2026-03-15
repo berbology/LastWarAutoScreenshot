@@ -33,6 +33,16 @@ function Invoke-CaptureWindowRegion {
     .PARAMETER OutputPath
         Full path to the output PNG file. Parent directory will be created if absent.
 
+    .PARAMETER MaskPixelRects
+        Optional array of System.Drawing.Rectangle objects, in the coordinate space of
+        the cropped bitmap (origin at top-left of the capture region). Each rectangle is
+        filled with MaskColour before the bitmap is saved. Pass an empty array (the default)
+        to skip masking.
+
+    .PARAMETER MaskColour
+        Colour used to fill each rectangle in MaskPixelRects. Defaults to black.
+        Ignored when MaskPixelRects is empty.
+
     .OUTPUTS
         System.Boolean
         $true on success; $false on any argument or Win32 failure.
@@ -57,7 +67,11 @@ function Invoke-CaptureWindowRegion {
 
         [Parameter(Mandatory)]
         [AllowEmptyString()]
-        [string]$OutputPath
+        [string]$OutputPath,
+
+        [System.Drawing.Rectangle[]]$MaskPixelRects = @(),
+
+        [System.Drawing.Color]$MaskColour = [System.Drawing.Color]::Black
     )
 
     # ── Argument validation ──────────────────────────────────────────────────────
@@ -90,9 +104,11 @@ function Invoke-CaptureWindowRegion {
     # ── Render window into a managed Bitmap via PrintWindow ──────────────────────
     # Graphics.FromImage creates a GDI DC backed by the bitmap's pixel buffer.
     # PrintWindow renders the DWM-composited window content into that DC.
-    $fullBmp = $null
-    $region  = $null
-    $g       = $null
+    $fullBmp   = $null
+    $region    = $null
+    $g         = $null
+    $maskG     = $null
+    $maskBrush = $null
     try {
         $fullBmp = [System.Drawing.Bitmap]::new($winWidth, $winHeight)
         $g       = [System.Drawing.Graphics]::FromImage($fullBmp)
@@ -107,6 +123,17 @@ function Invoke-CaptureWindowRegion {
         $cropRect = [System.Drawing.Rectangle]::new($captureX, $captureY, $captureW, $captureH)
         $region   = $fullBmp.Clone($cropRect, $fullBmp.PixelFormat)
 
+        # ── Apply mask rectangles (pre-computed in bitmap coordinate space) ──────
+        if ($null -ne $MaskPixelRects -and $MaskPixelRects.Length -gt 0) {
+            $maskG     = [System.Drawing.Graphics]::FromImage($region)
+            $maskBrush = [System.Drawing.SolidBrush]::new($MaskColour)
+            foreach ($rect in $MaskPixelRects) {
+                if ($rect.Width -gt 0 -and $rect.Height -gt 0) {
+                    $maskG.FillRectangle($maskBrush, $rect)
+                }
+            }
+        }
+
         $dir = [System.IO.Path]::GetDirectoryName($OutputPath)
         if (-not [string]::IsNullOrEmpty($dir)) {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -114,8 +141,10 @@ function Invoke-CaptureWindowRegion {
         $region.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
         return $true
     } finally {
-        if ($null -ne $g)       { $g.Dispose() }
-        if ($null -ne $region)  { $region.Dispose() }
-        if ($null -ne $fullBmp) { $fullBmp.Dispose() }
+        if ($null -ne $maskBrush) { $maskBrush.Dispose() }
+        if ($null -ne $maskG)     { $maskG.Dispose() }
+        if ($null -ne $g)         { $g.Dispose() }
+        if ($null -ne $region)    { $region.Dispose() }
+        if ($null -ne $fullBmp)   { $fullBmp.Dispose() }
     }
 }

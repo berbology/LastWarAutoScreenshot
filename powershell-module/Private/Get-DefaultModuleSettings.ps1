@@ -113,6 +113,7 @@ function Get-DefaultModuleSettings {
             StorageWarningThresholdPercent = 90
             FileFormat                     = 'PNG'
             FilenamePattern                = '{MacroName}_{ActionName}_{Timestamp}_{Index}'
+            MaskColour                     = '0,0,0'
             SimilarityCheck                = [PSCustomObject]@{
                 Enabled              = $false
                 Threshold            = 0.98
@@ -355,6 +356,11 @@ $script:ConfigValidationSchema = @{
     'Screenshots.FilenamePattern'                = @{
         Type        = 'string'
         Description = 'Placeholders: {MacroName}, {ActionName}, {Timestamp}, {Date}, {Time}, {Index}'
+        Nullable    = $false
+    }
+    'Screenshots.MaskColour'                     = @{
+        Type        = 'string'
+        Description = 'Colour used to fill screenshot black-out regions. Accepted formats: named colour (e.g. "red", "dark blue", "light green"), RGB triplet (e.g. "255,0,0"), or 6-character hex code (e.g. "FF0000"). Default: 0,0,0 (black)'
         Nullable    = $false
     }
     'Screenshots.SimilarityCheck.Enabled'        = @{

@@ -3114,8 +3114,8 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
 
 ### Tasks
 
-1. [ ] Extend macro JSON schema for `maskRegions`
-   1. [ ] 1.1: Update `Test-MacroAction` in `powershell-module/Private/MacroSchema.ps1` to validate the `maskRegions` property on Screenshot actions:
+1. [x] Extend macro JSON schema for `maskRegions`
+   1. [x] 1.1: Update `Test-MacroAction` in `powershell-module/Private/MacroSchema.ps1` to validate the `maskRegions` property on Screenshot actions:
       - If `maskRegions` is present and not `$null`, assert it is an array (type check: `$action.maskRegions -is [System.Collections.IEnumerable]` and not a string)
       - Assert array length is between 0 and 10 inclusive; return error `"Screenshot action '$name': maskRegions must contain at most 10 entries"` if exceeded
       - For each element at index `$i`:
@@ -3124,8 +3124,8 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         - Assert `bottomRight.relativeX -gt topLeft.relativeX`; return error `"Screenshot action '$name': maskRegions[$i].bottomRight.relativeX must be greater than topLeft.relativeX"`
         - Assert `bottomRight.relativeY -gt topLeft.relativeY`; return error `"Screenshot action '$name': maskRegions[$i].bottomRight.relativeY must be greater than topLeft.relativeY"`
       - A Screenshot action with no `maskRegions` key continues to pass validation unchanged
-   2. [ ] 1.2: Update the `$script:MacroActionTypes` hashtable entry for `'Screenshot'` in `MacroSchema.ps1` to document `maskRegions` as an optional property with its validation constraints (parallel to the existing `Required` / `Ranges` structure for other action types)
-   3. [ ] 1.3: Update `powershell-module/Tests/MacroSchema.Tests.ps1`:
+   2. [x] 1.2: Update the `$script:MacroActionTypes` hashtable entry for `'Screenshot'` in `MacroSchema.ps1` to document `maskRegions` as an optional property with its validation constraints (parallel to the existing `Required` / `Ranges` structure for other action types)
+   3. [x] 1.3: Update `powershell-module/Tests/MacroSchema.Tests.ps1`:
       - Add test: Screenshot action with no `maskRegions` key → passes validation (regression guard)
       - Add test: Screenshot action with `maskRegions = []` (empty array) → passes validation
       - Add test: Screenshot action with one valid mask region → passes validation
@@ -3137,24 +3137,24 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
       - Add test: mask region missing `bottomRight` entirely → fails validation
       - Run full Pester suite; confirm count increases
 
-2. [ ] Add `Screenshots.MaskColour` to module config schema
-   1. [ ] 2.1: Update `powershell-module/Private/Get-DefaultModuleSettings.ps1`:
+2. [x] Add `Screenshots.MaskColour` to module config schema
+   1. [x] 2.1: Update `powershell-module/Private/Get-DefaultModuleSettings.ps1`:
       - Add `MaskColour = '0,0,0'` to the existing `Screenshots` defaults hashtable, positioned after `FilenamePattern`
       - Add `'Screenshots.MaskColour'` to `$script:ConfigValidationSchema`:
         - Type: `string`
         - `Nullable = $false`
         - `Description = 'Colour used to fill screenshot black-out regions. Accepted formats: named colour (e.g. "red", "dark blue", "light green"), RGB triplet (e.g. "255,0,0"), or 6-character hex code (e.g. "FF0000"). Default: 0,0,0 (black)'`
-   2. [ ] 2.2: Update `powershell-module/Private/Get-ModuleConfiguration.ps1`:
-      - Inject `MaskColour = '0,0,0'` into the loaded config's `Screenshots` section if the key is absent, using the same `if (-not $config.Screenshots.PSObject.Properties['MaskColour'])` pattern established for other injected keys
-   3. [ ] 2.3: Update `powershell-module/Private/Save-ModuleConfiguration.ps1`:
-      - Ensure `MaskColour` is persisted alongside all other `Screenshots.*` keys — no structural changes required if the serialisation already round-trips the full `Screenshots` object; verify and add explicit handling if needed
-   4. [ ] 2.4: Update `powershell-module/Tests/ModuleConfiguration.Tests.ps1`:
+   2. [x] 2.2: Update `powershell-module/Private/Get-ModuleConfiguration.ps1`:
+      - No code change required — the existing `foreach ($key in $defaults.Screenshots.PSObject.Properties.Name)` loop already injects all missing Screenshots keys from defaults; adding MaskColour to defaults is sufficient.
+   3. [x] 2.3: Update `powershell-module/Private/Save-ModuleConfiguration.ps1`:
+      - No code change required — serialisation already round-trips the full Screenshots object via `ConvertTo-Json -Depth 5`.
+   4. [x] 2.4: Update `powershell-module/Tests/ModuleConfiguration.Tests.ps1`:
       - Add round-trip save/load test for `Screenshots.MaskColour` with value `"FFAA55"`
       - Add default-injection test: load a config file whose `Screenshots` section does not contain `MaskColour`; verify `MaskColour` is injected as `"0,0,0"`
       - Run full Pester suite; confirm count increases
 
-3. [ ] Create `Resolve-MaskColour.ps1`
-   1. [ ] 3.1: Create `powershell-module/Private/Resolve-MaskColour.ps1`:
+3. [x] Create `Resolve-MaskColour.ps1`
+   1. [x] 3.1: Create `powershell-module/Private/Resolve-MaskColour.ps1`:
       - Function signature: `Resolve-MaskColour -ColourString [string]`
       - `[CmdletBinding()]` first; full comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER ColourString`, `.OUTPUTS`, `.EXAMPLE`)
       - Trim leading/trailing whitespace from `$ColourString` before all parsing
@@ -3175,7 +3175,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         - Return `[System.Drawing.Color]::FromArgb($r, $g, $b)`
       - **Failure:** if all three formats fail, write `Write-Warning "Cannot parse colour string '$ColourString'. Expected a named colour (e.g. 'red', 'dark blue'), RGB triplet (e.g. '255,0,0'), or 6-character hex code (e.g. 'FF0000')"` and return `$null`
       - All three format attempts are tried in the order listed; the function returns on the first successful parse
-   2. [ ] 3.2: Create `powershell-module/Tests/Resolve-MaskColour.Tests.ps1`:
+   2. [x] 3.2: Create `powershell-module/Tests/Resolve-MaskColour.Tests.ps1`:
       - Import module in `BeforeAll` (standard pattern); load `System.Drawing.Common` via `Add-Type -AssemblyName 'System.Drawing.Common'` in `BeforeAll`
       - All assertions inside `InModuleScope LastWarAutoScreenshot`
       - **Named colour tests** (use `-TestCases` / `-ForEach` with the full table from section above):
@@ -3212,8 +3212,8 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         - `'   '` (whitespace only) → returns `$null`
       - Run full Pester suite; confirm count increases
 
-4. [ ] Extend `ScreenCaptureAPI.cs` with mask support
-   1. [ ] 4.1: Update `powershell-module/src/ScreenCaptureAPI.cs`:
+4. [x] Extend `ScreenCaptureAPI.cs` with mask support
+   1. [x] 4.1: Update `powershell-module/src/ScreenCaptureAPI.cs`:
       - Add `using System.Drawing;` and `using System.Drawing.Imaging;` to the existing `using` directives if not already present (both are already referenced for the existing `CaptureWindowRegion` implementation)
       - **Refactor existing `CaptureWindowRegion` (6-parameter) into a delegation wrapper:**
         - Retain the existing public 6-parameter signature unchanged (no breaking change to callers)
@@ -3252,7 +3252,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
           ```
         - All existing GDI object disposal in `finally` is unchanged
         - XML `.remarks` on the new overload: "Mask pixel rectangles must be pre-computed by the caller in the coordinate space of the cropped bitmap (origin at the top-left of the capture region). Rectangles extending outside the bitmap bounds are clipped silently by GDI+. Pass an empty array or `null` for `maskPixelRects` to skip masking."
-   2. [ ] 4.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1`:
+   2. [x] 4.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1`:
       - Add type verification: `CaptureWindowRegion` static method with 8 parameters exists (`IntPtr`, `double`, `double`, `double`, `double`, `string`, `System.Drawing.Rectangle[]`, `System.Drawing.Color`)
       - **Masking integration tests** using real bitmaps written to `TestDrive:\`:
         - Create a 100×100 white bitmap, save as `TestDrive:\source.png`. Pass it through `CaptureWindowRegion` indirectly by verifying the internal masking logic via a helper: create a 100×100 white `Bitmap`, call the new overload with `windowHandle = [IntPtr]::Zero` — this will fail parameter validation and return `$false`. Instead, test masking by calling `Invoke-CaptureWindowRegion` with mock (see Task 5.2) or by testing the C# logic via a dedicated test bitmap approach below.
@@ -3263,8 +3263,8 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
           - Note: the masking paint path can only be exercised with a real HWND; these tests verify the method accepts the parameter types correctly and that validation behaviour is unaffected
       - Run full Pester suite; confirm count increases
 
-5. [ ] Update `Invoke-CaptureWindowRegion.ps1`
-   1. [ ] 5.1: Update `powershell-module/Private/Invoke-CaptureWindowRegion.ps1`:
+5. [x] Update `Invoke-CaptureWindowRegion.ps1`
+   1. [x] 5.1: Update `powershell-module/Private/Invoke-CaptureWindowRegion.ps1`:
       - Add two optional parameters after the existing `$OutputPath` parameter:
         ```powershell
         [System.Drawing.Rectangle[]]$MaskPixelRects = @(),
@@ -3278,13 +3278,13 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         ```
       - Existing callers that omit the new parameters continue to work — the defaults (`@()` and `Color.Black`) match the behaviour of the original 6-parameter C# overload
       - Update comment-based help: add `.PARAMETER MaskPixelRects` and `.PARAMETER MaskColour` entries
-   2. [ ] 5.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1` (the existing smoke-test section from Phase 5 task 2.3.3):
+   2. [x] 5.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1` (the existing smoke-test section from Phase 5 task 2.3.3):
       - Add assertion: `Invoke-CaptureWindowRegion` command has `MaskPixelRects` and `MaskColour` parameters (use `(Get-Command Invoke-CaptureWindowRegion).Parameters` inside `InModuleScope`)
       - Add assertion: calling `Invoke-CaptureWindowRegion` with the two new optional parameters omitted does not throw (mock `[LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion` static call is not possible with Pester — test via module function signature only)
       - Run full Pester suite; confirm count increases
 
-6. [ ] Update `Invoke-CaptureScreenRegion.ps1` — overlap computation and mask application
-   1. [ ] 6.1: Update `powershell-module/Private/Invoke-CaptureScreenRegion.ps1`:
+6. [x] Update `Invoke-CaptureScreenRegion.ps1` — overlap computation and mask application
+   1. [x] 6.1: Update `powershell-module/Private/Invoke-CaptureScreenRegion.ps1`:
       - Add `System.Drawing.Common` is already loaded by the module at import time (via `psm1`) — no additional `Add-Type` call needed here
       - After validating the screenshot action and before calling `Invoke-CaptureWindowRegion`, add the mask preparation block:
         ```powershell
@@ -3352,7 +3352,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
             -MaskColour     $maskColour
         ```
       - No changes to the similarity detection, storage guard, filename resolution, or any other existing logic
-   2. [ ] 6.2: Update `powershell-module/Tests/Invoke-CaptureScreenRegion.Tests.ps1`:
+   2. [x] 6.2: Update `powershell-module/Tests/Invoke-CaptureScreenRegion.Tests.ps1`:
       - Add `BeforeEach` mock for `Get-WindowBounds` returning a fixed-size bounds object (e.g. Width=1000, Height=2000) for mask-related tests
       - Add `BeforeEach` mock for `Resolve-MaskColour` returning a fixed `[System.Drawing.Color]::Red` for mask-related tests
       - Add `BeforeEach` mock for `Invoke-CaptureWindowRegion` capturing its arguments for assertion
