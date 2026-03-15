@@ -31,7 +31,7 @@ Start-LastWarAutoScreenshot
 ```
 
 The app walks you through everything: picking a target window, configuring
-mouse behaviour, setting up storage, and (Phase 4) recording macros.
+mouse behaviour, setting up storage, recording macros, and capturing screenshots.
 
 ### First run
 
@@ -59,10 +59,10 @@ New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
 - **Emergency stop** - `Ctrl+Shift+#` (UK) or hold both mouse buttons for
   3 s to abort any running automation
 - **Configurable logging** - file, Windows Event Log, or both
-- **Screenshot capture** (Phase 6) - user-defined regions, PNG/JPEG,
-  configurable naming
-- **Macro recording** (Phase 4) - record click sequences via the app
-- **Task Scheduler integration** (Phase 5) - automated, repeating execution
+- **Screenshot capture** - user-defined window regions saved as PNG with
+  configurable naming; similarity detection to automatically detect scroll-list end
+- **Macro recording** - record click sequences via the app
+- **Task Scheduler integration** (Phase 6) - automated, repeating execution
 
 ## Documentation
 
@@ -124,7 +124,7 @@ shown and you are asked to capture again — no explicit Redo is needed.
 | **Move to region (circle)** | Move to a random point within a circular region. Capture the centre then a point on the edge. |
 | **Left-click** | Click at the current cursor position (normally follows a Move action). No capture required. |
 | **Drag-click** | Hold the left button, drag along a Bezier path, release. Capture start then end position. |
-| **Screenshot region** | Mark a region for screenshot capture (deferred to Phase 6). Capture top-left then bottom-right. |
+| **Screenshot region** | Capture a region of the game window and save it to the configured storage path. Capture top-left then bottom-right. |
 | **Delay** | Pause execution for a specified number of seconds (0.1–3600). |
 | **Loop** | Repeat a set of named actions N times (1–10 000). Only available when named actions exist. |
 
@@ -191,8 +191,108 @@ to continue anyway or cancel.
 
 ### Screenshot actions during execution
 
-Screenshot actions are logged as a warning and skipped — they do not cause
-an error or halt the macro. Capture will be implemented in Phase 6.
+When a macro reaches a `Screenshot` action the module captures the defined
+window region and saves a PNG file to `Screenshots.StoragePath`. If
+`StoragePath` is not configured a warning is logged and the action is skipped
+— the macro continues normally without halting.
+
+A pre-flight warning is shown before execution when the macro contains
+`Screenshot` actions and `StoragePath` is not configured, giving you the
+option to cancel or continue.
+
+The game window must be open, visible, and in windowed or borderless-windowed
+mode — minimised and exclusive-fullscreen windows cannot be captured.
+
+---
+
+## Screenshot Capture
+
+Screenshot actions in a macro capture a defined region of the game window and
+save a PNG file to disk. The game window must be in windowed or borderless-
+windowed mode (not minimised, not exclusive fullscreen) — the module uses
+`PrintWindow(PW_RENDERFULLCONTENT)` which captures OpenGL-rendered content via
+DWM composition.
+
+### Configuring screenshot storage
+
+1. From the main menu select **Configure module → Screenshot settings**.
+2. Set **Storage path** to a folder on a drive with enough free space.
+3. Set **Max storage (GB)** to your preferred storage cap. The app warns you
+   when usage reaches the warning threshold (default: 90%).
+
+`Screenshots.StoragePath` must be set before screenshot actions will save
+files. If it is empty a warning is logged per screenshot action and the macro
+continues without capturing.
+
+### Filename pattern
+
+Files are named according to `Screenshots.FilenamePattern`. The default
+pattern is:
+
+```
+{MacroName}_{ActionName}_{Timestamp}_{Index}
+```
+
+**Example output:**
+```
+get-vs-scores_vs-screenshot-region_20260307_143022_0001.png
+```
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{MacroName}` | Macro name (filename-safe characters only) |
+| `{ActionName}` | Action name, or `Screenshot` if the action has no name |
+| `{Timestamp}` | UTC date-time at capture (`yyyyMMdd_HHmmss`) |
+| `{Date}` | UTC date at capture (`yyyyMMdd`) |
+| `{Time}` | UTC time at capture (`HHmmss`) |
+| `{Index}` | Zero-padded sequential counter (resets each macro run) |
+
+The resolved filename (excluding the storage path prefix) is capped at 200
+characters. Only PNG is supported; the format is lossless and avoids
+compression artefacts that could cause false positives in similarity detection.
+
+---
+
+## Similarity Detection
+
+Similarity detection automatically compares each new screenshot to the
+previous one. When consecutive screenshots are sufficiently similar (indicating
+a scroll-list end or otherwise static content) a configured action is triggered.
+
+### Enabling similarity detection
+
+From **Configure module → Screenshot settings** set **Similarity check
+enabled** to `true`, then adjust the settings below to suit your use case.
+
+### Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `SimilarityCheck.Enabled` | `false` | Enable or disable duplicate detection |
+| `SimilarityCheck.Threshold` | `0.98` | Fraction of sampled pixels that must match (0.0–1.0). `0.98` = 98% match |
+| `SimilarityCheck.SampleCount` | `1000` | Number of pixels sampled per comparison (ignored when `FullScan` is enabled) |
+| `SimilarityCheck.FullScan` | `false` | Compare every pixel — more accurate but slower |
+| `SimilarityCheck.TolerancePerChannel` | `10` | Maximum per-channel (R/G/B) difference that counts as a matching pixel. `0` = exact |
+| `SimilarityCheck.Action` | `StopLoop` | What to do when the threshold is reached |
+| `SimilarityCheck.ConsecutiveThreshold` | `1` | How many consecutive similar screenshots must occur before the action fires |
+
+**Threshold** is entered and stored as a decimal (0.0–1.0). `0.98` means 98%
+of sampled pixels match. Sampling is grid-based (not random) — results are
+reproducible across runs.
+
+**ConsecutiveThreshold** — set to `1` (default) to act on the first match.
+Set higher (e.g. `3`) to avoid false positives on briefly static content.
+
+### Action values
+
+| Action | Behaviour |
+|--------|-----------|
+| `StopLoop` (default) | Exits the current loop; the parent sequence continues. Ideal for scroll loops. |
+| `StopMacro` | Halts the entire macro. Use when the screenshot is at the top level, not inside a loop. |
+| `Warn` | Logs a warning and continues. Useful for monitoring without stopping. |
+
+`StopLoop` and `StopMacro` are both reported as **success** — reaching the
+end of a scroll list is the intended outcome.
 
 ---
 
@@ -238,8 +338,8 @@ and action type reference.
 
 ## Roadmap
 
-See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 4 (Macro
-Recording) in progress.
+See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 5 (Screenshot
+Management) complete. Phase 6 (Configuration & Scheduling) is next.
 
 ## License
 

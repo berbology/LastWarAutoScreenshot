@@ -2229,32 +2229,38 @@ test cases throughout Phase 4 implementation.
 12. [x] Bug fixes
     1. [x] 12.1: User prompt incorrect when recording a macro action
        - When recording coords for `Move mouse to point` and other actions in Record Macro it correctly prompts the user , upon hitting enter to record screen coords the next prompt displays as `Move your mouse to the target position, then press [Enter]...`. After pressing Enter the display output incorrectly shows `What would you like to do?, 0.2765) relative to windowWhat would you like to do?`. It should show the x,y coords in green on one line and the prompt `What would you like to do?` on the next line, followed by the choices (which display correctly already)
-    2. [x] 12.2: Enable wrap around in all scpectre.console screens showing selection prompts
+    2. [x] 12.2: Enable wrap around in all spectre.console screens showing selection prompts
        - Wrap around is currently disabled on all selection prompts. Enable it in ConsoleAppBridge.cs
     3. [x] 12.3: Ensure ConsoleAppBridge.cs helper classes are being used everywhere instead of directly instantiating new objects from Spectre.Console
        -In some places we are directly instantiating new objects such as Show-MainMenu.ps1: `$prompt = [Spectre.Console.SelectionPrompt[string]]::new()` when we have a helper class for this already
-       - Check for any other places we are doing this and ensure it is deliberate. In those cases, explain why the decision was made to directly instantiate a Spectr.Console object and not use a helper class
+       - Check for any other places we are doing this and ensure it is deliberate. In those cases, explain why the decision was made to directly instantiate a Spectre.Console object and not use a helper class
 
 ## Phase 5: Screenshot Management
 
-### Architecture decisions (record here for future reference)
+### Architecture decisions (future reference)
 
 - **Capture library:** New `powershell-module/src/ScreenCaptureAPI.cs` compiled in the same `Add-Type` call as `MouseControlAPI.cs` and `WindowEnumerationAPI.cs` (not separately like `ConsoleAppBridge.cs`). It shares the `LastWarAutoScreenshot` namespace and references `MouseControlAPI.RECT` and calls `MouseControlAPI.GetWindowRect` directly without redeclaration. It references `System.Drawing.Common` (Windows-only, guaranteed available on PowerShell 7.x on Windows). `System.Drawing.Common` is loaded via `Add-Type -AssemblyName 'System.Drawing.Common'` before compilation; the assembly location is obtained from `[System.Drawing.Bitmap].Assembly.Location` and passed to `-ReferencedAssemblies`.
 - **Capture method:** `PrintWindow(PW_RENDERFULLCONTENT 0x2)` only. This flag instructs DWM (Desktop Window Manager) to composite and return the full hardware-accelerated window content — including OpenGL and DirectX surfaces — into the provided HDC. Since the target game window is always active (not obscured) at capture time — all mouse clicks and drags execute before any Screenshot action in the sequence — there is no need for a `BitBlt` fallback. `BitBlt` cannot reliably capture OpenGL content and would return a black bitmap. Both methods require the window to be non-minimised; this constraint is documented in `.NOTES` on `Invoke-CaptureScreenRegion` and in `README.md`. Exclusive-fullscreen DirectX/Vulkan windows (not windowed mode) are out of scope.
 - **File format:** PNG only (lossless, no compression artefacts that could cause false positives in similarity detection). The `FileFormat` config key is retained as a `string` field defaulting to `'PNG'` for future extensibility but only `'PNG'` is supported in Phase 5. No JPEG code exists anywhere in Phase 5.
 - **Bitmap saving:** `System.Drawing.Bitmap.Save()` with `System.Drawing.Imaging.ImageFormat.Png`. All GDI object handles (DC, compatible DC, HBITMAP) are disposed in `finally` blocks inside the C# method — callers never hold raw GDI handles.
+
 - **Filename pattern:** Configurable via `Screenshots.FilenamePattern`. Supported placeholders: `{MacroName}`, `{ActionName}` (falls back to the action's `type` property if the action has no `name`), `{Timestamp}` (UTC `yyyyMMdd_HHmmss`), `{Date}` (UTC `yyyyMMdd`), `{Time}` (UTC `HHmmss`), `{Index}` (zero-padded 4-digit integer per execution run, starting at `0001`). Default: `{MacroName}_{ActionName}_{Timestamp}_{Index}`. After placeholder substitution the resolved filename (before adding the storage path prefix) must be **≤ 200 characters** to stay within Windows' 260-character `MAX_PATH` limit and leave room for the path prefix.
+
 - **Screenshot context:** A `$screenshotContext` hashtable `@{ Index=[int]; MacroName=[string]; ActionName=[string]; PreviousScreenshotPath=[string or $null]; ConsecutiveSimilarCount=[int] }` is initialised in `Invoke-MacroSequence` and passed to every `Invoke-MacroAction` call. Because PowerShell hashtables are reference types, mutations (incrementing `Index`, updating `PreviousScreenshotPath`, setting `ActionName`, incrementing/resetting `ConsecutiveSimilarCount`) propagate without `[ref]` parameters. Loop iterations share the same hashtable so screenshot index and previous-path tracking are continuous across loop repetitions. `ConsecutiveSimilarCount` counts how many successive Screenshot actions in a row have triggered the similarity threshold; it is incremented when similar and reset to `0` when not similar. The stop action only fires when `ConsecutiveSimilarCount` reaches `Screenshots.SimilarityCheck.ConsecutiveThreshold` (default `1`, meaning trigger on the first match — backward compatible).
+
 - **Similarity detection algorithm:** `N` sample pixel coordinates are computed deterministically using evenly-distributed grid traversal (`x = (int)((double)i / sampleCount * bmp.Width) % bmp.Width`, `y = (int)((double)i / sampleCount * bmp.Height)`) — no randomness — so results are reproducible across test runs without seeding. Per-pixel comparison is against R, G, B channels; alpha is ignored. A pixel matches when all three channels differ by ≤ `TolerancePerChannel`. `MatchRatio = matchingPixels / sampleCount`. Implemented as a static C# method to avoid per-pixel PowerShell loop overhead. `FullScan = $true` computes `sampleCount = width * height` and iterates every pixel.
+
 - **Similarity stop action options** (controlled by `Screenshots.SimilarityCheck.Action`):
   - `StopLoop` (default): when the Screenshot action is executing **inside a Loop action**, exits the loop cleanly and the parent macro sequence **continues with the next step** after the loop. When not inside any loop (top-level Screenshot), behaves identically to `StopMacro`. Reported as success.
   - `StopMacro`: halts the entire macro sequence regardless of nesting. Reported as **success** — similarity detection stopping the macro is the intended outcome (scroll end detected), not an error.
   - `Warn`: logs a `Warning` and continues execution; `SimilarityStop` is never set to `$true`.
   - **Implementation contract:** `SimilarityStop=$true` is returned from the Screenshot case in `Invoke-MacroAction` for both `StopLoop` and `StopMacro`. The `Loop` dispatch in `Invoke-MacroAction` inspects `Action` when it receives `SimilarityStop=$true` from a sub-action: for `StopLoop` it breaks the iteration loop and returns `SimilarityStop=$false` (parent continues); for `StopMacro` it propagates `SimilarityStop=$true` upward. `Invoke-MacroSequence` always treats a `SimilarityStop=$true` result from any top-level action as "stop macro, report success".
+
 - **Storage guard:** Before each screenshot capture, `Get-StorageInfo` is called. If `UsedPercent >= 100.0` of `MaxStorageGB`, the screenshot is skipped with a logged `Error` and `Success=$false` returned (execution halts). If actual disk free space (`[System.IO.DriveInfo]`) is ≤ 0 bytes, execution halts entirely with an error panel. `StorageWarningThresholdPercent` (default 90) controls the warning-only band: `>= threshold and < 100%` logs `Warning` but capture continues.
+
 - **Storage path auto-creation:** If `StoragePath` is configured but the directory does not exist, it is created automatically at first capture via `New-Item -ItemType Directory -Force` with an `Info` log. If `StoragePath` is empty/unconfigured, screenshot actions are skipped with a `Warning` and `Skipped=$true` returned (not an error — consistent with Phase 4 deferred behaviour).
 
-### Phase 5 scope (what is and is not included)
+#=# Phase 5 scope (what is and is not included)
 
 **Included:** `ScreenCaptureAPI.cs` (Win32 `PrintWindow(PW_RENDERFULLCONTENT)` + `System.Drawing` PNG save; C# similarity comparison via deterministic grid sampling), `Invoke-CaptureWindowRegion.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion` — required for Pester mockability), `Invoke-CompareImages.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CompareImages` — required for Pester mockability), `Resolve-ScreenshotFilename.ps1` (with 200-character resolved-length validation), `Invoke-CaptureScreenRegion.ps1`, `Test-ScreenshotSimilarity.ps1`, `Invoke-MacroAction.ps1` updated (Screenshot action now captures; N-consecutive similarity threshold; Loop dispatch handles `SimilarityStop` for `StopLoop`), `Invoke-MacroSequence.ps1` updated (context initialisation, `SimilarityStop` success messaging), `Show-ScreenshotConfigScreen.ps1`, `Show-ConfigMenuScreen.ps1` updated, `Get-StorageInfo.ps1` enhanced (disk free space, screenshot count, date range), `Show-StorageInfoScreen.ps1` enhanced (Explorer shortcut, disk free warning, screenshot count display), `Show-RunMacroScreen.ps1` pre-flight screenshot check, full Pester test coverage, documentation.
 
@@ -2959,12 +2965,12 @@ test cases throughout Phase 4 implementation.
        - All existing tests must continue to pass without modification
        - Run full Pester suite; confirm count increases
 
-13. [ ] Run full Pester suite and validate
-    1. [ ] 13.1: Run the complete, unfiltered Pester suite (all files, no tag or name filters):
+13. [x] Run full Pester suite and validate
+    1. [x] 13.1: Run the complete, unfiltered Pester suite (all files, no tag or name filters):
        - Record total test count; it must meet or exceed the Phase 4 final baseline plus all new tests added in tasks 1–12
        - All tests must pass with 0 failures and 0 errors
        - If any test fails that previously passed, halt immediately and investigate; do not proceed; do not delete or skip failing tests
-    2. [ ] 13.2: Manually smoke-test all screenshot workflows in a real terminal:
+    2. [x] 13.2: Manually smoke-test all screenshot workflows in a real terminal:
        - Import module; call `Start-LastWarAutoScreenshot`
        - **Config screen:** Navigate to `Configure module` → `Screenshot settings`; confirm `'[[Back to main menu]]'` is the first option in the config menu; select `Screenshot settings`; set `StoragePath` to `C:\Temp\TestScreenshots`; verify `FileFormat` selection shows `'PNG'` with the "Only PNG is supported in this release" note; set a custom `FilenamePattern` and verify the example filename is displayed; enable `SimilarityCheck` and confirm the info note appears; set `Threshold = 0.95`; set `ConsecutiveThreshold = 3`; save; close config; reopen `Screenshot settings` and verify all saved values are displayed including `ConsecutiveThreshold = 3`
        - **Pre-flight warning:** record a macro with at least one `Screenshot` action; clear `StoragePath` (set to empty); run the macro; confirm the pre-flight warning panel appears with the two choices; choose `'Cancel'`; verify you return to the macro list (not the main menu)
@@ -2975,8 +2981,8 @@ test cases throughout Phase 4 implementation.
        - **Storage limit:** set `MaxStorageGB` to `0.0001` (a tiny value below current usage); run macro; confirm storage-limit warning appears for each Screenshot action and screenshots are skipped without halting the rest of the macro; confirm the run is reported as a failure at the first non-skipped error
        - Confirm no ANSI artefacts or rendering glitches on any screen
 
-14. [ ] Documentation updates
-    1. [ ] 14.1: Update `powershell-module/Docs/README.md`:
+14. [x] Documentation updates
+    1. [x] 14.1: Update `powershell-module/Docs/README.md`:
        - Add "Screenshot Capture" section documenting:
          - Supported format: PNG (lossless; recommended for accuracy with similarity detection)
          - How to configure the storage path and maximum size (`Configure module` → `Screenshot settings`)
@@ -2997,12 +3003,464 @@ test cases throughout Phase 4 implementation.
          - Sampling is deterministic (grid-based, not random) — results are reproducible across runs
        - Update "Running Macros" section: note that `Screenshot` actions require a configured `StoragePath`; pre-flight warning shown at run time if not configured
        - Update "Configuration" section: list all new `Screenshots.*` config keys with types, defaults, and plain-English descriptions
-    2. [ ] 14.2: Update `powershell-module/Docs/MacroFormat.md`:
+    2. [x] 14.2: Update `powershell-module/Docs/MacroFormat.md`:
        - Update the `Screenshot` action type row to reflect that capture is now **fully implemented** in Phase 5 (remove any "Phase 6 deferred" or "logs warning and skips" wording carried over from Phase 4)
        - Add a note: `Screenshot` actions require `Screenshots.StoragePath` to be configured; if unconfigured, the action is skipped with a `Warning` log during execution (non-fatal)
        - Add a "Screenshot Capture Behaviour" subsection: explain that `region.topLeft` and `region.bottomRight` are window-relative coordinates (0.0–1.0); the capture region is computed at execution time using the live window bounds; the full window is never captured — only the specified region
-    3. [ ] 14.3: Update `CLAUDE.md`:
+    3. [x] 14.3: Update `CLAUDE.md`:
        - Update the "Current status" line from "Phase 3 (Console App) complete. Phase 4 (Macro Recording) is next." to "Phase 4 (Macro Recording) complete. Phase 5 (Screenshot Management) is next."
+
+## Phase 5b: Screenshot Region Masking
+
+### Architecture decisions (future reference)
+
+- **Mask regions as optional Screenshot action property:** `maskRegions` is an optional array on the `Screenshot` action type in the macro JSON schema. No new action type is introduced. Each element has `topLeft` and `bottomRight` with window-relative coordinates (0.0–1.0), identical in structure and coordinate space to the screenshot `region` property. If `maskRegions` is absent or an empty array, capture behaviour is unchanged.
+
+- **Mask colour in module config:** A new `Screenshots.MaskColour` string key is added to the module configuration. Default value: `"0,0,0"` (pure black). The colour applies to all Screenshot steps in all macros — one global setting simplifies the configuration surface. It is validated and previewed in `Show-ScreenshotConfigScreen`. Parsed at execution time via `Resolve-MaskColour`.
+
+- **Colour parsing:** New `Resolve-MaskColour` private function. Parsing is fully case-insensitive. Three input formats are accepted:
+  1. **Named colour:** one of nine base names — `black`, `white`, `red`, `green`, `blue`, `yellow`, `pink`, `orange`, `purple` — optionally preceded by `light` or `dark` (space-separated). `light` and `dark` modifiers are not valid for `black` or `white`. The full set of recognised combinations is defined in the named colour table below.
+  2. **RGB triplet:** three comma-separated integers each in the range 0–255, e.g. `"255,200,100"` or `"0,0,0"`. Whitespace around commas is ignored.
+  3. **Six-character hex code:** exactly six hexadecimal characters (no leading `#`), e.g. `"FFAA55"` or `"ffffff"`.
+  Returns `[System.Drawing.Color]` on success. Returns `$null` on any parse failure — the caller warns and falls back to black.
+
+- **In-memory masking via new C# overload:** `ScreenCaptureAPI.CaptureWindowRegion` is extended with a new 8-parameter overload that accepts `System.Drawing.Rectangle[] maskPixelRects` and `System.Drawing.Color maskColour`. After `bmp.Clone()` produces the cropped region bitmap and before `region.Save()`, the method iterates `maskPixelRects`: for each rectangle with positive width and height it calls `Graphics.FillRectangle` with a `SolidBrush` of `maskColour`. The existing 6-parameter overload is preserved unchanged for backward compatibility and delegates to the 8-parameter overload with `Array.Empty<System.Drawing.Rectangle>()` and `System.Drawing.Color.Black`.
+
+- **Overlap computation in PowerShell:** The conversion from window-relative mask coordinates to pixel-space `System.Drawing.Rectangle` objects within the cropped bitmap is performed in `Invoke-CaptureScreenRegion`, not in C#. `Get-WindowBounds` is called with the macro's window handle to obtain window pixel dimensions (already used by `Invoke-CaptureMousePosition`). This keeps the overlap logic in PowerShell where it is straightforwardly testable with Pester mocks, without requiring real GDI handles. The C# overload receives pre-computed pixel rectangles and simply paints them.
+
+- **Recording flow extension:** During `Show-RecordMacroScreen`, after the screenshot region top-left and bottom-right have been captured and accepted, an immediate yes/no prompt asks `"Add a black-out region?"`. If yes, `Invoke-CaptureMousePosition` is called twice (same window handle, same `Accept / Redo / Cancel` pattern) to capture the mask top-left and bottom-right. After each mask region is successfully recorded, a second yes/no prompt asks `"Add another black-out region?"`. This loop repeats until the user declines. If the user selects `Cancel` during any mask region capture, that mask region is discarded and the loop exits — previously recorded mask regions are retained.
+
+- **Validation at recording time:** The mask region bottom-right must be strictly to the right of and below its top-left (`bottomRight.relativeX > topLeft.relativeX` and `bottomRight.relativeY > topLeft.relativeY`) — the same rule enforced for screenshot regions. If a captured mask region has no overlap with the screenshot region (the two rectangles are disjoint), a warning panel is displayed (`"This black-out region does not overlap the screenshot region and will have no visible effect"`) but recording continues — the user may intend it as a placeholder for a region that moves during macro execution.
+
+- **Step list display in recording screen:** Screenshot steps with one or more mask regions show the mask count appended to the region detail in the step table, e.g. `"0.10,0.15 → 0.90,0.85 | 2 mask(s)"`. Steps with no mask regions show the region coordinates only, unchanged from existing behaviour.
+
+- **Testability:** `Resolve-MaskColour` is pure PowerShell with no I/O — fully unit-testable. Overlap computation in `Invoke-CaptureScreenRegion` is isolated from GDI calls by mocking `Get-WindowBounds` and `Invoke-CaptureWindowRegion`. The C# overload is tested by creating real `System.Drawing.Bitmap` objects in `TestDrive:\` without a real window handle, consistent with the existing `ScreenCaptureAPI.Tests.ps1` pattern.
+
+### Phase 5b scope (what is and is not included)
+
+**Included:** `Screenshots.MaskColour` config key (string, default `"0,0,0"`), `Resolve-MaskColour` private function (case-insensitive named colours with `light`/`dark` modifiers, RGB triplet, 6-char hex), `MacroSchema.ps1` extended to validate optional `maskRegions` array on Screenshot actions, `ScreenCaptureAPI.cs` extended with new 8-parameter `CaptureWindowRegion` overload (existing 6-parameter overload delegates unchanged), `Invoke-CaptureWindowRegion.ps1` updated with optional mask parameters, `Invoke-CaptureScreenRegion.ps1` updated (overlap computation, colour resolution, pass mask data to wrapper), `Show-RecordMacroScreen.ps1` updated (mask region recording loop, step display), `Show-ScreenshotConfigScreen.ps1` updated (`MaskColour` setting with live resolution preview), `MacroFormat.md` and `Configuration.md` updated, full Pester test coverage throughout.
+
+**Explicitly out of scope:** Per-step mask colours (all steps share the global `MaskColour` config setting), visual overlay showing mask regions on the game window during recording, mask region editing after recording (reuse existing "edit macro step" flow — future enhancement), mask region deletion during recording (user must cancel and re-record the Screenshot step), JPEG/other format support, per-mask-region opacity (fill is always fully opaque).
+
+---
+
+### JSON schema extension
+
+The `Screenshot` action type gains an optional `maskRegions` array. Existing macros without `maskRegions` are valid and continue to behave identically.
+
+```json
+{
+    "name": "vs-score-screenshot-region",
+    "type": "Screenshot",
+    "region": {
+        "topLeft":     { "relativeX": 0.10, "relativeY": 0.15 },
+        "bottomRight": { "relativeX": 0.90, "relativeY": 0.85 }
+    },
+    "maskRegions": [
+        {
+            "topLeft":     { "relativeX": 0.30, "relativeY": 0.40 },
+            "bottomRight": { "relativeX": 0.55, "relativeY": 0.50 }
+        },
+        {
+            "topLeft":     { "relativeX": 0.60, "relativeY": 0.20 },
+            "bottomRight": { "relativeX": 0.80, "relativeY": 0.35 }
+        }
+    ]
+}
+```
+
+**`maskRegions` validation rules:**
+
+- `maskRegions` is optional; if absent or `[]`, no masking is applied
+- Maximum 10 elements per Screenshot action
+- Each element must have `topLeft.relativeX`, `topLeft.relativeY`, `bottomRight.relativeX`, `bottomRight.relativeY` — all doubles in the range 0.0–1.0
+- `bottomRight.relativeX` must be strictly greater than `topLeft.relativeX`
+- `bottomRight.relativeY` must be strictly greater than `topLeft.relativeY`
+- No overlap with the screenshot `region` is not a validation error (logged as `Verbose` during execution)
+
+---
+
+### Named colour reference table
+
+The following 23 combinations are the complete set recognised by `Resolve-MaskColour`. All parsing is case-insensitive; any combination of upper/lower case and any number of spaces between modifier and name is normalised before lookup.
+
+| Input name | R | G | B |
+-----------------------------------
+| `black` | 0 | 0 | 0 |
+| `white` | 255 | 255 | 255 |
+| `red` | 255 | 0 | 0 |
+| `green` | 0 | 128 | 0 |
+| `blue` | 0 | 0 | 255 |
+| `yellow` | 255 | 255 | 0 |
+| `pink` | 255 | 192 | 203 |
+| `orange` | 255 | 165 | 0 |
+| `purple` | 128 | 0 | 128 |
+| `light red` | 255 | 128 | 128 |
+| `light green` | 144 | 238 | 144 |
+| `light blue` | 173 | 216 | 230 |
+| `light yellow` | 255 | 255 | 224 |
+| `light pink` | 255 | 218 | 238 |
+| `light orange` | 255 | 210 | 150 |
+| `light purple` | 221 | 160 | 221 |
+| `dark red` | 139 | 0 | 0 |
+| `dark green` | 0 | 100 | 0 |
+| `dark blue` | 0 | 0 | 139 |
+| `dark yellow` | 204 | 204 | 0 |
+| `dark pink` | 220 | 100 | 130 |
+| `dark orange` | 255 | 140 | 0 |
+| `dark purple` | 75 | 0 | 130 |
+
+---
+
+### Tasks
+
+1. [ ] Extend macro JSON schema for `maskRegions`
+   1. [ ] 1.1: Update `Test-MacroAction` in `powershell-module/Private/MacroSchema.ps1` to validate the `maskRegions` property on Screenshot actions:
+      - If `maskRegions` is present and not `$null`, assert it is an array (type check: `$action.maskRegions -is [System.Collections.IEnumerable]` and not a string)
+      - Assert array length is between 0 and 10 inclusive; return error `"Screenshot action '$name': maskRegions must contain at most 10 entries"` if exceeded
+      - For each element at index `$i`:
+        - Assert `topLeft` and `bottomRight` sub-objects exist
+        - Assert `topLeft.relativeX`, `topLeft.relativeY`, `bottomRight.relativeX`, `bottomRight.relativeY` are all present and in the range 0.0–1.0
+        - Assert `bottomRight.relativeX -gt topLeft.relativeX`; return error `"Screenshot action '$name': maskRegions[$i].bottomRight.relativeX must be greater than topLeft.relativeX"`
+        - Assert `bottomRight.relativeY -gt topLeft.relativeY`; return error `"Screenshot action '$name': maskRegions[$i].bottomRight.relativeY must be greater than topLeft.relativeY"`
+      - A Screenshot action with no `maskRegions` key continues to pass validation unchanged
+   2. [ ] 1.2: Update the `$script:MacroActionTypes` hashtable entry for `'Screenshot'` in `MacroSchema.ps1` to document `maskRegions` as an optional property with its validation constraints (parallel to the existing `Required` / `Ranges` structure for other action types)
+   3. [ ] 1.3: Update `powershell-module/Tests/MacroSchema.Tests.ps1`:
+      - Add test: Screenshot action with no `maskRegions` key → passes validation (regression guard)
+      - Add test: Screenshot action with `maskRegions = []` (empty array) → passes validation
+      - Add test: Screenshot action with one valid mask region → passes validation
+      - Add test: Screenshot action with 10 valid mask regions (boundary maximum) → passes validation
+      - Add test: Screenshot action with 11 mask regions → fails validation with expected message
+      - Add test: mask region with `bottomRight.relativeX` equal to `topLeft.relativeX` → fails validation
+      - Add test: mask region with `bottomRight.relativeY` less than `topLeft.relativeY` → fails validation
+      - Add test: mask region with a coordinate outside 0.0–1.0 → fails validation
+      - Add test: mask region missing `bottomRight` entirely → fails validation
+      - Run full Pester suite; confirm count increases
+
+2. [ ] Add `Screenshots.MaskColour` to module config schema
+   1. [ ] 2.1: Update `powershell-module/Private/Get-DefaultModuleSettings.ps1`:
+      - Add `MaskColour = '0,0,0'` to the existing `Screenshots` defaults hashtable, positioned after `FilenamePattern`
+      - Add `'Screenshots.MaskColour'` to `$script:ConfigValidationSchema`:
+        - Type: `string`
+        - `Nullable = $false`
+        - `Description = 'Colour used to fill screenshot black-out regions. Accepted formats: named colour (e.g. "red", "dark blue", "light green"), RGB triplet (e.g. "255,0,0"), or 6-character hex code (e.g. "FF0000"). Default: 0,0,0 (black)'`
+   2. [ ] 2.2: Update `powershell-module/Private/Get-ModuleConfiguration.ps1`:
+      - Inject `MaskColour = '0,0,0'` into the loaded config's `Screenshots` section if the key is absent, using the same `if (-not $config.Screenshots.PSObject.Properties['MaskColour'])` pattern established for other injected keys
+   3. [ ] 2.3: Update `powershell-module/Private/Save-ModuleConfiguration.ps1`:
+      - Ensure `MaskColour` is persisted alongside all other `Screenshots.*` keys — no structural changes required if the serialisation already round-trips the full `Screenshots` object; verify and add explicit handling if needed
+   4. [ ] 2.4: Update `powershell-module/Tests/ModuleConfiguration.Tests.ps1`:
+      - Add round-trip save/load test for `Screenshots.MaskColour` with value `"FFAA55"`
+      - Add default-injection test: load a config file whose `Screenshots` section does not contain `MaskColour`; verify `MaskColour` is injected as `"0,0,0"`
+      - Run full Pester suite; confirm count increases
+
+3. [ ] Create `Resolve-MaskColour.ps1`
+   1. [ ] 3.1: Create `powershell-module/Private/Resolve-MaskColour.ps1`:
+      - Function signature: `Resolve-MaskColour -ColourString [string]`
+      - `[CmdletBinding()]` first; full comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER ColourString`, `.OUTPUTS`, `.EXAMPLE`)
+      - Trim leading/trailing whitespace from `$ColourString` before all parsing
+      - **Named colour parsing (attempt first):**
+        - Normalise: convert to lowercase, collapse multiple spaces to a single space
+        - Split on a single space: if two tokens, the first must be `'light'` or `'dark'` and the second a base colour name; if one token, it must be a base colour name; any other token count fails named parsing
+        - Look up the normalised name in the static colour table (see named colour reference table above); if found, return `[System.Drawing.Color]::FromArgb($r, $g, $b)`
+        - If `light` or `dark` modifier is used with `black` or `white`, return `$null` (write `Write-Warning "Colour modifier 'light'/'dark' is not valid for 'black' or 'white'"`)
+      - **RGB triplet parsing (attempt second):**
+        - Split on `,`; trim each token; assert exactly 3 tokens
+        - Assert each token is a non-empty string of digits; parse with `[int]`
+        - Assert each value is in range 0–255
+        - If all checks pass, return `[System.Drawing.Color]::FromArgb($r, $g, $b)`
+      - **Hex parsing (attempt third):**
+        - Assert length is exactly 6 after trimming
+        - Assert all characters are valid hex digits (`[0-9A-Fa-f]`)
+        - Parse: `$r = [Convert]::ToInt32($hex.Substring(0,2), 16)` etc.
+        - Return `[System.Drawing.Color]::FromArgb($r, $g, $b)`
+      - **Failure:** if all three formats fail, write `Write-Warning "Cannot parse colour string '$ColourString'. Expected a named colour (e.g. 'red', 'dark blue'), RGB triplet (e.g. '255,0,0'), or 6-character hex code (e.g. 'FF0000')"` and return `$null`
+      - All three format attempts are tried in the order listed; the function returns on the first successful parse
+   2. [ ] 3.2: Create `powershell-module/Tests/Resolve-MaskColour.Tests.ps1`:
+      - Import module in `BeforeAll` (standard pattern); load `System.Drawing.Common` via `Add-Type -AssemblyName 'System.Drawing.Common'` in `BeforeAll`
+      - All assertions inside `InModuleScope LastWarAutoScreenshot`
+      - **Named colour tests** (use `-TestCases` / `-ForEach` with the full table from section above):
+        - Each of the 23 named colours returns a `[System.Drawing.Color]` with the exact R, G, B values from the table
+        - Case variations: `'Red'`, `'RED'`, `'rEd'`, `'DARK BLUE'`, `'LiGhT GreeN'` → each resolves correctly
+        - Extra whitespace: `'  light red  '`, `'dark  blue'` → resolves correctly after normalisation
+        - `'light black'` → returns `$null`, emits a warning
+        - `'dark white'` → returns `$null`, emits a warning
+        - `'magenta'` (unrecognised name) → returns `$null`
+        - `'light magenta'` (unrecognised base) → returns `$null`
+      - **RGB triplet tests:**
+        - `'0,0,0'` → Color with R=0, G=0, B=0
+        - `'255,255,255'` → Color with R=255, G=255, B=255
+        - `'255,200,100'` → Color with R=255, G=200, B=100
+        - `' 255 , 200 , 100 '` (whitespace around commas) → resolves correctly
+        - `'256,0,0'` (out of range) → returns `$null`
+        - `'-1,0,0'` (negative) → returns `$null`
+        - `'255,255'` (only two components) → returns `$null`
+        - `'255,255,255,0'` (four components) → returns `$null`
+        - `'abc,0,0'` (non-numeric) → returns `$null`
+      - **Hex tests:**
+        - `'000000'` → Color with R=0, G=0, B=0
+        - `'FFFFFF'` → Color with R=255, G=255, B=255
+        - `'ffaa55'` (lowercase) → Color with R=255, G=170, B=85
+        - `'FFAA55'` → same as above
+        - `'FfAa55'` (mixed case) → same as above
+        - `'FFAA5'` (5 chars) → returns `$null`
+        - `'FFAA556'` (7 chars) → returns `$null`
+        - `'GGAA55'` (invalid hex char) → returns `$null`
+        - `'#FF0000'` (hash prefix not accepted) → returns `$null`
+      - **Null/empty input:**
+        - `$null` → returns `$null`
+        - `''` → returns `$null`
+        - `'   '` (whitespace only) → returns `$null`
+      - Run full Pester suite; confirm count increases
+
+4. [ ] Extend `ScreenCaptureAPI.cs` with mask support
+   1. [ ] 4.1: Update `powershell-module/src/ScreenCaptureAPI.cs`:
+      - Add `using System.Drawing;` and `using System.Drawing.Imaging;` to the existing `using` directives if not already present (both are already referenced for the existing `CaptureWindowRegion` implementation)
+      - **Refactor existing `CaptureWindowRegion` (6-parameter) into a delegation wrapper:**
+        - Retain the existing public 6-parameter signature unchanged (no breaking change to callers)
+        - Change the body to a single delegation call:
+          ```csharp
+          return CaptureWindowRegion(windowHandle, relativeX, relativeY,
+              relativeWidth, relativeHeight, outputPath,
+              Array.Empty<Rectangle>(), Color.Black);
+          ```
+        - Retain the full existing XML doc comment unchanged
+      - **Add new 8-parameter `CaptureWindowRegion` overload** — full XML doc comment required:
+        ```csharp
+        public static bool CaptureWindowRegion(
+            IntPtr windowHandle,
+            double relativeX,    double relativeY,
+            double relativeWidth, double relativeHeight,
+            string outputPath,
+            System.Drawing.Rectangle[] maskPixelRects,
+            System.Drawing.Color maskColour)
+        ```
+        - Move all existing implementation logic (validation, `GetWindowRect`, DC creation, `PrintWindow`, `bmp.Clone`, save, `finally` GDI cleanup) into this overload
+        - After the `bmp.Clone(...)` call that produces the `region` bitmap and before `region.Save(...)`, insert the masking block:
+          ```csharp
+          if (maskPixelRects != null && maskPixelRects.Length > 0)
+          {
+              using (var g = Graphics.FromImage(region))
+              using (var brush = new SolidBrush(maskColour))
+              {
+                  foreach (var rect in maskPixelRects)
+                  {
+                      if (rect.Width > 0 && rect.Height > 0)
+                          g.FillRectangle(brush, rect);
+                  }
+              }
+          }
+          ```
+        - All existing GDI object disposal in `finally` is unchanged
+        - XML `.remarks` on the new overload: "Mask pixel rectangles must be pre-computed by the caller in the coordinate space of the cropped bitmap (origin at the top-left of the capture region). Rectangles extending outside the bitmap bounds are clipped silently by GDI+. Pass an empty array or `null` for `maskPixelRects` to skip masking."
+   2. [ ] 4.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1`:
+      - Add type verification: `CaptureWindowRegion` static method with 8 parameters exists (`IntPtr`, `double`, `double`, `double`, `double`, `string`, `System.Drawing.Rectangle[]`, `System.Drawing.Color`)
+      - **Masking integration tests** using real bitmaps written to `TestDrive:\`:
+        - Create a 100×100 white bitmap, save as `TestDrive:\source.png`. Pass it through `CaptureWindowRegion` indirectly by verifying the internal masking logic via a helper: create a 100×100 white `Bitmap`, call the new overload with `windowHandle = [IntPtr]::Zero` — this will fail parameter validation and return `$false`. Instead, test masking by calling `Invoke-CaptureWindowRegion` with mock (see Task 5.2) or by testing the C# logic via a dedicated test bitmap approach below.
+        - **Direct bitmap masking test:** After confirming the new overload validates `maskPixelRects` and `maskColour` are accepted, verify paint logic by creating a 200×200 all-white PNG in `TestDrive:\`, then loading it as a `Bitmap`, applying `Graphics.FillRectangle` manually with a known `SolidBrush`, and asserting pixel colour at known coordinates — this validates the System.Drawing APIs behave as expected on this machine (infrastructure smoke test)
+        - **Parameter validation for new overload** (no real HWND needed — validation fires before P/Invoke):
+          - `maskPixelRects = $null` with valid other params → returns `$false` (invalid window handle fires first; confirm `$false` is returned)
+          - `maskPixelRects = @()` (empty array) → same early-exit behaviour (validation still fails on `IntPtr.Zero`)
+          - Note: the masking paint path can only be exercised with a real HWND; these tests verify the method accepts the parameter types correctly and that validation behaviour is unaffected
+      - Run full Pester suite; confirm count increases
+
+5. [ ] Update `Invoke-CaptureWindowRegion.ps1`
+   1. [ ] 5.1: Update `powershell-module/Private/Invoke-CaptureWindowRegion.ps1`:
+      - Add two optional parameters after the existing `$OutputPath` parameter:
+        ```powershell
+        [System.Drawing.Rectangle[]]$MaskPixelRects = @(),
+        [System.Drawing.Color]$MaskColour = [System.Drawing.Color]::Black
+        ```
+      - Update the function body from the existing one-liner to pass the two new parameters through to the C# overload:
+        ```powershell
+        return [LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion(
+            $WindowHandle, $RelativeX, $RelativeY, $RelativeWidth, $RelativeHeight,
+            $OutputPath, $MaskPixelRects, $MaskColour)
+        ```
+      - Existing callers that omit the new parameters continue to work — the defaults (`@()` and `Color.Black`) match the behaviour of the original 6-parameter C# overload
+      - Update comment-based help: add `.PARAMETER MaskPixelRects` and `.PARAMETER MaskColour` entries
+   2. [ ] 5.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1` (the existing smoke-test section from Phase 5 task 2.3.3):
+      - Add assertion: `Invoke-CaptureWindowRegion` command has `MaskPixelRects` and `MaskColour` parameters (use `(Get-Command Invoke-CaptureWindowRegion).Parameters` inside `InModuleScope`)
+      - Add assertion: calling `Invoke-CaptureWindowRegion` with the two new optional parameters omitted does not throw (mock `[LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion` static call is not possible with Pester — test via module function signature only)
+      - Run full Pester suite; confirm count increases
+
+6. [ ] Update `Invoke-CaptureScreenRegion.ps1` — overlap computation and mask application
+   1. [ ] 6.1: Update `powershell-module/Private/Invoke-CaptureScreenRegion.ps1`:
+      - Add `System.Drawing.Common` is already loaded by the module at import time (via `psm1`) — no additional `Add-Type` call needed here
+      - After validating the screenshot action and before calling `Invoke-CaptureWindowRegion`, add the mask preparation block:
+        ```powershell
+        # Compute pixel-space mask rectangles from window-relative maskRegions
+        $maskPixelRects = [System.Drawing.Rectangle[]]@()
+        $maskColour     = [System.Drawing.Color]::Black
+
+        if ($action.maskRegions -and $action.maskRegions.Count -gt 0) {
+            $resolvedColour = Resolve-MaskColour -ColourString $config.Screenshots.MaskColour
+            if ($null -eq $resolvedColour) {
+                Write-Warning "MaskColour '$($config.Screenshots.MaskColour)' could not be parsed — using black."
+                $resolvedColour = [System.Drawing.Color]::Black
+            }
+            $maskColour = $resolvedColour
+
+            $windowBounds = Get-WindowBounds -WindowHandle $WindowHandle
+            $ssLeft   = $action.region.topLeft.relativeX
+            $ssTop    = $action.region.topLeft.relativeY
+            $ssRight  = $action.region.bottomRight.relativeX
+            $ssBottom = $action.region.bottomRight.relativeY
+            $ssWidth  = $ssRight  - $ssLeft
+            $ssHeight = $ssBottom - $ssTop
+            $bmpWidth  = [int]($ssWidth  * $windowBounds.Width)
+            $bmpHeight = [int]($ssHeight * $windowBounds.Height)
+
+            $rectList = [System.Collections.Generic.List[System.Drawing.Rectangle]]::new()
+            foreach ($maskRegion in $action.maskRegions) {
+                $mLeft   = $maskRegion.topLeft.relativeX
+                $mTop    = $maskRegion.topLeft.relativeY
+                $mRight  = $maskRegion.bottomRight.relativeX
+                $mBottom = $maskRegion.bottomRight.relativeY
+
+                $overlapLeft   = [Math]::Max($ssLeft,   $mLeft)
+                $overlapTop    = [Math]::Max($ssTop,    $mTop)
+                $overlapRight  = [Math]::Min($ssRight,  $mRight)
+                $overlapBottom = [Math]::Min($ssBottom, $mBottom)
+
+                if ($overlapLeft -ge $overlapRight -or $overlapTop -ge $overlapBottom) {
+                    Write-Verbose "Mask region has no overlap with screenshot region — skipping."
+                    continue
+                }
+
+                $pixelX = [int](($overlapLeft   - $ssLeft) / $ssWidth  * $bmpWidth)
+                $pixelY = [int](($overlapTop    - $ssTop)  / $ssHeight * $bmpHeight)
+                $pixelW = [int](($overlapRight  - $overlapLeft) / $ssWidth  * $bmpWidth)
+                $pixelH = [int](($overlapBottom - $overlapTop)  / $ssHeight * $bmpHeight)
+
+                if ($pixelW -gt 0 -and $pixelH -gt 0) {
+                    $rectList.Add([System.Drawing.Rectangle]::new($pixelX, $pixelY, $pixelW, $pixelH))
+                }
+            }
+            $maskPixelRects = $rectList.ToArray()
+        }
+        ```
+      - Update the `Invoke-CaptureWindowRegion` call to pass `$maskPixelRects` and `$maskColour`:
+        ```powershell
+        $captureSuccess = Invoke-CaptureWindowRegion `
+            -WindowHandle   $WindowHandle `
+            -RelativeX      $relativeX `
+            -RelativeY      $relativeY `
+            -RelativeWidth  $relativeWidth `
+            -RelativeHeight $relativeHeight `
+            -OutputPath     $outputPath `
+            -MaskPixelRects $maskPixelRects `
+            -MaskColour     $maskColour
+        ```
+      - No changes to the similarity detection, storage guard, filename resolution, or any other existing logic
+   2. [ ] 6.2: Update `powershell-module/Tests/Invoke-CaptureScreenRegion.Tests.ps1`:
+      - Add `BeforeEach` mock for `Get-WindowBounds` returning a fixed-size bounds object (e.g. Width=1000, Height=2000) for mask-related tests
+      - Add `BeforeEach` mock for `Resolve-MaskColour` returning a fixed `[System.Drawing.Color]::Red` for mask-related tests
+      - Add `BeforeEach` mock for `Invoke-CaptureWindowRegion` capturing its arguments for assertion
+      - **Mask rectangle computation tests:**
+        - Screenshot region `(0.1, 0.1) → (0.9, 0.9)` with one mask region `(0.2, 0.2) → (0.5, 0.5)` (fully inside screenshot): assert `Invoke-CaptureWindowRegion` is called with one `Rectangle` at the correct pixel coordinates (verify `X`, `Y`, `Width`, `Height` against manually computed expected values)
+        - Mask region identical to screenshot region: assert one rectangle covering the full bitmap (X=0, Y=0, Width=bmpWidth, Height=bmpHeight)
+        - Mask region partially overlapping (extends outside screenshot boundary on right and bottom): assert rectangle is clipped to the overlapping portion only
+        - Mask region entirely outside screenshot region: assert `Invoke-CaptureWindowRegion` is called with zero rectangles (empty array)
+        - Two mask regions both valid: assert `Invoke-CaptureWindowRegion` is called with two `Rectangle` objects
+        - Screenshot action with no `maskRegions` property: assert `Invoke-CaptureWindowRegion` is called with an empty `Rectangle` array
+        - Screenshot action with `maskRegions = @()` (empty): assert `Invoke-CaptureWindowRegion` is called with an empty `Rectangle` array
+      - **Colour resolution tests:**
+        - `config.Screenshots.MaskColour = '255,0,0'` → `Resolve-MaskColour` called with `'255,0,0'`; `Invoke-CaptureWindowRegion` called with the returned `Color`
+        - `Resolve-MaskColour` returns `$null` (simulating unparseable config value) → `Invoke-CaptureWindowRegion` called with `[System.Drawing.Color]::Black` (fallback); warning emitted
+      - Run full Pester suite; confirm count increases
+
+7. [ ] Update `Show-RecordMacroScreen.ps1` — mask region recording flow and display
+   1. [ ] 7.1: Update the Screenshot action recording branch in `powershell-module/Private/ConsoleApp/Show-RecordMacroScreen.ps1`:
+      - After the screenshot region bottom-right is accepted (the existing two-point capture with validation), add the mask recording loop:
+        ```powershell
+        $maskRegions = [System.Collections.Generic.List[object]]::new()
+        $addMask = Invoke-YesNoPrompt -Console $Console -Message 'Add a black-out region to this screenshot?'
+        while ($addMask) {
+            # Capture mask top-left
+            $Console.Write([Spectre.Console.Markup]::new('[grey]Move mouse to the top-left corner of the black-out region, then press Enter.[/]'))
+            $maskTopLeft = Invoke-CaptureMousePosition -Console $Console -WindowHandle $WindowHandle
+            if ($null -eq $maskTopLeft) { break }  # user cancelled
+
+            # Capture mask bottom-right
+            $Console.Write([Spectre.Console.Markup]::new('[grey]Move mouse to the bottom-right corner of the black-out region, then press Enter.[/]'))
+            $maskBottomRight = Invoke-CaptureMousePosition -Console $Console -WindowHandle $WindowHandle
+            if ($null -eq $maskBottomRight) { break }  # user cancelled
+
+            # Validate mask region (bottom-right must be strictly below and to the right of top-left)
+            if ($maskBottomRight.RelativeX -le $maskTopLeft.RelativeX -or
+                $maskBottomRight.RelativeY -le $maskTopLeft.RelativeY) {
+                $Console.Write([Spectre.Console.Markup]::new('[red]Bottom-right corner must be below and to the right of the top-left corner. Black-out region not added.[/]'))
+            } else {
+                # Check for overlap with screenshot region and warn if none
+                $overlapExists = ($maskTopLeft.RelativeX  -lt $screenshotBottomRight.RelativeX) -and
+                                 ($maskBottomRight.RelativeX -gt $screenshotTopLeft.RelativeX)  -and
+                                 ($maskTopLeft.RelativeY  -lt $screenshotBottomRight.RelativeY) -and
+                                 ($maskBottomRight.RelativeY -gt $screenshotTopLeft.RelativeY)
+                if (-not $overlapExists) {
+                    $Console.Write([Spectre.Console.Markup]::new('[yellow]Warning: this black-out region does not overlap the screenshot region and will have no visible effect.[/]'))
+                }
+                $maskRegions.Add([PSCustomObject]@{
+                    topLeft     = [PSCustomObject]@{ relativeX = $maskTopLeft.RelativeX;     relativeY = $maskTopLeft.RelativeY }
+                    bottomRight = [PSCustomObject]@{ relativeX = $maskBottomRight.RelativeX; relativeY = $maskBottomRight.RelativeY }
+                })
+            }
+
+            $addMask = Invoke-YesNoPrompt -Console $Console -Message 'Add another black-out region?'
+        }
+        ```
+      - Construct the Screenshot action object: if `$maskRegions.Count -gt 0`, include the `maskRegions` property; otherwise omit it (keeping the JSON clean for steps without masks):
+        ```powershell
+        $action = [PSCustomObject]@{ type = 'Screenshot'; region = $region }
+        if ($maskRegions.Count -gt 0) {
+            $action | Add-Member -NotePropertyName maskRegions -NotePropertyValue $maskRegions.ToArray()
+        }
+        ```
+      - Note: `Invoke-YesNoPrompt` is assumed to be an existing or new private helper that displays a yes/no selection prompt via `CreateSelectionPrompt` and returns `$true` / `$false`. If it does not already exist, create it as a private function `Invoke-YesNoPrompt -Console [IAnsiConsole] -Message [string]` using `ConsoleAppBridge::CreateSelectionPrompt` with choices `@('Yes', 'No')` and returning `$true` for `'Yes'`.
+   2. [ ] 7.2: Update the step detail rendering in `Show-RecordMacroScreen.ps1` for Screenshot actions in the step table:
+      - Locate the existing logic that formats Screenshot action details for the step list display
+      - If the action has `maskRegions` with `Count -gt 0`, append `" | $($action.maskRegions.Count) mask(s)"` to the region coordinate string
+      - Example final display: `"0.10,0.15 → 0.90,0.85 | 2 mask(s)"` vs. `"0.10,0.15 → 0.90,0.85"` (no masks)
+   3. [ ] 7.3: Update `powershell-module/Tests/ConsoleApp/Show-RecordMacroScreen.Tests.ps1`:
+      - Add test: when user responds `'No'` to `"Add a black-out region?"`, the resulting Screenshot action has no `maskRegions` property
+      - Add test: when user adds one mask region and responds `'No'` to `"Add another black-out region?"`, the resulting action has `maskRegions` with one element containing the correct coordinates
+      - Add test: when user adds two mask regions, the action has `maskRegions` with two elements
+      - Add test: when user cancels (`$null` returned from `Invoke-CaptureMousePosition`) during mask top-left capture, no mask region is added and the loop exits cleanly
+      - Add test: when captured mask region has `bottomRight.relativeX <= topLeft.relativeX`, a warning markup is written and no mask region is added
+      - Add test: when mask region has no overlap with screenshot region, the no-overlap warning markup is written but the mask region IS still added to the action
+      - Add test: step detail for a Screenshot action with two mask regions contains `"2 mask(s)"`
+      - Add test: step detail for a Screenshot action with no `maskRegions` property does not contain `"mask"`
+      - Run full Pester suite; confirm count increases
+
+8. [ ] Update `Show-ScreenshotConfigScreen.ps1` — `MaskColour` setting
+   1. [ ] 8.1: Update `powershell-module/Private/ConsoleApp/Show-ScreenshotConfigScreen.ps1`:
+      - Add a `MaskColour` menu entry to the screenshot configuration options list (position: after the `FilenamePattern` entry, before any `SimilarityCheck` entries, consistent with config key order)
+      - When the user selects `MaskColour`:
+        - Display the current value (e.g. `"Current mask colour: 0,0,0"`)
+        - Prompt for a new value using a `TextPrompt` (free-text entry) with the current value as the default suggestion
+        - On input, call `Resolve-MaskColour -ColourString $input` to validate
+        - If `Resolve-MaskColour` returns `$null`, display an error panel: `"Invalid colour: '$input'. Enter a named colour (e.g. 'red', 'dark blue', 'light green'), an RGB triplet (e.g. '255,0,0'), or a 6-character hex code (e.g. 'FF0000')."` — do not update the config
+        - If `Resolve-MaskColour` returns a valid `[System.Drawing.Color]`, display a confirmation: `"Colour resolved: RGB($($colour.R), $($colour.G), $($colour.B))"` — save the raw input string (not the resolved RGB) to `config.Screenshots.MaskColour`, then persist via `Save-ModuleConfiguration`
+      - The confirmation display shows the resolved RGB so the user can verify the result matches their intent (especially useful for named colours and hex inputs)
+   2. [ ] 8.2: Update `powershell-module/Tests/ConsoleApp/Show-ScreenshotConfigScreen.Tests.ps1`:
+      - Add test: `MaskColour` option appears in the configuration menu
+      - Add test: selecting `MaskColour` and entering `'red'` → `Resolve-MaskColour` is called with `'red'`; resolved confirmation markup is written; `Save-ModuleConfiguration` is called with `MaskColour = 'red'`
+      - Add test: selecting `MaskColour` and entering an invalid string → error panel markup is written; `Save-ModuleConfiguration` is NOT called
+      - Add test: entering a valid hex code `'FFAA55'` → confirmation shows `"RGB(255, 170, 85)"`; config is saved with `MaskColour = 'FFAA55'`
+      - Run full Pester suite; confirm count increases
+
+9. [ ] Update documentation
+   1. [ ] 9.1: Update `powershell-module/Docs/MacroFormat.md`:
+      - Add `maskRegions` to the Screenshot action type documentation:
+        - Show the updated JSON example (matching the schema extension section above) with one mask region
+        - Document the optional `maskRegions` array: purpose, coordinate space, maximum count (10), validation rules
+        - Note that `maskRegions` coordinates are in the same window-relative space as all other coordinates in the macro
+        - Note that the fill colour is controlled by `Screenshots.MaskColour` in module configuration
+      - Update the action type reference table to show `maskRegions` as an optional property of `Screenshot`
+   2. [ ] 9.2: Update `powershell-module/Docs/Configuration.md`:
+      - Add `Screenshots.MaskColour` to the `Screenshots` section:
+        - Default value: `"0,0,0"`
+        - Accepted formats: named colour, RGB triplet, 6-char hex (reference the named colour table)
+        - Where configured: `Show-ScreenshotConfigScreen` → `MaskColour` option
 
 ## Phase 6
 

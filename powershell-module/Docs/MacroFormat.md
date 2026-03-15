@@ -224,9 +224,10 @@ freed, even if an emergency stop fires mid-drag.
 
 ### `Screenshot`
 
-Defines a region for screenshot capture. **Screenshot capture is deferred to
-Phase 6.** During execution this action is skipped with a warning logged;
-the macro continues normally.
+Captures a screenshot of a specified region of the target window and saves it
+to the configured `Screenshots.StoragePath`. Requires `Screenshots.StoragePath`
+to be configured; if unconfigured the action is skipped with a `Warning` log
+during execution (non-fatal — the macro continues normally).
 
 ```json
 {
@@ -247,6 +248,22 @@ the macro continues normally.
 | `region.bottomRight.relativeY` | double | 0.0–1.0 | Bottom edge. Must be greater than `topLeft.relativeY`. |
 
 Naming screenshot actions is recommended when they will be referenced by loops.
+
+#### Screenshot Capture Behaviour
+
+`region.topLeft` and `region.bottomRight` are window-relative coordinates
+(0.0–1.0 on each axis). The capture region is computed at execution time using
+the live window bounds — the window must be open, visible, and in windowed or
+borderless-windowed mode (not minimised, not exclusive fullscreen).
+
+The full window is never captured — only the rectangle defined by `topLeft`
+and `bottomRight` is written to disk. Capture uses `PrintWindow` with the
+`PW_RENDERFULLCONTENT` flag so that OpenGL-rendered content (composited via
+DWM) is captured correctly.
+
+Files are saved as PNG (lossless) and named according to
+`Screenshots.FilenamePattern`. Configure storage in the app under
+**Configure module → Screenshot settings**.
 
 ---
 
@@ -414,7 +431,7 @@ repeat.
 
 1. Move to VS icon (circle region) and click — opens the VS score screen.
 2. Move to rankings icon (box region) and click — opens rankings view.
-3. Screenshot the score table (Phase 6 — skipped in current release).
+3. Screenshot the score table and save to the configured storage path.
 4. Move to bottom of the list and drag-scroll up to load the next page.
 5. **Loop × 19** — repeat scroll and screenshot for the remaining pages.
 6. Three clicks separated by 5-second delays to dismiss menus.
@@ -483,7 +500,7 @@ Records the workflow for capturing Arms Race score screenshots.
 1. Move to the events icon (circle region) and click.
 2. Move to the bottom of the Arms Race list.
 3. Drag-scroll up to reveal scores.
-4. Screenshot the score table (Phase 6 — skipped in current release).
+4. Screenshot the score table and save to the configured storage path.
 5. Three clicks with 5-second delays to dismiss menus.
 
 ---

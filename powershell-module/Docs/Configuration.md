@@ -117,22 +117,53 @@ The `#` key is `0xDC` on UK layouts. On a US layout `0xDC` is `\` - adjust
 
 ### Screenshots
 
-Configured via the Storage & Log Info screen in the app.
+Configured via **Configure module → Screenshot settings** in the app.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `StoragePath` | string | `""` | Folder where screenshots are saved. Empty = not configured |
-| `MaxStorageGB` | double | `2.0` | Storage cap before the app warns you (0.1-2048 GB) |
+| `MaxStorageGB` | double | `2.0` | Storage cap in GB (0.1–2048) |
+| `StorageWarningThresholdPercent` | int | `90` | Warn when usage exceeds this percentage of `MaxStorageGB` (1–99) |
+| `FileFormat` | string | `"PNG"` | File format for captured screenshots. Only `"PNG"` is supported |
+| `FilenamePattern` | string | `"{MacroName}_{ActionName}_{Timestamp}_{Index}"` | Pattern for screenshot filenames. Supported placeholders: `{MacroName}`, `{ActionName}`, `{Timestamp}`, `{Date}`, `{Time}`, `{Index}` |
 
 When `StoragePath` is empty the storage info screen prompts you to configure
-it. The app shows a usage chart and warns at 90% capacity.
+it. The app shows a usage chart and warns when usage reaches
+`StorageWarningThresholdPercent` of the storage cap.
 
-**Example:**
+#### `SimilarityCheck` sub-object
+
+Controls automatic duplicate-screenshot detection. When consecutive
+screenshots match at or above `Threshold`, the configured `Action` fires.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `SimilarityCheck.Enabled` | bool | `false` | Enable or disable duplicate detection |
+| `SimilarityCheck.Threshold` | double | `0.98` | Fraction of sampled pixels that must match (0.01–1.0). `0.98` = 98% |
+| `SimilarityCheck.SampleCount` | int | `1000` | Pixels to sample per comparison (100–100 000). Ignored when `FullScan` is `true` |
+| `SimilarityCheck.FullScan` | bool | `false` | Compare every pixel — more accurate but slower |
+| `SimilarityCheck.TolerancePerChannel` | int | `10` | Maximum per-channel (R/G/B) difference counted as a match (0–255). `0` = exact |
+| `SimilarityCheck.Action` | string | `"StopLoop"` | Action on detection: `StopLoop`, `StopMacro`, or `Warn` |
+| `SimilarityCheck.ConsecutiveThreshold` | int | `1` | Consecutive similar screenshots required before the action fires (1–100) |
+
+**Example (ModuleConfig.json excerpt):**
 
 ```json
 "Screenshots": {
   "StoragePath": "C:\\GameScreenshots\\LastWar",
-  "MaxStorageGB": 5.0
+  "MaxStorageGB": 5.0,
+  "StorageWarningThresholdPercent": 90,
+  "FileFormat": "PNG",
+  "FilenamePattern": "{MacroName}_{ActionName}_{Timestamp}_{Index}",
+  "SimilarityCheck": {
+    "Enabled": true,
+    "Threshold": 0.98,
+    "SampleCount": 1000,
+    "FullScan": false,
+    "TolerancePerChannel": 10,
+    "Action": "StopLoop",
+    "ConsecutiveThreshold": 1
+  }
 }
 ```
 
