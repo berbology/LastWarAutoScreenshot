@@ -470,8 +470,9 @@ Describe 'Invoke-CaptureScreenRegion' -Tag 'Unit' {
                     topLeft     = [PSCustomObject]@{ relativeX = 0.2; relativeY = 0.2 }
                     bottomRight = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.5 }
                 }
+                Mock Write-Warning {}
+
                 $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
-                $warnings = @()
                 Invoke-CaptureScreenRegion `
                     -WindowHandle               ([IntPtr]::new(1)) `
                     -RegionTopLeftRelativeX     0.1 `
@@ -479,10 +480,9 @@ Describe 'Invoke-CaptureScreenRegion' -Tag 'Unit' {
                     -RegionBottomRightRelativeX 0.9 `
                     -RegionBottomRightRelativeY 0.9 `
                     -MaskRegions                @($mask) `
-                    -ScreenshotContext          $ctx `
-                    -WarningVariable            warnings | Out-Null
+                    -ScreenshotContext          $ctx | Out-Null
 
-                $warnings.Count | Should -BeAtLeast 1
+                Should -Invoke Write-Warning -Times 1
                 Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
                     $MaskColour.R -eq 0 -and $MaskColour.G -eq 0 -and $MaskColour.B -eq 0
                 }

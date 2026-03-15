@@ -3369,8 +3369,8 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         - `Resolve-MaskColour` returns `$null` (simulating unparseable config value) → `Invoke-CaptureWindowRegion` called with `[System.Drawing.Color]::Black` (fallback); warning emitted
       - Run full Pester suite; confirm count increases
 
-7. [ ] Update `Show-RecordMacroScreen.ps1` — mask region recording flow and display
-   1. [ ] 7.1: Update the Screenshot action recording branch in `powershell-module/Private/ConsoleApp/Show-RecordMacroScreen.ps1`:
+7. [x] Update `Show-RecordMacroScreen.ps1` — mask region recording flow and display
+   1. [x] 7.1: Update the Screenshot action recording branch in `powershell-module/Private/ConsoleApp/Show-RecordMacroScreen.ps1`:
       - After the screenshot region bottom-right is accepted (the existing two-point capture with validation), add the mask recording loop:
         ```powershell
         $maskRegions = [System.Collections.Generic.List[object]]::new()
@@ -3416,11 +3416,11 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         }
         ```
       - Note: `Invoke-YesNoPrompt` is assumed to be an existing or new private helper that displays a yes/no selection prompt via `CreateSelectionPrompt` and returns `$true` / `$false`. If it does not already exist, create it as a private function `Invoke-YesNoPrompt -Console [IAnsiConsole] -Message [string]` using `ConsoleAppBridge::CreateSelectionPrompt` with choices `@('Yes', 'No')` and returning `$true` for `'Yes'`.
-   2. [ ] 7.2: Update the step detail rendering in `Show-RecordMacroScreen.ps1` for Screenshot actions in the step table:
+   2. [x] 7.2: Update the step detail rendering in `Show-RecordMacroScreen.ps1` for Screenshot actions in the step table:
       - Locate the existing logic that formats Screenshot action details for the step list display
       - If the action has `maskRegions` with `Count -gt 0`, append `" | $($action.maskRegions.Count) mask(s)"` to the region coordinate string
       - Example final display: `"0.10,0.15 → 0.90,0.85 | 2 mask(s)"` vs. `"0.10,0.15 → 0.90,0.85"` (no masks)
-   3. [ ] 7.3: Update `powershell-module/Tests/ConsoleApp/Show-RecordMacroScreen.Tests.ps1`:
+   3. [x] 7.3: Update `powershell-module/Tests/ConsoleApp/Show-RecordMacroScreen.Tests.ps1`:
       - Add test: when user responds `'No'` to `"Add a black-out region?"`, the resulting Screenshot action has no `maskRegions` property
       - Add test: when user adds one mask region and responds `'No'` to `"Add another black-out region?"`, the resulting action has `maskRegions` with one element containing the correct coordinates
       - Add test: when user adds two mask regions, the action has `maskRegions` with two elements
@@ -3431,8 +3431,8 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
       - Add test: step detail for a Screenshot action with no `maskRegions` property does not contain `"mask"`
       - Run full Pester suite; confirm count increases
 
-8. [ ] Update `Show-ScreenshotConfigScreen.ps1` — `MaskColour` setting
-   1. [ ] 8.1: Update `powershell-module/Private/ConsoleApp/Show-ScreenshotConfigScreen.ps1`:
+8. [x] Update `Show-ScreenshotConfigScreen.ps1` — `MaskColour` setting
+   1. [x] 8.1: Update `powershell-module/Private/ConsoleApp/Show-ScreenshotConfigScreen.ps1`:
       - Add a `MaskColour` menu entry to the screenshot configuration options list (position: after the `FilenamePattern` entry, before any `SimilarityCheck` entries, consistent with config key order)
       - When the user selects `MaskColour`:
         - Display the current value (e.g. `"Current mask colour: 0,0,0"`)
@@ -3441,22 +3441,22 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         - If `Resolve-MaskColour` returns `$null`, display an error panel: `"Invalid colour: '$input'. Enter a named colour (e.g. 'red', 'dark blue', 'light green'), an RGB triplet (e.g. '255,0,0'), or a 6-character hex code (e.g. 'FF0000')."` — do not update the config
         - If `Resolve-MaskColour` returns a valid `[System.Drawing.Color]`, display a confirmation: `"Colour resolved: RGB($($colour.R), $($colour.G), $($colour.B))"` — save the raw input string (not the resolved RGB) to `config.Screenshots.MaskColour`, then persist via `Save-ModuleConfiguration`
       - The confirmation display shows the resolved RGB so the user can verify the result matches their intent (especially useful for named colours and hex inputs)
-   2. [ ] 8.2: Update `powershell-module/Tests/ConsoleApp/Show-ScreenshotConfigScreen.Tests.ps1`:
+   2. [x] 8.2: Update `powershell-module/Tests/ConsoleApp/Show-ScreenshotConfigScreen.Tests.ps1`:
       - Add test: `MaskColour` option appears in the configuration menu
       - Add test: selecting `MaskColour` and entering `'red'` → `Resolve-MaskColour` is called with `'red'`; resolved confirmation markup is written; `Save-ModuleConfiguration` is called with `MaskColour = 'red'`
       - Add test: selecting `MaskColour` and entering an invalid string → error panel markup is written; `Save-ModuleConfiguration` is NOT called
       - Add test: entering a valid hex code `'FFAA55'` → confirmation shows `"RGB(255, 170, 85)"`; config is saved with `MaskColour = 'FFAA55'`
       - Run full Pester suite; confirm count increases
 
-9. [ ] Update documentation
-   1. [ ] 9.1: Update `powershell-module/Docs/MacroFormat.md`:
+9. [x] Update documentation
+   1. [x] 9.1: Update `powershell-module/Docs/MacroFormat.md`:
       - Add `maskRegions` to the Screenshot action type documentation:
         - Show the updated JSON example (matching the schema extension section above) with one mask region
         - Document the optional `maskRegions` array: purpose, coordinate space, maximum count (10), validation rules
         - Note that `maskRegions` coordinates are in the same window-relative space as all other coordinates in the macro
         - Note that the fill colour is controlled by `Screenshots.MaskColour` in module configuration
       - Update the action type reference table to show `maskRegions` as an optional property of `Screenshot`
-   2. [ ] 9.2: Update `powershell-module/Docs/Configuration.md`:
+   2. [x] 9.2: Update `powershell-module/Docs/Configuration.md`:
       - Add `Screenshots.MaskColour` to the `Screenshots` section:
         - Default value: `"0,0,0"`
         - Accepted formats: named colour, RGB triplet, 6-char hex (reference the named colour table)

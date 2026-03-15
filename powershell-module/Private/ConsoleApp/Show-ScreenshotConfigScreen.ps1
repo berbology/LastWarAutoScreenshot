@@ -51,7 +51,7 @@ function Show-ScreenshotConfigScreen {
 
         Screenshots keys covered (in order):
           StoragePath, MaxStorageGB, StorageWarningThresholdPercent, FileFormat,
-          FilenamePattern, SimilarityCheck.Enabled, SimilarityCheck.Threshold,
+          FilenamePattern, MaskColour, SimilarityCheck.Enabled, SimilarityCheck.Threshold,
           SimilarityCheck.SampleCount, SimilarityCheck.FullScan,
           SimilarityCheck.TolerancePerChannel, SimilarityCheck.Action,
           SimilarityCheck.ConsecutiveThreshold
@@ -150,6 +150,13 @@ function Show-ScreenshotConfigScreen {
             Get    = { param($c) $c.Screenshots.FilenamePattern }
             Set    = { param($c, $v) $c.Screenshots.FilenamePattern = $v }
             DefGet = { param($d) $d.Screenshots.FilenamePattern }
+        },
+        @{
+            Key    = 'Screenshots.MaskColour'
+            Type   = 'string'
+            Get    = { param($c) $c.Screenshots.MaskColour }
+            Set    = { param($c, $v) $c.Screenshots.MaskColour = $v }
+            DefGet = { param($d) $d.Screenshots.MaskColour }
         },
         @{
             Key    = 'Screenshots.SimilarityCheck.Enabled'
@@ -446,6 +453,36 @@ function Show-ScreenshotConfigScreen {
 
                 $Console.Write(
                     [Spectre.Console.Markup]::new("[grey]Example filename: $([Spectre.Console.Markup]::Escape($example))`n[/]")
+                )
+                & $def.Set $config $answer
+                break
+            }
+        }
+        elseif ($def.Key -eq 'Screenshots.MaskColour') {
+            # ── MaskColour: TextPrompt with Resolve-MaskColour validation ─────────
+            while ($true) {
+                $currentValue = & $def.Get $config
+                $promptText   = "$description [green]($([Spectre.Console.Markup]::Escape("$currentValue")))[/]: "
+
+                $textPrompt = [Spectre.Console.TextPrompt[string]]::new($promptText)
+                $textPrompt.AllowEmpty = $true
+                $answer = $textPrompt.Show($Console)
+
+                # Empty → keep current value
+                if ([string]::IsNullOrEmpty($answer)) {
+                    break
+                }
+
+                $colour = Resolve-MaskColour -ColourString $answer
+                if ($null -eq $colour) {
+                    $Console.Write(
+                        [Spectre.Console.Markup]::new("[red]Invalid colour: '$([Spectre.Console.Markup]::Escape($answer))'. Enter a named colour (e.g. 'red', 'dark blue', 'light green'), an RGB triplet (e.g. '255,0,0'), or a 6-character hex code (e.g. 'FF0000').`n[/]")
+                    )
+                    continue
+                }
+
+                $Console.Write(
+                    [Spectre.Console.Markup]::new("[green]Colour resolved: RGB($($colour.R), $($colour.G), $($colour.B))`n[/]")
                 )
                 & $def.Set $config $answer
                 break

@@ -375,6 +375,9 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action menu: 5 DownArrows → index 5 'Screenshot region'
                 for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Mask prompt: 'Add a black-out region?' → DownArrow + Enter → 'No'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # 7 DownArrows → 'Save macro'
@@ -387,6 +390,425 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $script:_savedMacroData.sequence[0].region.topLeft.relativeY | Should -Be 0.1
                 $script:_savedMacroData.sequence[0].region.bottomRight.relativeX | Should -Be 0.9
                 $script:_savedMacroData.sequence[0].region.bottomRight.relativeY | Should -Be 0.9
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Screenshot mask region recording
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user responds No to Add a black-out region' {
+
+        It 'The resulting Screenshot action has no maskRegions property' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    if ($script:_captureCount -eq 1) { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }
+                    else                              { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Mask prompt → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $script:_savedMacroData.sequence[0].PSObject.Properties['maskRegions'] | Should -BeNullOrEmpty
+            }
+        }
+    }
+
+    Context 'When the user adds one mask region and responds No to Add another' {
+
+        It 'The Screenshot action has maskRegions with one element containing the correct coordinates' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    switch ($script:_captureCount) {
+                        1 { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }  # ss top-left
+                        2 { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }  # ss bottom-right
+                        3 { [PSCustomObject]@{ RelativeX = 0.2; RelativeY = 0.2 } }  # mask top-left
+                        4 { [PSCustomObject]@{ RelativeX = 0.5; RelativeY = 0.5 } }  # mask bottom-right
+                    }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # First mask prompt → Yes (Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second mask prompt ('Add another?') → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $maskRegions = $script:_savedMacroData.sequence[0].maskRegions
+                $maskRegions | Should -Not -BeNullOrEmpty
+                $maskRegions.Count | Should -Be 1
+                $maskRegions[0].topLeft.relativeX     | Should -Be 0.2
+                $maskRegions[0].topLeft.relativeY     | Should -Be 0.2
+                $maskRegions[0].bottomRight.relativeX | Should -Be 0.5
+                $maskRegions[0].bottomRight.relativeY | Should -Be 0.5
+            }
+        }
+    }
+
+    Context 'When the user adds two mask regions' {
+
+        It 'The Screenshot action has maskRegions with two elements' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    switch ($script:_captureCount) {
+                        1 { [PSCustomObject]@{ RelativeX = 0.0; RelativeY = 0.0 } }  # ss top-left
+                        2 { [PSCustomObject]@{ RelativeX = 1.0; RelativeY = 1.0 } }  # ss bottom-right
+                        3 { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }  # mask 1 top-left
+                        4 { [PSCustomObject]@{ RelativeX = 0.3; RelativeY = 0.3 } }  # mask 1 bottom-right
+                        5 { [PSCustomObject]@{ RelativeX = 0.6; RelativeY = 0.6 } }  # mask 2 top-left
+                        6 { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }  # mask 2 bottom-right
+                    }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # First mask prompt → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 'Add another?' → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 'Add another?' → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $script:_savedMacroData.sequence[0].maskRegions.Count | Should -Be 2
+            }
+        }
+    }
+
+    Context 'When the user cancels during mask top-left capture' {
+
+        It 'No mask region is added and the loop exits cleanly' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    switch ($script:_captureCount) {
+                        1 { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }  # ss top-left
+                        2 { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }  # ss bottom-right
+                        3 { $null }                                                    # mask top-left: cancel
+                    }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # First mask prompt → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # (mock returns $null for mask top-left → loop exits)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $script:_savedMacroData.sequence[0].PSObject.Properties['maskRegions'] | Should -BeNullOrEmpty
+            }
+        }
+    }
+
+    Context 'When captured mask region has bottomRight.relativeX <= topLeft.relativeX' {
+
+        It 'A warning is written and no mask region is added' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    switch ($script:_captureCount) {
+                        1 { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }  # ss top-left
+                        2 { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }  # ss bottom-right
+                        3 { [PSCustomObject]@{ RelativeX = 0.5; RelativeY = 0.2 } }  # mask top-left
+                        4 { [PSCustomObject]@{ RelativeX = 0.3; RelativeY = 0.8 } }  # mask bottom-right: X too small
+                    }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # First mask prompt → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 'Add another?' after invalid mask → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'must be below and to the right'
+                $script:_savedMacroData.sequence[0].PSObject.Properties['maskRegions'] | Should -BeNullOrEmpty
+            }
+        }
+    }
+
+    Context 'When mask region has no overlap with the screenshot region' {
+
+        It 'The no-overlap warning is written but the mask IS added to the action' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    switch ($script:_captureCount) {
+                        1 { [PSCustomObject]@{ RelativeX = 0.0; RelativeY = 0.0 } }  # ss top-left
+                        2 { [PSCustomObject]@{ RelativeX = 0.5; RelativeY = 0.5 } }  # ss bottom-right
+                        3 { [PSCustomObject]@{ RelativeX = 0.6; RelativeY = 0.6 } }  # mask top-left (outside ss)
+                        4 { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }  # mask bottom-right (outside ss)
+                    }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # First mask prompt → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 'Add another?' → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match 'no visible effect'
+                $script:_savedMacroData.sequence[0].maskRegions.Count | Should -Be 1
+            }
+        }
+    }
+
+    Context 'Step detail display for Screenshot actions' {
+
+        It 'Step detail for a Screenshot action with two mask regions contains "2 mask(s)"' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    switch ($script:_captureCount) {
+                        1 { [PSCustomObject]@{ RelativeX = 0.0; RelativeY = 0.0 } }
+                        2 { [PSCustomObject]@{ RelativeX = 1.0; RelativeY = 1.0 } }
+                        3 { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }
+                        4 { [PSCustomObject]@{ RelativeX = 0.3; RelativeY = 0.3 } }
+                        5 { [PSCustomObject]@{ RelativeX = 0.6; RelativeY = 0.6 } }
+                        6 { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }
+                    }
+                }
+                Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Mask prompt → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 'Add another?' → Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # 'Add another?' → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                $tc.Output | Should -Match '2 mask\(s\)'
+            }
+        }
+
+        It 'Step detail for a Screenshot action with no maskRegions does not contain "mask"' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-MacroFileList -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                $script:_captureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_captureCount++
+                    if ($script:_captureCount -eq 1) { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }
+                    else                              { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }
+                }
+                Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Mask prompt → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+                # Output from second loop iteration (step table showing the added screenshot action)
+                # should not contain 'mask' anywhere
+                $tc.Output | Should -Not -Match 'mask\(s\)'
             }
         }
     }

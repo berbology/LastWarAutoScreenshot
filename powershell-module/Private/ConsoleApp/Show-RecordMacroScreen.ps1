@@ -155,7 +155,14 @@ function Show-RecordMacroScreen {
                 }
                 'LeftClick'    { 'at current position' }
                 'DragClick'    { "($($action.start.relativeX), $($action.start.relativeY)) -> ($($action.end.relativeX), $($action.end.relativeY))" }
-                'Screenshot'   { "($($action.region.topLeft.relativeX), $($action.region.topLeft.relativeY)) to ($($action.region.bottomRight.relativeX), $($action.region.bottomRight.relativeY))" }
+                'Screenshot'   {
+                    $regionStr = "($($action.region.topLeft.relativeX), $($action.region.topLeft.relativeY)) to ($($action.region.bottomRight.relativeX), $($action.region.bottomRight.relativeY))"
+                    if ($action.PSObject.Properties['maskRegions'] -and $action.maskRegions.Count -gt 0) {
+                        "$regionStr | $($action.maskRegions.Count) mask(s)"
+                    } else {
+                        $regionStr
+                    }
+                }
                 'Delay'        { "$($action.seconds)s" }
                 'Loop'         { "$($action.actionNames -join ' -> ') x$($action.iterations)" }
                 default        { '' }
@@ -426,6 +433,42 @@ function Show-RecordMacroScreen {
                     $Console.Write([Spectre.Console.Markup]::new("Screenshot region: ($($ssTopLeft.RelativeX), $($ssTopLeft.RelativeY)) to ($($ssBottomRight.RelativeX), $($ssBottomRight.RelativeY))`n"))
                     $Console.Write([Spectre.Console.Markup]::new("[grey]Naming screenshot actions is recommended so they can be referenced in loops.[/]`n"))
 
+                    # ── Mask region recording loop ─────────────────────────────────────
+                    $maskRegions = [System.Collections.Generic.List[object]]::new()
+                    $addMask = Invoke-YesNoPrompt -Console $Console -Message 'Add a black-out region to this screenshot?'
+                    while ($addMask) {
+                        $maskTopLeft = Invoke-CaptureMousePosition `
+                            -Console $Console `
+                            -WindowHandle $windowHandle `
+                            -PromptMessage '[grey]Move mouse to the top-left corner of the black-out region, then press [[Enter]].[/]'
+                        if ($null -eq $maskTopLeft) { break }
+
+                        $maskBottomRight = Invoke-CaptureMousePosition `
+                            -Console $Console `
+                            -WindowHandle $windowHandle `
+                            -PromptMessage '[grey]Move mouse to the bottom-right corner of the black-out region, then press [[Enter]].[/]'
+                        if ($null -eq $maskBottomRight) { break }
+
+                        if ($maskBottomRight.RelativeX -le $maskTopLeft.RelativeX -or
+                            $maskBottomRight.RelativeY -le $maskTopLeft.RelativeY) {
+                            $Console.Write([Spectre.Console.Markup]::new("[red]Bottom-right corner must be below and to the right of the top-left corner. Black-out region not added.[/]`n"))
+                        } else {
+                            $overlapExists = ($maskTopLeft.RelativeX  -lt $ssBottomRight.RelativeX) -and
+                                             ($maskBottomRight.RelativeX -gt $ssTopLeft.RelativeX)  -and
+                                             ($maskTopLeft.RelativeY  -lt $ssBottomRight.RelativeY) -and
+                                             ($maskBottomRight.RelativeY -gt $ssTopLeft.RelativeY)
+                            if (-not $overlapExists) {
+                                $Console.Write([Spectre.Console.Markup]::new('[yellow]Warning: this black-out region does not overlap the screenshot region and will have no visible effect.[/]'))
+                            }
+                            $maskRegions.Add([PSCustomObject]@{
+                                topLeft     = [PSCustomObject]@{ relativeX = $maskTopLeft.RelativeX;     relativeY = $maskTopLeft.RelativeY }
+                                bottomRight = [PSCustomObject]@{ relativeX = $maskBottomRight.RelativeX; relativeY = $maskBottomRight.RelativeY }
+                            })
+                        }
+
+                        $addMask = Invoke-YesNoPrompt -Console $Console -Message 'Add another black-out region?'
+                    }
+
                     $actionName = Invoke-RecordActionName -Console $Console -ExistingNames $existingNames
                     if ($actionName -eq '__cancel__') { return $null }
 
@@ -441,6 +484,9 @@ function Show-RecordMacroScreen {
                                 relativeY = $ssBottomRight.RelativeY
                             }
                         }
+                    }
+                    if ($maskRegions.Count -gt 0) {
+                        $action | Add-Member -NotePropertyName maskRegions -NotePropertyValue $maskRegions.ToArray()
                     }
                     if (-not [string]::IsNullOrEmpty($actionName)) {
                         $action | Add-Member -NotePropertyName 'name' -NotePropertyValue $actionName
@@ -507,7 +553,14 @@ function Show-RecordMacroScreen {
                         }
                         'LeftClick'    { 'at current position' }
                         'DragClick'    { "($($loopAction.start.relativeX), $($loopAction.start.relativeY)) -> ($($loopAction.end.relativeX), $($loopAction.end.relativeY))" }
-                        'Screenshot'   { "($($loopAction.region.topLeft.relativeX), $($loopAction.region.topLeft.relativeY)) to ($($loopAction.region.bottomRight.relativeX), $($loopAction.region.bottomRight.relativeY))" }
+                        'Screenshot'   {
+                            $regionStr = "($($loopAction.region.topLeft.relativeX), $($loopAction.region.topLeft.relativeY)) to ($($loopAction.region.bottomRight.relativeX), $($loopAction.region.bottomRight.relativeY))"
+                            if ($loopAction.PSObject.Properties['maskRegions'] -and $loopAction.maskRegions.Count -gt 0) {
+                                "$regionStr | $($loopAction.maskRegions.Count) mask(s)"
+                            } else {
+                                $regionStr
+                            }
+                        }
                         'Delay'        { "$($loopAction.seconds)s" }
                         default        { '' }
                     }

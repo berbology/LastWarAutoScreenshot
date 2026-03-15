@@ -7,6 +7,8 @@ BeforeAll {
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
 
+    Add-Type -AssemblyName 'System.Drawing.Common'
+
     # Create a single shared TestConsole for all tests in this file.
     # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
     InModuleScope 'LastWarAutoScreenshot' {
@@ -29,6 +31,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                         StorageWarningThresholdPercent = 90
                         FileFormat                     = 'PNG'
                         FilenamePattern                = '{MacroName}_{ActionName}_{Timestamp}_{Index}'
+                        MaskColour                     = '0,0,0'
                         SimilarityCheck                = [PSCustomObject]@{
                             Enabled              = $false
                             Threshold            = 0.98
@@ -44,6 +47,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
             Mock Save-ModuleSettings {}
             Mock Write-LastWarLog {}
             Mock Resolve-ScreenshotFilename { 'my-macro_screenshot_20260101_120000_0001.png' }
+            Mock Resolve-MaskColour { [System.Drawing.Color]::FromArgb(0, 0, 0) }
             Mock Test-Path { $true }
             Mock New-Item {}
         }
@@ -56,14 +60,15 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
     #   3  StorageWarningThresholdPercent   TextPrompt   Enter (empty → keep)
     #   4  FileFormat                       SelectPrompt Enter (first = 'PNG')
     #   5  FilenamePattern                  TextPrompt   Enter (empty → keep)
-    #   6  SimilarityCheck.Enabled          ConfirmPrompt 'n' (keep false)
-    #   7  SimilarityCheck.Threshold        TextPrompt   Enter (empty → keep)
-    #   8  SimilarityCheck.SampleCount      TextPrompt   Enter (empty → keep)
-    #   9  SimilarityCheck.FullScan         ConfirmPrompt 'n' (keep false)
-    #  10  SimilarityCheck.TolerancePerChannel TextPrompt Enter (empty → keep)
-    #  11  SimilarityCheck.Action           SelectPrompt Enter (first = StopLoop display)
-    #  12  SimilarityCheck.ConsecutiveThreshold TextPrompt Enter (empty → keep)
-    #  13  Save prompt                      SelectPrompt Enter ('Yes - save now')
+    #   6  MaskColour                       TextPrompt   Enter (empty → keep)
+    #   7  SimilarityCheck.Enabled          ConfirmPrompt 'n' (keep false)
+    #   8  SimilarityCheck.Threshold        TextPrompt   Enter (empty → keep)
+    #   9  SimilarityCheck.SampleCount      TextPrompt   Enter (empty → keep)
+    #  10  SimilarityCheck.FullScan         ConfirmPrompt 'n' (keep false)
+    #  11  SimilarityCheck.TolerancePerChannel TextPrompt Enter (empty → keep)
+    #  12  SimilarityCheck.Action           SelectPrompt Enter (first = StopLoop display)
+    #  13  SimilarityCheck.ConsecutiveThreshold TextPrompt Enter (empty → keep)
+    #  14  Save prompt                      SelectPrompt Enter ('Yes - save now')
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Empty input keeps non-StoragePath values; Yes - save now persists
@@ -78,6 +83,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat SelectionPrompt → PNG
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern: keep
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # SimilarityCheck.Enabled: keep false
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold: keep
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount: keep
@@ -101,6 +107,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat SelectionPrompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -136,6 +143,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -167,6 +175,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat SelectionPrompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -198,6 +207,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # FileFormat
                 $tc.Input.PushTextWithEnter('{MacroName}_{Timestamp}_{Index}')     # FilenamePattern: non-empty
+                $tc.Input.PushKey([ConsoleKey]::Enter)                              # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')                                    # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # SampleCount
@@ -239,6 +249,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # FileFormat
                 $tc.Input.PushTextWithEnter('{MacroName}_{ActionName}_{Timestamp}_{Index}_too_long_pattern') # 1st: null
                 $tc.Input.PushTextWithEnter('{MacroName}_{Timestamp}')              # 2nd: valid
+                $tc.Input.PushKey([ConsoleKey]::Enter)                              # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')                                    # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)                              # SampleCount
@@ -271,6 +282,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('y')             # SimilarityCheck.Enabled: set to true
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -302,6 +314,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -333,6 +346,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -364,6 +378,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -395,6 +410,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -422,6 +438,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                             StorageWarningThresholdPercent = 50
                             FileFormat                     = 'PNG'
                             FilenamePattern                = '{MacroName}'
+                            MaskColour                     = '0,0,0'
                             SimilarityCheck                = [PSCustomObject]@{
                                 Enabled              = $true
                                 Threshold            = 0.50
@@ -441,6 +458,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('y')             # Enabled: true (non-default)
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -469,6 +487,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -499,6 +518,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -524,6 +544,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -556,6 +577,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')                 # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # SampleCount
@@ -597,6 +619,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')                 # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # SampleCount
@@ -624,6 +647,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)           # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')                 # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)           # SampleCount
@@ -653,6 +677,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -676,6 +701,7 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
                 $tc.Input.PushTextWithEnter('n')             # Enabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
@@ -690,6 +716,127 @@ Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
                 Show-ScreenshotConfigScreen -Console $tc
 
                 Should -Invoke Get-ModuleConfiguration -Exactly 1
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: MaskColour setting
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'MaskColour setting' {
+
+        It 'MaskColour appears in the settings table output' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep
+                $tc.Input.PushTextWithEnter('n')             # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
+                $tc.Input.PushTextWithEnter('n')             # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Save: Discard
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                $tc.Output | Should -Match 'MaskColour'
+            }
+        }
+
+        It 'When entering red for MaskColour, Resolve-MaskColour is called with red and confirmation is written' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Resolve-MaskColour { [System.Drawing.Color]::FromArgb(255, 0, 0) }
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushTextWithEnter('red')           # MaskColour: enter 'red'
+                $tc.Input.PushTextWithEnter('n')             # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
+                $tc.Input.PushTextWithEnter('n')             # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Save: 'Yes - save now'
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                Should -Invoke Resolve-MaskColour -Times 1 -ParameterFilter { $ColourString -eq 'red' }
+                $tc.Output | Should -Match 'Colour resolved'
+                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
+                    $Config.Screenshots.MaskColour -eq 'red'
+                }
+            }
+        }
+
+        It 'When entering an invalid colour, error markup is written and Save-ModuleSettings is not called after Discard' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Resolve-MaskColour { $null }
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushTextWithEnter('notacolour')    # MaskColour: invalid → error, re-prompt
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaskColour: keep (empty)
+                $tc.Input.PushTextWithEnter('n')             # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
+                $tc.Input.PushTextWithEnter('n')             # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)   # Save: Discard
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                $tc.Output | Should -Match 'Invalid colour'
+                Should -Not -Invoke Save-ModuleSettings
+            }
+        }
+
+        It 'When entering FFAA55, confirmation shows RGB(255, 170, 85) and config is saved with MaskColour = FFAA55' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Resolve-MaskColour { [System.Drawing.Color]::FromArgb(255, 170, 85) }
+
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StoragePath
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # MaxStorageGB
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # StorageWarningThresholdPercent
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FileFormat
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # FilenamePattern
+                $tc.Input.PushTextWithEnter('FFAA55')        # MaskColour: enter hex
+                $tc.Input.PushTextWithEnter('n')             # Enabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Threshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # SampleCount
+                $tc.Input.PushTextWithEnter('n')             # FullScan
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # TolerancePerChannel
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Action
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # ConsecutiveThreshold
+                $tc.Input.PushKey([ConsoleKey]::Enter)       # Save: 'Yes - save now'
+
+                Show-ScreenshotConfigScreen -Console $tc
+
+                $tc.Output | Should -Match 'RGB\(255, 170, 85\)'
+                Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
+                    $Config.Screenshots.MaskColour -eq 'FFAA55'
+                }
             }
         }
     }
