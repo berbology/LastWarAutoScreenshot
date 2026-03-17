@@ -36,7 +36,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Displays a panel containing "No macros saved" in the console output' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
@@ -49,7 +49,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Returns $null when no macros exist' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
@@ -68,7 +68,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Returns $null' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -93,7 +93,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Does not throw when back is selected immediately' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -122,7 +122,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Console output contains the macro name' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -182,7 +182,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Console output contains action types from the sequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -243,7 +243,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Calls Get-MacroFile with the correct FilePath' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -310,7 +310,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Calls Remove-MacroFile exactly once' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -345,7 +345,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Calls Remove-MacroFile with the correct FilePath' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -382,7 +382,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Console output contains "deleted" after confirmed deletion' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -423,7 +423,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Does not call Remove-MacroFile' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -470,7 +470,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Calls Show-EditMacroScreen exactly once' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -502,7 +502,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Calls Show-EditMacroScreen with the correct -FilePath' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -542,7 +542,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Output contains the macro name and display date' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
@@ -568,7 +568,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
 
         It 'Output contains "Back to main menu" option' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList {
+                Mock Get-LWASMacro {
                     @([PSCustomObject]@{
                         FileName    = '20260101_120000_test-macro.json'
                         FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'

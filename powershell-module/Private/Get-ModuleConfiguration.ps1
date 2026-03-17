@@ -96,11 +96,12 @@ function Get-ModuleConfiguration {
                 # Get defaults from single source of truth
                 $defaults = Get-DefaultModuleSettings
                 $defaultConfig = [PSCustomObject]@{
-                    Logging       = $defaults.Logging
-                    MouseControl  = $defaults.MouseControl
-                    EmergencyStop = $defaults.EmergencyStop
-                    Screenshots   = $defaults.Screenshots
-                    CodeEditor    = $defaults.CodeEditor
+                    Logging        = $defaults.Logging
+                    MouseControl   = $defaults.MouseControl
+                    EmergencyStop  = $defaults.EmergencyStop
+                    Screenshots    = $defaults.Screenshots
+                    CodeEditor     = $defaults.CodeEditor
+                    MacroExecution = $defaults.MacroExecution
                 }
 
                 # Ensure the target directory exists before writing.
@@ -198,6 +199,17 @@ function Get-ModuleConfiguration {
             # Inject missing CodeEditor key
             if (-not $configData.PSObject.Properties['CodeEditor']) {
                 $configData | Add-Member -MemberType NoteProperty -Name CodeEditor -Value $defaults.CodeEditor
+            }
+
+            # Inject missing MacroExecution keys (Phase 6 task 6.1)
+            if (-not $configData.PSObject.Properties['MacroExecution']) {
+                $configData | Add-Member -MemberType NoteProperty -Name MacroExecution -Value $defaults.MacroExecution
+            } else {
+                foreach ($key in $defaults.MacroExecution.PSObject.Properties.Name) {
+                    if (-not $configData.MacroExecution.PSObject.Properties[$key]) {
+                        $configData.MacroExecution | Add-Member -MemberType NoteProperty -Name $key -Value $defaults.MacroExecution.$key
+                    }
+                }
             }
 
             # Check whether window-target properties are present.

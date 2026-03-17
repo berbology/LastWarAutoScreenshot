@@ -126,10 +126,16 @@ namespace LastWarAutoScreenshot
         public static extern IntPtr GetForegroundWindow();
 
         /// <summary>
-        /// Sets the specified window's show state (minimize or maximize only)
+        /// Restores the window to its original size and position.
+        /// Reverses SW_SHOWMINIMIZED (2) or SW_SHOWMAXIMIZED (3).
+        /// </summary>
+        public const int SW_RESTORE = 9;
+
+        /// <summary>
+        /// Sets the specified window's show state (minimize, maximize, or restore)
         /// </summary>
         /// <param name="hWnd">Handle to the window</param>
-        /// <param name="nCmdShow">Show state (2 = minimize, 3 = maximize)</param>
+        /// <param name="nCmdShow">Show state (2 = minimize, 3 = maximize, 9 = restore)</param>
         /// <returns>True if successful, false otherwise</returns>
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);

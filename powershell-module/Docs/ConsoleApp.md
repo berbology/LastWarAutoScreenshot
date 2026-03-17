@@ -1,6 +1,6 @@
 ## Console App
 
-The interactive console app (`Start-LastWarAutoScreenshot`) is the primary
+The interactive console app (`Start-LWASConsole`) is the primary
 interface for all setup, configuration, and (from Phase 4) macro management.
 It uses [Spectre.Console](https://spectreconsole.net/) for rich terminal
 rendering.
@@ -9,7 +9,7 @@ rendering.
 
 ```powershell
 Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
-Start-LastWarAutoScreenshot
+Start-LWASConsole
 ```
 
 On first run with no config file: defaults are written to

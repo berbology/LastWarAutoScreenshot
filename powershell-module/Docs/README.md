@@ -27,7 +27,7 @@ cd LastWarAutoScreenshot
 Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
 
 # Launch the interactive app - this is your entry point
-Start-LastWarAutoScreenshot
+Start-LWASConsole
 ```
 
 The app walks you through everything: picking a target window, configuring
@@ -35,7 +35,7 @@ mouse behaviour, setting up storage, recording macros, and capturing screenshots
 
 ### First run
 
-On a clean install with no config file, `Start-LastWarAutoScreenshot` creates
+On a clean install with no config file, `Start-LWASConsole` creates
 a default `ModuleConfig.json` in `$env:APPDATA\LastWarAutoScreenshot\` and
 presents the main menu immediately. No manual config editing needed.
 

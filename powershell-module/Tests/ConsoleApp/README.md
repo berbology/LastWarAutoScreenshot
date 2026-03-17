@@ -35,7 +35,7 @@ are accessible.
 | `ConfigValidation.Tests.ps1` | `Test-ConfigValue` — all type/range/enum/nullable scenarios |
 | `Invoke-StartupConfigValidation.Tests.ps1` | Startup validation: missing file, valid config, invalid values, bad JSON |
 | `Show-MainMenu.Tests.ps1` | Main menu rendering and return values |
-| `Start-LastWarAutoScreenshot.Tests.ps1` | App entry point loop, config validation dispatch, screen routing |
+| `Start-LWASConsole.Tests.ps1` | App entry point loop, config validation dispatch, screen routing |
 | `Show-WindowSelectionScreen.Tests.ps1` | Window enumeration, sort, selection, handle validation, save |
 | `Show-ConfigMenuScreen.Tests.ps1` | Config area menu routing |
 | `Show-LoggingConfigScreen.Tests.ps1` | Logging config edit/save/reset/discard |

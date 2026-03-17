@@ -49,6 +49,18 @@ Describe 'Set-WindowState' -Tag 'Unit' {
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Message -like '*ShowWindow failed*' -and $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowState' }
             }
         }
+        It 'Calls ShowWindow with CmdShow 9 for Restore state' {
+            InModuleScope LastWarAutoScreenshot {
+                Set-WindowState -WindowHandle 12345 -State Restore | Should -Be $true
+                Should -Invoke Invoke-ShowWindow -ParameterFilter { $CmdShow -eq 9 } -Times 1
+            }
+        }
+        It 'Returns false on Restore with invalid handle' {
+            InModuleScope LastWarAutoScreenshot {
+                Set-WindowState -WindowHandle $null -State Restore | Should -Be $false
+                Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Error' -and $FunctionName -eq 'Set-WindowState' }
+            }
+        }
     }
     Context 'Error handling' {
         It 'Returns false and logs on exception' {

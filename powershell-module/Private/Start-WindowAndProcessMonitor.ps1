@@ -203,7 +203,7 @@ function Start-WindowAndProcessMonitor {
     )
 
     try {
-        $processObject = Get-MonitorProcess $ProcessId
+        $processObject = Get-LWASMonitorProcess $ProcessId
 
         $state = @{
             Stopped           = $false

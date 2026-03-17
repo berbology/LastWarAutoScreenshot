@@ -1,4 +1,4 @@
-function Start-LastWarAutoScreenshot {
+function Start-LWASConsole {
     <#
     .SYNOPSIS
         Launches the Last War Auto Screenshot interactive console application.
@@ -22,10 +22,11 @@ function Start-LastWarAutoScreenshot {
           3. Dispatches each selection to the relevant screen function:
                SelectWindow     → Show-WindowSelectionScreen   (Phase 1)
                Configure        → Show-ConfigMenuScreen         (Phase 3)
-               ViewStorageInfo  → Show-StorageInfoScreen        (Phase 3, inline)
+               StorageInfo      → Show-StorageInfoScreen        (Phase 3, inline)
                RecordMacro      → Show-RecordMacroScreen        (Phase 4)
                RunMacro         → Show-RunMacroScreen           (Phase 4)
                ManageMacros     → Show-ManageMacrosScreen       (Phase 4)
+               ManageSchedules  → Show-ScheduleScreen           (Phase 6)
                Exit             → breaks the loop and returns
           4. The loop restarts after each screen returns (except Exit).
 
@@ -39,13 +40,13 @@ function Start-LastWarAutoScreenshot {
 
     .EXAMPLE
         # Normal production usage - no parameters required.
-        Start-LastWarAutoScreenshot
+        Start-LWASConsole
 
     .EXAMPLE
         # Inject a TestConsole for Pester tests.
         $testConsole = [Spectre.Console.Testing.TestConsole]::new()
         # ... queue input keys on $testConsole.Input ...
-        Start-LastWarAutoScreenshot -Console $testConsole
+        Start-LWASConsole -Console $testConsole
 
     .NOTES
         Event log source initialization:
@@ -99,7 +100,7 @@ function Start-LastWarAutoScreenshot {
 
 Event Log source 'LastWarAutoScreenshot' could not be created.
 
-To enable event logging, rerun Start-LastWarAutoScreenshot in an admin window once, or manually run the following command in PowerShell as Administrator:
+To enable event logging, rerun Start-LWASConsole in an admin window once, or manually run the following command in PowerShell as Administrator:
 
     New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
 
@@ -121,7 +122,7 @@ Until this is resolved, logs will be written to file instead.
 
 Event Log source 'LastWarAutoScreenshot' could not be created.
 
-To enable event logging, rerun Start-LastWarAutoScreenshot in an admin window once, or manually run the following command in PowerShell as Administrator:
+To enable event logging, rerun Start-LWASConsole in an admin window once, or manually run the following command in PowerShell as Administrator:
 
     New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
 
@@ -188,7 +189,7 @@ Until this is resolved, logs will be written to file instead.
                     Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
 
-                'ViewStorageInfo' {
+                'StorageInfo' {
                     Show-StorageInfoScreen -Console $Console
                 }
 
@@ -206,6 +207,14 @@ Until this is resolved, logs will be written to file instead.
 
                 'ManageMacros' {
                     Show-ManageMacrosScreen -Console $Console
+                }
+
+                'ManageSchedules' {
+                    $screenBlock = {
+                        param([Spectre.Console.IAnsiConsole]$Console)
+                        Show-ScheduleScreen -Console $Console
+                    }
+                    Invoke-InAlternateScreen -Console $Console -Action $screenBlock
                 }
 
                 'Exit' {

@@ -29,7 +29,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Returns $null and output contains "No macros saved"' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
@@ -48,7 +48,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Invoke-MacroSequence and returns $null' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -101,7 +101,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays an error panel and does not call Invoke-MacroSequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -141,7 +141,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays all validation messages and does not call Invoke-MacroSequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -188,7 +188,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays the action types and parameter summaries in the output' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -254,7 +254,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays the "not open" error panel and does not call Invoke-MacroSequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -309,7 +309,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays the warning and calls Invoke-MacroSequence when the user selects Continue anyway' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -360,7 +360,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Invoke-MacroSequence when the user selects Cancel at the mismatch prompt' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -417,7 +417,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays the "completed successfully" message with action counts' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -470,7 +470,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays the "failed" message with completed action count' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -526,7 +526,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Displays warning when macro has Screenshot actions and StoragePath is empty' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_ss-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_ss-macro.json'
@@ -587,7 +587,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Calls Invoke-MacroSequence when user selects Continue at the pre-flight warning' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_ss-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_ss-macro.json'
@@ -648,7 +648,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Invoke-MacroSequence when user selects Cancel at the pre-flight warning' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_ss-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_ss-macro.json'
@@ -708,7 +708,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Does not display warning when macro has Screenshot actions and StoragePath is configured' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_ss-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_ss-macro.json'
@@ -769,7 +769,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Does not display warning when macro has no Screenshot actions even if StoragePath is empty' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
@@ -829,7 +829,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Invoke-MacroSequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-MacroFileList -MockWith {
+                Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
                         FileName    = '20240101_120000_test-macro.json'
                         FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'

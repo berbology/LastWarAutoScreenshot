@@ -81,14 +81,14 @@ Two exported functions manage the emergency-stop monitor. It polls for a
 hotkey combination (or mouse gesture) and sets a flag that aborts the
 automation loop cleanly.
 
-### `Start-EmergencyStopMonitor`
+### `Start-LWASEmergencyStopMonitor`
 
 ```powershell
 # Use config defaults (Ctrl+Shift+# at 100 ms)
-Start-EmergencyStopMonitor
+Start-LWASEmergencyStopMonitor
 
 # Override
-Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
+Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
 ```
 
 - **Idempotent** - safe to call when already running; logs Info, returns
@@ -96,28 +96,28 @@ Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
 - **Re-arming** - resets `$script:EmergencyStopRequested` to `$false` on
   every clean start
 
-### `Stop-EmergencyStopMonitor`
+### `Stop-LWASEmergencyStopMonitor`
 
 ```powershell
 try {
-    Start-AutomationSequence -WindowHandle $handle -RelativeX 0.5 -RelativeY 0.5
+    Invoke-MacroSequence -Macro $macro -WindowHandle $handle
 } finally {
-    Stop-EmergencyStopMonitor   # safe even if monitor is not running
+    Stop-LWASEmergencyStopMonitor   # safe even if monitor is not running
 }
 ```
 
 Does **not** reset `$script:EmergencyStopRequested`. The flag stays `$true`
-until the next `Start-EmergencyStopMonitor` call.
+until the next `Start-LWASEmergencyStopMonitor` call.
 
 ### Stop flag lifecycle
 
 | Action | Flag effect |
 |--------|-------------|
-| `Start-EmergencyStopMonitor` (clean start) | Reset to `$false` |
+| `Start-LWASEmergencyStopMonitor` (clean start) | Reset to `$false` |
 | Hotkey held → `Invoke-EmergencyStopPoll` | Set to `$true` |
 | Mouse gesture held | Set to `$true` |
-| `Start-AutomationSequence` (checks before/after move) | Reads; aborts if `$true` |
-| `Stop-EmergencyStopMonitor` | **Not modified** |
+| `Invoke-MacroSequence` (checks before each action) | Reads; aborts if `$true` |
+| `Stop-LWASEmergencyStopMonitor` | **Not modified** |
 
 ### Default hotkey
 
@@ -128,7 +128,7 @@ parameter if your layout differs.
 
 ```powershell
 # Ctrl + Pause/Break
-Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x13)
+Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x13)
 ```
 
 See [Configuration.md](Configuration.md) for all `EmergencyStop.*` keys.
@@ -140,5 +140,5 @@ See [Configuration.md](Configuration.md) for all `EmergencyStop.*` keys.
 | Keys held but automation doesn't stop | VKey code mismatch for your layout | Check `GetAsyncKeyState` docs for your layout's code |
 | Mouse gesture doesn't trigger | `MouseGestureEnabled` is `false` | Enable in config |
 | Gesture triggers too slowly | `MouseGestureHoldDurationMs` too high | Reduce (e.g. `1500`) |
-| `Start-AutomationSequence` aborts immediately | Flag still `$true` from last run | Call `Start-EmergencyStopMonitor` to re-arm |
+| `Invoke-MacroSequence` aborts immediately | Flag still `$true` from last run | Call `Start-LWASEmergencyStopMonitor` to re-arm |
 | One of the hotkeys is held at startup | Flag set immediately on start | Release all keys before starting automation |

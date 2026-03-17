@@ -95,7 +95,7 @@ function Show-EditMacroScreen {
 
     .EXAMPLE
         $console  = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
-        $macroList = Get-MacroFileList
+        $macroList = Get-LWASMacro
         Show-EditMacroScreen -Console $console -FilePath $macroList[0].FilePath
 
     .NOTES
@@ -182,7 +182,7 @@ function Show-EditMacroScreen {
                 }
 
                 # Collect other macro names (excluding current) for uniqueness check
-                $otherNames = @(Get-MacroFileList |
+                $otherNames = @(Get-LWASMacro |
                     Where-Object { $_.FilePath -ne $FilePath } |
                     Select-Object -ExpandProperty Name)
 

@@ -1,4 +1,4 @@
-function Get-MonitorProcess {
+function Get-LWASMonitorProcess {
     param($processId)
     try {
         return [System.Diagnostics.Process]::GetProcessById($processId)

@@ -8,11 +8,11 @@ BeforeAll {
     Add-Type -Path $testingDll
 }
 
-Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
+Describe 'Start-LWASConsole' -Tag 'Unit' {
 
     BeforeEach {
         # All tests need deterministic mocks for the window-clearing calls that now
-        # run on every invocation of Start-LastWarAutoScreenshot.
+        # run on every invocation of Start-LWASConsole.
         InModuleScope -ModuleName 'LastWarAutoScreenshot' {
             Mock Get-ModuleConfiguration -MockWith {
                 [PSCustomObject]@{
@@ -43,7 +43,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-MainMenu -MockWith { 'Exit' }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                { Start-LastWarAutoScreenshot -Console $tc } | Should -Not -Throw
+                { Start-LWASConsole -Console $tc } | Should -Not -Throw
             }
         }
 
@@ -59,7 +59,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-MainMenu -MockWith { 'Exit' }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Show-MainMenu -Exactly 1
             }
@@ -77,7 +77,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-MainMenu -MockWith { 'Exit' }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Invoke-StartupConfigValidation -Exactly 1
             }
@@ -98,7 +98,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-MainMenu -MockWith { 'Exit' }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Save-ModuleSettings -Exactly 1
             }
@@ -122,7 +122,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 $script:savedConfig | Should -Not -BeNullOrEmpty
                 $script:savedConfig.PSObject.Properties['ProcessName'] | Should -BeNullOrEmpty
@@ -145,7 +145,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-MainMenu -MockWith { 'Exit' }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 $tc.Output | Should -Not -Match 'Configuration Error'
             }
@@ -171,7 +171,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 $tc.Output | Should -Match 'Logging.MinimumLogLevel'
             }
@@ -197,7 +197,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Show-WindowSelectionScreen -Exactly 1
             }
@@ -216,7 +216,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-WindowSelectionScreen -MockWith { $null }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Not -Invoke Show-WindowSelectionScreen
             }
@@ -239,7 +239,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Show-RecordMacroScreen -Exactly 1
             }
@@ -262,13 +262,13 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Show-RunMacroScreen -Exactly 1
             }
         }
 
-        It 'Calls Show-StorageInfoScreen exactly once when Show-MainMenu returns ViewStorageInfo then Exit' {
+        It 'Calls Show-StorageInfoScreen exactly once when Show-MainMenu returns StorageInfo then Exit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Invoke-InAlternateScreen -MockWith {
                     param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
@@ -281,13 +281,36 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 $script:_storageMenuCallCount = 0
                 Mock Show-MainMenu -MockWith {
                     $script:_storageMenuCallCount++
-                    if ($script:_storageMenuCallCount -eq 1) { 'ViewStorageInfo' } else { 'Exit' }
+                    if ($script:_storageMenuCallCount -eq 1) { 'StorageInfo' } else { 'Exit' }
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Show-StorageInfoScreen -Exactly 1
+            }
+        }
+
+        It 'Calls Show-ScheduleScreen exactly once when Show-MainMenu returns ManageSchedules then Exit' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Invoke-InAlternateScreen -MockWith {
+                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
+                    & $Action $Console
+                }
+                Mock Invoke-StartupConfigValidation -MockWith {
+                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
+                }
+                Mock Show-ScheduleScreen -MockWith { $null }
+                $script:_scheduleMenuCallCount = 0
+                Mock Show-MainMenu -MockWith {
+                    $script:_scheduleMenuCallCount++
+                    if ($script:_scheduleMenuCallCount -eq 1) { 'ManageSchedules' } else { 'Exit' }
+                }
+
+                $tc = [Spectre.Console.Testing.TestConsole]::new()
+                Start-LWASConsole -Console $tc
+
+                Should -Invoke Show-ScheduleScreen -Exactly 1
             }
         }
 
@@ -308,7 +331,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 Should -Invoke Show-ManageMacrosScreen -Exactly 1
             }
@@ -318,7 +341,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
     Context 'Console parameter' {
 
         It 'Console parameter exists and is not mandatory (supports default value)' {
-            $fn = Get-Command -Name 'Start-LastWarAutoScreenshot'
+            $fn = Get-Command -Name 'Start-LWASConsole'
             $consoleParam = $fn.Parameters['Console']
             $consoleParam | Should -Not -BeNullOrEmpty
             $consoleParam.Attributes |
@@ -342,7 +365,7 @@ Describe 'Start-LastWarAutoScreenshot' -Tag 'Unit' {
                 Mock Show-MainMenu -MockWith { 'Exit' }
 
                 $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LastWarAutoScreenshot -Console $tc
+                Start-LWASConsole -Console $tc
 
                 # Figlet renders ASCII art across multiple lines, so the literal string
                 # "Last War Auto Screenshot" doesn't appear contiguously. Instead, verify

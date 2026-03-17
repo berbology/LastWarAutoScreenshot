@@ -10,7 +10,7 @@ Describe 'Start-WindowAndProcessMonitor' -Tag 'Integration' {
         It 'Returns an object with Stop and Cleanup scriptblock properties' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
-                Mock Get-MonitorProcess { [PSCustomObject]@{ HasExited = $false; Dispose = {} } }
+                Mock Get-LWASMonitorProcess { [PSCustomObject]@{ HasExited = $false; Dispose = {} } }
                 Mock Test-WindowHandleValid { $true }
                 $monitor = Start-WindowAndProcessMonitor -WindowHandle 123456 -ProcessId 12345 -OnClosedOrExited {}
                 try {

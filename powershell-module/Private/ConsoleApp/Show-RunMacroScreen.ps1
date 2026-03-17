@@ -60,7 +60,7 @@ function Show-RunMacroScreen {
     while ($true) {
 
         # ── Step 1: List and select macro ─────────────────────────────────────────
-        $macroList = @(Get-MacroFileList)
+        $macroList = @(Get-LWASMacro)
 
         if ($macroList.Count -eq 0) {
             $emptyPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(

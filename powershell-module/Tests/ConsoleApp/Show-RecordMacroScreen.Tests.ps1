@@ -73,7 +73,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -109,7 +109,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -155,7 +155,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -206,7 +206,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -256,7 +256,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -298,7 +298,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -348,7 +348,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -405,7 +405,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -452,7 +452,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -511,7 +511,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -568,7 +568,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -618,7 +618,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -672,7 +672,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -726,7 +726,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -776,7 +776,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -821,7 +821,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -866,7 +866,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -938,7 +938,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -970,7 +970,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1008,7 +1008,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
@@ -1038,7 +1038,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
@@ -1071,7 +1071,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1115,7 +1115,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 # Specific mock for the spaced name → auto-fixed
@@ -1164,7 +1164,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1210,7 +1210,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1244,7 +1244,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Get-MacroFileList -MockWith { @() }
+                Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {

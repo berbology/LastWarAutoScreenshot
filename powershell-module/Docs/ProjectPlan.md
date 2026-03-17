@@ -3462,34 +3462,791 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
         - Accepted formats: named colour, RGB triplet, 6-char hex (reference the named colour table)
         - Where configured: `Show-ScreenshotConfigScreen` → `MaskColour` option
 
-## Phase 6
-
-> **UX note:** `Show-StorageInfoScreen` has been moved from Configure Module → Storage & log file info
-> to the top-level main menu as **"Storage info"**.  The screen now shows two sections:
-> Screenshot Storage and Log Files (disk usage when `Logging.Backend` includes `File`, or an
-> EventLog-only info panel otherwise).  No new backend functions were required.
-
 ## Phase 6: Configuration & Scheduling
 
-1. [ ] Design and implement configuration schema supporting both JSON and YAML formats:
+### Architecture decisions (future reference)
 
-- Note: Most, if not all of this task has already been done
-- Window target settings
-- Action sequences with window-relative coordinates
-- Human-like interaction parameters
-- Emergency stop configuration
-- Storage limits and screenshot settings
-- Logging preferences
-- Azure upload settings (for future use)
+- **LWAS noun prefix for public functions:** All exported (public) functions gain the `LWAS` prefix
+  on the noun portion of the `Verb-Noun` name, e.g. `Stop-EmergencyStopMonitor` →
+  `Stop-LWASEmergencyStopMonitor`. This follows PowerShell module best practice for preventing
+  name collisions in the global scope. No backwards-compatibility aliases are created (the module
+  is not yet in production use). Every rename requires: file rename, function declaration rename,
+  all internal callers updated, all test files updated, and `FunctionsToExport` updated in
+  `LastWarAutoScreenshot.psd1` — all in the same task.
 
-1. [ ] Integrate with Windows Task Scheduler for automated execution:
+- **`Start-EmergencyStopMonitor` rename is a distinct sub-task:** Several console screens call
+  `Start-EmergencyStopMonitor` internally. All callers must be updated in the same sub-task as
+  the rename — not as an afterthought — to keep the suite green between sub-tasks.
 
-- Start date/time configuration
-- Repeat interval settings (e.g., every 6 hours)
-- Repeat duration (fixed or indefinite)
-- Random delay before task start (0-120 minutes)
-- Task expiration and stop conditions
-- Reference Windows Task Scheduler "Edit Trigger" dialog for UI patterns
+- **Scheduled task format — Option B (launcher `.ps1` scripts):**
+  `Register-LWASScheduledTask` generates a dedicated launcher `.ps1` file (e.g.
+  `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.ps1`) and creates a Windows
+  Scheduled Task whose action runs `pwsh.exe -NonInteractive -File <launcherPath>`. The launcher
+  script contains the module import and the `Get-LWASTargetWindow | Start-LWASAutomationSequence`
+  pipeline invocation. `Unregister-LWASScheduledTask` removes both the task entry and its
+  launcher script. Alternative (Option A — embedding the full command directly in the task action)
+  is rejected: task action arguments have a ~2,000-character limit, are unreadable and
+  undebuggable. Option B is the industry-standard approach for complex PowerShell scheduled tasks
+  and the cleanup requirement is straightforward to implement.
+
+- **`Get-LWASTargetWindow` return behaviour:** Returns all windows matching the specified
+  filter(s) by default. An optional `-First` switch caps the output to the single best match
+  (the first result in the order returned by `Get-EnumeratedWindows`). `-First` is the expected
+  usage for scheduled tasks where exactly one game window is anticipated. Without `-First` all
+  matches are piped to `Start-LWASAutomationSequence`, which runs the macro against each in turn.
+  If no windows match, `Write-Error` is called (non-terminating) and nothing is written to the
+  pipeline. If a matched window is minimised, `Write-Warning` is emitted but the object is
+  **still written to the pipeline** — `Start-LWASAutomationSequence` is the function that handles
+  restoration.
+
+- **Window restoration:** `Start-LWASAutomationSequence` detects a minimised window using the
+  existing `[LastWarAutoScreenshot.WindowEnumerationAPI]::IsIconic()` and restores it with
+  `ShowWindow(SW_RESTORE = 9)`. The constant `SW_RESTORE = 9` is added to the existing C#
+  constants in `WindowEnumerationAPI.cs`. `Set-WindowState` (`Private/Set-WindowState.ps1`) is
+  extended to accept `'Restore'` as a valid `-State` value alongside the existing `'Minimise'`
+  and `'Maximise'`. Extending the existing function is preferred over creating a new helper
+  because it keeps all `ShowWindow` logic in one place; the Phase 1 constraint ("only min/max")
+  was a scope constraint, not an architectural one. After calling `ShowWindow(SW_RESTORE)` a
+  configurable delay is applied before the macro starts (`MacroExecution.WindowRestoreDelayMs`,
+  default `500`). This is stored in the module configuration (not hard-coded) so it can be tuned
+  for slow machines or time-sensitive macros without a code change. A console config UI for the
+  `MacroExecution` section is deferred to Phase 10; for Phase 6 the value is set via the
+  config JSON or `Get-ModuleConfiguration` / `Save-ModuleConfiguration` at the command line.
+
+- **Scheduled task execution context:** Tasks are created with `-RunLevel Limited`
+  (non-elevated) and run as the currently logged-on user. The task only runs when the user is
+  logged on, which is required for window interaction. Running as SYSTEM is not supported because
+  the game window belongs to the interactive user session.
+
+- **`Register-LWASScheduledTask` is the single source of truth for task creation:**
+  `Show-ScheduleScreen` collects user input interactively and delegates entirely to
+  `Register-LWASScheduledTask`. This matches the established project pattern — every console
+  screen calls the underlying cmdlet, it does not duplicate the logic.
+
+- **Emergency stop monitor in scheduled/unattended execution:** `Start-LWASAutomationSequence`
+  reads `EmergencyStop.AutoStart` from config and starts the monitor if `$true`, consistent with
+  the original `Start-AutomationSequence` behaviour. For scheduled unattended runs the hotkey
+  monitor runs but is rarely triggered; users who prefer to disable it for automated runs can set
+  `EmergencyStop.AutoStart = $false` in module configuration.
+
+- **`Show-StorageInfoScreen` moved to top-level main menu:** The screen moves from
+  Configure Module → Storage & log file info to a dedicated top-level menu option `'Storage info'`
+  (identifier `'StorageInfo'`). `Show-ConfigMenuScreen` loses its `'Storage & log file info'`
+  option. No changes to `Show-StorageInfoScreen` itself are required.
+
+### Phase 6 scope (what is and is not included)
+
+**Included:** LWAS noun-prefix rename for all five existing public functions, with all callers
+and tests updated in the same sub-task; `Start-LWASEmergencyStopMonitor` rename called out as an
+explicit sub-task with caller audit; `FunctionsToExport` updated in every rename sub-task; `CLAUDE.md`
+updated to reflect `Start-LWASConsole` as the new entry point; `Show-StorageInfoScreen` moved to
+the top-level main menu; `Get-LWASTargetWindow` (new public, pipeline-compatible, emits warning
+for minimised windows); `Get-LWASMacro` (new public, optional `-Name` filter, full macro data
+returned including complete `Sequence` array, `Write-Error` (non-terminating) on name not found);
+`Start-LWASAutomationSequence` (new public, pipeline input from `Get-LWASTargetWindow`,
+minimised-window restoration via `Set-WindowState -State Restore`); `SW_RESTORE` Win32 constant
+and `Set-WindowState 'Restore'` state; `Register-LWASScheduledTask`, `Unregister-LWASScheduledTask`,
+`Get-LWASScheduledTask` (new public cmdlets); `New-LWASLauncherScript` (new private helper);
+`Show-ScheduleScreen` (new console screen integrated into main menu); launcher script generation
+and cleanup on unregister; full Pester coverage for all new and renamed functions.
+
+**Explicitly out of scope:** Multi-user or service-account scheduled execution; GUI-based
+schedule management outside the console app; YAML export of macro schedules; per-task logging
+configuration (tasks use the module's default log settings); task history archival in module
+config; notifications (email/toast) on task failure.
+
+### Windows Scheduled Task naming convention
+
+All tasks created by this module use the task name `LWAS_<macroName>`, e.g. `LWAS_get-vs-scores`.
+Task names are unique per macro name. Re-registering a task for an existing macro name overwrites
+the previous registration via `-Force` on `Register-ScheduledTask`. The corresponding launcher
+script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.ps1`.
+
+---
+
+### Tasks
+
+1. [x] Rename public functions to LWAS noun prefix and update all references
+
+   **(1) Rename `Start-LastWarAutoScreenshot` → `Start-LWASConsole`**
+   - [x] 1.1.1: Rename `powershell-module/Public/Start-LastWarAutoScreenshot.ps1` to
+     `Start-LWASConsole.ps1`; update the function declaration from
+     `function Start-LastWarAutoScreenshot` to `function Start-LWASConsole`
+   - [x] 1.1.2: Search all `.ps1` files for `Start-LastWarAutoScreenshot`; update every call site
+   - [x] 1.1.3: Rename `Tests/ConsoleApp/Start-LastWarAutoScreenshot.Tests.ps1` to
+     `Start-LWASConsole.Tests.ps1`; replace every reference to `Start-LastWarAutoScreenshot`
+     with `Start-LWASConsole`
+   - [x] 1.1.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: replace
+     `'Start-LastWarAutoScreenshot'` with `'Start-LWASConsole'`
+   - [x] 1.1.5: Update `CLAUDE.md`: replace `Start-LastWarAutoScreenshot` with `Start-LWASConsole`
+     in the entry-point documentation and example commands; update **Current status** line to
+     `Phase 6 (Configuration & Scheduling)`
+   - [x] 1.1.6: Run full Pester suite; confirm 0 failures and count meets or exceeds pre-task baseline
+
+   **(2) Rename `Start-EmergencyStopMonitor` → `Start-LWASEmergencyStopMonitor`**
+   - [x] 1.2.1: Rename `powershell-module/Public/Start-EmergencyStopMonitor.ps1` to
+     `Start-LWASEmergencyStopMonitor.ps1`; update the function declaration
+   - [x] 1.2.2: Audit all callers — search the entire `Private/` tree (including
+     `Private/ConsoleApp/`) for `Start-EmergencyStopMonitor`; update every call site (likely
+     callers include `Private/ConsoleApp/Show-EmergencyStopConfigScreen.ps1` and the macro
+     execution pipeline)
+   - [x] 1.2.3: Update every test file that references `Start-EmergencyStopMonitor` directly
+     (mocks, `Should -Invoke`, `InModuleScope` calls); check `Tests/EmergencyStop.Tests.ps1` and
+     all `Tests/ConsoleApp/` files
+   - [x] 1.2.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`
+   - [x] 1.2.5: Run full Pester suite; confirm 0 failures
+
+   **(3) Rename `Stop-EmergencyStopMonitor` → `Stop-LWASEmergencyStopMonitor`**
+   - [x] 1.3.1: Rename `powershell-module/Public/Stop-EmergencyStopMonitor.ps1` to
+     `Stop-LWASEmergencyStopMonitor.ps1`; update the function declaration
+   - [x] 1.3.2: Audit all callers — search all `.ps1` files for `Stop-EmergencyStopMonitor`;
+     update every call site
+   - [x] 1.3.3: Update all test files referencing `Stop-EmergencyStopMonitor`
+   - [x] 1.3.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`
+   - [x] 1.3.5: Run full Pester suite; confirm 0 failures
+
+   **(4) Rename `Get-MonitorProcess` → `Get-LWASMonitorProcess`**
+   - [x] 1.4.1: Rename `powershell-module/Public/Get-MonitorProcess.ps1` to
+     `Get-LWASMonitorProcess.ps1`; update the function declaration
+   - [x] 1.4.2: Search all files for `Get-MonitorProcess`; update every call site
+   - [x] 1.4.3: Update all test files referencing `Get-MonitorProcess`
+   - [x] 1.4.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`
+   - [x] 1.4.5: Run full Pester suite; confirm 0 failures
+
+   **(5) Rename `Install-LastWarAutoScreenshot` → `Install-LWASModule`**
+   - [x] 1.5.1: Rename `powershell-module/Public/Install-LastWarAutoScreenshot.ps1` to
+     `Install-LWASModule.ps1`; update the function declaration
+   - [x] 1.5.2: Search all files for `Install-LastWarAutoScreenshot`; update every call site
+     and any documentation references
+   - [x] 1.5.3: Update all test files referencing `Install-LastWarAutoScreenshot`
+   - [x] 1.5.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`
+   - [x] 1.5.5: Run full Pester suite; confirm 0 failures
+
+   **(6) Verify final manifest state after all renames**
+   - [x] 1.6.1: Confirm `FunctionsToExport` in `LastWarAutoScreenshot.psd1` now contains exactly:
+     `'Start-LWASConsole'`, `'Start-LWASEmergencyStopMonitor'`, `'Stop-LWASEmergencyStopMonitor'`,
+     `'Get-LWASMonitorProcess'`, `'Install-LWASModule'` (new functions are added in tasks 3–7)
+   - [x] 1.6.2: Run `Import-Module .\powershell-module\LastWarAutoScreenshot.psd1 -Force`;
+     verify `Get-Command -Module LastWarAutoScreenshot` lists only the new names, not the old ones
+   - [x] 1.6.3: Run the full Pester suite; confirm 0 failures and count meets or exceeds the
+     pre-task-1 baseline
+
+2. [x] Move `Show-StorageInfoScreen` from config sub-menu to top-level main menu
+
+   - [x] 2.1: Update `powershell-module/Private/ConsoleApp/Show-MainMenu.ps1`:
+     - Add `'Storage info'` as a selectable option (position: after `'Manage macros'`, before
+       `'Exit'`)
+     - Return the identifier `'StorageInfo'` when selected
+     - Update comment-based help (`.SYNOPSIS`, `.DESCRIPTION`) to list the new option
+   - [x] 2.2: Update `powershell-module/Public/Start-LWASConsole.ps1` (renamed in task 1):
+     - Add `'StorageInfo'` case to the `switch` block; dispatch to
+       `Show-StorageInfoScreen -Console $Console` wrapped in `RunInAlternateScreen`
+   - [x] 2.3: Update `powershell-module/Private/ConsoleApp/Show-ConfigMenuScreen.ps1`:
+     - Remove the `'Storage & log file info'` choice from the `SelectionPrompt`
+     - Remove the corresponding dispatch call to `Show-StorageInfoScreen` from the switch body
+     - Update comment-based help
+   - [x] 2.4: Update `powershell-module/Tests/ConsoleApp/Show-MainMenu.Tests.ps1`:
+     - Add test: `'Storage info'` option appears in the menu output
+     - Add test: selecting `'Storage info'` returns the identifier `'StorageInfo'`
+   - [x] 2.5: Update `powershell-module/Tests/ConsoleApp/Start-LWASConsole.Tests.ps1` (renamed
+     in task 1):
+     - Add test: mock `Show-StorageInfoScreen`; mock `Show-MainMenu` returning `'StorageInfo'`
+       once then `'Exit'`; verify `Show-StorageInfoScreen` called exactly once
+   - [x] 2.6: Update `powershell-module/Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`:
+     - Remove or update any test that asserts `'Storage & log file info'` is a choice in the
+       config menu (it has been removed)
+   - [x] 2.7: Run full Pester suite; confirm 0 failures
+
+3. [x] Implement `Get-LWASTargetWindow` public function
+
+   - [x] 3.1: Create `powershell-module/Public/Get-LWASTargetWindow.ps1`:
+     - `[CmdletBinding()]` with the following parameters:
+       - `-ProcessName [string]` — optional; matches against `WindowObject.ProcessName`
+         (case-insensitive)
+       - `-WindowTitle [string]` — optional; matches against `WindowObject.WindowTitle`
+         (case-insensitive wildcard: `-ilike "*$WindowTitle*"`)
+       - `-First [switch]` — optional; if present, write only the first matching window to the
+         pipeline and stop; intended for scheduled-task use where exactly one instance of the
+         game is expected
+     - Explicit validation at the top of the function body: if both `-ProcessName` and
+       `-WindowTitle` are `$null` or empty, `Write-Error "At least one of -ProcessName or
+       -WindowTitle must be specified."` and `return` (non-terminating)
+     - Calls `Get-EnumeratedWindows` with no filter parameters (enumerate all windows)
+     - Applies filter: if `-ProcessName` provided, keep entries where
+       `$w.ProcessName -ilike $ProcessName`; if `-WindowTitle` also provided, further filter by
+       `$w.WindowTitle -ilike "*$WindowTitle*"`
+     - If filtered result is empty: `Write-Error "No window found matching the specified
+       criteria."` (non-terminating); return without writing to pipeline
+     - If `-First` is present, take only the first element of the filtered list before the
+       warning/output loop
+     - For each window object to emit: if `$w.WindowState -eq 'Minimised'`, emit
+       `Write-Warning "Window '$($w.WindowTitle)' (PID $($w.PID)) is minimised. It will be
+       restored automatically when the macro runs."` — the object is still written to the pipeline
+     - Writes each selected window object to the pipeline via `Write-Output $w`
+     - Full comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER ProcessName`,
+       `.PARAMETER WindowTitle`, `.PARAMETER First`, `.OUTPUTS`, `.EXAMPLE`) — examples must
+       include the full pipeline pattern with `-First` for scheduled-task use and without `-First`
+       for interactive/multi-instance use
+
+   - [x] 3.2: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add
+     `'Get-LWASTargetWindow'`
+
+   - [x] 3.3: Create `powershell-module/Tests/Get-LWASTargetWindow.Tests.ps1`:
+     - Import module in `BeforeAll`; all tests inside `InModuleScope LastWarAutoScreenshot`
+     - In `BeforeAll`, define a helper `New-MockWindowList` that returns a fixed array of 3
+       objects: `@{ProcessName='lastwar.exe'; WindowTitle='Last War'; WindowState='Normal'; PID=100; WindowHandle=1}`, `@{ProcessName='lastwar.exe'; WindowTitle='Last War (2)'; WindowState='Minimised'; PID=101; WindowHandle=2}`, `@{ProcessName='notepad.exe'; WindowTitle='Notepad'; WindowState='Normal'; PID=200; WindowHandle=3}`
+     - In each test, mock `Get-EnumeratedWindows` to return `New-MockWindowList`
+     - Test: `-ProcessName 'lastwar.exe'` → 2 objects returned; both have `ProcessName =
+       'lastwar.exe'`; `Write-Warning` called once (for the minimised window)
+     - Test: `-ProcessName 'notepad.exe'` → 1 object returned; `Write-Warning` not called
+     - Test: `-ProcessName 'chrome.exe'` (no match) → `Write-Error` called; 0 objects in output
+     - Test: `-WindowTitle '*War*'` → 2 objects returned (both lastwar windows)
+     - Test: `-ProcessName 'lastwar.exe' -WindowTitle '*(2)*'` → 1 object returned (the second
+       lastwar window)
+     - Test: neither `-ProcessName` nor `-WindowTitle` provided → `Write-Error` called; 0 objects;
+       `Get-EnumeratedWindows` not called
+     - Test: case-insensitive match — `-ProcessName 'LASTWAR.EXE'` matches `'lastwar.exe'` entries
+     - Test: `-First` with multiple matches → exactly 1 object returned (the first in list order)
+     - Test: `-First` with a single match → 1 object returned (no change from normal behaviour)
+     - Test: `-First` with no matches → `Write-Error` called; 0 objects returned (same as without
+       `-First`)
+     - Test: without `-First` and multiple matches → all matching objects returned
+     - Run full Pester suite; confirm count increases
+
+4. [ ] Promote `Get-MacroFileList` to `Get-LWASMacro` (rename, extend, make public)
+
+   **Rationale:** `Get-MacroFileList` already contains the core logic (scans the Macros folder,
+   calls `Get-MacroFile` per file, returns structured objects). Creating a separate
+   `Get-LWASMacro` alongside it would duplicate this logic and cause confusion. The correct
+   approach is to rename `Get-MacroFileList` → `Get-LWASMacro`, promote it to public, add the
+   `-Name` filter, and extend the returned objects to include `Metadata` and `Sequence` (currently
+   only summary data is returned). The new return shape is a **superset** of the old one, so all
+   existing internal callers are updated by name only — no API breakage. `Get-MacroFile` remains
+   private and is still called internally by `Get-LWASMacro`.
+
+   **Current return shape of `Get-MacroFileList`:**
+   `FileName`, `FilePath`, `Name`, `CreatedUtc`, `DisplayDate`, `ActionCount`, `Valid`
+
+   **New return shape of `Get-LWASMacro`** (adds `Metadata` and `Sequence`):
+   `FileName`, `FilePath`, `Name`, `CreatedUtc`, `DisplayDate`, `ActionCount`, `Valid`,
+   `Metadata`, `Sequence`
+
+   - [x] 4.1: Move `powershell-module/Private/Get-MacroFileList.ps1` to
+     `powershell-module/Public/Get-LWASMacro.ps1`; rename the function declaration from
+     `function Get-MacroFileList` to `function Get-LWASMacro`
+
+   - [x] 4.2: Add `-Name [string[]]` parameter support to `Get-LWASMacro`:
+     - Parameter: `-Name [string[]]` — optional;
+       `[Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]`; a single
+       comma-separated string is split on `','` with each token trimmed (supports
+       `Get-LWASMacro -Name 'macro-1, macro-2'`)
+     - Restructure the function body to use `begin`/`process`/`end` blocks:
+       - `begin`: initialise
+         `$nameList = [System.Collections.Generic.List[string]]::new()`; if `-Name` is bound,
+         split/trim/add all tokens
+       - `process`: add any pipeline-supplied name tokens to `$nameList`
+       - `end`: run the existing scan logic; after building the `$results` list, apply the name
+         filter — if `$nameList.Count -gt 0`, keep only entries where
+         `$entry.Name -in $nameList`; for each name in `$nameList` that has no match in results,
+         call `Write-Error "No macro named '$name' found."` (non-terminating)
+
+   - [x] 4.3: Extend the returned object in `Get-LWASMacro` to include `Metadata` and `Sequence`:
+     - In the existing `foreach ($file in $jsonFiles)` loop, the `$macroResult` object from
+       `Get-MacroFile` already contains `$macroResult.Data.metadata` and
+       `$macroResult.Data.sequence`
+     - Add `Metadata = $macroResult.Data.metadata` and
+       `Sequence  = if ($null -ne $macroResult.Data.sequence) { @($macroResult.Data.sequence) } else { @() }`
+       to the `[PSCustomObject]` constructed in the loop — positioned after the existing
+       `Valid` property
+     - `ActionCount` remains as-is (derived from `Sequence.Count`; now redundant but kept for
+       backwards compatibility with console screens that use it for display)
+
+   - [x] 4.4: Update all internal callers of `Get-MacroFileList` — search the entire codebase
+     for `Get-MacroFileList`; rename each call site to `Get-LWASMacro`; confirm no references
+     to `Get-MacroFileList` remain (likely callers: `Show-RunMacroScreen.ps1`,
+     `Show-ManageMacrosScreen.ps1`, `Show-MainMenu.ps1`, `Show-ScheduleScreen.ps1` (added in
+     task 8))
+
+   - [x] 4.5: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add `'Get-LWASMacro'`
+
+   - [x] 4.6: Rename `powershell-module/Tests/Get-MacroFileList.Tests.ps1` (if it exists) to
+     `Get-LWASMacro.Tests.ps1`; replace every reference to `Get-MacroFileList` with
+     `Get-LWASMacro`; add new test cases covering the new behaviour:
+     - Test: no `-Name` → returns all macros (existing behaviour, now via `Get-LWASMacro`)
+     - Test: `-Name 'macro-1'` → returns exactly 1 object with `Name = 'macro-1'`
+     - Test: `-Name @('macro-1', 'macro-2')` → returns 2 objects
+     - Test: `-Name 'macro-1, macro-2'` (comma-separated string) → returns 2 objects
+     - Test: `-Name 'nonexistent'` → `Write-Error` called containing `'nonexistent'`; 0 objects
+       returned
+     - Test: `-Name @('macro-1', 'nonexistent')` → `Write-Error` for `'nonexistent'`; 1 object
+       returned for `'macro-1'`
+     - Test: pipeline input `'macro-1','macro-2' | Get-LWASMacro` → returns 2 objects
+     - Test: returned object has a `Sequence` property that is an array (not `$null`)
+     - Test: returned object has a `Metadata` property (not `$null`)
+     - Test: `Sequence` array elements have a `type` property (confirms full data, not summary)
+     - Run full Pester suite; confirm count increases and no existing tests regress
+
+5. [x] Add `SW_RESTORE` window state support
+
+   - [x] 5.1: Update the C# file that defines `ShowWindow` constants (in
+     `powershell-module/src/WindowEnumerationAPI.cs` or whichever file holds the existing
+     `SW_MINIMIZE`/`SW_MAXIMIZE` constants):
+     - Add `public const int SW_RESTORE = 9;` alongside the existing constants
+     - Add XML doc comment:
+       ```csharp
+       /// <summary>Restores the window to its original size and position.
+       /// Reverses SW_SHOWMINIMIZED (2) or SW_SHOWMAXIMIZED (3).</summary>
+       ```
+   - [x] 5.2: Update `powershell-module/Private/Set-WindowState.ps1`:
+     - Extend the `-State` parameter's `[ValidateSet(...)]` attribute to include `'Restore'`
+       alongside the existing valid values
+     - Add a `'Restore'` branch in the function body that calls `ShowWindow($handle, SW_RESTORE)`
+     - Update `.PARAMETER State` in comment-based help to document `'Restore'`; add a `.EXAMPLE`
+       showing restore usage
+
+   - [x] 5.3: Update the test file for `Set-WindowState` (find via Grep; likely
+     `Tests/WindowManagement.Tests.ps1` or similar):
+     - Add test: `Set-WindowState -State 'Restore'` calls `ShowWindow` with value `9`
+     - Add test: `Set-WindowState -State 'Restore'` on an invalid handle → logs error and returns
+       `$false`
+
+   - [x] 5.4: Run full Pester suite; confirm 0 failures
+
+6. [x] Implement `Start-LWASAutomationSequence` public function
+
+   - [x] 6.1: Add `MacroExecution` section to `powershell-module/Private/Get-DefaultModuleSettings.ps1`:
+     - Add a new `MacroExecution` hashtable in the defaults object:
+       ```powershell
+       MacroExecution = @{
+           WindowRestoreDelayMs = 500
+       }
+       ```
+     - Add `'MacroExecution.WindowRestoreDelayMs'` to `$script:ConfigValidationSchema`:
+       - `Type = 'int'`, `Min = 0`, `Max = 10000`
+       - `Description = 'Milliseconds to wait after restoring a minimised window before starting
+         macro execution. Increase on slower machines if the first action fires before the window
+         has fully rendered. Default: 500'`
+     - `Get-ModuleConfiguration` will inject the `MacroExecution` key automatically via the
+       existing `foreach ($key in $defaults.<Section>.PSObject.Properties.Name)` pattern — no
+       code change required there, but verify the section is handled correctly
+
+   - [x] 6.2: Update `powershell-module/Tests/ModuleConfiguration.Tests.ps1`:
+     - Add round-trip save/load test for `MacroExecution.WindowRestoreDelayMs` with a non-default
+       value (e.g. `1000`)
+     - Add default-injection test: load a config file whose JSON does not contain a
+       `MacroExecution` section; verify `WindowRestoreDelayMs` is injected as `500`
+     - Run full Pester suite; confirm count increases
+
+   - [x] 6.3: Create `powershell-module/Public/Start-LWASAutomationSequence.ps1`:
+     - `[CmdletBinding()]` with the following parameters:
+       - `-WindowObject [PSCustomObject]` — mandatory;
+         `[Parameter(Mandatory, ValueFromPipeline)]`; the window object as returned by
+         `Get-LWASTargetWindow` (must have `WindowHandle`, `ProcessName`, `WindowTitle`,
+         `WindowState` properties)
+       - `-MacroName [string]` — mandatory
+     - `process` block (executes once per piped window object):
+       1. **Validate window handle:** call `Test-WindowHandleValid -WindowHandle
+          $WindowObject.WindowHandle`; if `$false`, `Write-Error "Window '$($WindowObject.WindowTitle)'
+          is no longer valid."` (non-terminating); `continue`
+       2. **Read config** via `Get-ModuleConfiguration`; store in `$config` (read once at the
+          top of the process block, before any conditional branches, so all subsequent steps
+          share the same config object)
+       3. **Restore if minimised:** call
+          `[LastWarAutoScreenshot.WindowEnumerationAPI]::IsIconic($WindowObject.WindowHandle)`;
+          if `$true`, call `Set-WindowState -WindowHandle $WindowObject.WindowHandle -State 'Restore'`;
+          log `Info "Restored minimised window '$($WindowObject.WindowTitle)' before macro
+          execution."` via `Write-LastWarLog`; `Start-Sleep -Milliseconds
+          $config.MacroExecution.WindowRestoreDelayMs` to allow the OS to complete the restore
+          animation
+       4. **Load macro:** call `Get-LWASMacro -Name $MacroName`; assign result to `$macro`; if
+          `$macro` is `$null` or empty, `Write-Error "Macro '$MacroName' could not be loaded."`
+          (non-terminating); `continue`
+       5. **Start emergency stop monitor** if `$config.EmergencyStop.AutoStart -eq $true`: call
+          `Start-LWASEmergencyStopMonitor`
+       6. **Execute macro** inside `try`: call
+          `Invoke-MacroSequence -WindowHandle $WindowObject.WindowHandle -Macro $macro`; catch
+          exceptions, call `Write-Error` with exception message, set `$success = $false`
+       7. **Cleanup** in `finally`: call `Stop-LWASEmergencyStopMonitor`
+       8. Write result to pipeline:
+          ```powershell
+          [PSCustomObject]@{
+              Success      = $success
+              MacroName    = $MacroName
+              WindowTitle  = $WindowObject.WindowTitle
+              Message      = $message
+          }
+          ```
+     - Full comment-based help; `.EXAMPLE` showing the pipeline pattern with `Get-LWASTargetWindow`
+
+   - [x] 6.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add
+     `'Start-LWASAutomationSequence'`
+
+   - [x] 6.5: Create `powershell-module/Tests/Start-LWASAutomationSequence.Tests.ps1`:
+     - Import module in `BeforeAll`; all tests inside `InModuleScope LastWarAutoScreenshot`
+     - Define `New-MockWindowObject` helper in `BeforeAll` returning a fixed window PSCustomObject
+     - Mock `Test-WindowHandleValid`, `Get-LWASMacro`, `Invoke-MacroSequence`,
+       `Start-LWASEmergencyStopMonitor`, `Stop-LWASEmergencyStopMonitor`, `Set-WindowState`,
+       `Get-ModuleConfiguration`, `Write-LastWarLog`, `Start-Sleep`; mock
+       `[LastWarAutoScreenshot.WindowEnumerationAPI]::IsIconic` via a scriptblock parameter
+       approach or by mocking a thin wrapper function
+     - Test: valid window, valid macro → `Invoke-MacroSequence` called once; result
+       `Success = $true`; result `MacroName` equals the supplied name
+     - Test: `Test-WindowHandleValid` returns `$false` → `Write-Error` called;
+       `Invoke-MacroSequence` NOT called; result `Success = $false`
+     - Test: `IsIconic` returns `$true` (minimised window) → `Set-WindowState -State 'Restore'`
+       called; `Start-Sleep` called with `-Milliseconds` matching the value from
+       `MacroExecution.WindowRestoreDelayMs` in the mocked config; `Invoke-MacroSequence` called
+     - Test: `MacroExecution.WindowRestoreDelayMs = 0` in mocked config → `Start-Sleep` called
+       with `-Milliseconds 0` (or not called at all if the implementation skips a zero-delay sleep)
+     - Test: `IsIconic` returns `$false` (non-minimised) → `Set-WindowState` NOT called
+     - Test: `Get-LWASMacro` returns `$null` → `Invoke-MacroSequence` NOT called; result
+       `Success = $false`
+     - Test: `Invoke-MacroSequence` throws → `Stop-LWASEmergencyStopMonitor` still called
+       (finally block); result `Success = $false`
+     - Test: `EmergencyStop.AutoStart = $true` in config → `Start-LWASEmergencyStopMonitor` called
+     - Test: `EmergencyStop.AutoStart = $false` in config →
+       `Start-LWASEmergencyStopMonitor` NOT called
+     - Test: pipeline input of 2 window objects → `Invoke-MacroSequence` called twice; 2 result
+       objects emitted
+     - Test: `Write-LastWarLog` called with level `'Info'` when window is restored from minimised
+     - Run full Pester suite; confirm count increases
+
+7. [x] Implement Windows Task Scheduler integration cmdlets
+
+   **(A) Private helper: `New-LWASLauncherScript`**
+   - [x] 7.1.1: Create `powershell-module/Private/New-LWASLauncherScript.ps1`:
+     - `[CmdletBinding()]` parameters: `-TaskName [string]` (mandatory), `-MacroName [string]`
+       (mandatory), `-ProcessName [string]` (mandatory), `-ModulePath [string]` (mandatory)
+     - Computes launcher path:
+       `$launcherPath = Join-Path $env:APPDATA "LastWarAutoScreenshot\Schedulers\$TaskName.ps1"`
+     - Creates the `Schedulers` directory if it does not exist:
+       `New-Item -ItemType Directory -Path (Split-Path $launcherPath) -Force | Out-Null`
+     - Generates launcher script content as a here-string:
+       ```powershell
+       # LWAS Launcher — auto-generated by Register-LWASScheduledTask — do not edit manually
+       # Task    : <TaskName>
+       # Macro   : <MacroName>
+       # Generated: <UTC ISO-8601 timestamp>
+       $ErrorActionPreference = 'Stop'
+       Import-Module '<ModulePath>' -ErrorAction Stop
+       Get-LWASTargetWindow -ProcessName '<ProcessName>' |
+           Start-LWASAutomationSequence -MacroName '<MacroName>'
+       ```
+     - Writes file with `Set-Content -Path $launcherPath -Value $content -Encoding UTF8`
+     - Returns the full launcher path string
+     - Full comment-based help; `.NOTES` states the file must be deleted by
+       `Unregister-LWASScheduledTask` when the task is removed
+
+   **(B) `Register-LWASScheduledTask` (public)**
+   - [x] 7.2.1: Create `powershell-module/Public/Register-LWASScheduledTask.ps1`:
+     - `[CmdletBinding(SupportsShouldProcess)]` with parameters:
+       - `-MacroName [string]` — mandatory; macro is validated to exist via
+         `Get-LWASMacro -Name $MacroName`; if not found, `throw` with a message containing the
+         macro name (registration without a valid macro is always an error)
+       - `-ProcessName [string]` — mandatory; the target process name (e.g. `'lastwar.exe'`)
+       - `-StartAt [datetime]` — mandatory; the first trigger date and time
+       - `-RepeatEvery [timespan]` — optional; default `[TimeSpan]::FromHours(6)`; the repeat
+         interval
+       - `-RepeatFor [timespan]` — optional; default `[TimeSpan]::MaxValue` (interpreted by
+         Windows Scheduler as indefinite); the total repeat duration
+       - `-RandomDelayMinutes [int]` — optional; default `0`; validated range 0–120
+       - `-ExpiresAt [datetime]` — optional; if provided, sets an expiry on the trigger
+       - `-Force [switch]` — if present, overwrites an existing task without prompting
+     - Internal logic:
+       1. `$taskName = "LWAS_$MacroName"`
+       2. Call `New-LWASLauncherScript -TaskName $taskName -MacroName $MacroName -ProcessName
+          $ProcessName -ModulePath ((Get-Module LastWarAutoScreenshot).Path)`; store returned
+          path in `$launcherPath`
+       3. Build trigger: `$trigger = New-ScheduledTaskTrigger -Once -At $StartAt
+          -RepetitionInterval $RepeatEvery`; if `-RepeatFor` is not `[TimeSpan]::MaxValue`, set
+          `$trigger.RepetitionDuration = $RepeatFor`; if `-RandomDelayMinutes -gt 0`, set
+          `$trigger.RandomDelay = [TimeSpan]::FromMinutes($RandomDelayMinutes)`; if `-ExpiresAt`
+          provided, set `$trigger.EndBoundary = $ExpiresAt.ToUniversalTime().ToString('o')`
+       4. Build action: `$action = New-ScheduledTaskAction -Execute 'pwsh.exe' -Argument
+          "-NonInteractive -File ""$launcherPath"""`
+       5. Build settings: `$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit
+          ([TimeSpan]::FromHours(2)) -StopIfGoingOnBatteries:$false -StartWhenAvailable:$true`
+       6. Check `$PSCmdlet.ShouldProcess($taskName, 'Register scheduled task')`; if confirmed:
+          call `Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger
+          -Settings $settings -RunLevel Limited -Force:($Force.IsPresent)` — pipe result to
+          `Out-Null`
+       7. Log Info via `Write-LastWarLog`
+       8. Return `[PSCustomObject]@{TaskName=$taskName; MacroName=$MacroName;
+          LauncherPath=$launcherPath; Success=$true}`
+     - Full comment-based help with `.EXAMPLE` entries
+
+   - [x] 7.2.2: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add
+     `'Register-LWASScheduledTask'`
+
+   **(C) `Unregister-LWASScheduledTask` (public)**
+   - [x] 7.3.1: Create `powershell-module/Public/Unregister-LWASScheduledTask.ps1`:
+     - `[CmdletBinding(SupportsShouldProcess)]` with parameters:
+       - `-MacroName [string]` — mandatory
+       - `-Force [switch]` — skip confirmation
+     - Internal logic:
+       1. `$taskName = "LWAS_$MacroName"`
+       2. Check task exists: `Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue`;
+          if `$null`, `Write-Warning "No scheduled task found for macro '$MacroName'."` and `return`
+       3. Compute launcher path:
+          `$launcherPath = Join-Path $env:APPDATA "LastWarAutoScreenshot\Schedulers\$taskName.ps1"`
+       4. Check `$PSCmdlet.ShouldProcess($taskName, 'Unregister scheduled task and delete launcher
+          script')`; if confirmed:
+          - `Unregister-ScheduledTask -TaskName $taskName -Confirm:$false`
+          - If launcher script exists: `Remove-Item -Path $launcherPath -Force
+            -ErrorAction SilentlyContinue`; log Info
+          - Log Info via `Write-LastWarLog`
+     - Full comment-based help; `.NOTES` explicitly states that the launcher `.ps1` is always
+       deleted alongside the task to prevent orphaned scripts
+
+   - [x] 7.3.2: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add
+     `'Unregister-LWASScheduledTask'`
+
+   **(D) `Get-LWASScheduledTask` (public)**
+   - [x] 7.4.1: Create `powershell-module/Public/Get-LWASScheduledTask.ps1`:
+     - `[CmdletBinding()]` with optional parameter `-MacroName [string]`
+     - Calls `Get-ScheduledTask -TaskName 'LWAS_*' -ErrorAction SilentlyContinue` to enumerate
+       all LWAS tasks
+     - If `-MacroName` provided, filters the list to `"LWAS_$MacroName"`; if not found after
+       filtering, `Write-Error "No scheduled task found for macro '$MacroName'."` (non-terminating)
+     - For each task, calls `Get-ScheduledTaskInfo -TaskName $task.TaskName
+       -ErrorAction SilentlyContinue` to get next/last run info
+     - Returns `[PSCustomObject]` per task with properties: `TaskName` (full task name including
+       `LWAS_` prefix), `MacroName` (name with `LWAS_` prefix stripped), `State`, `NextRunTime`,
+       `LastRunTime`, `LastTaskResult`, `LauncherPath` (derived as
+       `Join-Path $env:APPDATA "LastWarAutoScreenshot\Schedulers\$($task.TaskName).ps1"`)
+     - Full comment-based help
+
+   - [x] 7.4.2: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add
+     `'Get-LWASScheduledTask'`
+
+   **(E) Tests for scheduling cmdlets**
+   - [x] 7.5.1: Create `powershell-module/Tests/New-LWASLauncherScript.Tests.ps1`:
+     - All tests inside `InModuleScope LastWarAutoScreenshot`; use `TestDrive:\` for all file I/O
+       (override `$env:APPDATA` via a mock or by testing the file-write logic with a patched path)
+     - Mock `New-Item` and `Set-Content` or write to `TestDrive:\Schedulers\` directly
+     - Test: launcher file is created at the expected path
+     - Test: file content contains `Import-Module '<ModulePath>'` with the supplied module path
+     - Test: file content contains `Get-LWASTargetWindow -ProcessName '<ProcessName>'` with the
+       supplied process name
+     - Test: file content contains `Start-LWASAutomationSequence -MacroName '<MacroName>'` with
+       the supplied macro name
+     - Test: file content contains the auto-generated header comment (task name and macro name)
+     - Test: returned value is the expected launcher file path string
+     - Run full Pester suite; confirm count increases
+
+   - [x] 7.5.2: Create `powershell-module/Tests/Register-LWASScheduledTask.Tests.ps1`:
+     - All tests inside `InModuleScope LastWarAutoScreenshot`
+     - Mock `Get-LWASMacro` to return a valid macro for happy-path tests and `$null` for
+       not-found tests
+     - Mock `New-LWASLauncherScript` to return `'TestDrive:\Schedulers\LWAS_test.ps1'`
+     - Mock `New-ScheduledTaskTrigger`, `New-ScheduledTaskAction`, `New-ScheduledTaskSettingsSet`,
+       `Register-ScheduledTask`; capture the arguments passed to `Register-ScheduledTask` for
+       assertion
+     - Test: valid parameters → `Register-ScheduledTask` called with
+       `TaskName = 'LWAS_my-macro'`; success result returned with correct `TaskName`,
+       `MacroName`, and `LauncherPath` properties
+     - Test: `-MacroName` not found (mock `Get-LWASMacro` returns nothing) → function throws
+       with message containing the macro name
+     - Test: `-RandomDelayMinutes 30` → the trigger object has `RandomDelay` set to
+       `[TimeSpan]::FromMinutes(30)`
+     - Test: `-ExpiresAt` provided → `trigger.EndBoundary` is set
+     - Test: `-RepeatFor` with a specific timespan → `trigger.RepetitionDuration` is set to that
+       timespan
+     - Test: `-RepeatEvery` not specified → default of 6 hours is used
+     - Test: `-WhatIf` → `Register-ScheduledTask` NOT called (ShouldProcess respected)
+     - Run full Pester suite; confirm count increases
+
+   - [x] 7.5.3: Create `powershell-module/Tests/Unregister-LWASScheduledTask.Tests.ps1`:
+     - Mock `Get-ScheduledTask`, `Unregister-ScheduledTask`, `Remove-Item`, `Write-LastWarLog`
+     - Test: task exists and launcher file exists → `Unregister-ScheduledTask` called;
+       `Remove-Item` called with the expected launcher path
+     - Test: task does not exist → `Write-Warning` called; `Unregister-ScheduledTask` NOT called
+     - Test: task exists but launcher file is missing → `Remove-Item` called with
+       `-ErrorAction SilentlyContinue`; no exception thrown
+     - Test: `-WhatIf` → `Unregister-ScheduledTask` NOT called (ShouldProcess respected)
+     - Run full Pester suite; confirm count increases
+
+   - [x] 7.5.4: Create `powershell-module/Tests/Get-LWASScheduledTask.Tests.ps1`:
+     - Mock `Get-ScheduledTask` returning 2 mock task objects with names `'LWAS_macro-1'` and
+       `'LWAS_macro-2'`
+     - Mock `Get-ScheduledTaskInfo` returning mock info objects with `NextRunTime` and
+       `LastRunTime` set
+     - Test: no `-MacroName` → returns 2 objects; both have the `LWAS_` prefix stripped from
+       their `MacroName` property
+     - Test: `-MacroName 'macro-1'` → returns 1 object with `MacroName = 'macro-1'`
+     - Test: `-MacroName 'nonexistent'` → `Write-Error` called; 0 objects returned
+     - Test: returned object has `NextRunTime`, `LastRunTime`, `LastTaskResult`, `LauncherPath`
+       properties
+     - Run full Pester suite; confirm count increases
+
+8. [ ] Implement `Show-ScheduleScreen` console screen and wire up main menu
+
+   - [x] 8.1: Update `powershell-module/Private/ConsoleApp/Show-MainMenu.ps1`:
+     - Add `'Manage schedules'` as a selectable option (position: after `'Manage macros'`,
+       before `'Storage info'`)
+     - Return identifier `'ManageSchedules'` for this option
+     - Update comment-based help
+
+   - [x] 8.2: Update `powershell-module/Public/Start-LWASConsole.ps1`:
+     - Add `'ManageSchedules'` case to the `switch` block; dispatch to
+       `Show-ScheduleScreen -Console $Console` wrapped in `RunInAlternateScreen`
+
+   - [x] 8.3: Create `powershell-module/Private/ConsoleApp/Show-ScheduleScreen.ps1`:
+     - `Show-ScheduleScreen -Console [Spectre.Console.IAnsiConsole]`
+     - **Task list:** call `Get-LWASScheduledTask`; if empty or error: display info `Panel`
+       `"No schedules configured. Select 'Create new schedule' to add one."`; otherwise build a
+       `Table` with columns `Task Name`, `Macro`, `Next Run`, `Last Run`, `Last Result` and write
+       it to `$Console`
+     - **Action selection:** `SelectionPrompt` with choices: `'Create new schedule'`,
+       `'Remove a schedule'` (present but disabled/greyed-out via a different Spectre style when
+       no tasks exist), `'[[Back to main menu]]'`
+     - **Create new schedule flow:**
+       1. Call `Get-LWASMacro`; if returns nothing, display error `Panel`
+          `"No macros recorded yet. Record a macro first before creating a schedule."` and return
+          to the action selection prompt
+       2. `SelectionPrompt` `"Select macro:"` populated from macro names; include `'[[Back]]'`;
+          if `'[[Back]]'` selected, return to action prompt
+       3. `TextPrompt` `"Target process name (e.g. lastwar.exe):"` — validated non-empty;
+          re-prompt if empty
+       4. `TextPrompt` `"Start date and time (dd/MM/yyyy HH:mm):"` — parsed with
+          `[datetime]::ParseExact($input, 'dd/MM/yyyy HH:mm', $null)`; display error in red and
+          re-prompt on parse failure or if date is not in the future
+       5. `SelectionPrompt` `"Repeat every:"` with choices: `'15 minutes'`, `'30 minutes'`,
+          `'45 minutes'`, `'1 hour'`, `'2 hours'`, `'4 hours'`, `'6 hours'`, `'12 hours'`,
+          `'24 hours'`, `'Custom'`; preset choices map directly to their `[TimeSpan]` equivalents;
+          if `'Custom'`, present two `TextPrompt`s in sequence:
+          - `"Hours (0 or more):"` — validated as a non-negative integer; re-prompt on invalid input
+          - `"Minutes (0–59):"` — validated as an integer in range 0–59; re-prompt on invalid input
+          - Combined duration must be at least 1 minute
+            (`[TimeSpan]::FromMinutes($hours * 60 + $minutes) -ge [TimeSpan]::FromMinutes(1)`);
+            if not, display error `"Interval must be at least 1 minute."` and re-prompt both fields
+       6. `SelectionPrompt` `"Repeat duration:"` with choices: `'Indefinitely'`, `'Until a
+          specific date'`; if `'Until a specific date'`, `TextPrompt` for expiry date
+          `(dd/MM/yyyy)` — parsed and validated to be after the start date
+       7. `TextPrompt` `"Random delay before start (0–120 minutes, 0 = no delay):"` default `'0'`;
+          validated as integer in range 0–120 via `Test-ConfigValue`; re-prompt if invalid
+       8. Display summary `Panel` showing all collected values; `SelectionPrompt`
+          `"Confirm?"` with `'Yes – create schedule'`, `'No – go back'`; if `'No'`, return to
+          action prompt
+       9. Call `Register-LWASScheduledTask -MacroName $macroName -ProcessName $processName
+          -StartAt $startAt -RepeatEvery $repeatEvery -RepeatFor $repeatFor
+          -RandomDelayMinutes $randomDelay (-ExpiresAt $expiresAt if provided)`
+       10. Display success `Panel` or error `Panel` based on the result; return to action prompt
+     - **Remove schedule flow:**
+       1. If no tasks exist, return to action prompt immediately
+       2. `SelectionPrompt` populated with `Get-LWASScheduledTask` task names; include `'[[Back]]'`;
+          if `'[[Back]]'` selected, return to action prompt
+       3. `SelectionPrompt` confirmation: `"Remove schedule '<taskName>'?"` with
+          `'Yes – remove'`, `'No – go back'`; if `'No'`, return to action prompt
+       4. Call `Unregister-LWASScheduledTask -MacroName $macroName -Force`; display result panel
+       5. Loop back to action selection
+     - Loops back to action selection until `'[[Back to main menu]]'` is chosen
+     - Full comment-based help; all error paths log via `Write-LastWarLog`
+
+   - [x] 8.4: Update `powershell-module/Tests/ConsoleApp/Show-MainMenu.Tests.ps1`:
+     - Add test: `'Manage schedules'` option appears in the menu output
+     - Add test: selecting `'Manage schedules'` returns the identifier `'ManageSchedules'`
+
+   - [x] 8.5: Update `powershell-module/Tests/ConsoleApp/Start-LWASConsole.Tests.ps1`:
+     - Add test: mock `Show-ScheduleScreen`; mock `Show-MainMenu` returning `'ManageSchedules'`
+       once then `'Exit'`; verify `Show-ScheduleScreen` called exactly once
+
+   - [x] 8.6: Create `powershell-module/Tests/ConsoleApp/Show-ScheduleScreen.Tests.ps1`:
+     - All tests use `TestConsole` injection and `InModuleScope LastWarAutoScreenshot`
+     - Mock `Get-LWASScheduledTask`, `Get-LWASMacro`, `Register-LWASScheduledTask`,
+       `Unregister-LWASScheduledTask`, `Write-LastWarLog`
+     - Test: `Get-LWASScheduledTask` returns empty → info panel `"No schedules configured"`
+       appears in `$testConsole.Output`; no task table rendered
+     - Test: `Get-LWASScheduledTask` returns 2 tasks → task table rendered; output contains both
+       task names
+     - Test: select `'[[Back to main menu]]'` immediately → no scheduling action called; function
+       returns
+     - Test: create schedule — queue all valid inputs through the wizard; `Register-LWASScheduledTask`
+       called once with correct `-MacroName`, `-ProcessName`, `-StartAt`, `-RepeatEvery`; success
+       panel content appears in output
+     - Test: create schedule — no macros available (`Get-LWASMacro` returns nothing) → error panel
+       `"No macros recorded yet"` appears; `Register-LWASScheduledTask` NOT called
+     - Test: create schedule — select `'[[Back]]'` at macro selection step → returns to action
+       prompt; `Register-LWASScheduledTask` NOT called
+     - Test: create schedule — invalid start date entered (non-parseable string) → error markup
+       appears in output; prompt is re-displayed; correct date then accepted and flow continues
+     - Test: create schedule — `'Custom'` selected → hours prompt and minutes prompt both rendered
+       in output
+     - Test: create schedule — `'Custom'` with hours `0` and minutes `0` → error `"Interval must
+       be at least 1 minute"` shown; prompts re-displayed
+     - Test: create schedule — `'Custom'` with hours `1` and minutes `30` →
+       `Register-LWASScheduledTask` called with `-RepeatEvery ([TimeSpan]::FromMinutes(90))`
+     - Test: create schedule — random delay `'150'` (out of range) → error shown; re-prompt
+       rendered
+     - Test: remove schedule — select task → confirmation prompt appears in output; queue `'Yes –
+       remove'` → `Unregister-LWASScheduledTask` called with correct macro name
+     - Test: remove schedule — select task → queue `'No – go back'` →
+       `Unregister-LWASScheduledTask` NOT called
+     - Run full Pester suite; confirm count increases
+
+9. [ ] Final validation, documentation, and CLAUDE.md updates
+
+   - [x] 9.1: Run the complete, unfiltered Pester suite (all files, no tag or name filters)
+     - Record total test count; must meet or exceed the Phase 5b final baseline plus all new tests
+       added throughout Phase 6 tasks
+     - All tests must pass with 0 failures and 0 errors
+     - If any previously-passing test now fails, halt and investigate; do not proceed
+   - [x] 9.2: Manually smoke-test command-line macro execution in a real PowerShell 7 terminal:
+     - `Import-Module .\powershell-module\LastWarAutoScreenshot.psd1 -Force`
+     - `Get-LWASMacro` — verify all macros returned with full `Sequence` array data
+     - `Get-LWASMacro -Name 'my-macro-1'` — verify single macro returned
+     - `Get-LWASTargetWindow -ProcessName 'notepad.exe'` (with Notepad open) — verify window
+       object returned; minimise Notepad and re-run, verify warning emitted but object still
+       returned
+     - `Get-LWASTargetWindow -ProcessName 'chrome.exe'` (not running) — verify non-terminating
+       `Write-Error` emitted; no object in output
+     - `Get-LWASTargetWindow -ProcessName 'notepad.exe' | Start-LWASAutomationSequence -MacroName
+       'my-macro-1'` with Notepad minimised — verify Notepad is restored before macro runs
+   - [x] 9.3: Manually smoke-test scheduling in a real PowerShell 7 terminal:
+     - `Register-LWASScheduledTask -MacroName 'my-macro-1' -ProcessName 'lastwar.exe' -StartAt
+       (Get-Date).AddMinutes(2) -RepeatEvery (New-TimeSpan -Hours 6)` — verify task created in
+       Windows Task Scheduler and launcher `.ps1` exists at the expected path
+     - `Get-LWASScheduledTask` — verify task appears with correct properties
+     - `Unregister-LWASScheduledTask -MacroName 'my-macro-1'` — verify task removed from Task
+       Scheduler and launcher `.ps1` deleted
+     - Open `Start-LWASConsole`; navigate to `Manage schedules`; create and remove a schedule
+       via the interactive UI
+   - [x] 9.4: Update `CLAUDE.md`:
+     - Verify `Start-LWASConsole` is documented as the entry point (completed in task 1.1.5);
+       confirm no references to `Start-LastWarAutoScreenshot` remain
+     - Add `Get-LWASTargetWindow`, `Get-LWASMacro`, `Start-LWASAutomationSequence` to the
+       commands section with usage examples
+     - Add scheduling cmdlets (`Register-LWASScheduledTask`, `Unregister-LWASScheduledTask`,
+       `Get-LWASScheduledTask`) to the commands section
+   - [x] 9.5: Update `powershell-module/Docs/Configuration.md`:
+     - Add a note in the file paths section documenting the `Schedulers/` subdirectory
+       (`$env:APPDATA\LastWarAutoScreenshot\Schedulers\`) and its contents (auto-generated
+       launcher scripts); note that this directory is managed automatically and files should not
+       be edited manually
+
+---
+
+### Design decisions (finalised)
+
+All design questions have been resolved. The decisions below are recorded for reference.
+
+1. **`Get-LWASTargetWindow` — `-First` switch added:**
+   Returns all matching windows by default. The `-First` switch caps output to the first match.
+   `-First` is the standard usage in launcher scripts and scheduled tasks where exactly one game
+   instance is expected. Interactive and multi-instance scenarios omit `-First`.
+
+2. **`Start-LWASAutomationSequence` restore delay — configurable via `MacroExecution.WindowRestoreDelayMs`:**
+   Default `500` ms. Stored in module configuration so it can be tuned without a code change.
+   A console config screen for the `MacroExecution` section is deferred to Phase 10.
+
+3. **Scheduled task repeat interval presets — expanded:**
+   `Show-ScheduleScreen` wizard presets: `15 minutes`, `30 minutes`, `45 minutes`, `1 hour`,
+   `2 hours`, `4 hours`, `6 hours`, `12 hours`, `24 hours`, `Custom`. The `Custom` option
+   prompts for hours and minutes separately; combined duration must be at least 1 minute.
+
+4. **`Register-LWASScheduledTask` — current module path embedded in launcher script:**
+   Accepted limitation. Documented in the function's comment-based help. If the module folder is
+   moved after registration, existing launcher scripts must be re-registered.
 
 ## Phase 7: Module Installation & Versioning
 

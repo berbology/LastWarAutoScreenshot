@@ -97,7 +97,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Get-MacroFile    -MockWith $mockMacroData
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
@@ -144,7 +144,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Get-MacroFile    -MockWith $mockMacroData
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
@@ -180,7 +180,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Get-MacroFile    -MockWith $mockMacroData
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
@@ -863,7 +863,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Get-MacroFile    -MockWith $mockMacroData
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Save-MacroFile   {}
                 Mock Rename-MacroFile {}
 
@@ -903,7 +903,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Get-MacroFile    -MockWith $mockMacroData
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile {}
 
                 $tc = $script:tc
@@ -946,7 +946,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Get-MacroFile    -MockWith $mockMacroData
-                Mock Get-MacroFileList { @() }
+                Mock Get-LWASMacro { @() }
                 Mock Save-MacroFile   {}
 
                 $tc = $script:tc

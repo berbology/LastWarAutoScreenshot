@@ -904,6 +904,73 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
         }
     }
 
+    Context 'When loading a Phase 6 config with MacroExecution.WindowRestoreDelayMs (round-trip)' {
+        BeforeAll {
+            $phase6Config = [PSCustomObject]@{
+                ProcessName        = 'Phase6Process'
+                WindowTitle        = 'Phase 6 Window'
+                WindowHandleString = '777'
+                WindowHandleInt64  = [int64]777
+                ProcessID          = [uint32]10
+                WindowState        = 'Visible'
+                SavedDate          = (Get-Date -Format 'o')
+                SavedBy            = 'TestUser'
+                ComputerName       = 'TestComputer'
+                MacroExecution     = [PSCustomObject]@{
+                    WindowRestoreDelayMs = 1000
+                }
+            }
+            $phase6Config | ConvertTo-Json -Depth 5 | Set-Content -Path $script:testConfigPath -Force
+        }
+
+        It 'Should preserve a non-default WindowRestoreDelayMs value' {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+                Mock Write-LastWarLog {}
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.MacroExecution | Should -Not -BeNullOrEmpty
+                $config.MacroExecution.WindowRestoreDelayMs | Should -Be 1000
+            }
+        }
+
+        AfterAll {
+            if (Test-Path -Path $script:testConfigPath) {
+                Remove-Item -Path $script:testConfigPath -Force
+            }
+        }
+    }
+
+    Context 'When loading a config without MacroExecution section (default injection)' {
+        BeforeEach {
+            $noMacroExecConfig = [PSCustomObject]@{
+                ProcessName        = 'NoMacroExecProcess'
+                WindowTitle        = 'No MacroExec Window'
+                WindowHandleString = '888'
+                WindowHandleInt64  = [int64]888
+                ProcessID          = [uint32]11
+                WindowState        = 'Visible'
+                SavedDate          = (Get-Date -Format 'o')
+                SavedBy            = 'TestUser'
+                ComputerName       = 'TestComputer'
+            }
+            $noMacroExecConfig | ConvertTo-Json -Depth 5 | Set-Content -Path $script:testConfigPath -Force
+        }
+
+        It 'Should inject MacroExecution.WindowRestoreDelayMs with default 500' {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+                Mock Write-LastWarLog {}
+                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
+                $config.MacroExecution | Should -Not -BeNullOrEmpty
+                $config.MacroExecution.WindowRestoreDelayMs | Should -Be 500
+            }
+        }
+
+        AfterEach {
+            if (Test-Path -Path $script:testConfigPath) {
+                Remove-Item -Path $script:testConfigPath -Force
+            }
+        }
+    }
+
     Context 'When configuration file is invalid' {
         BeforeEach {
             if (Test-Path -Path $script:testConfigPath) {

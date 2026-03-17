@@ -2,7 +2,7 @@
 
 All settings live in `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`.
 The file is created automatically with defaults on first run - you generally
-won't need to edit it by hand; use `Start-LastWarAutoScreenshot` → Configure
+won't need to edit it by hand; use `Start-LWASConsole` → Configure
 module instead.
 
 ### Config file location
@@ -19,6 +19,16 @@ $config = Get-ModuleConfiguration -ConfigurationPath 'C:\MyConfigs\custom.json'
 # Save to a custom path
 Save-ModuleConfiguration -WindowObject $window -ConfigurationPath 'C:\MyConfigs\custom.json'
 ```
+
+### Scheduled task launcher scripts
+
+When you register a scheduled macro task, the module automatically generates a launcher PowerShell script at:
+
+```
+$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<MacroName>.ps1
+```
+
+This directory and its contents are managed automatically by the module — do not edit or delete launcher scripts manually. Launcher scripts are deleted automatically when their corresponding task is unregistered via `Unregister-LWASScheduledTask`.
 
 ---
 
@@ -68,34 +78,41 @@ Controls how the cursor moves to avoid looking like a bot.
 
 #### Cursor target regions
 
-`Start-AutomationSequence` accepts a `-Region` parameter so each click
-lands at a random point inside a defined area rather than a fixed coordinate.
+`MoveToRegion` macro actions land at a random point inside a defined area
+rather than a fixed coordinate. Regions are specified in the macro JSON using
+window-relative values in `[0.0, 1.0]`.
 
 **Box** (uniform random within rectangle):
 
-```powershell
-$region = [PSCustomObject]@{
-    RelativeX      = 0.2   # left edge (0.0-1.0, relative to window width)
-    RelativeY      = 0.3   # top edge
-    RelativeWidth  = 0.4   # width
-    RelativeHeight = 0.2   # height
+```json
+{
+  "type": "MoveToRegion",
+  "region": {
+    "type": "Box",
+    "relativeX": 0.2,
+    "relativeY": 0.3,
+    "relativeWidth": 0.4,
+    "relativeHeight": 0.2
+  }
 }
-Start-AutomationSequence -WindowHandle $handle -Region $region
 ```
 
 **Circle** (uniform random within disc):
 
-```powershell
-$region = [PSCustomObject]@{
-    RelativeCentreX = 0.5   # centre X
-    RelativeCentreY = 0.5   # centre Y
-    RelativeRadius  = 0.15  # radius
+```json
+{
+  "type": "MoveToRegion",
+  "region": {
+    "type": "Circle",
+    "relativeCentreX": 0.5,
+    "relativeCentreY": 0.5,
+    "relativeRadius": 0.15
+  }
 }
-Start-AutomationSequence -WindowHandle $handle -Region $region
 ```
 
-`-Region` is mutually exclusive with `-RelativeX`/`-RelativeY`. All values
-must be in `[0.0, 1.0]`; out-of-range input logs an error and returns `$null`.
+All values must be in `[0.0, 1.0]`; out-of-range input logs an error and
+the action is skipped.
 
 ---
 
@@ -103,7 +120,7 @@ must be in `[0.0, 1.0]`; out-of-range input logs an error and returns `$null`.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `AutoStart` | bool | `true` | Start monitor automatically with `Start-AutomationSequence` |
+| `AutoStart` | bool | `true` | Start monitor automatically with `Invoke-MacroSequence` |
 | `HotkeyVKeyCodes` | int[] | `[17, 16, 220]` | Ctrl+Shift+# (UK layout) |
 | `PollIntervalMs` | int | `100` | Polling frequency in ms (10-5000) |
 | `MouseGestureEnabled` | bool | `true` | Hold both mouse buttons as a stop trigger |

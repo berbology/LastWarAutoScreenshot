@@ -88,7 +88,7 @@ function Show-RecordMacroScreen {
 
     # ── Step 2: Prompt for macro name ────────────────────────────────────────
 
-    $existingMacros = @(Get-MacroFileList | ForEach-Object { $_.Name })
+    $existingMacros = @(Get-LWASMacro | ForEach-Object { $_.Name })
 
     $infoPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
         'You will build a macro by adding actions one at a time. Position your mouse over the game window and press Enter to capture coordinates. The console must have keyboard focus while recording.',

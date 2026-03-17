@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PowerShell 7+ module (`LastWarAutoScreenshot`) that automates human-like mouse interactions and screen captures on Windows, targeting the game Last War: Survival. Uses Win32 P/Invoke via inline C# for mouse control and window enumeration, and Spectre.Console for the interactive console UI.
 
-**Current status:** Phase 5 (Screenshot Management) complete. Phase 5b (Screenshot Region Masking) is next.
+**Current status:** Phase 6 (Configuration & Scheduling).
 
 ## Commands
 
@@ -15,7 +15,25 @@ PowerShell 7+ module (`LastWarAutoScreenshot`) that automates human-like mouse i
 Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
 
 # Launch the interactive app (entry point)
-Start-LastWarAutoScreenshot
+Start-LWASConsole
+
+# Query macros
+Get-LWASMacro                              # List all macros with full metadata
+Get-LWASMacro -Name 'my-macro-1'           # Get a specific macro by name
+
+# Query and control windows
+Get-LWASTargetWindow -ProcessName 'lastwar.exe'                    # Find windows by process
+Get-LWASTargetWindow -ProcessName 'notepad.exe' -First             # Get first match only
+Get-LWASTargetWindow -WindowTitle '*Last War*'                     # Find windows by title
+
+# Execute macros programmatically
+Get-LWASTargetWindow -ProcessName 'lastwar.exe' -First | Start-LWASAutomationSequence -MacroName 'my-macro-1'
+
+# Schedule macro execution
+Register-LWASScheduledTask -MacroName 'my-macro-1' -ProcessName 'lastwar.exe' -StartAt (Get-Date).AddMinutes(2) -RepeatEvery (New-TimeSpan -Hours 6)
+Get-LWASScheduledTask                      # List all scheduled macro tasks
+Get-LWASScheduledTask -MacroName 'my-macro-1'    # Get a specific task by macro name
+Unregister-LWASScheduledTask -MacroName 'my-macro-1'   # Remove a scheduled task
 
 # Run full test suite (always run the full suite, never filter)
 Invoke-Pester -Path .\powershell-module\Tests -Output Detailed

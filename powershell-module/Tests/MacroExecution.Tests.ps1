@@ -647,8 +647,8 @@ Describe 'Invoke-MacroSequence' -Tag 'Unit' {
                     EmergencyStop = [PSCustomObject]@{ AutoStart = $false }
                 }
             }
-            Mock Start-EmergencyStopMonitor {}
-            Mock Stop-EmergencyStopMonitor {}
+            Mock Start-LWASEmergencyStopMonitor {}
+            Mock Stop-LWASEmergencyStopMonitor {}
             Mock Write-LastWarLog {}
         }
     }
@@ -680,7 +680,7 @@ Describe 'Invoke-MacroSequence' -Tag 'Unit' {
         }
     }
 
-    It 'EmergencyStop.AutoStart=$true: Start-EmergencyStopMonitor called before execution; Stop-EmergencyStopMonitor called in finally' {
+    It 'EmergencyStop.AutoStart=$true: Start-LWASEmergencyStopMonitor called before execution; Stop-LWASEmergencyStopMonitor called in finally' {
         InModuleScope LastWarAutoScreenshot {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{
@@ -695,8 +695,8 @@ Describe 'Invoke-MacroSequence' -Tag 'Unit' {
 
             Invoke-MacroSequence -MacroData $macro -WindowHandle ([IntPtr]::new(1)) -Console $testConsole | Out-Null
 
-            Should -Invoke Start-EmergencyStopMonitor -Times 1
-            Should -Invoke Stop-EmergencyStopMonitor -Times 1
+            Should -Invoke Start-LWASEmergencyStopMonitor -Times 1
+            Should -Invoke Stop-LWASEmergencyStopMonitor -Times 1
         }
     }
 

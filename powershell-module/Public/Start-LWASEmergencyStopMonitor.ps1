@@ -1,4 +1,4 @@
-function Start-EmergencyStopMonitor {
+function Start-LWASEmergencyStopMonitor {
     <#
     .SYNOPSIS
         Starts a background timer that polls for the configured emergency-stop hotkey combination.
@@ -18,7 +18,7 @@ function Start-EmergencyStopMonitor {
 
         On a clean start, $script:EmergencyStopRequested is always reset to $false so that an
         automation sequence that was previously stopped can be re-armed simply by calling
-        Start-EmergencyStopMonitor again (after Stop-EmergencyStopMonitor has been called to
+        Start-LWASEmergencyStopMonitor again (after Stop-LWASEmergencyStopMonitor has been called to
         clean up the previous timer).
 
     .PARAMETER PollIntervalMs
@@ -42,19 +42,19 @@ function Start-EmergencyStopMonitor {
     .OUTPUTS
         PSCustomObject with scriptblock properties:
           Stop    - sets State.Stopped = $true and stops the timer (does NOT null the variable
-                    or dispose the timer - use Stop-EmergencyStopMonitor for full clean-up).
+                    or dispose the timer - use Stop-LWASEmergencyStopMonitor for full clean-up).
           Cleanup - safely stops and disposes the timer.
 
         Returns $null (with Info logged) when called while already running.
 
     .EXAMPLE
-        $monitor = Start-EmergencyStopMonitor
+        $monitor = Start-LWASEmergencyStopMonitor
         # ... automation runs ...
-        Stop-EmergencyStopMonitor
+        Stop-LWASEmergencyStopMonitor
 
     .EXAMPLE
         # Override hotkey to Ctrl+F12 (0x11, 0x7B)
-        Start-EmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
+        Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
 
     .NOTES
         Why polling instead of Win32 RegisterHotKey:
@@ -66,11 +66,11 @@ function Start-EmergencyStopMonitor {
              rates used here.
           Polling via System.Timers.Timer is simple, fully testable, and sufficient.
 
-        Re-arming: Stop-EmergencyStopMonitor does NOT reset $script:EmergencyStopRequested.
+        Re-arming: Stop-LWASEmergencyStopMonitor does NOT reset $script:EmergencyStopRequested.
         Callers must reset the flag manually (e.g. $script:EmergencyStopRequested = $false
-        inside InModuleScope) before calling Start-EmergencyStopMonitor again if they want
+        inside InModuleScope) before calling Start-LWASEmergencyStopMonitor again if they want
         the automation loop to proceed after a previous stop.
-        Start-EmergencyStopMonitor itself resets the flag on each clean start, which is
+        Start-LWASEmergencyStopMonitor itself resets the flag on each clean start, which is
         sufficient for the normal workflow where the monitor is started fresh per sequence.
     #>
     [CmdletBinding()]
@@ -90,12 +90,12 @@ function Start-EmergencyStopMonitor {
         if ($timerRunning) {
             Write-LastWarLog -Level Info `
                 -Message 'Emergency stop monitor is already running - ignoring duplicate start.' `
-                -FunctionName 'Start-EmergencyStopMonitor'
+                -FunctionName 'Start-LWASEmergencyStopMonitor'
             return $null
         }
 
         # The timer exists but is stopped (e.g. it fired and triggered an emergency stop,
-        # but Stop-EmergencyStopMonitor was not yet called).  Dispose the stale timer and
+        # but Stop-LWASEmergencyStopMonitor was not yet called).  Dispose the stale timer and
         # start a fresh one so state is clean.
         try { $script:EmergencyStopTimer.Dispose() } catch {}
         $script:EmergencyStopTimer = $null

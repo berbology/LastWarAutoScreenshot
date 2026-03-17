@@ -125,6 +125,9 @@ function Get-DefaultModuleSettings {
             }
         }
         CodeEditor = $codeEditorPath
+        MacroExecution = [PSCustomObject]@{
+            WindowRestoreDelayMs = 500
+        }
     }
 }
 
@@ -413,6 +416,15 @@ $script:ConfigValidationSchema = @{
         Type        = 'string'
         Description = 'Path to the executable used to open configuration files'
         Nullable    = $true
+    }
+
+    # --- MacroExecution ---
+    'MacroExecution.WindowRestoreDelayMs' = @{
+        Type        = 'int'
+        Min         = 0
+        Max         = 10000
+        Description = 'Milliseconds to wait after restoring a minimised window before starting macro execution. Increase on slower machines if the first action fires before the window has fully rendered. Default: 500'
+        Nullable    = $false
     }
 }
 

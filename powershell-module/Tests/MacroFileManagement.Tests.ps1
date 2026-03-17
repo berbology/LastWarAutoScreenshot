@@ -209,10 +209,10 @@ Describe 'Get-MacroFile' -Tag 'Unit' {
 }
 
 # ============================================================
-# Get-MacroFileList
+# Get-LWASMacro
 # ============================================================
 
-Describe 'Get-MacroFileList' -Tag 'Unit' {
+Describe 'Get-LWASMacro' -Tag 'Unit' {
 
     BeforeEach {
         # Clean up the macros directory before each test to prevent file pollution
@@ -232,7 +232,7 @@ Describe 'Get-MacroFileList' -Tag 'Unit' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
             # Point to a subdirectory that has no Private\Macros inside it
             $script:ModuleRootPath = Join-Path $td 'NoSuchFolder'
-            $result = @(Get-MacroFileList)
+            $result = @(Get-LWASMacro)
             $result.Count | Should -Be 0
         }
     }
@@ -242,7 +242,7 @@ Describe 'Get-MacroFileList' -Tag 'Unit' {
         New-Item -Path $emptyDir -ItemType Directory -Force | Out-Null
 
         InModuleScope LastWarAutoScreenshot {
-            $result = @(Get-MacroFileList)
+            $result = @(Get-LWASMacro)
             $result.Count | Should -Be 0
         }
     }
@@ -258,7 +258,7 @@ Describe 'Get-MacroFileList' -Tag 'Unit' {
         $newerJson | Set-Content -Path (Join-Path $macrosDir '20260201_120000_macro-newer.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot {
-            $result = @(Get-MacroFileList)
+            $result = @(Get-LWASMacro)
             $result.Count           | Should -Be 2
             $result[0].Name         | Should -Be 'macro-newer'
             $result[1].Name         | Should -Be 'macro-older'
@@ -273,7 +273,7 @@ Describe 'Get-MacroFileList' -Tag 'Unit' {
         '{}' | Set-Content -Path (Join-Path $macrosDir 'bad-filename.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot {
-            $result = @(Get-MacroFileList)
+            $result = @(Get-LWASMacro)
             $result.Count | Should -Be 0 | Out-Null
             Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Warning' }
         }
@@ -285,7 +285,7 @@ Describe 'Get-MacroFileList' -Tag 'Unit' {
         'not valid json {' | Set-Content -Path (Join-Path $macrosDir '20260101_120000_corrupt.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot {
-            $result = @(Get-MacroFileList)
+            $result = @(Get-LWASMacro)
             $result.Count | Should -Be 0 | Out-Null
             Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Warning' }
         }
@@ -301,9 +301,114 @@ Describe 'Get-MacroFileList' -Tag 'Unit' {
             $json = '{"version":"1.0","metadata":{"name":"date-check","createdUtc":"2026-03-15T10:30:00Z","modifiedUtc":"2026-03-15T10:30:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"}]}'
             $macroFilePath = Join-Path $macrosDir '20260315_103000_date-check.json'
             $json | Set-Content -Path $macroFilePath -Encoding UTF8
-            $result = @(Get-MacroFileList)
+            $result = @(Get-LWASMacro)
             $result.Count | Should -Be 1 | Out-Null
             $result[0].DisplayDate | Should -Match '^\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}$'
+        }
+    }
+
+    Context '-Name filter' {
+
+        BeforeEach {
+            $macrosDir = Join-Path $TestDrive 'Private\Macros'
+            New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
+
+            $json1 = '{"version":"1.0","metadata":{"name":"macro-one","createdUtc":"2026-01-01T12:00:00Z","modifiedUtc":"2026-01-01T12:00:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"}]}'
+            $json2 = '{"version":"1.0","metadata":{"name":"macro-two","createdUtc":"2026-02-01T12:00:00Z","modifiedUtc":"2026-02-01T12:00:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"},{"type":"LeftClick"}]}'
+
+            $json1 | Set-Content -Path (Join-Path $macrosDir '20260101_120000_macro-one.json') -Encoding UTF8
+            $json2 | Set-Content -Path (Join-Path $macrosDir '20260201_120000_macro-two.json') -Encoding UTF8
+
+            InModuleScope LastWarAutoScreenshot {
+                Mock Write-Error { }
+            }
+        }
+
+        It '-Name ''<name>'' returns only the matching macro' -TestCases @(
+            @{ name = 'macro-one' }
+            @{ name = 'macro-two' }
+        ) {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ name = $name } {
+                $result = @(Get-LWASMacro -Name $name)
+                $result.Count   | Should -Be 1
+                $result[0].Name | Should -Be $name
+            }
+        }
+
+        It '-Name with an array returns all matching macros' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro -Name @('macro-one', 'macro-two'))
+                $result.Count | Should -Be 2
+            }
+        }
+
+        It '-Name with a comma-separated string returns all matching macros' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro -Name 'macro-one, macro-two')
+                $result.Count | Should -Be 2
+            }
+        }
+
+        It '-Name with an unknown name writes a non-terminating error and returns 0 results' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro -Name 'nonexistent')
+                $result.Count | Should -Be 0
+                Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*nonexistent*' }
+            }
+        }
+
+        It '-Name with one match and one miss returns 1 result and writes 1 error for the miss' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro -Name @('macro-one', 'nonexistent'))
+                $result.Count   | Should -Be 1
+                $result[0].Name | Should -Be 'macro-one'
+                Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*nonexistent*' }
+            }
+        }
+
+        It 'accepts pipeline input of macro names and returns matching macros' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @('macro-one', 'macro-two' | Get-LWASMacro)
+                $result.Count | Should -Be 2
+            }
+        }
+    }
+
+    Context 'returned object shape' {
+
+        BeforeEach {
+            $macrosDir = Join-Path $TestDrive 'Private\Macros'
+            New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
+
+            $json = '{"version":"1.0","metadata":{"name":"shape-check","createdUtc":"2026-03-01T10:00:00Z","modifiedUtc":"2026-03-01T10:00:00Z","description":"desc"},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"},{"type":"LeftClick"}]}'
+            $json | Set-Content -Path (Join-Path $macrosDir '20260301_100000_shape-check.json') -Encoding UTF8
+        }
+
+        It 'returned object has a non-null Metadata property containing the macro metadata' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro)
+                $result[0].Metadata      | Should -Not -BeNull
+                $result[0].Metadata.name | Should -Be 'shape-check'
+            }
+        }
+
+        It 'returned object has a Sequence property with the correct action count' {
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro)
+                $result[0].Sequence                 | Should -Not -BeNull
+                @($result[0].Sequence).Count        | Should -Be 2
+            }
+        }
+
+        It 'Sequence is an empty array when the macro JSON has no sequence property' {
+            $macrosDir = Join-Path $TestDrive 'Private\Macros'
+            $noSeqJson = '{"version":"1.0","metadata":{"name":"no-seq","createdUtc":"2026-03-01T11:00:00Z","modifiedUtc":"2026-03-01T11:00:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"}}'
+            $noSeqJson | Set-Content -Path (Join-Path $macrosDir '20260301_110000_no-seq.json') -Encoding UTF8
+
+            InModuleScope LastWarAutoScreenshot {
+                $result = @(Get-LWASMacro -Name 'no-seq')
+                @($result[0].Sequence).Count | Should -Be 0
+            }
         }
     }
 }
@@ -351,7 +456,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
             $script:ModuleRootPath = $td
             Mock Write-LastWarLog
-            Mock Get-MacroFileList { @() }
+            Mock Get-LWASMacro { @() }
             Mock Get-MacroFile {
                 [PSCustomObject]@{
                     Valid    = $true
@@ -415,7 +520,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
         $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
-            Mock Get-MacroFileList {
+            Mock Get-LWASMacro {
                 @([PSCustomObject]@{
                     FilePath = 'C:\other\20260201_120000_taken-name.json'
                     Name     = 'taken-name'

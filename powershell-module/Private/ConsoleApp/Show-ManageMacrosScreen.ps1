@@ -4,7 +4,7 @@ function Show-ManageMacrosScreen {
         Displays the Manage Macros screen, allowing the user to view, edit, and delete saved macros.
 
     .DESCRIPTION
-        Presents a list of all saved macros (from Get-MacroFileList) and lets the user choose one
+        Presents a list of all saved macros (from Get-LWASMacro) and lets the user choose one
         to manage.  For the selected macro the user can:
           - View details: displays a metadata table and the full action sequence table, then waits
             for the user to press Enter before returning to the management options.
@@ -73,7 +73,7 @@ function Show-ManageMacrosScreen {
 
     # ── Outer loop: rebuild macro list on each iteration ─────────────────────
     while ($true) {
-        $macroList = Get-MacroFileList
+        $macroList = Get-LWASMacro
 
         if ($macroList.Count -eq 0) {
             $noMacrosPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(

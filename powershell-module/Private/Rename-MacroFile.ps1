@@ -57,7 +57,7 @@ function Rename-MacroFile {
     }
 
     # Collect existing macro names, excluding the current file, for uniqueness validation
-    $allMacros  = Get-MacroFileList
+    $allMacros  = Get-LWASMacro
     $otherNames = @($allMacros | Where-Object { $_.FilePath -ne $FilePath } | Select-Object -ExpandProperty Name)
 
     $nameResult = Get-ValidMacroName -Name $NewName -ExistingNames $otherNames

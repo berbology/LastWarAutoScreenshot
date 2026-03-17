@@ -12,6 +12,7 @@ function Show-MainMenu {
                                  files exist in the module's Private\Macros\ folder)
           - Manage macros       (only shown when *.json files exist in the module's
                                  Private\Macros\ folder)
+          - Manage schedules
           - Storage info
           - Exit
 
@@ -22,7 +23,7 @@ function Show-MainMenu {
 
         Returns a string identifier corresponding to the user's selection:
           'SelectWindow' | 'Configure' | 'RecordMacro' | 'RunMacro' | 'ManageMacros' |
-          'ViewStorageInfo' | 'Exit'
+          'ManageSchedules' | 'StorageInfo' | 'Exit'
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance to use for rendering and input.
@@ -31,7 +32,7 @@ function Show-MainMenu {
 
     .OUTPUTS
         String
-        One of: 'SelectWindow', 'Configure', 'RecordMacro', 'RunMacro', 'ManageMacros', 'ViewStorageInfo', 'Exit'
+        One of: 'SelectWindow', 'Configure', 'RecordMacro', 'RunMacro', 'ManageMacros', 'ManageSchedules', 'StorageInfo', 'Exit'
 
     .EXAMPLE
         $console = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
@@ -87,7 +88,8 @@ function Show-MainMenu {
     if ($hasMacros) {
         $choices.Add('Manage macros')
     }
-    
+
+    $choices.Add('Manage schedules')
     $choices.Add('Storage info')
     $choices.Add('Exit')
 
@@ -101,7 +103,8 @@ function Show-MainMenu {
         'Record macro'         { return 'RecordMacro'   }
         'Run macro'            { return 'RunMacro'      }
         'Manage macros'            { return 'ManageMacros'     }
-        'Storage info' { return 'ViewStorageInfo'  }
+        'Manage schedules'         { return 'ManageSchedules'  }
+        'Storage info'             { return 'StorageInfo'      }
         default                    { return 'Exit'             }
     }
 }

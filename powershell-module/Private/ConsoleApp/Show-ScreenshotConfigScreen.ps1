@@ -74,7 +74,7 @@ function Show-ScreenshotConfigScreen {
         on its Output property without requiring a live terminal.
 
         Do NOT call Invoke-InAlternateScreen inside this function.  The entire configuration
-        area is already wrapped in Invoke-InAlternateScreen by Start-LastWarAutoScreenshot
+        area is already wrapped in Invoke-InAlternateScreen by Start-LWASConsole
         via Show-ConfigMenuScreen.
 
         Bool keys use ConfirmationPrompt.  In tests, push 'y' or 'n' explicitly using

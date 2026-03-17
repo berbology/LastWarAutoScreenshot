@@ -51,7 +51,7 @@ Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
 ### 2. Launch the app
 
 ```powershell
-Start-LastWarAutoScreenshot
+Start-LWASConsole
 ```
 
 The interactive console app is your entry point for everything: selecting a
@@ -60,7 +60,7 @@ macros. No manual JSON editing is required.
 
 ### 3. First run
 
-On a clean install with no config file, `Start-LastWarAutoScreenshot` creates
+On a clean install with no config file, `Start-LWASConsole` creates
 a default `ModuleConfig.json` at:
 
 ```

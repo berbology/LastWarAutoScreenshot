@@ -1,6 +1,6 @@
 # EmergencyStop.ps1
 # Private helper for emergency-stop polling.
-# Start-EmergencyStopMonitor and Stop-EmergencyStopMonitor are public functions
+# Start-LWASEmergencyStopMonitor and Stop-LWASEmergencyStopMonitor are public functions
 # located in the Public folder.
 
 <#
@@ -8,7 +8,7 @@
     Executes one poll cycle checking whether an emergency-stop condition is met.
 
 .DESCRIPTION
-    Called by the System.Timers.Timer Elapsed handler in Start-EmergencyStopMonitor on each
+    Called by the System.Timers.Timer Elapsed handler in Start-LWASEmergencyStopMonitor on each
     poll interval. Checks two independent emergency-stop triggers:
 
       1. Hotkey combo: every virtual key code in State.HotkeyVKeyCodes must be simultaneously
@@ -42,7 +42,7 @@
                                                Not keyboard-layout-dependent.
       MouseGestureRequiredPollCount [int]   - consecutive polls where both buttons must be held
                                                before triggering. Computed as MouseGestureHoldDurationMs
-                                               / PollIntervalMs in Start-EmergencyStopMonitor.
+                                               / PollIntervalMs in Start-LWASEmergencyStopMonitor.
       MouseGestureCurrentPollCount  [int]   - running counter; incremented each poll whilst both
                                                buttons are held, reset to 0 on release. Mutated in-place.
 
@@ -103,7 +103,7 @@ function Invoke-EmergencyStopPoll {
             if ($null -ne $State.Timer) { $State.Timer.Stop() }
             Write-LastWarLog -Level Error `
                 -Message 'Emergency stop triggered by hotkey combination.' `
-                -FunctionName 'Start-EmergencyStopMonitor'
+                -FunctionName 'Start-LWASEmergencyStopMonitor'
             Write-Host "`e[31mEMERGENCY STOP TRIGGERED - automation halted. $(Get-LogCheckHint)`e[0m"
         }
     }
@@ -142,7 +142,7 @@ function Invoke-EmergencyStopPoll {
                     if ($null -ne $State.Timer) { $State.Timer.Stop() }
                     Write-LastWarLog -Level Error `
                         -Message 'Emergency stop triggered by mouse gesture (both mouse buttons held).' `
-                        -FunctionName 'Start-EmergencyStopMonitor'
+                        -FunctionName 'Start-LWASEmergencyStopMonitor'
                     Write-Host "`e[31mEMERGENCY STOP TRIGGERED - automation halted. $(Get-LogCheckHint)`e[0m"
                 }
             } else {

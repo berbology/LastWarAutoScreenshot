@@ -88,7 +88,7 @@ function Invoke-MacroSequence {
     try {
         $moduleConfig = Get-ModuleConfiguration
         if ($moduleConfig.EmergencyStop.AutoStart -eq $true) {
-            Start-EmergencyStopMonitor | Out-Null
+            Start-LWASEmergencyStopMonitor | Out-Null
         }
     } catch {
         Write-LastWarLog -Level Warning -FunctionName 'Invoke-MacroSequence' -Message "Could not read module configuration for emergency-stop auto-start: $_"
@@ -143,7 +143,7 @@ function Invoke-MacroSequence {
             }
         }
     } finally {
-        Stop-EmergencyStopMonitor
+        Stop-LWASEmergencyStopMonitor
     }
 
     return [PSCustomObject]@{

@@ -69,7 +69,7 @@ Describe 'EventLog backend in Write-LastWarLog' -Tag 'Integration' {
             @{ FunctionName = 'Set-WindowState';               ExpectedEventId = 2010 }
             @{ FunctionName = 'Start-WindowAndProcessMonitor'; ExpectedEventId = 2100 }
             @{ FunctionName = 'Test-WindowHandleValid';        ExpectedEventId = 2200 }
-            @{ FunctionName = 'Get-MonitorProcess';            ExpectedEventId = 2300 }
+            @{ FunctionName = 'Get-LWASMonitorProcess';            ExpectedEventId = 2300 }
             @{ FunctionName = 'UnknownFunction';               ExpectedEventId = 1000 }
         ) {
             InModuleScope LastWarAutoScreenshot -Parameters @{ FunctionName = $FunctionName; ExpectedEventId = $ExpectedEventId } {

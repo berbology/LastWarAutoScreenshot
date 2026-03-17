@@ -83,7 +83,7 @@ function Write-LastWarLog {
                     Write-Verbose "Created Event Log source 'LastWarAutoScreenshot'"
                 } catch {
                     # Event log source creation failed (typically requires administrator privileges).
-                    # Set flag so Start-LastWarAutoScreenshot can display error via Spectre.Console.
+                    # Set flag so Start-LWASConsole can display error via Spectre.Console.
                     # Do not write directly to host here; error will be shown to user in the
                     # console app startup flow with proper UI.
                     $global:LastWarAutoScreenshot_LoggingInitFailed = $true
@@ -110,7 +110,7 @@ function Write-LastWarLog {
                  'Set-WindowState'               { 2010 }
                  'Start-WindowAndProcessMonitor' { 2100 }
                  'Test-WindowHandleValid'        { 2200 }
-                 'Get-MonitorProcess'            { 2300 }
+                 'Get-LWASMonitorProcess'        { 2300 }
                  default                         { 1000 }
             }
             $logEntry = [ordered]@{

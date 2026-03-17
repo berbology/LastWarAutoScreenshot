@@ -1,23 +1,27 @@
 <#
 .SYNOPSIS
-    Sets the window state (minimize or maximize) for a given window handle.
+    Sets the window state (minimise, maximise, or restore) for a given window handle.
 
 .DESCRIPTION
     Calls the ShowWindow Win32 API via the WindowEnumerationAPI type definition.
-    Only supports minimize (SW_MINIMIZE) and maximize (SW_MAXIMIZE) states.
+    Supports minimise (SW_MINIMIZE), maximise (SW_MAXIMIZE), and restore (SW_RESTORE) states.
     Handles errors and logs using the standard backend.
 
 .PARAMETER WindowHandle
     The handle (IntPtr or int64) of the window to modify.
 
 .PARAMETER State
-    The desired state: 'Minimize' or 'Maximize'.
+    The desired state: 'Minimize', 'Maximize', or 'Restore'.
 
 .EXAMPLE
     Set-WindowState -WindowHandle 123456 -State Minimize
 
 .EXAMPLE
     Set-WindowState -WindowHandle 123456 -State Maximize
+
+.EXAMPLE
+    Set-WindowState -WindowHandle 123456 -State Restore
+    Restores a minimised or maximised window to its original size and position.
 #>
 
 function Invoke-ShowWindow {
@@ -39,14 +43,16 @@ function Set-WindowState {
         [object]$WindowHandle,
 
         [Parameter(Mandatory)]
-        [ValidateSet('Minimize','Maximize')]
+        [ValidateSet('Minimize','Maximize','Restore')]
         [string]$State
     )
     $SW_MINIMIZE = 2
     $SW_MAXIMIZE = 3
+    $SW_RESTORE  = 9
     $cmdShow = switch ($State) {
         'Minimize' { $SW_MINIMIZE }
         'Maximize' { $SW_MAXIMIZE }
+        'Restore'  { $SW_RESTORE  }
     }
     try {
         # Reject null outright

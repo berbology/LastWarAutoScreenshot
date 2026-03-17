@@ -1,4 +1,4 @@
-function Install-LastWarAutoScreenshot {
+function Install-LWASModule {
     <#
     .SYNOPSIS
         Installs the runtime dependencies required by LastWarAutoScreenshot.
@@ -11,7 +11,7 @@ function Install-LastWarAutoScreenshot {
         Must be run in an elevated (Administrator) PowerShell window.
 
     .EXAMPLE
-        Install-LastWarAutoScreenshot
+        Install-LWASModule
 
         Runs the interactive installer, checking for and installing missing dependencies.
 
@@ -26,7 +26,7 @@ function Install-LastWarAutoScreenshot {
     $isAdmin   = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $isAdmin) {
         Write-Warning 'This function must be run in an elevated (Administrator) PowerShell window.'
-        Write-Output  'Please close this window, open PowerShell as Administrator, and run Install-LastWarAutoScreenshot again.'
+        Write-Output  'Please close this window, open PowerShell as Administrator, and run Install-LWASModule again.'
         return
     }
 
@@ -40,7 +40,7 @@ function Install-LastWarAutoScreenshot {
         Write-Output '  .NET 9.0 runtime was not found.'
         $answer = Read-Host '  Install it now via winget? [Y/N]'
         if ($answer -notmatch '^[Yy]') {
-            Write-Output 'Installation cancelled. Please install .NET 9.0 manually and re-run Install-LastWarAutoScreenshot.'
+            Write-Output 'Installation cancelled. Please install .NET 9.0 manually and re-run Install-LWASModule.'
             return
         }
         Write-Output 'Installing .NET 9.0 runtime...'
@@ -49,7 +49,7 @@ function Install-LastWarAutoScreenshot {
         $runtimes = & dotnet --list-runtimes 2>&1
         $hasNet9  = ($runtimes | Where-Object { $_ -match 'Microsoft\.NETCore\.App 9\.' }).Count -gt 0
         if (-not $hasNet9) {
-            Write-Error '.NET 9.0 installation could not be verified. Please install it manually from https://dotnet.microsoft.com/download/dotnet/9.0 then re-run Install-LastWarAutoScreenshot.'
+            Write-Error '.NET 9.0 installation could not be verified. Please install it manually from https://dotnet.microsoft.com/download/dotnet/9.0 then re-run Install-LWASModule.'
             return
         }
         Write-Output '.NET 9.0 installed successfully.'
