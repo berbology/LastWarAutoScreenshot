@@ -62,7 +62,7 @@ New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
 - **Screenshot capture** - user-defined window regions saved as PNG with
   configurable naming; similarity detection to automatically detect scroll-list end
 - **Macro recording** - record click sequences via the app
-- **Task Scheduler integration** (Phase 6) - automated, repeating execution
+- **Task Scheduler integration** — automated, repeating execution via Windows Task Scheduler
 
 ## Documentation
 
@@ -333,6 +333,15 @@ Each macro file is a JSON object with four top-level keys:
 
 See [MacroFormat.md](MacroFormat.md) for the full schema, annotated example,
 and action type reference.
+
+---
+
+## Uninstalling
+
+Run `scripts\Uninstall-LWAS.ps1` from an elevated PowerShell session. The
+script removes the module, the Windows Event Log source, and (optionally)
+the AppData config directory. See [Developer.md](Developer.md#uninstallation)
+for full usage and options.
 
 ---
 

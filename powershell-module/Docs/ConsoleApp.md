@@ -26,9 +26,12 @@ Main Menu
 │   ├── Logging settings
 │   ├── Mouse control settings
 │   ├── Emergency stop settings
-│   └── Storage & log file info
-├── Record macro            → Phase 4 (shows "Not yet available")
-├── Run macro               → Phase 4 (greyed out when no macros exist)
+│   └── Screenshot settings
+├── Record macro            → only visible when a target window is configured
+├── Run macro               → only visible when target window configured AND macros exist
+├── Manage macros           → only visible when macros exist
+├── Manage schedules        → always visible
+├── Storage info            → always visible
 └── Exit
 ```
 
@@ -48,7 +51,8 @@ Example: `20260310_143022_OpenAllianceShop.json`
 
 The `Run macro` menu option is greyed out when no `*.json` files exist in
 that folder. When macros are present it shows a selectable list parsed from
-the filenames. The macro format is defined in Phase 4.
+the filenames. See [MacroFormat.md](MacroFormat.md) for the full JSON schema
+and action type reference.
 
 ---
 
@@ -97,61 +101,11 @@ Spectre.Console.Testing=0.49.1
 
 ---
 
-### `IAnsiConsole` injection pattern (for contributors)
+### `IAnsiConsole` injection pattern
 
 Every screen function accepts a `[Spectre.Console.IAnsiConsole]$Console`
 parameter. The real console is the default; tests inject `TestConsole`.
 
-**Adding a new screen:**
-
-```powershell
-function Show-MyScreen {
-    [CmdletBinding()]
-    param(
-        [Spectre.Console.IAnsiConsole]$Console = (
-            [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
-        )
-    )
-
-    $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
-        'Pick something:', @('Option A', 'Option B', 'Back')
-    )
-    $choice = $prompt.Show($Console)
-
-    switch ($choice) {
-        'Option A' { <# ... #> }
-        'Option B' { <# ... #> }
-        'Back'     { return $null }
-    }
-}
-```
-
-**Testing it:**
-
-```powershell
-BeforeAll {
-    $testingDll = Join-Path $PSScriptRoot '..\..\lib\test\Spectre.Console.Testing.dll'
-    Add-Type -Path $testingDll
-}
-
-It 'Returns $null when user picks Back' {
-    InModuleScope LastWarAutoScreenshot {
-        $tc = [Spectre.Console.Testing.TestConsole]::new()
-        $tc.Input.PushTextWithEnter('Back')
-        $result = Show-MyScreen -Console $tc
-        $result | Should -BeNullOrEmpty
-    }
-}
-```
-
-Assert on `$tc.Output` for rendered text, or mock downstream functions using
-standard Pester `Mock`. All screen tests live in `Tests/ConsoleApp/`.
-
-**`ConsoleAppBridge` helper methods:**
-
-| Method | Returns | Notes |
-|--------|---------|-------|
-| `CreateConsole()` | `IAnsiConsole` | Live terminal |
-| `CreateSelectionPrompt(title, choices[])` | `SelectionPrompt<string>` | Standard styling |
-| `CreateTable(columns[])` | `Table` | Standard border |
-| `CreatePanel(content, header)` | `Panel` | Standard styling |
+See [Developer.md](Developer.md) for the complete `IAnsiConsole` injection
+pattern, `TestConsole` testing example, `ConsoleAppBridge` reference, and
+Spectre.Console markup rules.

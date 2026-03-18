@@ -30,6 +30,7 @@ adaptable to any application.
 - [Logging](powershell-module/Docs/Logging.md)
 - [Project plan](powershell-module/Docs/ProjectPlan.md)
 - [Spectre.Console documentation](https://spectreconsole.net/)
+- [Pester v5 documentation](https://pester.dev)
 
 ---
 

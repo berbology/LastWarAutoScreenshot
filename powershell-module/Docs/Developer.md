@@ -16,7 +16,7 @@ task list and architecture decisions see [ProjectPlan.md](ProjectPlan.md).
 - [Uninstallation](#uninstallation)
 - [Creating a release](#creating-a-release)
 - [Running the test suite](#running-the-test-suite)
-- [Console app — IAnsiConsole injection](#console-app--iansiConsole-injection)
+- [Console app — IAnsiConsole injection](#console-app--iansconsole-injection)
 - [Adding a new screen](#adding-a-new-screen)
 - [ConsoleAppBridge reference](#consoleappbridge-reference)
 - [Spectre.Console markup rules](#spectreconsole-markup-rules)
@@ -389,3 +389,4 @@ a stuck button would otherwise make the system unusable.
 | [Logging.md](Logging.md) | Log backends, levels, troubleshooting, Event Log registration |
 | [ProjectPlan.md](ProjectPlan.md) | Full phase-by-phase task list and architecture decisions |
 | [Spectre.Console docs](https://spectreconsole.net/) | Official library documentation |
+| [Pester v5 documentation](https://pester.dev) | Testing framework reference |
