@@ -4755,47 +4755,47 @@ All design questions have been resolved. The decisions below are recorded for re
 
 ### Tasks
 
-1. [ ] Remove `Docs/RefactorPlan.md`
-   1.1 [ ] Delete `powershell-module/Docs/RefactorPlan.md`
-   1.2 [ ] Search all `Docs/*.md` files and root `README.md` for any links to `RefactorPlan.md`; remove any found
+1. [x] Remove `Docs/RefactorPlan.md`
+   1.1 [x] Delete `powershell-module/Docs/RefactorPlan.md`
+   1.2 [x] Search all `Docs/*.md` files and root `README.md` for any links to `RefactorPlan.md`; remove any found
 
-2. [ ] Fix stale phase references and update the root `README.md` features list
-   2.1 [ ] Update the Roadmap section of root `README.md` (currently reads "Current status: Phase 4 (Macro Recording) in progress") to reflect Phase 7 complete and Phase 8 in progress
-   2.2 [ ] Update the Features list in root `README.md`: remove the `_(Phase 4)_` and `_(Phase 6)_` phase labels from feature bullets; add a planned/forthcoming item for the ESP32-S3 USB hardware HID mouse toggle (hardware device presenting as a physical HID mouse, toggled alongside the existing `SendInput` software approach, providing greater resilience to anti-cheat detection)
-   2.3 [ ] Update the Roadmap section in `Docs/README.md` (currently reads "Phase 5 complete. Phase 6 is next") — this file is renamed in task 6; the stale roadmap text is corrected here so the rename begins with clean content
-   2.4 [ ] Update `CLAUDE.md` "Current status: Phase 7 (Module Installation & Versioning)" → "Phase 8 (Documentation & Examples)"
-   2.5 [ ] Remove stale phase-qualifier notes in `Developer.md` (e.g. `"Macros are stored in Private/Macros/ (Phase 4)"` in the repository structure section)
+2. [x] Fix stale phase references and update the root `README.md` features list
+   2.1 [x] Update the Roadmap section of root `README.md` (currently reads "Current status: Phase 4 (Macro Recording) in progress") to reflect Phase 7 complete and Phase 8 in progress
+   2.2 [x] Update the Features list in root `README.md`: remove the `_(Phase 4)_` and `_(Phase 6)_` phase labels from feature bullets; add a planned/forthcoming item for the ESP32-S3 USB hardware HID mouse toggle (hardware device presenting as a physical HID mouse, toggled alongside the existing `SendInput` software approach, providing greater resilience to anti-cheat detection)
+   2.3 [x] Update the Roadmap section in `Docs/README.md` (currently reads "Phase 5 complete. Phase 6 is next") — this file is renamed in task 6; the stale roadmap text is corrected here so the rename begins with clean content
+   2.4 [x] Update `CLAUDE.md` "Current status: Phase 7 (Module Installation & Versioning)" → "Phase 8 (Documentation & Examples)"
+   2.5 [x] Remove stale phase-qualifier notes in `Developer.md` (e.g. `"Macros are stored in Private/Macros/ (Phase 4)"` in the repository structure section)
 
-3. [ ] Add window-relative coordinate system reference to `MacroFormat.md`
-   3.1 [ ] Add a `## Window-relative coordinate system` section immediately before the existing `## Action type reference` section, containing:
+3. [x] Add window-relative coordinate system reference to `MacroFormat.md`
+   3.1 [x] Add a `## Window-relative coordinate system` section immediately before the existing `## Action type reference` section, containing:
       - Definition: all coordinates are expressed as fractions of the window's client-area width (X axis) and height (Y axis); origin `(0.0, 0.0)` is the top-left corner; `(1.0, 1.0)` is the bottom-right corner; X increases rightward, Y increases downward
       - ASCII diagram marking the four corners, centre, and axes
       - Explanation that pixel positions are computed at execution time from the live window bounds — moving or resizing the game window does not invalidate recorded coordinates
       - Conversion example: window 800 × 600 px, `relativeX: 0.5, relativeY: 0.25` → pixel (400, 150)
       - Note that coordinate values outside `[0.0, 1.0]` are invalid and will cause a validation error at save time
-   3.2 [ ] Review the field description cells in the `MoveToPoint`, `MoveToRegion`, `DragClick`, and `Screenshot` action tables; where descriptions re-explain the coordinate system inline, replace with a short cross-reference (e.g. "See [Window-relative coordinate system](#window-relative-coordinate-system)")
+   3.2 [x] Review the field description cells in the `MoveToPoint`, `MoveToRegion`, `DragClick`, and `Screenshot` action tables; where descriptions re-explain the coordinate system inline, replace with a short cross-reference (e.g. "See [Window-relative coordinate system](#window-relative-coordinate-system)")
 
-4. [ ] Create example configuration file
-   4.1 [ ] Create `examples/` directory at the repository root
-   4.2 [ ] Create `examples/ModuleConfig-example.jsonc` containing every configuration key at its default value, grouped by `MouseControl`, `EmergencyStop`, `Screenshots` (including `SimilarityCheck`), and `Logging` categories, with a `// comment` on each line explaining the setting, its type, and accepted values or range
-   4.3 [ ] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
-   4.4 [ ] Add a link to `examples/` in the root `README.md` contents section under "For Users"
+4. [x] Create example configuration file
+   4.1 [x] Create `examples/` directory at the repository root
+   4.2 [x] Create `examples/ModuleConfig-example.jsonc` containing every configuration key at its default value, grouped by `MouseControl`, `EmergencyStop`, `Screenshots` (including `SimilarityCheck`), and `Logging` categories, with a `// comment` on each line explaining the setting, its type, and accepted values or range
+   4.3 [x] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
+   4.4 [x] Add a link to `examples/` in the root `README.md` contents section under "For Users"
 
-5. [ ] Create `Docs/QuickStart.md`
-   5.1 [ ] Write a first-use walkthrough covering:
+5. [x] Create `Docs/QuickStart.md`
+   5.1 [x] Write a first-use walkthrough covering:
       - Prerequisites: module installed, game running in windowed or borderless-windowed mode
       - Launch: `Import-Module LastWarAutoScreenshot`, then `Start-LWASConsole`
       - Step 1 — Select a target window: main menu → "Select target window" → choose the game window from the list
       - Step 2 — Record a simple macro: main menu → "Record macro" → enter a name → add a MoveToPoint, LeftClick, Delay, MoveToPoint, LeftClick sequence → Save
       - Step 3 — Run the macro: main menu → "Run macro" → select the macro → review the summary → confirm
       - Step 4 — Emergency stop: `Ctrl+Shift+#` hotkey or hold both mouse buttons for 3 seconds
-   5.2 [ ] Add a link to `QuickStart.md` in the root `README.md` "Get Started" section, immediately after the "2. Launch the app" step
-   5.3 [ ] Add a link to `QuickStart.md` in `Docs/README.md` (pre-rename) Getting Started section so the link is in place before the rename in task 6
+   5.2 [x] Add a link to `QuickStart.md` in the root `README.md` "Get Started" section, immediately after the "2. Launch the app" step
+   5.3 [x] Add a link to `QuickStart.md` in `Docs/README.md` (pre-rename) Getting Started section so the link is in place before the rename in task 6
 
-6. [ ] Rename `Docs/README.md` → `Docs/UserGuide.md` and update all links
-   6.1 [ ] Rename the file; add a brief audience note to the introduction paragraph making clear this document is for end users, not contributors
-   6.2 [ ] Remove the developer-oriented git-clone / `Import-Module` from path getting-started block from `UserGuide.md` (this content already exists in `Developer.md`); replace with a one-line pointer to the root README install section
-   6.3 [ ] Update all links to `Docs/README.md` across the repository:
+6. [x] Rename `Docs/README.md` → `Docs/UserGuide.md` and update all links
+   6.1 [x] Rename the file; add a brief audience note to the introduction paragraph making clear this document is for end users, not contributors
+   6.2 [x] Remove the developer-oriented git-clone / `Import-Module` from path getting-started block from `UserGuide.md` (this content already exists in `Developer.md`); replace with a one-line pointer to the root README install section
+   6.3 [x] Update all links to `Docs/README.md` across the repository:
       - Root `README.md`: `powershell-module/Docs/README.md` → `powershell-module/Docs/UserGuide.md`
       - `Developer.md`: `README.md` → `UserGuide.md`
       - `MacroFormat.md`: `README.md` → `UserGuide.md`
@@ -4803,9 +4803,9 @@ All design questions have been resolved. The decisions below are recorded for re
       - `WindowManagement.md`: any references to `README.md`
       - `Logging.md`: any references to `README.md`
 
-7. [ ] Add comment-based help to `Public/Get-LWASMonitorProcess.ps1`
-   7.1 [ ] Add `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.OUTPUTS`, and at least two `.EXAMPLE` blocks to `Get-LWASMonitorProcess.ps1`, following the same style as `Get-LWASMacro.ps1`
-   7.2 [ ] Read each of the three `scripts/` files (`Install-LWAS.ps1`, `Uninstall-LWAS.ps1`, `New-LWASRelease.ps1`) and confirm each has a complete help block (`.SYNOPSIS`, `.DESCRIPTION`, at least one `.PARAMETER` per parameter, at least one `.EXAMPLE`); add any missing sections
+7. [x] Add comment-based help to `Public/Get-LWASMonitorProcess.ps1`
+   7.1 [x] Add `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.OUTPUTS`, and at least two `.EXAMPLE` blocks to `Get-LWASMonitorProcess.ps1`, following the same style as `Get-LWASMacro.ps1`
+   7.2 [x] Read each of the three `scripts/` files (`Install-LWAS.ps1`, `Uninstall-LWAS.ps1`, `New-LWASRelease.ps1`) and confirm each has a complete help block (`.SYNOPSIS`, `.DESCRIPTION`, at least one `.PARAMETER` per parameter, at least one `.EXAMPLE`); add any missing sections
 
 8. [ ] Documentation clarity sweep
    8.1 [ ] Read all `Docs/*.md` files in full; remove or update any references to code, functions, or behaviour that no longer exists (including removed features, old function signatures, and superseded design notes)

@@ -1,15 +1,13 @@
 # Last War AutoScript — User Guide
 
-PowerShell 7+ module that automates human-like mouse interactions and screen
-captures in Windows game windows — built specifically for Last War: Survival,
-adaptable to any application.
+End-user guide for Last War AutoScript. Covers configuration, macro recording,
+screenshot capture, and scheduling. This document is for people using the
+module — for module internals, testing, and contributing see
+[Developer.md](Developer.md).
 
 > **Anti-cheat warning:** Automating input may violate the game's terms of
 > service and could trigger anti-cheat systems. Use at your own risk. The
 > authors take no responsibility for bans or account actions.
-
-> **Contributing?** See [Developer.md](Developer.md) for the module
-> architecture, testing guide, and how to add new screens.
 
 ## Requirements
 
@@ -20,15 +18,17 @@ adaptable to any application.
 
 ## Getting Started
 
-```powershell
-# Clone and import
-git clone https://github.com/berbology/LastWarAutoScreenshot.git
-cd LastWarAutoScreenshot
-Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
+Install the module by following the steps in the
+[root README](../../README.md#get-started), then run:
 
-# Launch the interactive app - this is your entry point
+```powershell
+Import-Module LastWarAutoScreenshot
 Start-LWASConsole
 ```
+
+New to the module? The [Quick Start Guide](QuickStart.md) walks through
+selecting a window, recording your first macro, running it, and using the
+emergency stop.
 
 The app walks you through everything: picking a target window, configuring
 mouse behaviour, setting up storage, recording macros, and capturing screenshots.

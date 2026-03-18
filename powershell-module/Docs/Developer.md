@@ -2,8 +2,8 @@
 
 Reference for contributors and anyone working on the module internals.
 
-For the user-facing guide see [README.md](README.md). For the project task
-list and architecture decisions see [ProjectPlan.md](ProjectPlan.md).
+For the user-facing guide see [UserGuide.md](UserGuide.md). For the project
+task list and architecture decisions see [ProjectPlan.md](ProjectPlan.md).
 
 ---
 

@@ -12,6 +12,14 @@
     common parameters (-Verbose, -Debug, -WhatIf, -ErrorAction, -WarningAction,
     -InformationAction) are forwarded to the elevated process and to Install-LWAS.
 
+.PARAMETER Force
+    When specified, overwrites an existing installation of the same version
+    without prompting.
+
+.PARAMETER IncludeTests
+    When specified, copies Spectre.Console.Testing.dll into the installed
+    module so that the Pester test suite can be run against the installed copy.
+
 .EXAMPLE
     .\Install-LWAS.ps1
 

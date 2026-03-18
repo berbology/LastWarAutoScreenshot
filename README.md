@@ -16,7 +16,8 @@ adaptable to any application.
 
 - [Get Started](#get-started)
 - [Features](#features)
-- [User Guide](powershell-module/Docs/README.md)
+- [User Guide](powershell-module/Docs/UserGuide.md)
+- [Quick Start Guide](powershell-module/Docs/QuickStart.md)
 - [Configuration reference](powershell-module/Docs/Configuration.md)
 - [Macro format reference](powershell-module/Docs/MacroFormat.md)
 - [Example configuration file](examples/)
@@ -73,6 +74,9 @@ Start-LWASConsole
 The interactive console app is your entry point for everything: selecting a
 target window, adjusting mouse behaviour, configuring storage, and running
 macros. No manual JSON editing is required.
+
+See the [Quick Start Guide](powershell-module/Docs/QuickStart.md) for a
+step-by-step first-use walkthrough.
 
 ### 3. First run
 
