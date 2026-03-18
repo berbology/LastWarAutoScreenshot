@@ -4,6 +4,7 @@
 
 BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
     ${script:Get-TestRunnerWindowHandle} = {
         $processPID = [System.Diagnostics.Process]::GetCurrentProcess().Id

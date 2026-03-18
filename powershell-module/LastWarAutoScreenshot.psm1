@@ -1,3 +1,10 @@
+# ── Test console dimensions ────────────────────────────────────────────────────
+# Width and height for the Spectre.Console TestConsole injected by Pester tests.
+# Wide dimensions prevent table cell wrapping, eliminating regex test flakiness.
+# Must be set early so tests can access these even if module loading partially fails.
+$script:TestConsoleWidth  = 2560
+$script:TestConsoleHeight = 1440
+
 # Robust C# type loader: check file existence, abort if missing, check for loaded types, abort if loaded, else Add-Type
 
 $logBackendSourcecodePath = "$PSScriptRoot\src\LogBackend.cs"
@@ -65,10 +72,6 @@ if (-not (Test-Path $spectreConsolePath)) {
     return
 }
 
-# Check Spectre.Console.Testing.dll exists (required by the test suite only)
-if (-not (Test-Path $spectreTestingConsolePath)) {
-    Write-Warning "Spectre.Console.Testing.dll not found. Tests will not run. Run Install-LastWarAutoScreenshot to install it."
-}
 
 # 1. Check all files exist
 $missingFiles = @()
@@ -174,13 +177,6 @@ if (Test-Path "$privateScriptRoot") {
         }
     }
 }
-
-# ── Test console dimensions ────────────────────────────────────────────────────
-# Width and height for the Spectre.Console TestConsole injected by Pester tests.
-# Wide dimensions prevent table cell wrapping, eliminating regex test flakiness.
-# Change these values here to affect all test files simultaneously.
-$script:TestConsoleWidth  = 2560
-$script:TestConsoleHeight = 1440
 
 # Explicitly export Get-MonitorProcess first for testability
 Export-ModuleMember -Function Get-MonitorProcess

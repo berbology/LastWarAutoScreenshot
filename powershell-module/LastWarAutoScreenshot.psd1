@@ -12,7 +12,7 @@
 RootModule = 'LastWarAutoScreenshot.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '1.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -34,7 +34,7 @@ Description = 'Automates the task of taking screenshots within the game.
 Useful for capturing alliance strength, VS rankings etc.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '7.5.4'
+PowerShellVersion = '7.0'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -55,6 +55,9 @@ PowerShellVersion = '7.5.4'
 # RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
+# RequiredAssemblies is intentionally empty. Spectre.Console.dll is loaded by the psm1 via
+# guarded Add-Type calls. Populating RequiredAssemblies would cause a double-load before the
+# guard runs, producing 'Assembly already loaded' warnings. See LastWarAutoScreenshot.psm1.
 # RequiredAssemblies = @()
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
@@ -70,7 +73,7 @@ PowerShellVersion = '7.5.4'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Start-LWASConsole', 'Start-LWASEmergencyStopMonitor', 'Stop-LWASEmergencyStopMonitor', 'Get-LWASMonitorProcess', 'Install-LWASModule', 'Get-LWASTargetWindow', 'Get-LWASMacro', 'Start-LWASAutomationSequence', 'Register-LWASScheduledTask', 'Unregister-LWASScheduledTask', 'Get-LWASScheduledTask')
+FunctionsToExport = @('Start-LWASConsole', 'Start-LWASEmergencyStopMonitor', 'Stop-LWASEmergencyStopMonitor', 'Get-LWASMonitorProcess', 'Install-LWAS', 'Get-LWASTargetWindow', 'Get-LWASMacro', 'Start-LWASAutomationSequence', 'Register-LWASScheduledTask', 'Unregister-LWASScheduledTask', 'Get-LWASScheduledTask')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -96,10 +99,10 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('automation', 'gaming', 'mouse-control', 'screenshot', 'last-war', 'macro', 'scheduled-task', 'windows')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/berbology/LastWarAutoScreenshot/blob/main/LICENSE'
 
         # A URL to the main website for this project.
         ProjectUri = 'https://github.com/berbology/LastWarAutoScreenshot'
@@ -108,7 +111,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        ReleaseNotes = 'v1.0.0 — v1.0.0 - Initial release. Features: window management, mouse control, console UI, macro recording and playback, screenshot capture with optional similarity detection and image region masking, configuration and scheduling, module installation.'
 
         # Prerelease string of this module
         # Prerelease = ''

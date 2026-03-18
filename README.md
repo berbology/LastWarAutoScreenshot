@@ -40,22 +40,37 @@ adaptable to any application.
 
 ## Get Started
 
-### 1. Clone and import
+### 1. Download and install
 
-```powershell
-git clone https://github.com/berbology/LastWarAutoScreenshot.git
-cd LastWarAutoScreenshot
-Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
+1. Go to the [Releases](https://github.com/berbology/LastWarAutoScreenshot/releases)
+   page and download the latest `LastWarAutoScreenshot-v{version}.zip`.
+2. Extract the zip to any folder.
+3. Open a PowerShell 7 terminal in the extracted folder and run:
+
+   ```powershell
+   .\scripts\Install-LWAS.ps1
+   ```
+
+   The script self-elevates automatically — a UAC prompt will appear if your
+   session is not already running as Administrator.
+
+The module is installed to:
+
+```
+$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\{version}\
 ```
 
 ### 2. Launch the app
 
+Open any PowerShell 7 terminal and run:
+
 ```powershell
+Import-Module LastWarAutoScreenshot
 Start-LWASConsole
 ```
 
 The interactive console app is your entry point for everything: selecting a
-target window, adjusting mouse behaviour, configuring storage, and recording
+target window, adjusting mouse behaviour, configuring storage, and running
 macros. No manual JSON editing is required.
 
 ### 3. First run
@@ -68,17 +83,6 @@ a default `ModuleConfig.json` at:
 ```
 
 The main menu loads immediately. Nothing needs editing before you start.
-
-### 4. Optional — register the Windows Event Log source
-
-If you want log entries written to the Windows Event Log, run this **once**
-in an elevated (Administrator) PowerShell session:
-
-```powershell
-New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
-```
-
-File logging works without this step and is the default.
 
 ---
 

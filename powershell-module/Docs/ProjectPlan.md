@@ -4250,14 +4250,484 @@ All design questions have been resolved. The decisions below are recorded for re
 
 ## Phase 7: Module Installation & Versioning
 
-1. [ ] Implement PowerShell v7 best practices for module installation:
+### Architecture decisions (future reference)
 
-- Support installation to user and system module paths
-- Proper module manifest (psd1) with metadata
-- Exported functions defined in manifest (as developed)
-- Semantic versioning for module releases
+- **Distribution channel — GitHub Releases (zip):** Module is distributed as a versioned zip archive
+  attached to a GitHub Release (`LastWarAutoScreenshot-v{version}.zip`). No PowerShell Gallery
+  publication in this phase. Zip structure mirrors the repo layout so bootstrap script path
+  resolution works identically in both contexts:
 
-1. [ ] Create installation documentation and example commands
+  ```plaintext
+  LastWarAutoScreenshot-v1.0.0.zip
+  ├── scripts/
+  │   ├── Install-LWAS.ps1
+  │   └── Uninstall-LWAS.ps1
+  ├── LastWarAutoScreenshot/          ← the module folder (Tests/ and lib/test/ excluded)
+  └── LICENSE
+  ```
+
+- **`Install-LWAS` stays as a public function:** The canonical installation logic lives in
+  `Public/Install-LWAS.ps1` (renamed from `Install-LWASModule`). A thin bootstrap script
+  `scripts/Install-LWAS.ps1` self-elevates and delegates to the function, providing a
+  double-click entry point for first-time users who have not yet imported the module.
+
+- **`Uninstall-LWAS` is a standalone script, not a module function:** A module function cannot
+  remove the module that exports it. `scripts/Uninstall-LWAS.ps1` is self-contained and requires
+  no prior module import.
+
+- **Versioned install directory:** Module is installed to
+  `$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\{version}\` following the PowerShell
+  module versioning convention. This allows side-by-side versions and is what `Install-Module`
+  uses. `$HOME\Documents\PowerShell` is the standard user-scope module root on PowerShell 7+
+  (Windows).
+
+- **`Tests/`, `lib/test/`, and `Docs/` excluded from installed copy:** These are development
+  artefacts. Only runtime files are installed:
+  `*.psm1`, `*.psd1`, `src/`, `lib/` (minus `lib/test/`), `Public/`, `Private/`, `Private/ConsoleApp/`.
+
+- **`RequiredAssemblies` left empty with explanatory comment:** The psm1 already handles DLL
+  loading via guarded `Add-Type` calls. Populating `RequiredAssemblies` with the bundled DLL paths
+  would cause PowerShell to load them a second time before the psm1 guard runs, producing
+  `Assembly already loaded` warnings. The comment in the psd1 documents this decision.
+
+- **Event log source registered eagerly at install time:** Currently `Write-LastWarLog` registers
+  the `LastWarAutoScreenshot` event log source lazily on first use, requiring elevation at that
+  point. `Install-LWAS` pre-registers the source during installation (using the existing private
+  `Add-EventLogSource` / `Test-EventLogSourceExists` helpers) so subsequent log writes never need
+  elevation. The lazy fallback in `Write-LastWarLog` is retained as a safety net.
+
+- **DLL download as repair/verification step:** The bundled DLLs are tracked in git and present
+  in release zips. `Install-LWAS` checks their presence and offers to download from NuGet only
+  if they are missing (i.e. as a repair step). It does not download them unconditionally.
+
+- **`ModuleVersion` bumped to `1.0.0`:** Phase 7 is the first production-ready release. The
+  `ModuleVersion` field in `LastWarAutoScreenshot.psd1` is updated from `0.0.1` to `1.0.0`.
+  Subsequent bumps are manual: edit `ModuleVersion` and `ReleaseNotes` in the psd1, then run
+  `scripts/New-LWASRelease.ps1 -Version x.y.z`.
+
+- **`PowerShellVersion` lowered to `7.0`:** The module uses no features introduced after PS 7.0
+  (`ForEach-Object -Parallel` is 7.0, all other constructs are compatible). Setting it to
+  `7.5.4` (the developer's current runtime) is unnecessarily restrictive for users on older PS 7.x
+  builds.
+
+- **`New-LWASRelease.ps1` does not auto-tag git:** The script bumps the psd1, runs the test
+  suite, and creates the release zip. It then prints a post-release checklist instructing the
+  developer to commit the psd1 change, create the git tag (`git tag v{version}`), push, and
+  upload the zip to GitHub Releases. Git operations are not automated to keep the script safe
+  and auditable.
+
+- **MIT licence:** A `LICENSE` file is added to the repository root. `LicenseUri` in the psd1
+  PSData block points to the GitHub raw URL. `Copyright` in the psd1 is already present and
+  consistent with the licence.
+
+---
+
+1. [x] Add MIT `LICENSE` file to repo root
+
+   - [x] 1.1: Create `LICENSE` at the repository root (`C:\git\LastWarAutoScreenshot\LICENSE`) with
+     the standard MIT licence text, year `2026`, name `Paul Kathro`. Full text:
+
+     ```plaintext
+     MIT License
+
+     Copyright (c) 2026 Paul Kathro
+
+     Permission is hereby granted, free of charge, to any person obtaining a copy
+     of this software and associated documentation files (the "Software"), to deal
+     in the Software without restriction, including without limitation the rights
+     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+     copies of the Software, and to permit persons to whom the Software is
+     furnished to do so, subject to the following conditions:
+
+     The above copyright notice and this permission notice shall be included in all
+     copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+     SOFTWARE.
+     ```
+
+2. [x] Update `LastWarAutoScreenshot.psd1` metadata
+
+   - [x] 2.1: Set `ModuleVersion` from `'0.0.1'` to `'1.0.0'`.
+
+   - [x] 2.2: Set `PowerShellVersion` from `'7.5.4'` to `'7.0'`. Rationale: no module code uses
+     features introduced after PS 7.0; `7.5.4` is the developer's current runtime, not the minimum
+     requirement.
+
+   - [x] 2.3: Populate `Tags` in the `PSData` block:
+
+     ```powershell
+     Tags = @('automation', 'gaming', 'mouse-control', 'screenshot', 'last-war', 'macro', 'scheduled-task', 'windows')
+     ```
+
+   - [x] 2.4: Populate `LicenseUri` in the `PSData` block:
+
+     ```powershell
+     LicenseUri = 'https://github.com/berbology/LastWarAutoScreenshot/blob/main/LICENSE'
+     ```
+
+   - [x] 2.5: Populate `ReleaseNotes` in the `PSData` block with the v1.0.0 entry:
+
+     ```powershell
+     ReleaseNotes = 'v1.0.0 — Initial release. Phases 1–7: window management, mouse control, console UI, macro recording and playback, screenshot capture with similarity detection, configuration and scheduling, module installation.'
+     ```
+
+   - [x] 2.6: Add an explanatory comment to the `RequiredAssemblies` line to document why it is
+     intentionally empty:
+
+     ```powershell
+     # RequiredAssemblies is intentionally empty. Spectre.Console.dll is loaded by the psm1 via
+     # guarded Add-Type calls. Populating RequiredAssemblies would cause a double-load before the
+     # guard runs, producing 'Assembly already loaded' warnings. See LastWarAutoScreenshot.psm1.
+     # RequiredAssemblies = @()
+     ```
+
+   - [x] 2.7: Replace `'Install-LWASModule'` with `'Install-LWAS'` in `FunctionsToExport`.
+
+3. [x] Rename and expand `Install-LWASModule` → `Install-LWAS`
+
+   - [x] 3.1: Rename file `powershell-module/Public/Install-LWASModule.ps1` →
+     `powershell-module/Public/Install-LWAS.ps1`.
+
+   - [x] 3.2: Rename the function declaration from `Install-LWASModule` to `Install-LWAS` inside
+     the file.
+
+   - [x] 3.3: Add a `-Force` switch parameter. When present, overwrite an existing installation
+     without prompting.
+
+   - [x] 3.4: Add module copy logic as a new step after the admin check and .NET 9.0 verification:
+     - Resolve source module root: `$moduleRoot = Split-Path -Parent $PSScriptRoot`
+       (`$PSScriptRoot` is `Public/`; parent is the module root)
+     - Read version from the psd1: `$version = (Import-PowerShellDataFile (Join-Path $moduleRoot 'LastWarAutoScreenshot.psd1')).ModuleVersion`
+     - Resolve destination: `$installBase = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\LastWarAutoScreenshot'`
+       then `$installPath = Join-Path $installBase $version`
+     - If `$installPath` already exists and `-Force` is not specified: prompt user
+       `"An installation already exists at $installPath. Overwrite? [Y/N]"` — if `N`, write
+       `'Installation cancelled.'` and return
+     - Remove existing `$installPath` if present (so stale files from a previous install are not
+       left behind)
+     - Excluded items (do not copy): `Tests`, `lib\test`, `Docs` — use
+       `Get-ChildItem -Path $moduleRoot -Exclude 'Tests','Docs' -Force` then recurse,
+       filtering out `lib\test` by path during copy
+     - Use `Copy-Item -Path $moduleRoot\* -Destination $installPath -Recurse -Force`
+       followed by `Remove-Item -Path (Join-Path $installPath 'Tests') -Recurse -Force -ErrorAction SilentlyContinue`,
+       `Remove-Item -Path (Join-Path $installPath 'Docs') -Recurse -Force -ErrorAction SilentlyContinue`, and
+       `Remove-Item -Path (Join-Path $installPath 'lib\test') -Recurse -Force -ErrorAction SilentlyContinue`
+     - Write `"Module installed to $installPath"` on success
+     - On any error: `Write-Error` with the exception message; return
+
+   - [x] 3.5: Add Windows Event Log source registration as a new step after module copy:
+     - Call the module's existing private helpers (accessible because the module is loaded):
+       `$sourceExists = Test-EventLogSourceExists -Source 'LastWarAutoScreenshot'`
+     - If `$false`: call `Add-EventLogSource -Source 'LastWarAutoScreenshot' -LogName 'Application'`
+       inside a `try/catch`; on success write `"Windows Event Log source registered."`; on error
+       write a `Write-Warning` explaining the source was not registered and log writes will use
+       the fallback lazy registration
+     - If `$true`: write `"Windows Event Log source already registered, skipping."`
+
+   - [x] 3.6: Add `$env:APPDATA\LastWarAutoScreenshot\` directory creation as a new step:
+     - `$appDataPath = Join-Path $env:APPDATA 'LastWarAutoScreenshot'`
+     - If it does not exist: `New-Item -Path $appDataPath -ItemType Directory -Force | Out-Null`;
+       write `"Created config directory: $appDataPath"`
+     - If it already exists: write `"Config directory already exists, skipping."`
+
+   - [x] 3.7: Reframe the existing DLL download blocks (steps 4 and 5 in the original function)
+     as repair/verification steps. Update the `Write-Output` messages to reflect this:
+     - Change `"Downloading Spectre.Console $version from NuGet..."` →
+       `"Spectre.Console.dll missing — downloading from NuGet as repair step..."`
+     - Change `"Downloading Spectre.Console.Testing $version from NuGet..."` →
+       `"Spectre.Console.Testing.dll missing — downloading from NuGet as repair step..."`
+     - Add a heading `Write-Output ''` + `Write-Output '--- Dependency verification ---'` before
+       the DLL checks so the output is clearly grouped
+
+   - [x] 3.8: Update the success message (step 6 in the original function):
+     - Replace the existing `Read-Host 'Press Enter to continue'` line with a clean summary panel:
+
+       ```powershell
+       Write-Output ''
+       Write-Output 'Installation complete.'
+       Write-Output "  Module path : $installPath"
+       Write-Output "  Config path : $appDataPath"
+       Write-Output ''
+       Write-Output 'You can now use: Import-Module LastWarAutoScreenshot'
+       ```
+
+   - [x] 3.9: Update comment-based help:
+     - `.SYNOPSIS`: `'Installs the LastWarAutoScreenshot module and its dependencies.'`
+     - `.DESCRIPTION`: document all steps performed (copy to PSModulePath, event log registration,
+       config directory, DLL repair check), note elevation requirement, note `-Force` behaviour
+     - Add `.PARAMETER Force` entry
+     - Update `.EXAMPLE` to show both plain and `-Force` invocations
+
+4. [x] Create `scripts/Install-LWAS.ps1` bootstrap script
+
+   - [x] 4.1: Create the `scripts/` directory at the repository root
+     (`C:\git\LastWarAutoScreenshot\scripts\`).
+
+   - [x] 4.2: Create `scripts/Install-LWAS.ps1` with the following behaviour:
+     - Comment-based help at the top: `.SYNOPSIS 'Bootstrap installer for LastWarAutoScreenshot.'`
+       and `.DESCRIPTION` documenting that it self-elevates and delegates to `Install-LWAS`
+     - Self-elevation block: if the current principal is not Administrator, re-launch the script
+       via `Start-Process pwsh -Verb RunAs -ArgumentList "-NonInteractive -File \`"$PSCommandPath\`""` and `exit`
+     - Resolve the module manifest path relative to `$PSScriptRoot`:
+       `$manifest = Join-Path $PSScriptRoot '..\LastWarAutoScreenshot\LastWarAutoScreenshot.psd1'`
+       then `$manifest = (Resolve-Path $manifest).Path`
+     - Validate the manifest exists; if not, write an error explaining the expected directory
+       structure and exit with code 1
+     - Import the module: `Import-Module $manifest -Force`
+     - Call `Install-LWAS @args` (pass through any arguments, e.g. `-Force`)
+     - No `[CmdletBinding()]` or `param()` block — this is a script, not a function; pass-through
+       is handled by `@args`
+
+5. [x] Create `scripts/Uninstall-LWAS.ps1`
+
+   - [x] 5.1: Create `scripts/Uninstall-LWAS.ps1` with comment-based help:
+     - `.SYNOPSIS`: `'Uninstalls the LastWarAutoScreenshot module.'`
+     - `.DESCRIPTION`: documents the three removal steps (module directory, event log source,
+       optional appdata) and notes elevation requirement
+     - `.PARAMETER RemoveAppData`: switch; when present, also removes `$env:APPDATA\LastWarAutoScreenshot\`
+       including all config files and generated scheduler scripts. Default is to prompt.
+
+   - [x] 5.2: `[CmdletBinding(SupportsShouldProcess)]` and `param([switch]$RemoveAppData)` block.
+
+   - [x] 5.3: Admin check — same pattern as `Install-LWAS`: check `WindowsPrincipal.IsInRole`; if
+     not elevated write `Write-Warning` and `return`.
+
+   - [x] 5.4: Check if the module is currently loaded in the session:
+     `if (Get-Module -Name LastWarAutoScreenshot) { Write-Warning 'LastWarAutoScreenshot is currently imported in this session. Uninstalling while the module is loaded may leave assemblies in memory. Consider starting a new PowerShell session after uninstallation.' }`
+     — do not abort; this is advisory only.
+
+   - [x] 5.5: Locate all installed copies using `Get-Module -Name LastWarAutoScreenshot -ListAvailable`:
+     - For each `ModuleBase` path found: remove the directory with
+       `Remove-Item -Path $_.ModuleBase -Recurse -Force`; write `"Removed: $($_.ModuleBase)"`
+     - If no copies found via `Get-Module -ListAvailable`: fall back to checking
+       `$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\` directly; remove if present
+     - If still nothing found: write `"No installed module directories found in PSModulePath. Skipping module removal."` — do not error
+
+   - [x] 5.6: Remove Windows Event Log source:
+     - Check `[System.Diagnostics.EventLog]::SourceExists('LastWarAutoScreenshot')` in a
+       `try/catch`
+     - If exists: call `[System.Diagnostics.EventLog]::DeleteEventSource('LastWarAutoScreenshot')`
+       in a `try/catch`; on success write `"Windows Event Log source removed."`; on error
+       `Write-Warning` with the exception message
+     - If not exists: write `"Windows Event Log source not found, skipping."`
+
+   - [x] 5.7: Handle `$env:APPDATA\LastWarAutoScreenshot\` removal:
+     - `$appDataPath = Join-Path $env:APPDATA 'LastWarAutoScreenshot'`
+     - If the path does not exist: write `"Config directory not found, skipping."` and skip
+     - If `-RemoveAppData` was passed: remove without prompting
+     - Otherwise: prompt `"Remove config and scheduler files at $appDataPath? [Y/N]"` via
+       `Read-Host`; remove only if user answers `Y`/`y`
+     - Removal: `Remove-Item -Path $appDataPath -Recurse -Force`; on success write
+       `"Removed config directory: $appDataPath"`; on error `Write-Warning`
+
+   - [x] 5.8: Print a completion summary:
+
+     ```powershell
+     Write-Output ''
+     Write-Output 'Uninstallation complete.'
+     Write-Output 'Start a new PowerShell session to ensure no module assemblies remain in memory.'
+     ```
+
+6. [x] Create `scripts/New-LWASRelease.ps1`
+
+   - [x] 6.1: Comment-based help:
+     - `.SYNOPSIS`: `'Creates a versioned release zip for LastWarAutoScreenshot.'`
+     - `.DESCRIPTION`: documents the steps — version bump in psd1, Pester run, zip creation,
+       post-release checklist output
+     - `.PARAMETER Version`: required string; must match semver pattern `^\d+\.\d+\.\d+$`
+     - `.PARAMETER OutputDir`: optional string; default `$PSScriptRoot\..\releases`
+     - `.PARAMETER ReleaseNotes`: optional string; if omitted, user is prompted interactively
+     - `.PARAMETER SkipTests`: switch; skip the Pester run (intended for dry-run testing of the
+       script itself only — document this clearly)
+     - `.EXAMPLE`: `.\New-LWASRelease.ps1 -Version '1.1.0' -ReleaseNotes 'Bug fixes and performance improvements.'`
+
+   - [x] 6.2: `[CmdletBinding()]` and `param` block matching the parameters above.
+
+   - [x] 6.3: Validate `-Version` matches `^\d+\.\d+\.\d+$`; if not, `throw "Version must be in
+     semver format (e.g. '1.2.3'). Got: $Version"`
+
+   - [x] 6.4: Resolve paths:
+     - `$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path`
+     - `$moduleRoot = Join-Path $repoRoot 'LastWarAutoScreenshot'`
+
+     > Note: inside a release zip the module folder is named `LastWarAutoScreenshot`; in the repo it
+     > is `powershell-module`. The script therefore looks for the module at both locations in order:
+     > `powershell-module` first (repo context), then `LastWarAutoScreenshot` (zip context).
+     > Implementation: check `Test-Path (Join-Path $repoRoot 'powershell-module')` first;
+     > if true, set `$moduleRoot = Join-Path $repoRoot 'powershell-module'`; else set
+     > `$moduleRoot = Join-Path $repoRoot 'LastWarAutoScreenshot'`; if neither exists, `throw`.
+
+   - [x] 6.5: Collect release notes if not supplied via parameter:
+     - `if (-not $ReleaseNotes) { $ReleaseNotes = Read-Host "Enter release notes for v$Version" }`
+     - Validate non-empty; re-prompt if blank.
+
+   - [x] 6.6: Update `ModuleVersion` and `ReleaseNotes` in the psd1:
+     - `$psd1Path = Join-Path $moduleRoot 'LastWarAutoScreenshot.psd1'`
+     - Read the raw text: `$psd1Content = Get-Content $psd1Path -Raw`
+     - Replace `ModuleVersion` line using a regex: `$psd1Content -replace "ModuleVersion\s*=\s*'[^']+'"`, `"ModuleVersion = '$Version'"`
+     - Replace `ReleaseNotes` line using a regex: `$psd1Content -replace "ReleaseNotes\s*=\s*'[^']*'"`, `"ReleaseNotes = 'v$Version — $ReleaseNotes'"`
+     - Write back: `Set-Content -Path $psd1Path -Value $psd1Content -Encoding UTF8 -NoNewline`
+     - Write `"Updated psd1: ModuleVersion = $Version, ReleaseNotes updated."`
+
+   - [x] 6.7: Run the full Pester suite (unless `-SkipTests`):
+     - `$testsPath = Join-Path $moduleRoot 'Tests'`
+     - `$result = Invoke-Pester -Path $testsPath -Output Minimal -PassThru`
+     - If `$result.FailedCount -gt 0` or `$result.Result -ne 'Passed'`: `throw "Pester suite failed ($($result.FailedCount) failure(s)). Release zip not created. Fix all failures before releasing."`
+     - Write `"Pester: $($result.PassedCount) tests passed. Suite is green."`
+
+   - [x] 6.8: Create the output directory:
+     - Resolve `$OutputDir` to an absolute path
+     - `New-Item -Path $OutputDir -ItemType Directory -Force | Out-Null`
+
+   - [x] 6.9: Assemble the staging directory and create the zip:
+     - `$stagingRoot = Join-Path $env:TEMP "LWAS_Release_v$Version"`
+     - Remove staging dir if it already exists
+     - Create `$stagingRoot\LastWarAutoScreenshot\` and copy module files into it, excluding
+       `Tests`, `Docs`, and `lib\test`:
+       - `Copy-Item -Path $moduleRoot\* -Destination (Join-Path $stagingRoot 'LastWarAutoScreenshot') -Recurse -Force`
+       - Then prune: `Remove-Item (Join-Path $stagingRoot 'LastWarAutoScreenshot\Tests') -Recurse -Force -ErrorAction SilentlyContinue`
+       - `Remove-Item (Join-Path $stagingRoot 'LastWarAutoScreenshot\Docs') -Recurse -Force -ErrorAction SilentlyContinue`
+       - `Remove-Item (Join-Path $stagingRoot 'LastWarAutoScreenshot\lib\test') -Recurse -Force -ErrorAction SilentlyContinue`
+     - Copy `scripts\` folder: `Copy-Item -Path (Join-Path $repoRoot 'scripts') -Destination (Join-Path $stagingRoot 'scripts') -Recurse -Force`
+     - Copy `LICENSE`: `Copy-Item -Path (Join-Path $repoRoot 'LICENSE') -Destination $stagingRoot -Force`
+     - `$zipPath = Join-Path $OutputDir "LastWarAutoScreenshot-v$Version.zip"`
+     - Remove existing zip if present
+     - `Compress-Archive -Path "$stagingRoot\*" -DestinationPath $zipPath`
+     - Remove staging dir
+     - Write `"Release zip created: $zipPath"`
+
+   - [x] 6.10: Print post-release checklist:
+
+     ```powershell
+     Write-Output ''
+     Write-Output '=== Post-release checklist ==='
+     Write-Output "  1. Review and commit psd1 changes: git add powershell-module/LastWarAutoScreenshot.psd1 && git commit -m 'chore(release): bump version to $Version'"
+     Write-Output "  2. Tag the release:                git tag v$Version"
+     Write-Output "  3. Push tag and branch:            git push && git push origin v$Version"
+     Write-Output "  4. Upload release zip to GitHub:   $zipPath"
+     Write-Output '  5. Create GitHub Release, paste release notes, attach zip.'
+     Write-Output '==============================='
+     ```
+
+7. [x] Create `powershell-module/Tests/Install-LWAS.Tests.ps1`
+
+   - [x] 7.1: `BeforeAll` block — import module via manifest path; do NOT load
+     `Spectre.Console.Testing.dll` (not needed for these tests).
+
+   - [x] 7.2: For all tests: mock the following to prevent side effects:
+     - `Test-Path` (scoped to avoid breaking module loading)
+     - `Copy-Item`
+     - `Remove-Item`
+     - `New-Item`
+     - `Import-PowerShellDataFile` (return a hashtable with `ModuleVersion = '1.0.0'`)
+     - `Test-EventLogSourceExists`
+     - `Add-EventLogSource`
+     - `Invoke-WebRequest`
+     - `Expand-Archive`
+
+   - [x] 7.3: Test: not elevated → `Write-Warning` called; function returns without calling
+     `Copy-Item`. Mock `[Security.Principal.WindowsPrincipal]` role check to return `$false`.
+     Use `InModuleScope LastWarAutoScreenshot` to access the function.
+
+   - [x] 7.4: Test: elevated + .NET 9.0 present → `dotnet --list-runtimes` mock returns a string
+     containing `'Microsoft.NETCore.App 9.'`; confirm no winget call (mock `Start-Process`
+     and assert it is not called with id `Microsoft.DotNet.Runtime.9`).
+
+   - [x] 7.5: Test: elevated + .NET 9.0 missing + user answers `'N'` → function returns early;
+     `Copy-Item` not called.
+
+   - [x] 7.6: Test: install path does not exist → `Copy-Item` called with destination containing
+     the version subfolder `'1.0.0'`.
+
+   - [x] 7.7: Test: install path already exists + user answers `'N'` to overwrite → `Copy-Item`
+     not called; `Write-Output` includes `'Installation cancelled.'`
+
+   - [x] 7.8: Test: install path already exists + `-Force` switch → `Copy-Item` called without
+     prompting.
+
+   - [x] 7.9: Test: event log source does not exist → `Add-EventLogSource` called with
+     `-Source 'LastWarAutoScreenshot'` and `-LogName 'Application'`.
+
+   - [x] 7.10: Test: event log source already exists → `Add-EventLogSource` not called.
+
+   - [x] 7.11: Test: appdata directory does not exist → `New-Item` called with the appdata path.
+
+   - [x] 7.12: Test: appdata directory already exists → `New-Item` not called; output contains
+     `'already exists'`.
+
+   - [x] 7.13: Test: both DLLs present → `Invoke-WebRequest` not called; output contains
+     `'already present'` for both.
+
+   - [x] 7.14: Test: `Spectre.Console.dll` missing → `Invoke-WebRequest` called with a URL
+     matching `'Spectre.Console'` (not `'Spectre.Console.Testing'`).
+
+   - [x] 7.15: Run full Pester suite; confirm count increases from Phase 6 final baseline.
+
+8. [x] Update `powershell-module/Docs/Developer.md` with installation and release documentation
+
+   - [x] 8.1: Add an **Installation** section documenting both install paths:
+     - **From a GitHub Release zip:** extract the zip; run `scripts/Install-LWAS.ps1` (self-elevates
+       automatically); then use `Import-Module LastWarAutoScreenshot` from any session
+     - **From the repo (development):** `Import-Module .\powershell-module\LastWarAutoScreenshot.psd1 -Force`;
+       optionally run `Install-LWAS` to register to PSModulePath
+     - Document the installed path convention (`$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\{version}\`)
+     - Document the `-Force` flag for overwriting an existing install
+
+   - [x] 8.2: Add an **Uninstallation** section:
+     - Show `scripts/Uninstall-LWAS.ps1` and `scripts/Uninstall-LWAS.ps1 -RemoveAppData`
+     - Note that a new session is recommended after uninstall
+
+   - [x] 8.3: Add a **Creating a Release** section:
+     - Pre-requisites: all Pester tests passing, psd1 metadata reviewed
+     - Command: `scripts/New-LWASRelease.ps1 -Version 'x.y.z' -ReleaseNotes 'Description of changes.'`
+     - Output location and post-release checklist steps
+
+   - [x] 8.4: Update `CLAUDE.md` commands section:
+     - Add `Install-LWAS` with example (replacing `Install-LWASModule`)
+     - Add note about `scripts/Install-LWAS.ps1` for bootstrap use
+
+9. [x] Final validation
+
+   - [x] 9.1: Run the complete, unfiltered Pester suite:
+     - Record total test count; must meet or exceed the Phase 6 final baseline plus all new Phase 7
+       tests added in task 7
+     - 0 failures, 0 errors
+     - If any previously-passing test now fails, halt and investigate; do not proceed
+
+   - [x] 9.2: Manually smoke-test `Install-LWAS` in an elevated PowerShell 7 terminal:
+     - `Import-Module .\powershell-module\LastWarAutoScreenshot.psd1 -Force`
+     - `Install-LWAS`
+     - Verify the versioned folder exists at `$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\1.0.0\`
+     - Verify `Tests\`, `Docs\`, and `lib\test\` are absent from the installed copy
+     - Verify `[System.Diagnostics.EventLog]::SourceExists('LastWarAutoScreenshot')` returns `$true`
+     - Verify `$env:APPDATA\LastWarAutoScreenshot\` exists
+     - Open a new PowerShell session and verify `Import-Module LastWarAutoScreenshot` succeeds
+       without specifying a path
+
+   - [x] 9.3: Manually smoke-test `scripts/Install-LWAS.ps1` in a *non-elevated* terminal:
+     - Verify it relaunches itself elevated (UAC prompt appears)
+     - Verify post-elevation execution completes successfully
+
+   - [x] 9.4: Manually smoke-test `scripts/Uninstall-LWAS.ps1`:
+     - Run without `-RemoveAppData`; verify module directories removed from PSModulePath;
+       verify event log source removed; verify `$env:APPDATA\LastWarAutoScreenshot\` still exists
+     - Run again with `-RemoveAppData`; verify appdata directory removed
+     - Run `Get-Module -Name LastWarAutoScreenshot -ListAvailable` in a new session; verify
+       nothing returned
+
+   - [x] 9.5: Manually smoke-test `scripts/New-LWASRelease.ps1 -Version '1.0.0' -SkipTests`:
+     - Verify psd1 `ModuleVersion` updated to `'1.0.0'`
+     - Verify zip created at `releases\LastWarAutoScreenshot-v1.0.0.zip`
+     - Inspect zip contents: confirm `LastWarAutoScreenshot\` module folder present;
+       `Tests\`, `Docs\`, `lib\test\` absent; `scripts\Install-LWAS.ps1` and
+       `scripts\Uninstall-LWAS.ps1` present; `LICENSE` present
+     - Revert psd1 change (the real version bump will happen at actual release time)
 
 ## Phase 8: Documentation & Examples
 

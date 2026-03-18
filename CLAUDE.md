@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PowerShell 7+ module (`LastWarAutoScreenshot`) that automates human-like mouse interactions and screen captures on Windows, targeting the game Last War: Survival. Uses Win32 P/Invoke via inline C# for mouse control and window enumeration, and Spectre.Console for the interactive console UI.
 
-**Current status:** Phase 6 (Configuration & Scheduling).
+**Current status:** Phase 7 (Module Installation & Versioning).
 
 ## Commands
 
@@ -34,6 +34,13 @@ Register-LWASScheduledTask -MacroName 'my-macro-1' -ProcessName 'lastwar.exe' -S
 Get-LWASScheduledTask                      # List all scheduled macro tasks
 Get-LWASScheduledTask -MacroName 'my-macro-1'    # Get a specific task by macro name
 Unregister-LWASScheduledTask -MacroName 'my-macro-1'   # Remove a scheduled task
+
+# Install the module (must be run as Administrator)
+Install-LWAS                               # Install to PSModulePath, prompt before overwriting
+Install-LWAS -Force                        # Overwrite existing installation without prompting
+
+# Bootstrap install from a release zip (self-elevates automatically)
+# .\scripts\Install-LWAS.ps1              # Run from extracted zip directory
 
 # Run full test suite (always run the full suite, never filter)
 Invoke-Pester -Path .\powershell-module\Tests -Output Detailed

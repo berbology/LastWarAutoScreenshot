@@ -1,6 +1,7 @@
 BeforeAll {
     # Tests\ConsoleApp\ is two levels below the module root; go up twice to find the manifest
     $moduleManifest = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
 
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
@@ -376,7 +377,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
                 $tc.Input.PushTextWithEnter('lastwar.exe')                    # Process name
                 $tc.Input.PushTextWithEnter('01/01/3000 09:00')               # Start date
-                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 10; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Custom
                 $tc.Input.PushTextWithEnter('0')                              # Hours = 0 (first attempt)
                 $tc.Input.PushTextWithEnter('0')                              # Minutes = 0 → error, re-prompt
@@ -414,7 +415,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
                 $tc.Input.PushTextWithEnter('lastwar.exe')                    # Process name
                 $tc.Input.PushTextWithEnter('01/01/3000 09:00')               # Start date
-                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 10; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Custom
                 $tc.Input.PushTextWithEnter('1')                              # Hours = 1
                 $tc.Input.PushTextWithEnter('30')                             # Minutes = 30 → 90 min total

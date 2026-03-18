@@ -2,6 +2,7 @@
 
 BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
     $testLogDir = Join-Path $PSScriptRoot 'testlogs'
     if (-not (Test-Path $testLogDir)) { New-Item -Path $testLogDir -ItemType Directory | Out-Null }

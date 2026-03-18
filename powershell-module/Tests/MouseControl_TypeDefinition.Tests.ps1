@@ -3,6 +3,7 @@
 
 BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
 }
 

@@ -191,11 +191,12 @@ function Register-LWASScheduledTask {
         if ($PSBoundParameters.ContainsKey('RepeatEvery')) {
             $trigger = New-ScheduledTaskTrigger -Once -At $StartAt -RepetitionInterval $RepeatEvery `
                 -ErrorAction Stop
-            if ($RepeatFor -ne [TimeSpan]::MaxValue) {
-                $trigger.RepetitionDuration = $RepeatFor
-            }
         } else {
             $trigger = New-ScheduledTaskTrigger -Once -At $StartAt -ErrorAction Stop
+        }
+
+        if ($RepeatFor -ne [TimeSpan]::MaxValue) {
+            $trigger.RepetitionDuration = $RepeatFor
         }
 
         if ($RandomDelayMinutes -gt 0) {

@@ -1,5 +1,6 @@
 BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
     # Create the screenshots directory in TestDrive for all tests
     New-Item -ItemType Directory -Path 'TestDrive:\Screenshots' -Force | Out-Null

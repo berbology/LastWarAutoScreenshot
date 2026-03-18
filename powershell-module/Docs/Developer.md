@@ -9,8 +9,12 @@ list and architecture decisions see [ProjectPlan.md](ProjectPlan.md).
 
 ## Contents
 
+- [Getting started](#getting-started)
 - [Repository structure](#repository-structure)
 - [Module loading](#module-loading)
+- [Installation](#installation)
+- [Uninstallation](#uninstallation)
+- [Creating a release](#creating-a-release)
 - [Running the test suite](#running-the-test-suite)
 - [Console app — IAnsiConsole injection](#console-app--iansiConsole-injection)
 - [Adding a new screen](#adding-a-new-screen)
@@ -18,6 +22,61 @@ list and architecture decisions see [ProjectPlan.md](ProjectPlan.md).
 - [Spectre.Console markup rules](#spectreconsole-markup-rules)
 - [Invoke-MouseDragClick](#invoke-mousedragclick)
 - [Further reading](#further-reading)
+
+---
+
+## Getting started
+
+### 1. Clone the repository
+
+```powershell
+git clone https://github.com/berbology/LastWarAutoScreenshot.git
+cd LastWarAutoScreenshot
+```
+
+### 2. Import the module
+
+```powershell
+Import-Module .\powershell-module\LastWarAutoScreenshot.psd1 -Force
+```
+
+Use `-Force` whenever you make changes to module files and need to reload.
+
+### 3. Launch the app
+
+```powershell
+Start-LWASConsole
+```
+
+### 4. Run the test suite
+
+```powershell
+Invoke-Pester -Path .\powershell-module\Tests -Output Detailed
+```
+
+Always run the full suite — never filter by file or tag unless debugging a
+specific failure. All tests must pass before any change is committed.
+
+### 5. Optional — install to PSModulePath
+
+To use `Import-Module LastWarAutoScreenshot` (without specifying a path) from
+any terminal, install the module in an elevated PowerShell session:
+
+```powershell
+Install-LWAS
+```
+
+Use `-Force` to overwrite an existing installation without prompting:
+
+```powershell
+Install-LWAS -Force
+```
+
+The module is installed to:
+
+```
+$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\{version}\
+```
 
 ---
 
@@ -67,6 +126,94 @@ On import, `LastWarAutoScreenshot.psm1`:
    - All other `Private/*.ps1`
    - `Private/ConsoleApp/*.ps1`
    - `Public/*.ps1`
+
+---
+
+## Installation
+
+### From a GitHub Release zip
+
+1. Download and extract `LastWarAutoScreenshot-v{version}.zip`.
+2. Open an elevated PowerShell terminal and run:
+
+   ```powershell
+   .\scripts\Install-LWAS.ps1
+   ```
+
+   The script self-elevates automatically if the current session is not already
+   elevated (re-launches via `Start-Process pwsh -Verb RunAs`).
+
+3. After installation, import the module from any session:
+
+   ```powershell
+   Import-Module LastWarAutoScreenshot
+   ```
+
+The module is installed to:
+
+```
+$HOME\Documents\PowerShell\Modules\LastWarAutoScreenshot\{version}\
+```
+
+This follows the PowerShell module versioning convention (same as `Install-Module`)
+and allows side-by-side versions.
+
+### From the repo (development)
+
+```powershell
+Import-Module .\powershell-module\LastWarAutoScreenshot.psd1 -Force
+```
+
+To also register the module to PSModulePath (optional):
+
+```powershell
+Install-LWAS
+```
+
+Use `-Force` to overwrite an existing installation without prompting:
+
+```powershell
+Install-LWAS -Force
+```
+
+---
+
+## Uninstallation
+
+```powershell
+# Remove the module and event log source; prompt before removing AppData
+.\scripts\Uninstall-LWAS.ps1
+
+# Remove everything including AppData directory without prompting
+.\scripts\Uninstall-LWAS.ps1 -RemoveAppData
+```
+
+After uninstalling, start a new PowerShell session to ensure no module
+assemblies remain loaded in memory.
+
+---
+
+## Creating a release
+
+**Pre-requisites:** all Pester tests passing; psd1 metadata reviewed.
+
+```powershell
+.\scripts\New-LWASRelease.ps1 -Version '1.1.0' -ReleaseNotes 'Description of changes.'
+```
+
+The script:
+
+1. Validates the version string (semver `x.y.z`).
+2. Updates `ModuleVersion` and `ReleaseNotes` in the psd1.
+3. Runs the full Pester suite (abort on failure).
+4. Creates the release zip at `releases\LastWarAutoScreenshot-v{version}.zip`.
+5. Prints a post-release checklist:
+   - Commit the psd1 change
+   - `git tag v{version}`
+   - `git push && git push origin v{version}`
+   - Upload the zip to GitHub Releases
+
+The `releases/` directory is in `.gitignore` and is created at runtime.
 
 ---
 

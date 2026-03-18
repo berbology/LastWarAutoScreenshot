@@ -4,6 +4,7 @@
 BeforeAll {
     # Tests\ConsoleApp\ is two levels below the module root; navigate up twice to find the manifest
     $moduleManifest = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
 }
 

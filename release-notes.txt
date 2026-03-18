@@ -1,0 +1,76 @@
+# LastWarAutoScreenshot v1.0.0
+
+## Overview
+
+LastWarAutoScreenshot is a comprehensive PowerShell 7+ automation module for Last War: Survival, enabling human-like mouse interactions, strategic screen captures, and scheduled macro execution on Windows systems.
+
+This is the 1.0.0 stable release, featuring a complete end-to-end automation workflow with configuration management, scheduled tasks, and an intuitive console interface.
+
+## Features
+
+- Interactive Console UI – Spectre.Console-powered menu system for macro management, configuration, and scheduling
+- Macro System – Record, store, and execute complex automation sequences with human-like timing and mouse control
+- Scheduling Engine – Register macros as Windows scheduled tasks with flexible repeat intervals
+- Window Enumeration – Target automation to specific windows by process name or window title
+- Configuration Persistence – JSON-based configuration stored in %APPDATA%\LastWarAutoScreenshot\
+- Module Installation – Bootstrap installer script for easy deployment from release packages
+- Full Test Coverage – 100+ Pester integration tests across all public and internal functions
+- Win32 P/Invoke – Direct mouse control and window APIs via inline C# for maximum reliability
+
+## Key Capabilities
+
+# Interactive entry point
+Start-LWASConsole
+
+# Programmatic automation
+Get-LWASTargetWindow -ProcessName 'lastwar.exe' -First | Start-LWASAutomationSequence -MacroName 'farm-resources'
+
+# Scheduled execution
+Register-LWASScheduledTask -MacroName 'farm-resources' -ProcessName 'lastwar.exe' -RepeatEvery (New-TimeSpan -Hours 6)
+
+## Installation
+
+Recommended: Use the bootstrap installer
+Extract the release zip and run (requires Administrator):
+.\scripts\Install-LWAS.ps1
+
+Or install manually:
+Install-LWAS -Force
+
+Or import directly:
+Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
+
+## Requirements
+
+- PowerShell 7.0+ (Windows PowerShell 5.1 not supported)
+- Windows 10/11 (Win32 APIs required)
+- Administrator privileges for scheduled tasks and window enumeration
+
+## Breaking Changes
+
+None. This is the initial stable release.
+
+## Known Limitations
+
+- Macros must be manually configured via the console UI (macro file import/export planned for v1.1)
+- Spectre.Console DLL bundled with module; updates require module reinstall
+- Scheduled tasks use Windows Task Scheduler (not suitable for high-frequency repeats < 1 minute)
+
+## Documentation
+
+- Architecture: See Docs/Architecture.md for module design and C# integration details
+- Command Reference: Run Get-Command -Module LastWarAutoScreenshot -Full for full cmdlet help
+- Examples: Get-Help Start-LWASAutomationSequence -Examples
+
+## Bug Reports & Feedback
+
+Issues and feature requests: GitHub Issues
+
+## Contributors
+
+- Module Design & Implementation – Paul Kathro
+
+---
+
+Release Date: March 2026
+License: [Your License Here]

@@ -9,7 +9,8 @@ Describe 'Get-RandomTargetPosition' -Tag 'Unit' {
 
     BeforeAll {
         $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
-        Import-Module $moduleManifest -Force
+        Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
+    Import-Module $moduleManifest -Force
         Mock Write-LastWarLog { } -ModuleName LastWarAutoScreenshot
     }
 
