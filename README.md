@@ -88,14 +88,14 @@ step-by-step first-use walkthrough.
 4. Name action eg. "click-score-icon-1" and save
 5. When done adding macro sequence steps, select "Save macro"
 
----
-
 ### 5. Run macro
 
 1. Ensure LWAS console and target window are visible
 2. Select "Run macro"
 3. Choose macro from list
 4. Click "Run"
+
+---
 
 ## Features
 
