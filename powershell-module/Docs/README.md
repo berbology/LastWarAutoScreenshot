@@ -338,8 +338,8 @@ and action type reference.
 
 ## Roadmap
 
-See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 5 (Screenshot
-Management) complete. Phase 6 (Configuration & Scheduling) is next.
+See [ProjectPlan.md](ProjectPlan.md). Phase 7 (Module Installation &
+Versioning) complete. Phase 8 (Documentation & Examples) in progress.
 
 ## License
 

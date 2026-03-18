@@ -108,7 +108,7 @@ powershell-module/
 ```
 
 Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`.
-Macros are stored in `Private/Macros/` (Phase 4).
+Macros are stored in `Private/Macros/`.
 
 ---
 

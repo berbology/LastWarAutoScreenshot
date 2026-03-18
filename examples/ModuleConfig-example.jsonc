@@ -1,0 +1,202 @@
+{
+    // MouseControl — controls how the cursor moves to avoid looking like a bot.
+    "MouseControl": {
+        // Slow at start/end of path, fast in the middle.
+        // Type: bool | Default: true
+        "EasingEnabled": true,
+
+        // Overshoot the target then correct back for a more natural motion.
+        // Type: bool | Default: true
+        "OvershootEnabled": true,
+
+        // Scale of the overshoot. 0.0 = no overshoot, 1.0 = maximum overshoot.
+        // Type: double | Range: 0.0–1.0 | Default: 0.1
+        "OvershootFactor": 0.1,
+
+        // Insert random hesitation pauses along the movement path.
+        // Type: bool | Default: true
+        "MicroPausesEnabled": true,
+
+        // Probability of a micro-pause at each path step (0.0 = never, 1.0 = always).
+        // Type: double | Range: 0.0–1.0 | Default: 0.2
+        "MicroPauseChance": 0.2,
+
+        // Minimum duration of a micro-pause, in milliseconds.
+        // Type: int | Range: 1–5000 | Default: 20
+        "MinMicroPauseDurationMs": 20,
+
+        // Maximum duration of a micro-pause, in milliseconds.
+        // Type: int | Range: 1–5000 | Default: 80
+        "MaxMicroPauseDurationMs": 80,
+
+        // Add slight wobble to the movement path.
+        // Type: bool | Default: true
+        "JitterEnabled": true,
+
+        // Maximum wobble radius in pixels (0 = no wobble).
+        // Type: int | Range: 0–20 | Default: 2
+        "JitterRadiusPx": 2,
+
+        // Controls the sharpness of the Bézier curve.
+        // 0.0 = straight line, 2.0 = very sharp curve.
+        // Type: double | Range: 0.0–2.0 | Default: 0.3
+        "BezierControlPointOffsetFactor": 0.3,
+
+        // Minimum total movement duration, in milliseconds.
+        // Type: int | Range: 10–10000 | Default: 200
+        "MinMovementDurationMs": 200,
+
+        // Maximum total movement duration, in milliseconds.
+        // Type: int | Range: 10–10000 | Default: 600
+        "MaxMovementDurationMs": 600,
+
+        // [min, max] range for how long the mouse button is held during a click (ms).
+        // Type: int[] (2 elements) | Default: [50, 150]
+        "ClickDownDurationRangeMs": [50, 150],
+
+        // [min, max] range for the delay before a click fires (ms).
+        // Type: int[] (2 elements) | Default: [50, 200]
+        "ClickPreDelayRangeMs": [50, 200],
+
+        // Minimum delay after a click completes, in milliseconds.
+        // Type: int | Range: 0–10000 | Default: 100
+        "MinClickPostDelayMs": 100,
+
+        // Maximum delay after a click completes, in milliseconds.
+        // Type: int | Range: 0–10000 | Default: 300
+        "MaxClickPostDelayMs": 300,
+
+        // Number of interpolated points along the Bézier path.
+        // Higher values produce smoother movement but consume slightly more CPU.
+        // Type: int | Range: 5–200 | Default: 20
+        "PathPointCount": 20
+    },
+
+    // EmergencyStop — hotkey and mouse gesture that immediately halt any running macro.
+    "EmergencyStop": {
+        // Start the emergency-stop monitor automatically when a macro begins.
+        // Type: bool | Default: true
+        "AutoStart": true,
+
+        // Virtual key codes that must all be held simultaneously to trigger the stop.
+        // Default is Ctrl+Shift+# (UK layout): Ctrl=17, Shift=16, #=220 (0xDC).
+        // Key 220 (0xDC) is '#' on UK keyboards and '\' on US keyboards.
+        // Adjust for your keyboard layout if the hotkey does not fire.
+        // Type: int[] | Default: [17, 16, 220]
+        "HotkeyVKeyCodes": [17, 16, 220],
+
+        // How often the hotkey state is checked, in milliseconds.
+        // Type: int | Range: 10–5000 | Default: 100
+        "PollIntervalMs": 100,
+
+        // Allow holding both mouse buttons for MouseGestureHoldDurationMs to trigger a stop.
+        // Type: bool | Default: true
+        "MouseGestureEnabled": true,
+
+        // How long both mouse buttons must be held to trigger the gesture stop, in milliseconds.
+        // Type: int | Range: 500–30000 | Default: 3000
+        "MouseGestureHoldDurationMs": 3000
+    },
+
+    // Screenshots — where captured images are saved and how they are named.
+    "Screenshots": {
+        // Folder where screenshot files are written.
+        // Empty string means not configured; screenshot actions are skipped with a warning.
+        // Type: string | Default: ""
+        "StoragePath": "",
+
+        // Maximum total storage used by screenshots before old files are pruned, in gigabytes.
+        // Type: double | Range: 0.1–2048 | Default: 2.0
+        "MaxStorageGB": 2.0,
+
+        // Warn when screenshot storage usage exceeds this percentage of MaxStorageGB.
+        // Type: int | Range: 1–99 | Default: 90
+        "StorageWarningThresholdPercent": 90,
+
+        // File format for saved screenshots. Only "PNG" is currently supported.
+        // Type: string | Accepted: "PNG" | Default: "PNG"
+        "FileFormat": "PNG",
+
+        // Pattern used to build screenshot filenames (without the .png extension).
+        // Supported placeholders: {MacroName}, {ActionName}, {Timestamp}, {Date}, {Time}, {Index}
+        // {Timestamp} expands to yyyyMMdd_HHmmss (UTC). {Index} is zero-padded per macro run.
+        // Type: string | Default: "{MacroName}_{ActionName}_{Timestamp}_{Index}"
+        "FilenamePattern": "{MacroName}_{ActionName}_{Timestamp}_{Index}",
+
+        // Colour used to fill mask regions before a screenshot is saved.
+        // Accepted formats: named colour ("red", "dark blue"), RGB triplet ("255,0,0"),
+        // or 6-character hex code ("FF0000"). Default is pure black.
+        // Type: string | Default: "0,0,0"
+        "MaskColour": "0,0,0",
+
+        // SimilarityCheck — automatic duplicate detection between consecutive screenshots.
+        "SimilarityCheck": {
+            // Enable or disable duplicate detection.
+            // Type: bool | Default: false
+            "Enabled": false,
+
+            // Fraction of sampled pixels that must match to be considered similar (0.98 = 98%).
+            // Sampling is grid-based and reproducible across runs.
+            // Type: double | Range: 0.01–1.0 | Default: 0.98
+            "Threshold": 0.98,
+
+            // Number of pixels sampled per comparison. Ignored when FullScan is true.
+            // Type: int | Range: 100–100000 | Default: 1000
+            "SampleCount": 1000,
+
+            // Compare every pixel instead of a sample — more accurate but slower.
+            // Type: bool | Default: false
+            "FullScan": false,
+
+            // Maximum per-channel (R/G/B) difference that still counts as a matching pixel.
+            // 0 = exact match required. 10 = allows slight colour drift.
+            // Type: int | Range: 0–255 | Default: 10
+            "TolerancePerChannel": 10,
+
+            // Action to take when the similarity threshold is reached.
+            // "StopLoop"  — exit the current loop; macro continues (ideal for scroll loops)
+            // "StopMacro" — halt the entire macro
+            // "Warn"      — log a warning and continue
+            // Type: string | Accepted: "StopLoop", "StopMacro", "Warn" | Default: "StopLoop"
+            "Action": "StopLoop",
+
+            // How many consecutive similar screenshots must occur before the action fires.
+            // Set to 1 to act on the first match; higher values reduce false positives.
+            // Type: int | Range: 1–100 | Default: 1
+            "ConsecutiveThreshold": 1
+        }
+    },
+
+    // Logging — where log entries are written and at what verbosity.
+    "Logging": {
+        // Log destination. Use "File,EventLog" to write to both simultaneously.
+        // "File"           — writes to LastWarAutoScreenshot.log in the module directory
+        // "EventLog"       — writes to the Windows Application event log
+        // "File,EventLog"  — writes to both
+        // Type: string | Accepted: "File", "EventLog", "File,EventLog" | Default: "EventLog"
+        "Backend": "EventLog",
+
+        // Minimum severity level to record. Entries below this level are discarded.
+        // "Verbose" — every internal step (noisy; useful for debugging)
+        // "Info"    — normal operations and state changes
+        // "Warning" — recoverable issues
+        // "Error"   — failures and exceptions
+        // Type: string | Accepted: "Verbose", "Info", "Warning", "Error" | Default: "Info"
+        "MinimumLogLevel": "Info",
+
+        // FileBackend — settings that apply when Backend includes "File".
+        "FileBackend": {
+            // Roll over to a new log file when this size (in MB) is reached.
+            // Type: int | Range: 1–10240 | Default: 10
+            "MaxSizeMB": 10,
+
+            // Delete log files older than this many days.
+            // Type: int | Range: 1–3650 | Default: 30
+            "MaxAgeDays": 30,
+
+            // Maximum number of log files to keep; the oldest is deleted when the limit is reached.
+            // Type: int | Range: 1–100000 | Default: 500
+            "MaxLogFileCount": 500
+        }
+    }
+}

@@ -96,6 +96,35 @@ the sequence in the order defined by its `actionNames` array.
 
 ---
 
+## Window-relative coordinate system
+
+All coordinates in macro action fields are expressed as fractions of the
+window's client-area dimensions.
+
+```
+(0.0, 0.0) ────────── X → ──────────── (1.0, 0.0)
+    │                                        │
+    Y            centre (0.5, 0.5)           │
+    ↓                                        │
+(0.0, 1.0) ──────────────────────────── (1.0, 1.0)
+```
+
+- **Origin** `(0.0, 0.0)` — top-left corner of the window client area
+- **X axis** — increases rightward; `1.0` = right edge
+- **Y axis** — increases downward; `1.0` = bottom edge
+
+Pixel positions are computed at execution time from the live window bounds.
+Moving or resizing the game window does not invalidate recorded coordinates —
+the module reads the current bounds on every action.
+
+**Conversion example:** for a window 800 × 600 px, `relativeX: 0.5,
+relativeY: 0.25` resolves to pixel (400, 150).
+
+Coordinate values outside `[0.0, 1.0]` are invalid and cause a validation
+error at save time. See [Validation rules summary](#validation-rules-summary).
+
+---
+
 ## Action type reference
 
 ### `MoveToPoint`
@@ -115,8 +144,8 @@ Move the mouse to an exact window-relative position.
 
 | Field | Type | Range | Description |
 |-------|------|-------|-------------|
-| `position.relativeX` | double | 0.0–1.0 | Horizontal position relative to window width. 0.0 = left edge, 1.0 = right edge. |
-| `position.relativeY` | double | 0.0–1.0 | Vertical position relative to window height. 0.0 = top edge, 1.0 = bottom edge. |
+| `position.relativeX` | double | 0.0–1.0 | Horizontal position. See [Window-relative coordinate system](#window-relative-coordinate-system). |
+| `position.relativeY` | double | 0.0–1.0 | Vertical position. See [Window-relative coordinate system](#window-relative-coordinate-system). |
 
 ---
 
@@ -266,10 +295,10 @@ Naming screenshot actions is recommended when they will be referenced by loops.
 
 #### Screenshot Capture Behaviour
 
-`region.topLeft` and `region.bottomRight` are window-relative coordinates
-(0.0–1.0 on each axis). The capture region is computed at execution time using
-the live window bounds — the window must be open, visible, and in windowed or
-borderless-windowed mode (not minimised, not exclusive fullscreen).
+Coordinates use the [window-relative system](#window-relative-coordinate-system).
+The capture region is computed at execution time using the live window bounds —
+the window must be open, visible, and in windowed or borderless-windowed mode
+(not minimised, not exclusive fullscreen).
 
 The full window is never captured — only the rectangle defined by `topLeft`
 and `bottomRight` is written to disk. Capture uses `PrintWindow` with the
