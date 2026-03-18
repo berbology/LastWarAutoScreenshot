@@ -161,7 +161,7 @@ them in the sequence:
    `*.json` file exists in `Private/Macros/`).
 2. Choose the macro from the list (displayed as `<name> (dd/MM/yy HH:mm:ss)`).
 3. A summary table shows all actions before you confirm.
-4. Select **"Yes, run now"** to start execution.
+4. Select **"Run"** to start execution.
 
 The module validates the target window before running. If the window is not
 open you will see an error and be returned to the macro list.

@@ -241,7 +241,7 @@ function Show-RunMacroScreen {
         # ── Step 5: Confirm and execute ───────────────────────────────────────────
         $runPrompt  = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
             'Run this macro?',
-            @('Yes, run now', 'Cancel')
+            @('Run', 'Cancel')
         )
         $runChoice  = $runPrompt.Show($Console)
         if ($runChoice -ieq 'Cancel') {

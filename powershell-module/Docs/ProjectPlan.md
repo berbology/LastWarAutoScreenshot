@@ -1969,7 +1969,7 @@ test cases throughout Phase 4 implementation.
       - If the current config's `ProcessName` differs from the macro's `targetWindow.processName`: display warning panel `"[yellow]This macro was recorded for process '<macro-process>' but the current target window is '<config-process>'. The macro may not work correctly.[/]"` and show `SelectionPrompt` `'Continue anyway'` / `'Cancel'`; if `'Cancel'`, return to step 1
 
       **Step 5 — Confirm and execute:**
-      - `SelectionPrompt`: `"Run this macro?"` with choices `'Yes, run now'`, `'Cancel'`
+      - `SelectionPrompt`: `"Run this macro?"` with choices `'Run'`, `'Cancel'`
       - If `'Cancel'`: return to step 1
       - Call `Invoke-MacroSequence -MacroData $macro.Data -WindowHandle $config.WindowHandle -Console $Console`
       - Display results:

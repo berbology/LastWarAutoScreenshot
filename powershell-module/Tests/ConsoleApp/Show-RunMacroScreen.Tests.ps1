@@ -347,7 +347,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Continue anyway at mismatch → Yes, run now → dismiss pause prompt
+                # Select macro → Continue anyway at mismatch → Run → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -455,7 +455,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Yes, run now → dismiss pause prompt
+                # Select macro → Run → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -508,7 +508,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Yes, run now → dismiss pause prompt
+                # Select macro → Run → dismiss pause prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -575,7 +575,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Continue (screenshots will be skipped) → Yes, run now → dismiss pause
+                # Select macro → Continue (screenshots will be skipped) → Run → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -636,7 +636,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Continue (screenshots will be skipped) → Yes, run now → dismiss pause
+                # Select macro → Continue (screenshots will be skipped) → Run → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -757,7 +757,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Yes, run now (no pre-flight prompt) → dismiss pause
+                # Select macro → Run (no pre-flight prompt) → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -812,7 +812,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                # Select macro → Yes, run now → dismiss pause
+                # Select macro → Run → dismiss pause
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)

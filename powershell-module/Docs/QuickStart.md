@@ -70,7 +70,7 @@ From the main menu choose **Record macro**.
 From the main menu choose **Run macro**.
 
 Select your macro from the list. A summary table shows every action in the
-sequence before you commit. Choose **Yes, run now** to start execution.
+sequence before you commit. Choose **Run** to start execution.
 
 The module validates that the target window is open before running. If the
 window is not found, an error is displayed and you are returned to the macro
