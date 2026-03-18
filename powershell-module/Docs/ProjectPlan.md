@@ -4731,10 +4731,97 @@ All design questions have been resolved. The decisions below are recorded for re
 
 ## Phase 8: Documentation & Examples
 
-1. [ ] Create example configuration files with inline comments
-2. [ ] Document window-relative coordinate system
-3. [ ] Provide quick start guide with simple working example
-4. [ ] Document all exported PowerShell functions as they are created
+### Architecture decisions (for future reference)
+
+- **`Docs/README.md` renamed to `Docs/UserGuide.md`:** The existing name was ambiguous — within `Docs/`, `README.md` does not render automatically in GitHub's folder view as the root one does. Renaming to `UserGuide.md` makes the intended audience explicit and eliminates confusion with the root `README.md`. All internal links are updated to match.
+
+- **Example config file format — JSONC:** The example `ModuleConfig-example.jsonc` uses the JSON with Comments (`.jsonc`) format to allow inline `//` annotations explaining each setting. This file is for reference only and cannot be used directly as `ModuleConfig.json`. A companion `examples/README.md` makes this clear and points to `Configuration.md` for the full reference.
+
+- **Quick start guide as a standalone doc (`Docs/QuickStart.md`):** The root `README.md` "Get Started" section covers installation and first launch. A separate `QuickStart.md` provides a richer first-use walkthrough (select window → record a macro → run it → emergency stop) without bloating the root README with step-by-step instructions.
+
+- **ConsoleApp README files — rewritten, not merged:** `Tests/ConsoleApp/README.md` and `Private/ConsoleApp/README.md` are each rewritten as accurate, focused documents for their respective folders. No cross-folder content. The current `Tests/ConsoleApp/README.md` mistakenly includes `Private/ConsoleApp/` content appended to it; this is corrected.
+
+- **ESP32-S3 hardware HID mouse toggle — documented as planned feature:** The `esp32-s3-mouse-emulator/` folder stub README describes a forthcoming USB hardware mouse emulator based on the ESP32-S3 microcontroller. The device presents to the OS as a genuine physical HID mouse and provides an alternative to the current `SendInput` software approach. Both methods will be selectable at runtime. Using hardware HID substantially reduces anti-cheat detection risk because mouse input originates at the driver level, perfectly emulating physical mouse hardware.
+
+---
+
+### Phase 8 scope (what is and is not included)
+
+**Included:** Remove `Docs/RefactorPlan.md`; fix stale phase references across `README.md`, `Docs/README.md`, and `CLAUDE.md`; update root `README.md` features list (remove phase labels from bullets, add ESP32-S3 hardware HID mouse toggle as a planned feature); add window-relative coordinate system reference section to `MacroFormat.md`; create `examples/ModuleConfig-example.jsonc` and `examples/README.md`; create `Docs/QuickStart.md`; rename `Docs/README.md` → `Docs/UserGuide.md` and update all links; add comment-based help to `Public/Get-LWASMonitorProcess.ps1`; verify help blocks in all `scripts/` files; full documentation clarity sweep across all `Docs/*.md` and root `README.md`; create `powershell-module/README.md`, `powershell-module/Tests/README.md`, `powershell-module/lib/README.md`, `scripts/README.md`, and `esp32-s3-mouse-emulator/README.md`; rewrite `Tests/ConsoleApp/README.md` and `Private/ConsoleApp/README.md`.
+
+**Explicitly out of scope:** `ProjectPlan.md` itself; comment-based help for `Private/` functions; changes to module code; updating the psd1 version number; creating example macro JSON files (annotated examples already exist in `MacroFormat.md`); documentation for Phase 9 or Phase 10 features before they are implemented.
+
+---
+
+### Tasks
+
+1. [ ] Remove `Docs/RefactorPlan.md`
+   1.1 [ ] Delete `powershell-module/Docs/RefactorPlan.md`
+   1.2 [ ] Search all `Docs/*.md` files and root `README.md` for any links to `RefactorPlan.md`; remove any found
+
+2. [ ] Fix stale phase references and update the root `README.md` features list
+   2.1 [ ] Update the Roadmap section of root `README.md` (currently reads "Current status: Phase 4 (Macro Recording) in progress") to reflect Phase 7 complete and Phase 8 in progress
+   2.2 [ ] Update the Features list in root `README.md`: remove the `_(Phase 4)_` and `_(Phase 6)_` phase labels from feature bullets; add a planned/forthcoming item for the ESP32-S3 USB hardware HID mouse toggle (hardware device presenting as a physical HID mouse, toggled alongside the existing `SendInput` software approach, providing greater resilience to anti-cheat detection)
+   2.3 [ ] Update the Roadmap section in `Docs/README.md` (currently reads "Phase 5 complete. Phase 6 is next") — this file is renamed in task 6; the stale roadmap text is corrected here so the rename begins with clean content
+   2.4 [ ] Update `CLAUDE.md` "Current status: Phase 7 (Module Installation & Versioning)" → "Phase 8 (Documentation & Examples)"
+   2.5 [ ] Remove stale phase-qualifier notes in `Developer.md` (e.g. `"Macros are stored in Private/Macros/ (Phase 4)"` in the repository structure section)
+
+3. [ ] Add window-relative coordinate system reference to `MacroFormat.md`
+   3.1 [ ] Add a `## Window-relative coordinate system` section immediately before the existing `## Action type reference` section, containing:
+      - Definition: all coordinates are expressed as fractions of the window's client-area width (X axis) and height (Y axis); origin `(0.0, 0.0)` is the top-left corner; `(1.0, 1.0)` is the bottom-right corner; X increases rightward, Y increases downward
+      - ASCII diagram marking the four corners, centre, and axes
+      - Explanation that pixel positions are computed at execution time from the live window bounds — moving or resizing the game window does not invalidate recorded coordinates
+      - Conversion example: window 800 × 600 px, `relativeX: 0.5, relativeY: 0.25` → pixel (400, 150)
+      - Note that coordinate values outside `[0.0, 1.0]` are invalid and will cause a validation error at save time
+   3.2 [ ] Review the field description cells in the `MoveToPoint`, `MoveToRegion`, `DragClick`, and `Screenshot` action tables; where descriptions re-explain the coordinate system inline, replace with a short cross-reference (e.g. "See [Window-relative coordinate system](#window-relative-coordinate-system)")
+
+4. [ ] Create example configuration file
+   4.1 [ ] Create `examples/` directory at the repository root
+   4.2 [ ] Create `examples/ModuleConfig-example.jsonc` containing every configuration key at its default value, grouped by `MouseControl`, `EmergencyStop`, `Screenshots` (including `SimilarityCheck`), and `Logging` categories, with a `// comment` on each line explaining the setting, its type, and accepted values or range
+   4.3 [ ] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
+   4.4 [ ] Add a link to `examples/` in the root `README.md` contents section under "For Users"
+
+5. [ ] Create `Docs/QuickStart.md`
+   5.1 [ ] Write a first-use walkthrough covering:
+      - Prerequisites: module installed, game running in windowed or borderless-windowed mode
+      - Launch: `Import-Module LastWarAutoScreenshot`, then `Start-LWASConsole`
+      - Step 1 — Select a target window: main menu → "Select target window" → choose the game window from the list
+      - Step 2 — Record a simple macro: main menu → "Record macro" → enter a name → add a MoveToPoint, LeftClick, Delay, MoveToPoint, LeftClick sequence → Save
+      - Step 3 — Run the macro: main menu → "Run macro" → select the macro → review the summary → confirm
+      - Step 4 — Emergency stop: `Ctrl+Shift+#` hotkey or hold both mouse buttons for 3 seconds
+   5.2 [ ] Add a link to `QuickStart.md` in the root `README.md` "Get Started" section, immediately after the "2. Launch the app" step
+   5.3 [ ] Add a link to `QuickStart.md` in `Docs/README.md` (pre-rename) Getting Started section so the link is in place before the rename in task 6
+
+6. [ ] Rename `Docs/README.md` → `Docs/UserGuide.md` and update all links
+   6.1 [ ] Rename the file; add a brief audience note to the introduction paragraph making clear this document is for end users, not contributors
+   6.2 [ ] Remove the developer-oriented git-clone / `Import-Module` from path getting-started block from `UserGuide.md` (this content already exists in `Developer.md`); replace with a one-line pointer to the root README install section
+   6.3 [ ] Update all links to `Docs/README.md` across the repository:
+      - Root `README.md`: `powershell-module/Docs/README.md` → `powershell-module/Docs/UserGuide.md`
+      - `Developer.md`: `README.md` → `UserGuide.md`
+      - `MacroFormat.md`: `README.md` → `UserGuide.md`
+      - `ConsoleApp.md`: any references to `README.md`
+      - `WindowManagement.md`: any references to `README.md`
+      - `Logging.md`: any references to `README.md`
+
+7. [ ] Add comment-based help to `Public/Get-LWASMonitorProcess.ps1`
+   7.1 [ ] Add `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.OUTPUTS`, and at least two `.EXAMPLE` blocks to `Get-LWASMonitorProcess.ps1`, following the same style as `Get-LWASMacro.ps1`
+   7.2 [ ] Read each of the three `scripts/` files (`Install-LWAS.ps1`, `Uninstall-LWAS.ps1`, `New-LWASRelease.ps1`) and confirm each has a complete help block (`.SYNOPSIS`, `.DESCRIPTION`, at least one `.PARAMETER` per parameter, at least one `.EXAMPLE`); add any missing sections
+
+8. [ ] Documentation clarity sweep
+   8.1 [ ] Read all `Docs/*.md` files in full; remove or update any references to code, functions, or behaviour that no longer exists (including removed features, old function signatures, and superseded design notes)
+   8.2 [ ] Identify and resolve content duplication across docs files: where the same information appears in more than one file, keep it in the most appropriate file and replace other occurrences with a cross-reference link
+   8.3 [ ] Review `Developer.md` for any user-facing content (instructions a non-developer end-user might need); move to `UserGuide.md` or add a link from it
+   8.4 [ ] Audit every link in every `Docs/*.md` file and in the root `README.md`; fix any broken or stale links (including any links that still point to `Docs/README.md` after task 6)
+   8.5 [ ] Add Pester v5 docs link (`https://pester.dev`) to the `Developer.md` Further reading table and to the root `README.md` For Developers section (Spectre.Console is already linked; Pester is not)
+
+9. [ ] Create and update folder README.md files
+   9.1 [ ] Create `powershell-module/README.md`: developer-oriented introduction — what each subfolder contains (`src/`, `lib/`, `Public/`, `Private/`, `Tests/`, `Docs/`), how to import the module from source, and how to run the test suite
+   9.2 [ ] Create `powershell-module/Tests/README.md`: overview of the test suite — how it is structured, how to run the full suite vs a single file, what the `_Integration` and `_TypeDefinition` filename suffixes mean, and a note that `ConsoleApp/` has its own README
+   9.3 [ ] Rewrite `powershell-module/Tests/ConsoleApp/README.md`: remove the appended `Private/ConsoleApp/` content; rewrite as an accurate, concise reference for the ConsoleApp test harness only — TestConsole setup, `InModuleScope` pattern, and an accurate file-to-screen-function mapping table for all current test files in that folder
+   9.4 [ ] Rewrite `powershell-module/Private/ConsoleApp/README.md`: accurate, up-to-date summary of every current screen function file in `Private/ConsoleApp/`, what each does, and a brief "Adding a new screen" pointer to `Developer.md` for the full guide; remove any stale or inaccurate file entries
+   9.5 [ ] Create `powershell-module/lib/README.md`: explains the bundled DLLs (`Spectre.Console.dll`, `Spectre.Console.Testing.dll`), why they are tracked in git rather than fetched at runtime, current versions (from `VERSIONS.txt`), and the process for updating them (PR required, full test run, update `VERSIONS.txt`)
+   9.6 [ ] Create `scripts/README.md`: describes each script (`Install-LWAS.ps1` — bootstrap install from a release zip, self-elevates; `Uninstall-LWAS.ps1` — removes module and optionally AppData; `New-LWASRelease.ps1` — bumps version, runs tests, creates release zip), when to use each, and any prerequisites
+   9.7 [ ] Create `esp32-s3-mouse-emulator/README.md` stub: explains that this folder contains firmware for a planned USB HID hardware mouse emulator based on the ESP32-S3 microcontroller; describes the purpose — the device presents to the OS as a genuine physical HID mouse and provides an alternative to the current `SendInput` software approach; both methods will be selectable at runtime; using hardware HID substantially reduces anti-cheat detection risk because input arrives at the driver level, indistinguishable from a physical mouse; marks the feature as not yet implemented
 
 ## Phase 9: Azure Integration (Future)
 
