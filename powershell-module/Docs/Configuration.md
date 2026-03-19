@@ -121,13 +121,13 @@ the action is skipped.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `AutoStart` | bool | `true` | Start monitor automatically with `Invoke-MacroSequence` |
-| `HotkeyVKeyCodes` | int[] | `[17, 16, 220]` | Ctrl+Shift+# (UK layout) |
+| `HotkeyKeyNames` | string | `"Ctrl+Alt+Q"` | Key combination string; converted to virtual key codes at runtime |
 | `PollIntervalMs` | int | `100` | Polling frequency in ms (10-5000) |
 | `MouseGestureEnabled` | bool | `true` | Hold both mouse buttons as a stop trigger |
 | `MouseGestureHoldDurationMs` | int | `3000` | Hold duration to trigger (500-30000 ms) |
 
-The `#` key is `0xDC` on UK layouts. On a US layout `0xDC` is `\` - adjust
-`HotkeyVKeyCodes` to suit your keyboard. See
+The `#` key is only available as a standalone key on UK layouts. On other layouts
+adjust `HotkeyKeyNames` to a combination available on your keyboard (e.g. `"Ctrl+Shift+P"`). See
 [WindowManagement.md](WindowManagement.md) for full emergency stop details.
 
 ---

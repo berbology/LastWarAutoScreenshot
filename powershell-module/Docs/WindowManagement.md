@@ -84,11 +84,11 @@ automation loop cleanly.
 ### `Start-LWASEmergencyStopMonitor`
 
 ```powershell
-# Use config defaults (Ctrl+Shift+# at 100 ms)
+# Use config defaults (Ctrl+Alt+Q at 100 ms)
 Start-LWASEmergencyStopMonitor
 
-# Override
-Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
+# Override hotkey at call site via key names and poll interval
+Start-LWASEmergencyStopMonitor -HotkeyKeyNames 'Ctrl+F12' -PollIntervalMs 200
 ```
 
 - **Idempotent** - safe to call when already running; logs Info, returns
@@ -121,15 +121,23 @@ until the next `Start-LWASEmergencyStopMonitor` call.
 
 ### Default hotkey
 
-Default: `Ctrl+Shift+#` — VKey codes `[0x11, 0x10, 0xDC]`.
+Default: `Ctrl+Alt+Q`, stored as the string `"Ctrl+Alt+Q"` in `EmergencyStop.HotkeyKeyNames`.
+The key names are converted to virtual key codes at runtime via `ConvertFrom-HotkeyString`.
 
-`0xDC` is `#` on UK keyboards, `\` on standard US. Change via config or
-parameter if your layout differs.
+`#` is only a standalone key on UK keyboard layouts. On other layouts, reconfigure
+`HotkeyKeyNames` via the app (**Configure module → Emergency stop settings**) or
+by editing `ModuleConfig.json` directly:
 
-```powershell
-# Ctrl + Pause/Break
-Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x13)
+```json
+"HotkeyKeyNames": "Ctrl+Shift+P"
 ```
+
+Accepted key name formats: `Ctrl`, `Shift`, `Alt`, `Win` (and `L`/`R` variants),
+`A`–`Z`, `0`–`9`, `F1`–`F24`, `Esc`, `Enter`, `Tab`, `Space`, `Backspace`,
+`Left`/`Right`/`Up`/`Down`, `Home`, `End`, `PageUp`, `PageDown`, `Insert`,
+`Delete`, `Pause`, `CapsLock`, `NumLock`, `ScrollLock`, `Num0`–`Num9`,
+`Num*`, `Num+`, `Num-`, `Num.`, `Num/`, and single OEM characters that your
+keyboard layout produces without a modifier (e.g. `#` on UK).
 
 See [Configuration.md](Configuration.md) for all `EmergencyStop.*` keys.
 
@@ -137,7 +145,7 @@ See [Configuration.md](Configuration.md) for all `EmergencyStop.*` keys.
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| Keys held but automation doesn't stop | VKey code mismatch for your layout | Check `GetAsyncKeyState` docs for your layout's code |
+| Keys held but automation doesn't stop | Key name not valid on your layout | Reconfigure `HotkeyKeyNames` to a key available without a modifier on your keyboard |
 | Mouse gesture doesn't trigger | `MouseGestureEnabled` is `false` | Enable in config |
 | Gesture triggers too slowly | `MouseGestureHoldDurationMs` too high | Reduce (e.g. `1500`) |
 | `Invoke-MacroSequence` aborts immediately | Flag still `$true` from last run | Call `Start-LWASEmergencyStopMonitor` to re-arm |

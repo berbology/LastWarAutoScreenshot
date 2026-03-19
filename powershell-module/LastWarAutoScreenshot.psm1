@@ -18,6 +18,7 @@ $spectreConsolePath        = "$PSScriptRoot\lib\Spectre.Console.dll"
 $spectreTestingConsolePath = "$PSScriptRoot\lib\test\Spectre.Console.Testing.dll"
 
 $script:ModuleRootPath = $PSScriptRoot
+$script:MacrosPath     = Join-Path $env:APPDATA 'LastWarAutoScreenshot\Macros'
 
 $privateScriptRoot = Join-Path $PSScriptRoot 'Private'
 $publicScriptRoot = Join-Path $PSScriptRoot 'Public'
@@ -90,6 +91,7 @@ $typeNames = @(
     'LastWarAutoScreenshot.WindowEnumerationAPI',
     'LastWarAutoScreenshot.EnumWindowsProc',
     'LastWarAutoScreenshot.MouseControlAPI',
+    'LastWarAutoScreenshot.EmergencyStopMonitor',
     'LastWarAutoScreenshot.ScreenCaptureAPI',
     'LastWarAutoScreenshot.ConsoleAppBridge'
 )

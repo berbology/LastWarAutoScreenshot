@@ -16,7 +16,7 @@ function Remove-MacroFile {
         or if deletion failed.
 
     .EXAMPLE
-        $deleted = Remove-MacroFile -FilePath 'C:\...\Private\Macros\20260101_120000_my-macro.json'
+        $deleted = Remove-MacroFile -FilePath "$env:APPDATA\LastWarAutoScreenshot\Macros\20260101_120000_my-macro.json"
         if ($deleted) { Write-Host 'Macro deleted.' }
     #>
     [CmdletBinding()]

@@ -307,11 +307,11 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
                     [PSCustomObject]@{
                         EmergencyStop = [PSCustomObject]@{
                             PollIntervalMs  = 100
-                            HotkeyVKeyCodes = @(17, 16, 220)
+                            HotkeyKeyNames  = 'Ctrl+Shift+F12'
                         }
                     }
                 }
-                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17, 16, 220)
+                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl+Shift+F12'
                 try {
                     $monitor | Should -Not -BeNullOrEmpty
                     $monitor.Stop    | Should -BeOfType [ScriptBlock]
@@ -327,11 +327,11 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl' } }
                 }
                 # Pre-set the flag to $true to confirm it is reset.
                 $script:EmergencyStopRequested = $true
-                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17)
+                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl'
                 try {
                     $script:EmergencyStopRequested | Should -Be $false
                 } finally {
@@ -345,9 +345,9 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl' } }
                 }
-                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17)
+                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl'
                 try {
                     $script:EmergencyStopTimer | Should -Not -BeNullOrEmpty
                     $script:EmergencyStopTimer | Should -BeOfType [System.Timers.Timer]
@@ -363,9 +363,9 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl' } }
                 }
-                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 250 -HotkeyVKeyCodes @(17)
+                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 250 -HotkeyKeyNames 'Ctrl'
                 try {
                     $script:EmergencyStopTimer.Interval | Should -Be 250
                 } finally {
@@ -381,10 +381,10 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17, 16, 220) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl+Shift+F12' } }
                 }
-                $monitor1 = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17, 16, 220)
-                $monitor2 = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17, 16, 220)
+                $monitor1 = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl+Shift+F12'
+                $monitor2 = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl+Shift+F12'
                 try {
                     $monitor2 | Should -BeNullOrEmpty
                 } finally {
@@ -398,10 +398,10 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17, 16, 220) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl+Shift+F12' } }
                 }
-                $monitor1 = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17, 16, 220)
-                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17, 16, 220) | Out-Null
+                $monitor1 = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl+Shift+F12'
+                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl+Shift+F12' | Out-Null
                 try {
                     Should -Invoke Write-LastWarLog -ParameterFilter {
                         $Level -eq 'Info' -and $Message -like '*already running*'
@@ -422,11 +422,11 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
                     [PSCustomObject]@{
                         EmergencyStop = [PSCustomObject]@{
                             PollIntervalMs  = 350
-                            HotkeyVKeyCodes = @(17, 16, 220)
+                            HotkeyKeyNames  = ''
                         }
                     }
                 }
-                $monitor = Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(17, 16, 220)
+                $monitor = Start-LWASEmergencyStopMonitor -HotkeyKeyNames 'Ctrl+Shift+F12'
                 try {
                     $script:EmergencyStopTimer.Interval | Should -Be 350
                 } finally {
@@ -451,9 +451,9 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl' } }
                 }
-                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17)
+                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl'
                 & $monitor.Stop
                 try {
                     $script:EmergencyStopTimer.Enabled | Should -Be $false
@@ -472,13 +472,13 @@ Describe 'Start-LWASEmergencyStopMonitor' -Tag 'Unit' {
                     [PSCustomObject]@{
                         EmergencyStop = [PSCustomObject]@{
                             PollIntervalMs           = 100
-                            HotkeyVKeyCodes          = @(17)
+                            HotkeyKeyNames           = 'Ctrl'
                             MouseGestureEnabled      = $true
                             MouseGestureHoldDurationMs = 3000
                         }
                     }
                 }
-                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17)
+                $monitor = Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl'
                 try {
                     # Verify the timer was created - state is internal, but we verify the monitor started cleanly.
                     $script:EmergencyStopTimer | Should -Not -BeNullOrEmpty
@@ -897,14 +897,14 @@ Describe 'Stop-LWASEmergencyStopMonitor' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-LastWarLog {}
                 Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyVKeyCodes = @(17) } }
+                    [PSCustomObject]@{ EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100; HotkeyKeyNames = 'Ctrl' } }
                 }
             }
         }
 
         It 'stops the timer and nulls $script:EmergencyStopTimer' {
             InModuleScope LastWarAutoScreenshot {
-                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17) | Out-Null
+                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl' | Out-Null
                 $script:EmergencyStopTimer | Should -Not -BeNullOrEmpty
 
                 Stop-LWASEmergencyStopMonitor
@@ -915,7 +915,7 @@ Describe 'Stop-LWASEmergencyStopMonitor' -Tag 'Unit' {
 
         It 'logs Info via Write-LastWarLog' {
             InModuleScope LastWarAutoScreenshot {
-                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17) | Out-Null
+                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl' | Out-Null
                 Stop-LWASEmergencyStopMonitor
                 Should -Invoke Write-LastWarLog -ParameterFilter {
                     $Level -eq 'Info' -and $Message -like '*Emergency stop monitor stopped*'
@@ -925,7 +925,7 @@ Describe 'Stop-LWASEmergencyStopMonitor' -Tag 'Unit' {
 
         It 'does NOT modify $script:EmergencyStopRequested' {
             InModuleScope LastWarAutoScreenshot {
-                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyVKeyCodes @(17) | Out-Null
+                Start-LWASEmergencyStopMonitor -PollIntervalMs 100 -HotkeyKeyNames 'Ctrl' | Out-Null
                 # Simulate a triggered emergency stop
                 $script:EmergencyStopRequested = $true
 

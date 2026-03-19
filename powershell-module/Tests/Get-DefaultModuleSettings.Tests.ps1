@@ -96,21 +96,18 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
                 $es = $defaults.EmergencyStop
                 
                 $es.AutoStart | Should -Be $true
-                $es.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
+                $es.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
                 $es.PollIntervalMs | Should -Be 100
                 $es.MouseGestureEnabled | Should -Be $true
                 $es.MouseGestureHoldDurationMs | Should -Be 3000
             }
         }
 
-        It 'Should have correct HotkeyVKeyCodes values' {
+        It 'Should have correct HotkeyKeyNames value' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
-                # 17 = Ctrl, 16 = Shift, 220 = '#' on UK layout
-                $defaults.EmergencyStop.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
-                $defaults.EmergencyStop.HotkeyVKeyCodes[0] | Should -Be 17
-                $defaults.EmergencyStop.HotkeyVKeyCodes[1] | Should -Be 16
-                $defaults.EmergencyStop.HotkeyVKeyCodes[2] | Should -Be 220
+                # 'Ctrl+Alt+Q' -- '#' is a standalone key on UK keyboard layouts
+                $defaults.EmergencyStop.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
             }
         }
     }

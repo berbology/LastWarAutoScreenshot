@@ -129,7 +129,8 @@ function Invoke-MacroSequence {
                 break
             }
 
-            if ($script:EmergencyStopRequested) {
+            if ($script:EmergencyStopRequested -or [LastWarAutoScreenshot.EmergencyStopMonitor]::StopRequested) {
+                $script:EmergencyStopRequested = $true
                 $success = $false
                 $message = "Emergency stop triggered at step ${i}. Macro execution halted."
                 $Console.Write([Spectre.Console.Markup]::new("[red]Emergency stop triggered at step ${i}. Macro execution halted.[/]`n")) | Out-Null

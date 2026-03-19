@@ -5,15 +5,15 @@ function Show-EmergencyStopConfigScreen {
 
     .DESCRIPTION
         Guides the user through reviewing and optionally updating every EmergencyStop key that
-        exists in the $script:ConfigValidationSchema, plus the HotkeyVKeyCodes key which
+        exists in the $script:ConfigValidationSchema, plus the HotkeyKeyNames key which
         requires custom parsing and validation.
 
         Workflow:
           1. Loads the current configuration via Get-ModuleConfiguration.
           2. Renders a Spectre.Console Table showing each EmergencyStop key with its current
              value, allowed values or range, and a human-readable description sourced
-             from $script:ConfigValidationSchema.  The HotkeyVKeyCodes row is always shown
-             with the codes formatted as comma-separated hex strings (e.g. "0x11, 0x10, 0xDC").
+             from $script:ConfigValidationSchema.  The HotkeyKeyNames row is always shown
+             as the stored key combination string (e.g. 'Ctrl+Alt+Q').
           3. Iterates each schema-backed EmergencyStop key in order.  The prompt type depends
              on the key type:
 
@@ -28,13 +28,15 @@ function Show-EmergencyStopConfigScreen {
                Empty input -> keep current; '[Reset to default]' -> restore default;
                any other input is validated via Test-ConfigValue and re-prompted if invalid.
 
-          4. After schema-backed keys, handles HotkeyVKeyCodes with custom logic:
-               - Displays an informational note about the '#' key being layout-dependent.
-               - Shows a TextPrompt with the current codes as comma-separated hex strings.
-               - Accepts empty input (keep current), '[Reset to default]', or a new value as
-                 comma-separated hex (e.g. "0x11, 0x10, 0xDC") or decimal integers.
-               - Each parsed code is validated to be in the range 0x01-0xFE (1-254).
+          4. After schema-backed keys, handles HotkeyKeyNames with custom logic:
+               - Displays an informational note about the key name input format.
+               - Shows a TextPrompt displaying the current key combination string.
+               - Accepts empty input (keep current), '[Reset to default]', or a new key
+                 combination (e.g. 'Ctrl+Shift+P', 'Ctrl+Alt+F1', 'Alt+F10').
+               - Input is validated via Test-HotkeyString: modifiers must come first, the
+                 last key must not be a modifier, no duplicates, all names must be recognised.
                - On validation failure, writes a red error line and re-prompts.
+               - On success, stores the normalised canonical form.
 
           5. After all keys, renders a SelectionPrompt "Save changes?" with choices:
                - 'Yes -- save now'                              -> calls Save-ModuleSettings; success panel.
@@ -44,7 +46,7 @@ function Show-EmergencyStopConfigScreen {
 
         EmergencyStop keys covered (in order):
           AutoStart, MouseGestureEnabled, PollIntervalMs, MouseGestureHoldDurationMs,
-          HotkeyVKeyCodes
+          HotkeyKeyNames
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -63,15 +65,15 @@ function Show-EmergencyStopConfigScreen {
         is routed through this interface so Pester tests can inject a TestConsole and assert
         on its Output property without requiring a live terminal.
 
-        HotkeyVKeyCodes is not stored in $script:ConfigValidationSchema because it is a
-        variable-length integer array with VKey-specific range constraints (0x01-0xFE)
-        rather than the fixed min/max pattern used by other intArray keys.  Validation is
-        therefore performed inline in this function.
+        HotkeyKeyNames is not stored in $script:ConfigValidationSchema because it requires
+        specialised structural validation (modifier order, key name lookup) beyond the
+        fixed type/range pattern used by schema-backed keys.  Validation is performed
+        inline via Test-HotkeyString.
 
-        VKey note: Virtual key code 0xDC is the '#' key on UK keyboard layouts.  On US
-        layouts, '#' requires Shift+3 (VK code 0x33).  Users on non-UK layouts may need
-        to reconfigure HotkeyVKeyCodes.  The README documents the default hotkey and the
-        keyboard-layout caveat in detail.
+        Default hotkey: 'Ctrl+Alt+Q', which on UK keyboard layouts corresponds to VKey
+        codes @(17, 16, 220).  On other layouts where '#' requires a modifier to produce,
+        the key cannot be used as a standalone key name; users should reconfigure
+        HotkeyKeyNames using a combination available on their keyboard (e.g. 'Ctrl+Shift+P').
 
         Type coercion for int keys: values entered as strings are converted to [int] before
         being stored on the config object, matching ConvertFrom-Json behaviour.
@@ -80,7 +82,7 @@ function Show-EmergencyStopConfigScreen {
         sentinel to reset an individual key.  It is case-insensitive.
 
         'Reset ALL EmergencyStop settings to defaults' on the save prompt replaces the entire
-        EmergencyStop sub-object (including HotkeyVKeyCodes) with a fresh copy from
+        EmergencyStop sub-object (including HotkeyKeyNames) with a fresh copy from
         Get-DefaultModuleSettings -- any per-key changes made earlier in the same session
         are discarded.
     #>
@@ -165,17 +167,16 @@ function Show-EmergencyStopConfigScreen {
         ) | Out-Null
     }
 
-    # HotkeyVKeyCodes row -- not in schema; formatted as comma-separated hex strings
-    $currentHotkeys = $config.EmergencyStop.HotkeyVKeyCodes
-    $hotkeysDisplay = ($currentHotkeys | ForEach-Object { '0x{0:X2}' -f $_ }) -join ', '
+    # HotkeyKeyNames row -- not in schema; displayed as-is (stored as a key combination string)
+    $currentHotkeyNames = $config.EmergencyStop.HotkeyKeyNames
 
     [Spectre.Console.TableExtensions]::AddRow(
         $table,
         [string[]]@(
-            'HotkeyVKeyCodes',
-            [Spectre.Console.Markup]::Escape($hotkeysDisplay),
-            'comma-separated hex or decimal; each 0x01-0xFE',
-            'Virtual key codes that must all be held simultaneously to trigger emergency stop'
+            'HotkeyKeyNames',
+            [Spectre.Console.Markup]::Escape($currentHotkeyNames),
+            'e.g. Ctrl+Shift+P, Ctrl+Alt+F1',
+            'Key combination that must be held simultaneously to trigger emergency stop'
         )
     ) | Out-Null
 
@@ -233,76 +234,46 @@ function Show-EmergencyStopConfigScreen {
         }
     }
 
-    # -- Step 2b: HotkeyVKeyCodes -- custom VKey validation -------------------
-    # Informational note: '#' is VK_OEM_5 (0xDC) on UK layouts; layout-dependent elsewhere.
+    # -- Step 2b: HotkeyKeyNames -- key combination name validation -----------
+    # Informational note: key name format and UK layout caveat.
     $Console.Write(
         [Spectre.Console.Markup]::new(
-            "[grey]Note: '#' key is 0xDC on UK layouts and layout-dependent on others. See README for details.[/]`n"
+            "[grey]Note: Enter a key combination using key names separated by '+' (e.g. Ctrl+Shift+P). " +
+            "Modifiers (Ctrl, Shift, Alt, Win) must precede the trigger key. " +
+            "The default 'Ctrl+Alt+Q' requires a UK keyboard layout.[/]`n"
         )
     )
 
     while ($true) {
-        $currentHotkeyArr = $config.EmergencyStop.HotkeyVKeyCodes
-        $hexDisplay       = ($currentHotkeyArr | ForEach-Object { '0x{0:X2}' -f $_ }) -join '+'
-        $vkeyPromptText   = "Hotkey VKey codes (comma-separated hex or decimal; each 0x01-0xFE) [green][[$hexDisplay]][/]:"
+        $currentKeyNames  = $config.EmergencyStop.HotkeyKeyNames
+        $hotkeyPromptText = "Emergency stop key combination (e.g. Ctrl+Shift+P, Ctrl+Alt+F1, Alt+F10) [green][[$currentKeyNames]][/]:"
 
-        $vkeyPrompt            = [Spectre.Console.TextPrompt[string]]::new($vkeyPromptText)
-        $vkeyPrompt.AllowEmpty = $true
-        $vkeyAnswer            = $vkeyPrompt.Show($Console)
+        $hotkeyPrompt            = [Spectre.Console.TextPrompt[string]]::new($hotkeyPromptText)
+        $hotkeyPrompt.AllowEmpty = $true
+        $hotkeyAnswer            = $hotkeyPrompt.Show($Console)
 
         # Empty -> keep current value
-        if ([string]::IsNullOrEmpty($vkeyAnswer)) {
+        if ([string]::IsNullOrEmpty($hotkeyAnswer)) {
             break
         }
 
         # Reset sentinel (case-insensitive)
-        if ($vkeyAnswer -ieq '[Reset to default]') {
-            $config.EmergencyStop.HotkeyVKeyCodes = $defaults.EmergencyStop.HotkeyVKeyCodes
+        if ($hotkeyAnswer -ieq '[Reset to default]') {
+            $config.EmergencyStop.HotkeyKeyNames = $defaults.EmergencyStop.HotkeyKeyNames
             break
         }
 
-        # Parse and validate comma-separated hex or decimal integers
-        $parsedCodes = [System.Collections.Generic.List[int]]::new()
-        $errMsg      = $null
-        $parts       = $vkeyAnswer -split '\s*,\s*'
-
-        foreach ($part in $parts) {
-            $partTrimmed = $part.Trim()
-            if ([string]::IsNullOrEmpty($partTrimmed)) { continue }
-
-            $codeValue = 0
-
-            if ($partTrimmed -match '^0[xX][0-9a-fA-F]+$') {
-                # Hex input -- strip '0x' prefix before passing to [Convert]::ToInt32
-                try   { $codeValue = [Convert]::ToInt32($partTrimmed.Substring(2), 16) }
-                catch { $errMsg = "Could not parse '$partTrimmed' as a hexadecimal integer."; break }
-            }
-            elseif (-not [int]::TryParse($partTrimmed, [ref]$codeValue)) {
-                $errMsg = "Could not parse '$partTrimmed' as an integer."
-                break
-            }
-
-            if ($codeValue -lt 1 -or $codeValue -gt 254) {
-                $errMsg = "VKey code $codeValue (0x$($codeValue.ToString('X2'))) is outside the valid range 0x01-0xFE (1-254)."
-                break
-            }
-
-            $parsedCodes.Add($codeValue)
+        # Validate the entered key combination
+        $hotkeyValidation = Test-HotkeyString -HotkeyString $hotkeyAnswer
+        if ($hotkeyValidation.Valid) {
+            $config.EmergencyStop.HotkeyKeyNames = $hotkeyValidation.Normalized
+            break
         }
 
-        if (-not $errMsg -and $parsedCodes.Count -eq 0) {
-            $errMsg = 'At least one VKey code must be provided.'
-        }
-
-        if ($errMsg) {
-            $Console.Write(
-                [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($errMsg))[/]`n")
-            )
-            continue
-        }
-
-        $config.EmergencyStop.HotkeyVKeyCodes = $parsedCodes.ToArray()
-        break
+        # Invalid -- show error in red and re-prompt
+        $Console.Write(
+            [Spectre.Console.Markup]::new("[red]$([Spectre.Console.Markup]::Escape($hotkeyValidation.Message))[/]`n")
+        )
     }
 
     # -- Step 3: Save / reset / discard ---------------------------------------

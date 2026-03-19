@@ -9,17 +9,18 @@ function Show-MainMenu {
           - Configure module
           - Record macro        (only shown when a target window has been configured)
           - Run macro           (only shown when a target window is configured AND *.json
-                                 files exist in the module's Private\Macros\ folder)
-          - Manage macros       (only shown when *.json files exist in the module's
-                                 Private\Macros\ folder)
+                                 files exist in $env:APPDATA\LastWarAutoScreenshot\Macros)
+          - Manage macros       (only shown when *.json files exist in
+                                 $env:APPDATA\LastWarAutoScreenshot\Macros)
           - Manage schedules
           - Storage info
           - Exit
 
         The function calls Get-ModuleConfiguration to determine whether a target window has
-        been configured (ProcessName is non-empty).  It also checks the Private\Macros\
-        folder for saved macro files before building the prompt.  A macro is any file
-        matching *.json in that folder (naming convention: yyyyMMdd_HHmmss_<name>.json).
+        been configured (ProcessName is non-empty).  It also checks the macros directory
+        ($env:APPDATA\LastWarAutoScreenshot\Macros) for saved macro files before building
+        the prompt.  A macro is any file matching *.json in that folder
+        (naming convention: yyyyMMdd_HHmmss_<name>.json).
 
         Returns a string identifier corresponding to the user's selection:
           'SelectWindow' | 'Configure' | 'RecordMacro' | 'RunMacro' | 'ManageMacros' |
@@ -47,10 +48,10 @@ function Show-MainMenu {
         is routed through this interface so that Pester tests can inject a TestConsole and
         assert directly on its Output property without requiring a live terminal.
 
-        Macro detection: the Private\Macros\ folder is not created automatically by this
-        function.  If the folder does not exist, Get-ChildItem returns nothing and the 'Run
-        macro' option is rendered as disabled.  The folder is created when the first macro is
-        recorded (Phase 4).
+        Macro detection: the macros directory is not created automatically by this
+        function.  If the directory does not exist, Get-ChildItem returns nothing and the
+        'Run macro' option is rendered as disabled.  The directory is created when the
+        first macro is recorded.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -65,7 +66,7 @@ function Show-MainMenu {
                        -not [string]::IsNullOrEmpty($config.ProcessName)
 
     # Detect saved macros
-    $macroFolder = Join-Path $script:ModuleRootPath 'Private\Macros'
+    $macroFolder = $script:MacrosPath
     $macroFiles  = @()
     if (Test-Path $macroFolder -PathType Container) {
         $macroFiles = @(Get-ChildItem -Path $macroFolder -Filter '*.json' -ErrorAction SilentlyContinue)

@@ -49,7 +49,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 
                 # Verify EmergencyStop matches defaults
                 $config.EmergencyStop.AutoStart | Should -Be $expectedDefaults.EmergencyStop.AutoStart
-                $config.EmergencyStop.HotkeyVKeyCodes | Should -Be $expectedDefaults.EmergencyStop.HotkeyVKeyCodes
+                $config.EmergencyStop.HotkeyKeyNames | Should -Be $expectedDefaults.EmergencyStop.HotkeyKeyNames
                 $config.EmergencyStop.MouseGestureEnabled | Should -Be $expectedDefaults.EmergencyStop.MouseGestureEnabled
                 $config.EmergencyStop.MouseGestureHoldDurationMs | Should -Be $expectedDefaults.EmergencyStop.MouseGestureHoldDurationMs
 
@@ -77,7 +77,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 
                 # Verify EmergencyStop matches defaults
                 $savedConfig.EmergencyStop.AutoStart | Should -Be $expectedDefaults.EmergencyStop.AutoStart
-                $savedConfig.EmergencyStop.HotkeyVKeyCodes | Should -Be $expectedDefaults.EmergencyStop.HotkeyVKeyCodes
+                $savedConfig.EmergencyStop.HotkeyKeyNames | Should -Be $expectedDefaults.EmergencyStop.HotkeyKeyNames
 
                 # Verify Screenshots matches defaults
                 $savedConfig.Screenshots.StoragePath | Should -Be $expectedDefaults.Screenshots.StoragePath
@@ -206,14 +206,14 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $es = $config.EmergencyStop
                 $es | Should -Not -BeNullOrEmpty
                 $es.AutoStart | Should -Be $true
-                $es.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
+                $es.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
                 $es.PollIntervalMs | Should -Be 100
             }
         }
 
         It 'Should inject individual EmergencyStop keys that are missing while preserving existing ones' {
             InModuleScope -ModuleName LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; mockWindow = $script:mockWindow } {
-                # Config has EmergencyStop but only AutoStart - missing HotkeyVKeyCodes and PollIntervalMs
+                # Config has EmergencyStop but only AutoStart - missing HotkeyKeyNames and PollIntervalMs
                 $partialConfig = [PSCustomObject]@{
                     ProcessName         = $mockWindow.ProcessName
                     WindowTitle         = $mockWindow.WindowTitle
@@ -233,7 +233,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 # AutoStart was explicitly set to $false - must be preserved
                 $es.AutoStart | Should -Be $false
                 # Missing keys should have been injected with defaults
-                $es.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
+                $es.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
                 $es.PollIntervalMs | Should -Be 100
             }
         }
@@ -244,7 +244,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 $es = $config.EmergencyStop
                 $es.AutoStart | Should -Be $true
-                $es.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
+                $es.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
                 $es.PollIntervalMs | Should -Be 100
             }
         }
@@ -347,7 +347,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         MinClickPostDelayMs = 100; MaxClickPostDelayMs = 300; PathPointCount = 20
                     }
                     EmergencyStop      = [PSCustomObject]@{
-                        AutoStart = $true; HotkeyVKeyCodes = @(17, 16, 220)
+                        AutoStart = $true; HotkeyKeyNames = 'Ctrl+Alt+Q'
                         PollIntervalMs = 100; MouseGestureEnabled = $true; MouseGestureHoldDurationMs = 3000
                     }
                     Screenshots        = [PSCustomObject]@{

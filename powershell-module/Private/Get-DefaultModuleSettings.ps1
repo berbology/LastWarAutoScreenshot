@@ -99,8 +99,9 @@ function Get-DefaultModuleSettings {
         }
         EmergencyStop = [PSCustomObject]@{
             AutoStart                  = $true
-            # 17 = Ctrl (0x11), 16 = Shift (0x10), 220 = '#' on UK layout (0xDC)
-            HotkeyVKeyCodes            = @(17, 16, 220)
+            # 'Ctrl+Alt+Q' is the default emergency stop hotkey combination.
+            # Users can reconfigure this to any key combination available on their keyboard.
+            HotkeyKeyNames             = 'Ctrl+Alt+Q'
             PollIntervalMs             = 100
             # Hold both mouse buttons (VK_LBUTTON 0x01, VK_RBUTTON 0x02) for this duration to trigger stop.
             # VK codes for mouse buttons are fixed and keyboard-layout-independent.

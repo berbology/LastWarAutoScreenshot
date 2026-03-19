@@ -78,7 +78,7 @@ function Invoke-MacroAction {
         [hashtable]$ScreenshotContext = $null
     )
 
-    if ($script:EmergencyStopRequested) {
+    if ($script:EmergencyStopRequested -or [LastWarAutoScreenshot.EmergencyStopMonitor]::StopRequested) {
         return [PSCustomObject]@{ Success = $false; Message = 'Emergency stop active'; Skipped = $true; SimilarityStop = $false }
     }
 
@@ -234,7 +234,19 @@ function Invoke-MacroAction {
         }
 
         'Delay' {
-            Start-Sleep -Seconds $Action.seconds
+            # Break the sleep into 100 ms chunks so the emergency stop flag is checked
+            # at least every 100 ms.  A single Start-Sleep -Seconds call would block the
+            # PowerShell thread for the full duration, making the emergency stop unresponsive
+            # during long delays.
+            $remainingMs = [int]($Action.seconds * 1000)
+            while ($remainingMs -gt 0) {
+                if ($script:EmergencyStopRequested -or [LastWarAutoScreenshot.EmergencyStopMonitor]::StopRequested) {
+                    return [PSCustomObject]@{ Success = $false; Message = 'Emergency stop active'; Skipped = $true; SimilarityStop = $false }
+                }
+                $chunkMs = [Math]::Min($remainingMs, 100)
+                Start-Sleep -Milliseconds $chunkMs
+                $remainingMs -= $chunkMs
+            }
             return [PSCustomObject]@{ Success = $true; Message = ''; Skipped = $false; SimilarityStop = $false }
         }
 
@@ -244,11 +256,11 @@ function Invoke-MacroAction {
                 return [PSCustomObject]@{ Success = $false; Message = 'Loop nesting detected — aborting'; Skipped = $false; SimilarityStop = $false }
             }
             for ($iteration = 1; $iteration -le $Action.iterations; $iteration++) {
-                if ($script:EmergencyStopRequested) {
+                if ($script:EmergencyStopRequested -or [LastWarAutoScreenshot.EmergencyStopMonitor]::StopRequested) {
                     return [PSCustomObject]@{ Success = $false; Message = 'Emergency stop active'; Skipped = $true; SimilarityStop = $false }
                 }
                 foreach ($actionName in $Action.actionNames) {
-                    if ($script:EmergencyStopRequested) {
+                    if ($script:EmergencyStopRequested -or [LastWarAutoScreenshot.EmergencyStopMonitor]::StopRequested) {
                         return [PSCustomObject]@{ Success = $false; Message = 'Emergency stop active'; Skipped = $true; SimilarityStop = $false }
                     }
                     $refAction = $ActionLookup[$actionName]

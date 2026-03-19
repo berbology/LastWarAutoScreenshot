@@ -85,7 +85,7 @@ function Start-LWASConsole {
           Show-ConfigMenuScreen is implemented in Phase 3 (console app).
           Show-RecordMacroScreen, Show-RunMacroScreen, and Show-ManageMacrosScreen are
           implemented in Phase 4 (macro recording).
-          Macro file naming convention: Private\Macros\yyyyMMdd_HHmmss_<name>.json
+          Macro file naming convention: $env:APPDATA\LastWarAutoScreenshot\Macros\yyyyMMdd_HHmmss_<name>.json
     #>
     [CmdletBinding()]
     param(

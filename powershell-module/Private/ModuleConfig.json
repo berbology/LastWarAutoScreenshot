@@ -31,7 +31,7 @@
 	},
 	"EmergencyStop": {
 		"AutoStart": true,
-		"HotkeyVKeyCodes": [17, 16, 220],
+		"HotkeyKeyNames": "Ctrl+Alt+Q",
 		"PollIntervalMs": 100,
 		"MouseGestureEnabled": true,
 		"MouseGestureHoldDurationMs": 3000

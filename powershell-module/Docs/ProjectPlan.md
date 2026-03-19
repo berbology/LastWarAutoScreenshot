@@ -405,7 +405,7 @@
        - Update `ModuleConfiguration.Tests.ps1`: replace the "returns `$null` when file does not exist" tests with tests that assert a default config is created and returned; add `AfterEach` cleanup for the generated file; add a test that verifies `Get-ModuleConfiguration` creates the config file on disk
        - Update `EmergencyStop.Tests.ps1` (if needed): add a test asserting that `Start-EmergencyStopMonitor` propagates an error when `Get-ModuleConfiguration` throws; remove any test that relied on the hardcoded fallback path
       - Document `Start-EmergencyStopMonitor` and `Stop-EmergencyStopMonitor` with usage examples
-      - Document the default hotkey (`Ctrl+Shift+#`), how to change it via config, and the keyboard-layout caveat for the `#` key VKCode
+      - Document the default hotkey (`Ctrl+Alt+Q`), how to change it via config, and the keyboard-layout caveat for the `#` key VKCode
       - Document `$script:EmergencyStopRequested`: what sets it, what reads it, and the re-arming requirement
       - Document all three config keys (`HotkeyVKeyCodes`, `PollIntervalMs`, `AutoStart`) with types, defaults, and examples
 
@@ -1046,7 +1046,7 @@
       - Navigate two levels deep: main menu → Configure → Logging settings; confirm only one
         alternate screen is active (the config menu and its sub-screens share the same buffer;
         there is no double-nesting)
-      - Hold `Ctrl+Shift+#` during a screen to trigger emergency stop; confirm the terminal
+      - Hold `Ctrl+Alt+Q` during a screen to trigger emergency stop; confirm the terminal
         restores correctly after the stop message
       - If your terminal does not support alternate buffers, confirm the application still works
         (output accumulates in-place; no crash or error)
@@ -2196,7 +2196,7 @@ test cases throughout Phase 4 implementation.
     2. [x] 10.2: Manually smoke-test all macro workflows in a real terminal
        - Import module; call `Start-LastWarAutoScreenshot`
        - **Record macro:** Navigate to "Record macro"; enter a macro name; record at least one of each action type (MoveToPoint, MoveToRegion box, MoveToRegion circle, LeftClick, DragClick, Screenshot, Delay); create a Loop; save the macro. Verify the JSON file appears in `Private/Macros/` with correct content.
-       - **Run macro:** Navigate to "Run macro"; select the recorded macro; verify the summary table displays all actions correctly; run the macro targeting a visible window (e.g. Notepad); observe mouse movements and clicks executing in order; verify the emergency stop (Ctrl+Shift+#) halts execution mid-macro.
+       - **Run macro:** Navigate to "Run macro"; select the recorded macro; verify the summary table displays all actions correctly; run the macro targeting a visible window (e.g. Notepad); observe mouse movements and clicks executing in order; verify the emergency stop (Ctrl+Alt+Q) halts execution mid-macro.
        - **Manage macros:** Navigate to "Manage macros"; view macro details; edit macro (rename macro, rename a step, reorder steps, save changes); verify the JSON file is updated on disk; delete a macro; verify the file is removed.
        - **Edge cases:** Attempt to run a macro with the target window closed — verify error message. Record a macro with a name containing spaces — verify auto-fix to hyphens. Create a loop referencing multiple named actions — verify execution repeats correctly.
        - Confirm no ANSI artefacts or rendering glitches in any screen
@@ -2212,7 +2212,7 @@ test cases throughout Phase 4 implementation.
          - Macro naming rules (`[a-zA-Z0-9_-]`, max 50 characters)
        - Add "Running Macros" section documenting:
          - How to select and run a saved macro
-         - Emergency stop integration (Ctrl+Shift+# or mouse gesture)
+         - Emergency stop integration (Ctrl+Alt+Q or mouse gesture)
          - Target window validation and process mismatch warnings
          - Screenshot actions being deferred (logged as warning, skipped during execution)
        - Add "Managing Macros" section documenting:

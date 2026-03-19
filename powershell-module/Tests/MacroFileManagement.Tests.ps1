@@ -12,7 +12,7 @@ Describe 'Save-MacroFile' -Tag 'Unit' {
 
     BeforeEach {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $script:ModuleRootPath = $td
+            $script:MacrosPath = Join-Path $td 'Macros'
             Mock Write-LastWarLog
             Mock Test-MacroFile { [PSCustomObject]@{ Valid = $true; Messages = @() } }
         }
@@ -32,9 +32,9 @@ Describe 'Save-MacroFile' -Tag 'Unit' {
         }
     }
 
-    It 'creates the Private\Macros directory when it does not already exist' {
+    It 'creates the Macros directory when it does not already exist' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $macrosDir = Join-Path $td 'Private\Macros'
+            $macrosDir = Join-Path $td 'Macros'
             # Clean up in case a previous test created the directory
             if (Test-Path -LiteralPath $macrosDir) {
                 Remove-Item -Path $macrosDir -Recurse -Force | Out-Null
@@ -131,7 +131,7 @@ Describe 'Save-MacroFile' -Tag 'Unit' {
             Mock Test-MacroFile { [PSCustomObject]@{ Valid = $false; Messages = @('bad') } }
 
             # Clean up any files from previous tests
-            $macrosDir = Join-Path $td 'Private\Macros'
+            $macrosDir = Join-Path $td 'Macros'
             if (Test-Path -LiteralPath $macrosDir) {
                 Remove-Item -Path $macrosDir -Recurse -Force | Out-Null
             }
@@ -217,29 +217,29 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
 
     BeforeEach {
         # Clean up the macros directory before each test to prevent file pollution
-        $macrosDir = Join-Path $TestDrive 'Private\Macros'
+        $macrosDir = Join-Path $TestDrive 'Macros'
         if (Test-Path -LiteralPath $macrosDir) {
             Remove-Item -Path $macrosDir -Recurse -Force | Out-Null
         }
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $script:ModuleRootPath = $td
+            $script:MacrosPath = Join-Path $td 'Macros'
             Mock Write-LastWarLog
             Mock Test-MacroFile { [PSCustomObject]@{ Valid = $true; Messages = @() } }
         }
     }
 
-    It 'returns an empty array when the Private\Macros folder does not exist' {
+    It 'returns an empty array when the Macros folder does not exist' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            # Point to a subdirectory that has no Private\Macros inside it
-            $script:ModuleRootPath = Join-Path $td 'NoSuchFolder'
+            # Point to a path that does not exist
+            $script:MacrosPath = Join-Path $td 'NoSuchFolder\Macros'
             $result = @(Get-LWASMacro)
             $result.Count | Should -Be 0
         }
     }
 
     It 'returns an empty array when the macros folder exists but contains no JSON files' {
-        $emptyDir = Join-Path $TestDrive 'Private\Macros'
+        $emptyDir = Join-Path $TestDrive 'Macros'
         New-Item -Path $emptyDir -ItemType Directory -Force | Out-Null
 
         InModuleScope LastWarAutoScreenshot {
@@ -249,7 +249,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
     }
 
     It 'returns entries sorted newest-first with correct Name and ActionCount' {
-        $macrosDir = Join-Path $TestDrive 'Private\Macros'
+        $macrosDir = Join-Path $TestDrive 'Macros'
         New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
 
         $olderJson = '{"version":"1.0","metadata":{"name":"macro-older","createdUtc":"2026-01-01T12:00:00Z","modifiedUtc":"2026-01-01T12:00:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"}]}'
@@ -269,7 +269,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
     }
 
     It 'excludes files with non-matching filename patterns and logs at Warning level' {
-        $macrosDir = Join-Path $TestDrive 'Private\Macros'
+        $macrosDir = Join-Path $TestDrive 'Macros'
         New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
         '{}' | Set-Content -Path (Join-Path $macrosDir 'bad-filename.json') -Encoding UTF8
 
@@ -281,7 +281,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
     }
 
     It 'excludes corrupt JSON files and logs at Warning level' {
-        $macrosDir = Join-Path $TestDrive 'Private\Macros'
+        $macrosDir = Join-Path $TestDrive 'Macros'
         New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
         'not valid json {' | Set-Content -Path (Join-Path $macrosDir '20260101_120000_corrupt.json') -Encoding UTF8
 
@@ -294,8 +294,8 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
 
     It 'returns a DisplayDate string matching the dd/MM/yy HH:mm:ss format' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $script:ModuleRootPath = $td
-            $macrosDir = Join-Path $script:ModuleRootPath 'Private\Macros'
+            $script:MacrosPath = Join-Path $td 'Macros'
+            $macrosDir = $script:MacrosPath
             if (-not (Test-Path -LiteralPath $macrosDir)) {
                 New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
             }
@@ -311,7 +311,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
     Context '-Name filter' {
 
         BeforeEach {
-            $macrosDir = Join-Path $TestDrive 'Private\Macros'
+            $macrosDir = Join-Path $TestDrive 'Macros'
             New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
 
             $json1 = '{"version":"1.0","metadata":{"name":"macro-one","createdUtc":"2026-01-01T12:00:00Z","modifiedUtc":"2026-01-01T12:00:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"}]}'
@@ -378,7 +378,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
     Context 'returned object shape' {
 
         BeforeEach {
-            $macrosDir = Join-Path $TestDrive 'Private\Macros'
+            $macrosDir = Join-Path $TestDrive 'Macros'
             New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
 
             $json = '{"version":"1.0","metadata":{"name":"shape-check","createdUtc":"2026-03-01T10:00:00Z","modifiedUtc":"2026-03-01T10:00:00Z","description":"desc"},"targetWindow":{"processName":"P","windowTitle":"T"},"sequence":[{"type":"LeftClick"},{"type":"LeftClick"}]}'
@@ -402,7 +402,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
         }
 
         It 'Sequence is an empty array when the macro JSON has no sequence property' {
-            $macrosDir = Join-Path $TestDrive 'Private\Macros'
+            $macrosDir = Join-Path $TestDrive 'Macros'
             $noSeqJson = '{"version":"1.0","metadata":{"name":"no-seq","createdUtc":"2026-03-01T11:00:00Z","modifiedUtc":"2026-03-01T11:00:00Z","description":""},"targetWindow":{"processName":"P","windowTitle":"T"}}'
             $noSeqJson | Set-Content -Path (Join-Path $macrosDir '20260301_110000_no-seq.json') -Encoding UTF8
 
@@ -455,7 +455,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
 
     BeforeEach {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $script:ModuleRootPath = $td
+            $script:MacrosPath = Join-Path $td 'Macros'
             Mock Write-LastWarLog
             Mock Get-LWASMacro { @() }
             Mock Get-MacroFile {
@@ -473,13 +473,13 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
         }
 
         # Create the macros directory and old file shared by most tests in this Describe
-        $macrosDir = Join-Path $TestDrive 'Private\Macros'
+        $macrosDir = Join-Path $TestDrive 'Macros'
         New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
         'dummy' | Set-Content -Path (Join-Path $macrosDir '20260101_120000_old-name.json') -Encoding UTF8
     }
 
     It 'returns Success=true on a valid rename' {
-        $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
+        $oldPath = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
             $result = Rename-MacroFile -FilePath $oldPath -NewName 'new-name'
@@ -488,8 +488,8 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
     }
 
     It 'creates the new file and deletes the old file on a valid rename' {
-        $oldPath   = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
-        $newPath   = Join-Path $TestDrive 'Private\Macros\20260101_120000_new-name.json'
+        $oldPath   = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
+        $newPath   = Join-Path $TestDrive 'Macros\20260101_120000_new-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath; newPath = $newPath } {
             Rename-MacroFile -FilePath $oldPath -NewName 'new-name' | Out-Null
@@ -499,7 +499,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
     }
 
     It 'preserves the original datetime prefix in the new filename' {
-        $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
+        $oldPath = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
             $result = Rename-MacroFile -FilePath $oldPath -NewName 'new-name'
@@ -508,7 +508,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
     }
 
     It 'updates metadata.name to the new name in the written file' {
-        $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
+        $oldPath = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
             $result  = Rename-MacroFile -FilePath $oldPath -NewName 'new-name'
@@ -518,7 +518,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
     }
 
     It 'returns Success=false without changing files when the new name clashes with an existing macro' {
-        $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
+        $oldPath = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
             Mock Get-LWASMacro {
@@ -534,7 +534,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
     }
 
     It 'returns Success=false when the new name contains invalid characters' {
-        $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
+        $oldPath = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
             $result = Rename-MacroFile -FilePath $oldPath -NewName 'bad name!'
@@ -550,7 +550,7 @@ Describe 'Rename-MacroFile' -Tag 'Unit' {
     }
 
     It 'calls Write-LastWarLog at Info level on a successful rename' {
-        $oldPath = Join-Path $TestDrive 'Private\Macros\20260101_120000_old-name.json'
+        $oldPath = Join-Path $TestDrive 'Macros\20260101_120000_old-name.json'
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ oldPath = $oldPath } {
             Rename-MacroFile -FilePath $oldPath -NewName 'new-name' | Out-Null

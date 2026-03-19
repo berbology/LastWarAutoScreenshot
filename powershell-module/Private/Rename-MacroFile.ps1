@@ -27,7 +27,7 @@ function Rename-MacroFile {
         Message is empty on success; human-readable on failure.
 
     .EXAMPLE
-        $result = Rename-MacroFile -FilePath 'C:\...\Private\Macros\20260101_120000_old-name.json' -NewName 'new-name'
+        $result = Rename-MacroFile -FilePath "$env:APPDATA\LastWarAutoScreenshot\Macros\20260101_120000_old-name.json" -NewName 'new-name'
         if ($result.Success) { Write-Host "Renamed to $($result.NewFilePath)" }
 
     .NOTES

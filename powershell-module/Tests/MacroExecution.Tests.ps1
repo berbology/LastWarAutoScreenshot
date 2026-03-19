@@ -472,13 +472,14 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
         }
     }
 
-    It 'Delay with seconds=5: calls Start-Sleep -Seconds 5; returns Success=$true' {
+    It 'Delay with seconds=5: calls Start-Sleep multiple times with -Milliseconds; returns Success=$true' {
         InModuleScope LastWarAutoScreenshot {
             $action = [PSCustomObject]@{ type = 'Delay'; seconds = 5 }
 
             $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{}
 
-            Should -Invoke Start-Sleep -Times 1 -ParameterFilter { $Seconds -eq 5 }
+            # 5 seconds = 5000 milliseconds, chunked in 100ms increments = 50 calls
+            Should -Invoke Start-Sleep -Times 50 -ParameterFilter { $Milliseconds -eq 100 }
             $result.Success | Should -BeTrue
         }
     }

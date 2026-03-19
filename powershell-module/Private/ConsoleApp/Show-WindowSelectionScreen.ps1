@@ -100,11 +100,24 @@ function Show-WindowSelectionScreen {
         }
 
         # ── Step 3: Window selection prompt ────────────────────────────────────
-        $backChoice   = '[[Back to main menu]]'  # Use double brackets for AddChoice
+        $backChoice = '[[Back to main menu]]'  # Use double brackets for AddChoice
+
+        # Truncate labels to the terminal width minus a small indent margin.
+        # Spectre.Console counts items (not screen lines) when calculating cursor-up distance
+        # for redraws. If a label wraps onto a second terminal line, the cursor math is off by
+        # one per wrapped item, causing the title to be left on screen as a ghost duplicate on
+        # each keypress. Truncating ensures every label fits on exactly one line.
+        $terminalWidth = $Console.Profile.Width
+        $maxLabelWidth = [Math]::Max(20, $terminalWidth - 6)  # 6 = indent + selection marker
+
         $choiceLabels = @()
         for ($i = 0; $i -lt $sortedWindows.Count; $i++) {
-            $win          = $sortedWindows[$i]
-            $choiceLabels += "$($i + 1): $([Spectre.Console.Markup]::Escape($win.ProcessName)) - $([Spectre.Console.Markup]::Escape($win.WindowTitle)) ($($win.WindowState))"
+            $win   = $sortedWindows[$i]
+            $label = "$($i + 1): $([Spectre.Console.Markup]::Escape($win.ProcessName)) - $([Spectre.Console.Markup]::Escape($win.WindowTitle)) ($($win.WindowState))"
+            if ($label.Length -gt $maxLabelWidth) {
+                $label = $label.Substring(0, $maxLabelWidth - 3) + '...'
+            }
+            $choiceLabels += $label
         }
 
         $selectionPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(

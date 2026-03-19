@@ -31,9 +31,11 @@ function Install-LWAS {
            elevation.
         5. Config directory creation — ensures '$env:APPDATA\LastWarAutoScreenshot\'
            exists.
-        6. Dependency verification — checks that the bundled Spectre.Console DLLs
+        6. Macros directory creation — ensures '$env:APPDATA\LastWarAutoScreenshot\Macros\'
+           exists.
+        7. Dependency verification — checks that the bundled Spectre.Console DLLs
            are present. Downloads from NuGet as a repair step if either is missing.
-        7. Test dependencies (when -IncludeTests) — ensures Pester is installed and
+        8. Test dependencies (when -IncludeTests) — ensures Pester is installed and
            that Spectre.Console.Testing.dll is present in the installed module.
 
         Must be run in an elevated (Administrator) PowerShell window.
@@ -161,6 +163,16 @@ function Install-LWAS {
     }
     else {
         Write-Verbose 'Config directory already exists, skipping.'
+    }
+
+    # Step 7 — Create AppData Macros directory
+    $macrosPath = Join-Path $appDataPath 'Macros'
+    if (-not (Test-Path $macrosPath)) {
+        New-Item -Path $macrosPath -ItemType Directory -Force | Out-Null
+        Write-Verbose "Created macros directory: $macrosPath"
+    }
+    else {
+        Write-Verbose 'Macros directory already exists, skipping.'
     }
 
     # --- Dependency verification ---

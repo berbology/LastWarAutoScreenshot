@@ -21,7 +21,7 @@ function Get-MacroFile {
         Returns $null if the file is missing or the JSON cannot be parsed.
 
     .EXAMPLE
-        $result = Get-MacroFile -FilePath 'C:\...\Private\Macros\20260224_121212_my-macro.json'
+        $result = Get-MacroFile -FilePath "$env:APPDATA\LastWarAutoScreenshot\Macros\20260224_121212_my-macro.json"
         if ($null -eq $result) { Write-Warning 'File missing or invalid JSON.' }
         elseif (-not $result.Valid) { $result.Messages | ForEach-Object { Write-Warning $_ } }
         else { $result.Data.metadata.name }

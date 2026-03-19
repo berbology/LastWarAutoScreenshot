@@ -152,6 +152,33 @@ function Get-ModuleConfiguration {
                 }
             }
 
+            # Migrate old HotkeyVKeyCodes (int[]) to HotkeyKeyNames (string) when upgrading
+            # from a pre-Phase-7 configuration that stored virtual key codes directly.
+            # The old property is removed so it is not re-serialised to the JSON file.
+            if ($configData.EmergencyStop.PSObject.Properties['HotkeyVKeyCodes'] -and
+                -not $configData.EmergencyStop.PSObject.Properties['HotkeyKeyNames']) {
+                try {
+                    $oldCodes         = [int[]]$configData.EmergencyStop.HotkeyVKeyCodes
+                    $migratedKeyNames = ConvertTo-HotkeyDisplayString -VKeyCodes $oldCodes
+                    $configData.EmergencyStop | Add-Member -MemberType NoteProperty -Name HotkeyKeyNames -Value $migratedKeyNames
+                    Write-LastWarLog -Level Info `
+                        -Message "Migrated HotkeyVKeyCodes @($($oldCodes -join ', ')) to HotkeyKeyNames '$migratedKeyNames'." `
+                        -FunctionName 'Get-ModuleConfiguration'
+                }
+                catch {
+                    Write-LastWarLog -Level Warning `
+                        -Message "Could not migrate HotkeyVKeyCodes to HotkeyKeyNames: $_. Using default '$($defaults.EmergencyStop.HotkeyKeyNames)'." `
+                        -FunctionName 'Get-ModuleConfiguration'
+                    $configData.EmergencyStop | Add-Member -MemberType NoteProperty -Name HotkeyKeyNames -Value $defaults.EmergencyStop.HotkeyKeyNames
+                }
+            }
+
+            # Remove the old HotkeyVKeyCodes property if still present (legacy configs carry it
+            # even after migration; stripping it here keeps the JSON file clean).
+            if ($configData.EmergencyStop.PSObject.Properties['HotkeyVKeyCodes']) {
+                $configData.EmergencyStop.PSObject.Properties.Remove('HotkeyVKeyCodes')
+            }
+
             # Inject missing Logging keys
             if (-not $configData.PSObject.Properties['Logging']) {
                 $configData | Add-Member -MemberType NoteProperty -Name Logging -Value $defaults.Logging

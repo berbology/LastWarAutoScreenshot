@@ -56,7 +56,7 @@ New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
   micro-pauses, and overshoot/correction to dodge bot detection
 - **Flexible target regions** - define a bounding box or circle; each click
   lands at a random point within it
-- **Emergency stop** - `Ctrl+Shift+#` (UK) or hold both mouse buttons for
+- **Emergency stop** - `Ctrl+Alt+Q` (UK) or hold both mouse buttons for
   3 s to abort any running automation
 - **Configurable logging** - file, Windows Event Log, or both
 - **Screenshot capture** - user-defined window regions saved as PNG with
@@ -170,10 +170,10 @@ open you will see an error and be returned to the macro list.
 
 Two emergency stop mechanisms are available during macro execution:
 
-- **Keyboard hotkey:** hold `Ctrl+Shift+#` simultaneously.
-  - `#` is `0xDC` on UK keyboard layouts; on other layouts the key code
-    may differ. See the Emergency Stop section for how to change it via
-    the config app.
+- **Keyboard hotkey:** hold `Ctrl+Alt+Q` simultaneously.
+  - `#` is only a standalone key on UK keyboard layouts. On other layouts,
+    reconfigure `EmergencyStop.HotkeyKeyNames` via **Configure module →
+    Emergency stop settings** in the app (e.g. change to `"Ctrl+Shift+P"`).
 - **Mouse gesture:** hold both left and right mouse buttons for 3 seconds.
 
 Either trigger halts the current action at the next safe check point,

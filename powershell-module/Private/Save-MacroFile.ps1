@@ -1,7 +1,7 @@
 function Save-MacroFile {
     <#
     .SYNOPSIS
-        Validates a macro data object and saves it to the Private/Macros folder.
+        Validates a macro data object and saves it to the macros directory.
 
     .DESCRIPTION
         Runs the macro through Test-MacroFile before writing. If validation fails,
@@ -12,7 +12,8 @@ function Save-MacroFile {
         UTC) and metadata.name (sanitised via Get-ValidMacroName):
             <yyyyMMdd_HHmmss>_<name>.json
 
-        The Private/Macros directory is created automatically if it does not exist.
+        The macros directory ($env:APPDATA\LastWarAutoScreenshot\Macros) is created
+        automatically if it does not exist.
 
     .PARAMETER MacroData
         The PSCustomObject representing the macro to save (typically built during
@@ -57,7 +58,7 @@ function Save-MacroFile {
         }
     }
 
-    $macrosDir = Join-Path $script:ModuleRootPath 'Private\Macros'
+    $macrosDir = $script:MacrosPath
     New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
 
     $createdUtc = [datetime]::Parse($MacroData.metadata.createdUtc)

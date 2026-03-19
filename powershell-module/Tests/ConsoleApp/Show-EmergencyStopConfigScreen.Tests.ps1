@@ -25,7 +25,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
     #   2. MouseGestureEnabled    (bool  -> ConfirmationPrompt): push 'y' or 'n' explicitly
     #   3. PollIntervalMs         (int   -> TextPrompt):         push Enter to keep
     #   4. MouseGestureHoldDurationMs (int -> TextPrompt):      push Enter to keep
-    #   5. HotkeyVKeyCodes        (custom TextPrompt):          push Enter to keep
+    #   5. HotkeyKeyNames         (custom TextPrompt):          push Enter to keep
     #   6. Save SelectionPrompt: Enter = 'Yes -- save now', Down+Enter = 'Reset ALL', Down+Down+Enter = 'Discard'
 
     # ════════════════════════════════════════════════════════════════════════
@@ -48,7 +48,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -75,7 +75,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match 'AutoStart'
                 $tc.Output | Should -Match 'MouseGestureEnabled'
                 $tc.Output | Should -Match 'PollIntervalMs'
-                $tc.Output | Should -Match '0x11'                 # HotkeyVKeyCodes hex value
+                $tc.Output | Should -Match 'Ctrl'                 # HotkeyVKeyCodes resolved key name
             }
         }
 
@@ -94,7 +94,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -119,7 +119,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc.Output | Should -Match '100'    # PollIntervalMs
                 $tc.Output | Should -Match '3000'   # MouseGestureHoldDurationMs
-                $tc.Output | Should -Match '0x11'   # HotkeyVKeyCodes first code as hex
+                $tc.Output | Should -Match 'Ctrl'   # HotkeyVKeyCodes resolved key name
             }
         }
     }
@@ -144,7 +144,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -184,7 +184,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -226,7 +226,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -266,7 +266,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -312,7 +312,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -354,7 +354,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -402,7 +402,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -444,7 +444,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $false
-                            HotkeyVKeyCodes            = @(1, 2, 3)
+                            HotkeyKeyNames             = 'Ctrl+A'
                             PollIntervalMs             = 500
                             MouseGestureEnabled        = $false
                             MouseGestureHoldDurationMs = 10000
@@ -471,7 +471,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
                     $Config.EmergencyStop.AutoStart -eq $true -and
                     $Config.EmergencyStop.PollIntervalMs -eq 100 -and
-                    $Config.EmergencyStop.HotkeyVKeyCodes[0] -eq 17
+                    $Config.EmergencyStop.HotkeyKeyNames -eq 'Ctrl+Alt+Q'
                 }
             }
         }
@@ -491,7 +491,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -532,7 +532,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -560,11 +560,11 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: HotkeyVKeyCodes valid hex input
+    # Context: HotkeyKeyNames valid key name input
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters valid hex VKey codes for HotkeyVKeyCodes' {
+    Context 'When the user enters a valid key combination for HotkeyKeyNames' {
 
-        It 'Valid hex input "0x11, 0x10, 0xDC" is parsed and saved as integer array @(17, 16, 220)' {
+        It 'Valid input "Ctrl+Shift+P" is normalised and saved as "Ctrl+Shift+P"' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -579,7 +579,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -591,30 +591,28 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                $tc.Input.PushTextWithEnter('y')                    # AutoStart
-                $tc.Input.PushTextWithEnter('y')                    # MouseGestureEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)              # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)              # MouseGestureHoldDurationMs
-                $tc.Input.PushTextWithEnter('0x11, 0x10, 0xDC')    # HotkeyVKeyCodes valid hex
-                $tc.Input.PushKey([ConsoleKey]::Enter)              # Yes -- save now
+                $tc.Input.PushTextWithEnter('y')               # AutoStart
+                $tc.Input.PushTextWithEnter('y')               # MouseGestureEnabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)         # PollIntervalMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)         # MouseGestureHoldDurationMs
+                $tc.Input.PushTextWithEnter('Ctrl+Shift+P')    # HotkeyKeyNames valid key name
+                $tc.Input.PushKey([ConsoleKey]::Enter)         # Yes -- save now
 
                 Show-EmergencyStopConfigScreen -Console $tc
 
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.EmergencyStop.HotkeyVKeyCodes[0] -eq 17 -and
-                    $Config.EmergencyStop.HotkeyVKeyCodes[1] -eq 16 -and
-                    $Config.EmergencyStop.HotkeyVKeyCodes[2] -eq 220
+                    $Config.EmergencyStop.HotkeyKeyNames -eq 'Ctrl+Shift+P'
                 }
             }
         }
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: HotkeyVKeyCodes out-of-range input
+    # Context: HotkeyKeyNames invalid key name input
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the user enters out-of-range VKey codes for HotkeyVKeyCodes' {
+    Context 'When the user enters an invalid key combination for HotkeyKeyNames' {
 
-        It 'Out-of-range codes show a validation error message in the console output' {
+        It 'Invalid input "a+b+c" shows a validation error message in the console output' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -629,7 +627,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -641,23 +639,23 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                $tc.Input.PushTextWithEnter('y')             # AutoStart
-                $tc.Input.PushTextWithEnter('y')             # MouseGestureEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # MouseGestureHoldDurationMs
-                $tc.Input.PushTextWithEnter('0xFF, 0x200')   # HotkeyVKeyCodes invalid (both out of range)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # keep current on re-prompt
+                $tc.Input.PushTextWithEnter('y')         # AutoStart
+                $tc.Input.PushTextWithEnter('y')         # MouseGestureEnabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # PollIntervalMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # MouseGestureHoldDurationMs
+                $tc.Input.PushTextWithEnter('a+b+c')     # HotkeyKeyNames invalid ('a' not a modifier)
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # keep current on re-prompt
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Discard changes
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # Discard changes
 
                 Show-EmergencyStopConfigScreen -Console $tc
 
-                $tc.Output | Should -Match 'valid range'
+                $tc.Output | Should -Match 'not a valid modifier'
             }
         }
 
-        It 'Current HotkeyVKeyCodes are preserved when Enter is pressed after invalid input' {
+        It 'Current HotkeyKeyNames is preserved when Enter is pressed after invalid input' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -672,7 +670,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -684,32 +682,30 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
-                $tc.Input.PushTextWithEnter('y')             # AutoStart
-                $tc.Input.PushTextWithEnter('y')             # MouseGestureEnabled
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # MouseGestureHoldDurationMs
-                $tc.Input.PushTextWithEnter('0xFF, 0x200')   # HotkeyVKeyCodes invalid
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Keep current on re-prompt
-                $tc.Input.PushKey([ConsoleKey]::Enter)       # Yes -- save now
+                $tc.Input.PushTextWithEnter('y')         # AutoStart
+                $tc.Input.PushTextWithEnter('y')         # MouseGestureEnabled
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # PollIntervalMs
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # MouseGestureHoldDurationMs
+                $tc.Input.PushTextWithEnter('a+b+c')     # HotkeyKeyNames invalid
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # Keep current on re-prompt
+                $tc.Input.PushKey([ConsoleKey]::Enter)   # Yes -- save now
 
                 Show-EmergencyStopConfigScreen -Console $tc
 
-                # Original HotkeyVKeyCodes @(17, 16, 220) must be preserved
+                # Original HotkeyKeyNames 'Ctrl+Alt+Q' must be preserved
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
-                    $Config.EmergencyStop.HotkeyVKeyCodes[0] -eq 17 -and
-                    $Config.EmergencyStop.HotkeyVKeyCodes[1] -eq 16 -and
-                    $Config.EmergencyStop.HotkeyVKeyCodes[2] -eq 220
+                    $Config.EmergencyStop.HotkeyKeyNames -eq 'Ctrl+Alt+Q'
                 }
             }
         }
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Informational note about keyboard layout
+    # Context: Informational note about key name format and keyboard layout
     # ════════════════════════════════════════════════════════════════════════
-    Context 'Informational note about keyboard layout' {
+    Context 'Informational note about key name format and keyboard layout' {
 
-        It 'Console output contains the UK layout note for the # key' {
+        It 'Console output contains the key name format note mentioning UK keyboard layout' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -724,7 +720,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
                             AutoStart                  = $true
-                            HotkeyVKeyCodes            = @(17, 16, 220)
+                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
                             PollIntervalMs             = 100
                             MouseGestureEnabled        = $true
                             MouseGestureHoldDurationMs = 3000
@@ -740,14 +736,14 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames (keep current)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Discard changes
 
                 Show-EmergencyStopConfigScreen -Console $tc
 
-                $tc.Output | Should -Match 'UK layouts'
+                $tc.Output | Should -Match 'UK keyboard'
             }
         }
     }

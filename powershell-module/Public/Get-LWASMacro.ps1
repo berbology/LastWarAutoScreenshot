@@ -4,7 +4,7 @@ function Get-LWASMacro {
         Returns saved macros with their full metadata and sequence data.
 
     .DESCRIPTION
-        Scans the Private\Macros folder within the module root for *.json files
+        Scans $env:APPDATA\LastWarAutoScreenshot\Macros for *.json files
         whose filenames match the expected convention (yyyyMMdd_HHmmss_<name>.json).
 
         For each matching file the macro JSON is read via Get-MacroFile and key
@@ -37,8 +37,8 @@ function Get-LWASMacro {
           Metadata    [object]   — full metadata object from the macro JSON
           Sequence    [object[]] — full sequence array from the macro JSON
 
-        Returns an empty array when the folder does not exist or contains no
-        matching JSON files.
+        Returns an empty array when the macros directory does not exist or contains
+        no matching JSON files.
 
     .EXAMPLE
         $macros = Get-LWASMacro
@@ -78,7 +78,7 @@ function Get-LWASMacro {
     }
 
     end {
-        $macrosDir = Join-Path $script:ModuleRootPath 'Private\Macros'
+        $macrosDir = $script:MacrosPath
 
         if (-not (Test-Path -LiteralPath $macrosDir)) {
             return @()

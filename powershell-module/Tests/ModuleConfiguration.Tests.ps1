@@ -130,7 +130,7 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 }
                 EmergencyStop = @{
                     AutoStart = $false
-                    HotkeyVKeyCodes = @(18, 17, 13)
+                    HotkeyKeyNames = 'Alt+Ctrl+Enter'
                     PollIntervalMs = 200
                 }
                 Logging = @{
@@ -194,7 +194,7 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
                 
                 # Custom EmergencyStop settings should be preserved
                 $config.EmergencyStop.AutoStart | Should -Be $false
-                $config.EmergencyStop.HotkeyVKeyCodes | Should -Be @(18, 17, 13)
+                $config.EmergencyStop.HotkeyKeyNames | Should -Be 'Alt+Ctrl+Enter'
                 $config.EmergencyStop.PollIntervalMs | Should -Be 200
             }
         }
@@ -495,7 +495,7 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 
                 $config.EmergencyStop.AutoStart | Should -Be $true
-                $config.EmergencyStop.HotkeyVKeyCodes | Should -Be @(17, 16, 220)
+                $config.EmergencyStop.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
                 $config.EmergencyStop.PollIntervalMs | Should -Be 100
             }
         }

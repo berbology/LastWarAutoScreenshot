@@ -27,17 +27,11 @@ function Start-LWASEmergencyStopMonitor {
         valid config (creating one with defaults on first run), so no separate fallback is
         required here.
 
-    .PARAMETER HotkeyVKeyCodes
-        Array of virtual key codes that must all be held simultaneously to trigger the stop.
-        Reads EmergencyStop.HotkeyVKeyCodes from the module configuration when omitted.
-        Get-ModuleConfiguration always returns a valid config (creating one with defaults on
-        first run), so no separate fallback is required here.
-
-        Virtual key code reference:
-          0x11 (17)  = VK_CONTROL
-          0x10 (16)  = VK_SHIFT
-          0xDC (220) = VK_OEM_5  - '#' on UK QWERTY, '\' on standard US layout.
-                                   Adjust this value to match your keyboard layout.
+    .PARAMETER HotkeyKeyNames
+        A plus-separated key combination string (e.g. 'Ctrl+Shift+F12') that must be held
+        simultaneously to trigger the stop. Reads EmergencyStop.HotkeyKeyNames from the module
+        configuration when omitted. Get-ModuleConfiguration always returns a valid config
+        (creating one with defaults on first run), so no separate fallback is required here.
 
     .OUTPUTS
         PSCustomObject with scriptblock properties:
@@ -53,8 +47,8 @@ function Start-LWASEmergencyStopMonitor {
         Stop-LWASEmergencyStopMonitor
 
     .EXAMPLE
-        # Override hotkey to Ctrl+F12 (0x11, 0x7B)
-        Start-LWASEmergencyStopMonitor -HotkeyVKeyCodes @(0x11, 0x7B) -PollIntervalMs 200
+        # Override hotkey to Ctrl+F12 via key names
+        Start-LWASEmergencyStopMonitor -HotkeyKeyNames 'Ctrl+F12' -PollIntervalMs 200
 
     .NOTES
         Why polling instead of Win32 RegisterHotKey:
@@ -79,7 +73,7 @@ function Start-LWASEmergencyStopMonitor {
         [int]$PollIntervalMs,
 
         [Parameter()]
-        [int[]]$HotkeyVKeyCodes
+        [string]$HotkeyKeyNames
     )
 
     # ── Idempotency check ────────────────────────────────────────────────────────
@@ -106,11 +100,34 @@ function Start-LWASEmergencyStopMonitor {
     # It never returns $null - if no config file exists it creates one with defaults.
     $config = Get-ModuleConfiguration
     $effectivePollIntervalMs  = [int]$config.EmergencyStop.PollIntervalMs
-    $effectiveHotkeyVKeyCodes = [int[]]$config.EmergencyStop.HotkeyVKeyCodes
+
+    # Convert HotkeyKeyNames from config to virtual key codes.
+    $configHotkeyKeyNames     = $config.EmergencyStop.HotkeyKeyNames
+    $effectiveHotkeyVKeyCodes = @()
+    if (-not [string]::IsNullOrEmpty($configHotkeyKeyNames)) {
+        try {
+            $effectiveHotkeyVKeyCodes = [int[]](ConvertFrom-HotkeyString -HotkeyString $configHotkeyKeyNames)
+        }
+        catch {
+            Write-LastWarLog -Level Warning `
+                -Message "Could not convert HotkeyKeyNames '$configHotkeyKeyNames' to virtual key codes: $_. Emergency stop hotkey will be inactive." `
+                -FunctionName 'Start-LWASEmergencyStopMonitor'
+        }
+    }
 
     # Explicitly-supplied parameters always win over config values.
-    if ($PSBoundParameters.ContainsKey('PollIntervalMs'))  { $effectivePollIntervalMs  = $PollIntervalMs  }
-    if ($PSBoundParameters.ContainsKey('HotkeyVKeyCodes')) { $effectiveHotkeyVKeyCodes = $HotkeyVKeyCodes }
+    if ($PSBoundParameters.ContainsKey('PollIntervalMs')) { $effectivePollIntervalMs = $PollIntervalMs }
+    if ($PSBoundParameters.ContainsKey('HotkeyKeyNames')) {
+        try {
+            $effectiveHotkeyVKeyCodes = [int[]](ConvertFrom-HotkeyString -HotkeyString $HotkeyKeyNames)
+        }
+        catch {
+            Write-LastWarLog -Level Warning `
+                -Message "Could not convert HotkeyKeyNames parameter '$HotkeyKeyNames' to virtual key codes: $_. Emergency stop hotkey will be inactive." `
+                -FunctionName 'Start-LWASEmergencyStopMonitor'
+            $effectiveHotkeyVKeyCodes = @()
+        }
+    }
 
     # Mouse gesture settings are always read from config (no parameter overrides).
     $mouseGestureEnabled       = [bool]$config.EmergencyStop.MouseGestureEnabled
@@ -118,6 +135,8 @@ function Start-LWASEmergencyStopMonitor {
 
     # ── Reset the stop flag and build state ─────────────────────────────────────
     $script:EmergencyStopRequested = $false
+
+    $mouseGestureRequiredPollCount = [int][Math]::Ceiling($mouseGestureHoldDurationMs / $effectivePollIntervalMs)
 
     $state = @{
         Stopped                       = $false
@@ -127,9 +146,18 @@ function Start-LWASEmergencyStopMonitor {
         # VK_LBUTTON (0x01) and VK_RBUTTON (0x02) are fixed codes, not keyboard-layout-dependent.
         MouseGestureEnabled           = $mouseGestureEnabled
         MouseGestureVKeyCodes         = @(0x01, 0x02)
-        MouseGestureRequiredPollCount = [int][Math]::Ceiling($mouseGestureHoldDurationMs / $effectivePollIntervalMs)
+        MouseGestureRequiredPollCount = $mouseGestureRequiredPollCount
         MouseGestureCurrentPollCount  = 0
     }
+
+    # Configure the C# handler. Must happen before timer.Start() so the timer thread
+    # sees the initialised values (timer.Start() provides the memory barrier).
+    [LastWarAutoScreenshot.EmergencyStopMonitor]::Configure(
+        $effectiveHotkeyVKeyCodes,
+        $mouseGestureEnabled,
+        @(0x01, 0x02),
+        $mouseGestureRequiredPollCount
+    )
 
     # ── Create and start the timer ───────────────────────────────────────────────
     $timer = [System.Timers.Timer]::new($effectivePollIntervalMs)
@@ -137,13 +165,15 @@ function Start-LWASEmergencyStopMonitor {
     $state.Timer = $timer
     $script:EmergencyStopTimer = $timer
 
-    $timer.add_Elapsed({
-        try {
-            Invoke-EmergencyStopPoll -State $state
-        } catch {
-            # Ultimate safety net - never let an unhandled exception escape the Elapsed handler.
-        }
-    }.GetNewClosure())
+    # Attach the C# method directly as a true CLR delegate so the timer thread
+    # invokes it without requiring a PowerShell runspace. A scriptblock handler
+    # cannot execute while the macro runspace is busy and would be silently swallowed.
+    $elapsedHandler = [System.Delegate]::CreateDelegate(
+        [System.Timers.ElapsedEventHandler],
+        [LastWarAutoScreenshot.EmergencyStopMonitor],
+        'HandleElapsed'
+    )
+    $timer.add_Elapsed($elapsedHandler)
 
     $timer.Start()
 

@@ -147,5 +147,39 @@ namespace LastWarAutoScreenshot
         /// <returns>True if successful, false otherwise</returns>
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        /// <summary>
+        /// Retrieves the active input locale identifier (keyboard layout handle) for the specified thread.
+        /// Pass 0 to retrieve the layout for the current thread.
+        /// </summary>
+        /// <param name="idThread">The identifier of the thread to query (0 = current thread).</param>
+        /// <returns>The input locale identifier (HKL) for the specified thread.</returns>
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetKeyboardLayout(uint idThread);
+
+        /// <summary>
+        /// Translates a virtual-key code into a character or scan code using the specified keyboard layout.
+        /// Use uMapType = 2 (MAPVK_VK_TO_CHAR) to retrieve the Unicode character produced by the key.
+        /// The high-order bit of the return value is set for dead keys; mask with 0x7FFFFFFF to obtain the character value.
+        /// </summary>
+        /// <param name="uCode">The virtual-key code to translate.</param>
+        /// <param name="uMapType">The translation to perform (2 = MAPVK_VK_TO_CHAR).</param>
+        /// <param name="dwhkl">The keyboard layout handle obtained from GetKeyboardLayout.</param>
+        /// <returns>The Unicode character value, or 0 if no translation exists for the key.</returns>
+        [DllImport("user32.dll")]
+        public static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, IntPtr dwhkl);
+
+        /// <summary>
+        /// Translates a character to the virtual-key code and shift state required to produce that
+        /// character using the specified keyboard layout.
+        /// The low-order byte of the return value contains the virtual-key code and the high-order
+        /// byte contains the shift state (0 = no modifier, 1 = Shift, 2 = Ctrl, 4 = Alt, 8 = Hankaku;
+        /// combinations use bitwise OR). Returns -1 if the character is not defined in the layout.
+        /// </summary>
+        /// <param name="ch">The character to translate.</param>
+        /// <param name="dwhkl">The keyboard layout handle obtained from GetKeyboardLayout.</param>
+        /// <returns>The virtual-key code and shift state packed into a SHORT, or -1 if not found.</returns>
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern short VkKeyScanEx(char ch, IntPtr dwhkl);
     }
 }

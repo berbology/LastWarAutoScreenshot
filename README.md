@@ -96,7 +96,7 @@ The main menu loads immediately. Nothing needs editing before you start.
   micro-pauses, and overshoot/correction to avoid bot detection
 - **Flexible target regions** — define a bounding box or circle; each click
   lands at a random point within it
-- **Emergency stop** — `Ctrl+Shift+#` (UK layout) or hold both mouse buttons
+- **Emergency stop** — `Ctrl+Alt+Q` (UK layout) or hold both mouse buttons
   for 3 seconds to abort any running automation
 - **Configurable logging** — file, Windows Event Log, or both
 - **Macro recording** _(Phase 4)_ — record click sequences via the app and

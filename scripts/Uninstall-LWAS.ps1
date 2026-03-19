@@ -132,7 +132,7 @@ catch {
 # Handle AppData directory removal
 $appDataPath = Join-Path $env:APPDATA 'LastWarAutoScreenshot'
 if (-not (Test-Path $appDataPath)) {
-    Write-Output 'Config directory not found, skipping.'
+    Write-Output 'LastWarAutoScreenshot user directory not found, skipping.'
 }
 else {
     $shouldRemove = $false
@@ -140,20 +140,20 @@ else {
         $shouldRemove = $true
     }
     else {
-        $answer = Read-Host "Remove config and scheduler files at ${appDataPath}? [Y/N]"
+        $answer = Read-Host "Remove config, Macros and scheduler files at ${appDataPath}? [Y/N]"
         if ($answer -match '^(y|yes)$') {
             $shouldRemove = $true
         }
     }
 
     if ($shouldRemove) {
-        if ($PSCmdlet.ShouldProcess($appDataPath, 'Remove config directory')) {
+        if ($PSCmdlet.ShouldProcess($appDataPath, 'Remove LastWarAutoScreenshot user directory')) {
             try {
                 Remove-Item -Path $appDataPath -Recurse -Force
-                Write-Output "Removed config directory: $appDataPath"
+                Write-Output "Removed LastWarAutoScreenshot user directory: $appDataPath"
             }
             catch {
-                Write-Warning "Could not remove config directory: $($_.Exception.Message)"
+                Write-Warning "Could not remove LastWarAutoScreenshot user directory: $($_.Exception.Message)"
             }
         }
     }
