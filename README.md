@@ -13,7 +13,7 @@ captures in Windows games and other applications - built predominantly for Last 
 
 ### Users
 
-- [Getting Started](#get-started)
+- [Getting Started](#getting-started)
 - [Features](#features)
 - [User Guide](powershell-module/Docs/UserGuide.md)
 - [Configuration reference](powershell-module/Docs/Configuration.md)
