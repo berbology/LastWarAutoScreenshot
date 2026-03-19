@@ -22,11 +22,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
     # Prompts in order:
     #   1. AutoStart              (bool  -> ConfirmationPrompt): push 'y' or 'n' explicitly
-    #   2. MouseGestureEnabled    (bool  -> ConfirmationPrompt): push 'y' or 'n' explicitly
-    #   3. PollIntervalMs         (int   -> TextPrompt):         push Enter to keep
-    #   4. MouseGestureHoldDurationMs (int -> TextPrompt):      push Enter to keep
-    #   5. HotkeyKeyNames         (custom TextPrompt):          push Enter to keep
-    #   6. Save SelectionPrompt: Enter = 'Yes -- save now', Down+Enter = 'Reset ALL', Down+Down+Enter = 'Discard'
+    #   2. PollIntervalMs         (int   -> TextPrompt):         push Enter to keep
+    #   3. HotkeyKeyNames         (custom TextPrompt):          push Enter to keep
+    #   4. Save SelectionPrompt: Enter = 'Yes -- save now', Down+Enter = 'Reset ALL', Down+Down+Enter = 'Discard'
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Table renders current values
@@ -47,11 +45,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -61,10 +57,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Discard changes
@@ -73,9 +67,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 # With a 2560px-wide console the table does not wrap; assert full key names.
                 $tc.Output | Should -Match 'AutoStart'
-                $tc.Output | Should -Match 'MouseGestureEnabled'
                 $tc.Output | Should -Match 'PollIntervalMs'
-                $tc.Output | Should -Match 'Ctrl'                 # HotkeyVKeyCodes resolved key name
+                $tc.Output | Should -Match 'Ctrl'                 # HotkeyKeyNames resolved key name
             }
         }
 
@@ -93,11 +86,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -107,10 +98,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Discard changes
@@ -118,8 +107,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                 Show-EmergencyStopConfigScreen -Console $tc
 
                 $tc.Output | Should -Match '100'    # PollIntervalMs
-                $tc.Output | Should -Match '3000'   # MouseGestureHoldDurationMs
-                $tc.Output | Should -Match 'Ctrl'   # HotkeyVKeyCodes resolved key name
+                $tc.Output | Should -Match 'Ctrl'   # HotkeyKeyNames resolved key name
             }
         }
     }
@@ -143,11 +131,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -157,10 +143,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes -- save now
 
                 Show-EmergencyStopConfigScreen -Console $tc
@@ -183,11 +167,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -197,10 +179,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart = keep true
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes -- save now
 
                 Show-EmergencyStopConfigScreen -Console $tc
@@ -225,11 +205,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -239,10 +217,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes -- save now
 
                 Show-EmergencyStopConfigScreen -Console $tc
@@ -265,11 +241,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -279,10 +253,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Yes -- save now
 
                 Show-EmergencyStopConfigScreen -Console $tc
@@ -311,11 +283,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -325,10 +295,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Discard changes
@@ -353,11 +321,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -367,10 +333,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Discard changes
@@ -401,11 +365,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -415,10 +377,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL EmergencyStop settings to defaults
 
@@ -443,11 +403,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $false
-                            HotkeyKeyNames             = 'Ctrl+A'
-                            PollIntervalMs             = 500
-                            MouseGestureEnabled        = $false
-                            MouseGestureHoldDurationMs = 10000
+                            AutoStart      = $false
+                            HotkeyKeyNames = 'Ctrl+A'
+                            PollIntervalMs = 500
                         }
                     }
                 }
@@ -457,17 +415,15 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('n')       # AutoStart (confirm current false)
-                $tc.Input.PushTextWithEnter('n')       # MouseGestureEnabled (confirm current false)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL EmergencyStop settings to defaults
 
                 Show-EmergencyStopConfigScreen -Console $tc
 
                 # After Reset ALL, entire EmergencyStop section is replaced with defaults.
-                # Defaults: AutoStart = $true, PollIntervalMs = 100, HotkeyVKeyCodes = @(17, 16, 220)
+                # Defaults: AutoStart = $true, PollIntervalMs = 100, HotkeyKeyNames = 'Ctrl+Alt+Q'
                 Should -Invoke Save-ModuleSettings -Exactly 1 -ParameterFilter {
                     $Config.EmergencyStop.AutoStart -eq $true -and
                     $Config.EmergencyStop.PollIntervalMs -eq 100 -and
@@ -490,11 +446,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -504,10 +458,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL EmergencyStop settings to defaults
 
@@ -531,11 +483,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -545,10 +495,8 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyVKeyCodes
+                $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter) # Reset ALL EmergencyStop settings to defaults
 
@@ -578,11 +526,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -592,9 +538,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')               # AutoStart
-                $tc.Input.PushTextWithEnter('y')               # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)         # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)         # MouseGestureHoldDurationMs
                 $tc.Input.PushTextWithEnter('Ctrl+Shift+P')    # HotkeyKeyNames valid key name
                 $tc.Input.PushKey([ConsoleKey]::Enter)         # Yes -- save now
 
@@ -626,11 +570,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -640,9 +582,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')         # AutoStart
-                $tc.Input.PushTextWithEnter('y')         # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)   # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)   # MouseGestureHoldDurationMs
                 $tc.Input.PushTextWithEnter('a+b+c')     # HotkeyKeyNames invalid ('a' not a modifier)
                 $tc.Input.PushKey([ConsoleKey]::Enter)   # keep current on re-prompt
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -669,11 +609,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -683,9 +621,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')         # AutoStart
-                $tc.Input.PushTextWithEnter('y')         # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter)   # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter)   # MouseGestureHoldDurationMs
                 $tc.Input.PushTextWithEnter('a+b+c')     # HotkeyKeyNames invalid
                 $tc.Input.PushKey([ConsoleKey]::Enter)   # Keep current on re-prompt
                 $tc.Input.PushKey([ConsoleKey]::Enter)   # Yes -- save now
@@ -719,11 +655,9 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
                         }
                         MouseControl  = [PSCustomObject]@{}
                         EmergencyStop = [PSCustomObject]@{
-                            AutoStart                  = $true
-                            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-                            PollIntervalMs             = 100
-                            MouseGestureEnabled        = $true
-                            MouseGestureHoldDurationMs = 3000
+                            AutoStart      = $true
+                            HotkeyKeyNames = 'Ctrl+Alt+Q'
+                            PollIntervalMs = 100
                         }
                     }
                 }
@@ -733,9 +667,7 @@ Describe 'Show-EmergencyStopConfigScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushTextWithEnter('y')       # AutoStart
-                $tc.Input.PushTextWithEnter('y')       # MouseGestureEnabled
                 $tc.Input.PushKey([ConsoleKey]::Enter) # PollIntervalMs
-                $tc.Input.PushKey([ConsoleKey]::Enter) # MouseGestureHoldDurationMs
                 $tc.Input.PushKey([ConsoleKey]::Enter) # HotkeyKeyNames (keep current)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)

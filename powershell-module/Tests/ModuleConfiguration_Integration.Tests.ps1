@@ -50,8 +50,6 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                 # Verify EmergencyStop matches defaults
                 $config.EmergencyStop.AutoStart | Should -Be $expectedDefaults.EmergencyStop.AutoStart
                 $config.EmergencyStop.HotkeyKeyNames | Should -Be $expectedDefaults.EmergencyStop.HotkeyKeyNames
-                $config.EmergencyStop.MouseGestureEnabled | Should -Be $expectedDefaults.EmergencyStop.MouseGestureEnabled
-                $config.EmergencyStop.MouseGestureHoldDurationMs | Should -Be $expectedDefaults.EmergencyStop.MouseGestureHoldDurationMs
 
                 # Verify Screenshots matches defaults
                 $config.Screenshots.StoragePath | Should -Be $expectedDefaults.Screenshots.StoragePath
@@ -347,8 +345,7 @@ Describe 'Configuration Functions Integration' -Tag 'Integration' {
                         MinClickPostDelayMs = 100; MaxClickPostDelayMs = 300; PathPointCount = 20
                     }
                     EmergencyStop      = [PSCustomObject]@{
-                        AutoStart = $true; HotkeyKeyNames = 'Ctrl+Alt+Q'
-                        PollIntervalMs = 100; MouseGestureEnabled = $true; MouseGestureHoldDurationMs = 3000
+                        AutoStart = $true; HotkeyKeyNames = 'Ctrl+Alt+Q'; PollIntervalMs = 100
                     }
                     Screenshots        = [PSCustomObject]@{
                         StoragePath  = 'D:\GameScreenshots'

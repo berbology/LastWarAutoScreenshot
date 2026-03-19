@@ -381,20 +381,6 @@ Describe 'Test-ConfigValue' -Tag 'Unit' {
             }
         }
 
-        It 'Should return Valid=$true for EmergencyStop.MouseGestureHoldDurationMs at boundary' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'EmergencyStop.MouseGestureHoldDurationMs' -Value 500
-                $result.Valid | Should -BeTrue
-            }
-        }
-
-        It 'Should return Valid=$false for EmergencyStop.MouseGestureHoldDurationMs below Min (500)' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $result = Test-ConfigValue -Key 'EmergencyStop.MouseGestureHoldDurationMs' -Value 499
-                $result.Valid | Should -BeFalse
-                $result.Message | Should -Not -BeNullOrEmpty
-            }
-        }
     }
 }
 

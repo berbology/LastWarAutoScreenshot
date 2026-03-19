@@ -521,9 +521,7 @@
         - `'MouseControl.MaxMicroPauseDurationMs'` - `int`; `Min = 0`, `Max = 5000`
         - `'MouseControl.PathPointCount'` - `int`; `Min = 5`, `Max = 200`
         - `'EmergencyStop.PollIntervalMs'` - `int`; `Min = 10`, `Max = 5000`
-        - `'EmergencyStop.MouseGestureHoldDurationMs'` - `int`; `Min = 500`, `Max = 30000`
         - `'EmergencyStop.AutoStart'` - `bool`
-        - `'EmergencyStop.MouseGestureEnabled'` - `bool`
         - `'MouseControl.EasingEnabled'`, `'MouseControl.OvershootEnabled'`, `'MouseControl.MicroPausesEnabled'`, `'MouseControl.JitterEnabled'` - all `bool`
    2. [x] 2.2: Create `Test-ConfigValue` (private) in `Private/ConsoleApp/Test-ConfigValue.ps1`
       - `Test-ConfigValue -Key [string] -Value [object]`

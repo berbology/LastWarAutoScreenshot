@@ -32,9 +32,7 @@
 	"EmergencyStop": {
 		"AutoStart": true,
 		"HotkeyKeyNames": "Ctrl+Alt+Q",
-		"PollIntervalMs": 100,
-		"MouseGestureEnabled": true,
-		"MouseGestureHoldDurationMs": 3000
+		"PollIntervalMs": 100
 	},
 	"Screenshots": {
 		"StoragePath": "C:\\LastWarAutoScreenshot\\Screenshots",

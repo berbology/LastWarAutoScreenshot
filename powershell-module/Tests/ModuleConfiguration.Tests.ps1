@@ -500,30 +500,6 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             }
         }
 
-        It 'Should return MouseGestureEnabled default $true when file is empty' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                Mock Write-LastWarLog {}
-                Mock Write-Host {}
-                '' | Set-Content -Path $testConfigPath -Force
-
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-
-                $config.EmergencyStop.MouseGestureEnabled | Should -Be $true
-            }
-        }
-
-        It 'Should return MouseGestureHoldDurationMs default 3000 when file is empty' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                Mock Write-LastWarLog {}
-                Mock Write-Host {}
-                '' | Set-Content -Path $testConfigPath -Force
-
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-
-                $config.EmergencyStop.MouseGestureHoldDurationMs | Should -Be 3000
-            }
-        }
-
         It 'Should return MouseControl defaults when file is empty' {
             InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
                 Mock Write-LastWarLog {}

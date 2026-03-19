@@ -86,7 +86,7 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $defaults.EmergencyStop | Should -Not -BeNullOrEmpty
-                @($defaults.EmergencyStop.PSObject.Properties).Count | Should -Be 5
+                @($defaults.EmergencyStop.PSObject.Properties).Count | Should -Be 3
             }
         }
 
@@ -94,12 +94,10 @@ Describe 'Get-DefaultModuleSettings' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 $defaults = Get-DefaultModuleSettings
                 $es = $defaults.EmergencyStop
-                
+
                 $es.AutoStart | Should -Be $true
                 $es.HotkeyKeyNames | Should -Be 'Ctrl+Alt+Q'
                 $es.PollIntervalMs | Should -Be 100
-                $es.MouseGestureEnabled | Should -Be $true
-                $es.MouseGestureHoldDurationMs | Should -Be 3000
             }
         }
 

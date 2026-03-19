@@ -5,11 +5,9 @@ function Start-LWASEmergencyStopMonitor {
 
     .DESCRIPTION
         Creates a System.Timers.Timer (AutoReset) that fires every PollIntervalMs milliseconds.
-        On each tick, Invoke-EmergencyStopPoll checks two independent emergency-stop triggers:
-          1. Hotkey combo: all keys in HotkeyVKeyCodes held simultaneously.
-          2. Mouse gesture: both mouse buttons (VK_LBUTTON 0x01, VK_RBUTTON 0x02) held
-             continuously for MouseGestureHoldDurationMs milliseconds.
-        On either trigger, $script:EmergencyStopRequested is set to $true, the timer is
+        On each tick, Invoke-EmergencyStopPoll checks the emergency-stop trigger:
+          Hotkey combo: all keys in HotkeyVKeyCodes held simultaneously.
+        On trigger, $script:EmergencyStopRequested is set to $true, the timer is
         stopped, an Error is logged, and a red ANSI message is written to the console.
 
         The function is idempotent: if the monitor is already running (i.e.
@@ -129,35 +127,19 @@ function Start-LWASEmergencyStopMonitor {
         }
     }
 
-    # Mouse gesture settings are always read from config (no parameter overrides).
-    $mouseGestureEnabled       = [bool]$config.EmergencyStop.MouseGestureEnabled
-    $mouseGestureHoldDurationMs = [int]$config.EmergencyStop.MouseGestureHoldDurationMs
-
     # ── Reset the stop flag and build state ─────────────────────────────────────
     $script:EmergencyStopRequested = $false
 
-    $mouseGestureRequiredPollCount = [int][Math]::Ceiling($mouseGestureHoldDurationMs / $effectivePollIntervalMs)
-
     $state = @{
-        Stopped                       = $false
-        Timer                         = $null
-        HotkeyVKeyCodes               = $effectiveHotkeyVKeyCodes
-        GetKeyStateFn                 = $null   # $null → real GetAsyncKeyState API; scriptblock → mock/test
-        # VK_LBUTTON (0x01) and VK_RBUTTON (0x02) are fixed codes, not keyboard-layout-dependent.
-        MouseGestureEnabled           = $mouseGestureEnabled
-        MouseGestureVKeyCodes         = @(0x01, 0x02)
-        MouseGestureRequiredPollCount = $mouseGestureRequiredPollCount
-        MouseGestureCurrentPollCount  = 0
+        Stopped         = $false
+        Timer           = $null
+        HotkeyVKeyCodes = $effectiveHotkeyVKeyCodes
+        GetKeyStateFn   = $null   # $null → real GetAsyncKeyState API; scriptblock → mock/test
     }
 
     # Configure the C# handler. Must happen before timer.Start() so the timer thread
     # sees the initialised values (timer.Start() provides the memory barrier).
-    [LastWarAutoScreenshot.EmergencyStopMonitor]::Configure(
-        $effectiveHotkeyVKeyCodes,
-        $mouseGestureEnabled,
-        @(0x01, 0x02),
-        $mouseGestureRequiredPollCount
-    )
+    [LastWarAutoScreenshot.EmergencyStopMonitor]::Configure($effectiveHotkeyVKeyCodes)
 
     # ── Create and start the timer ───────────────────────────────────────────────
     $timer = [System.Timers.Timer]::new($effectivePollIntervalMs)

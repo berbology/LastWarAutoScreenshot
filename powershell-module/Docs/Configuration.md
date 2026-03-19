@@ -123,8 +123,6 @@ the action is skipped.
 | `AutoStart` | bool | `true` | Start monitor automatically with `Invoke-MacroSequence` |
 | `HotkeyKeyNames` | string | `"Ctrl+Alt+Q"` | Key combination string; converted to virtual key codes at runtime |
 | `PollIntervalMs` | int | `100` | Polling frequency in ms (10-5000) |
-| `MouseGestureEnabled` | bool | `true` | Hold both mouse buttons as a stop trigger |
-| `MouseGestureHoldDurationMs` | int | `3000` | Hold duration to trigger (500-30000 ms) |
 
 The `#` key is only available as a standalone key on UK layouts. On other layouts
 adjust `HotkeyKeyNames` to a combination available on your keyboard (e.g. `"Ctrl+Shift+P"`). See

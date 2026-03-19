@@ -101,16 +101,7 @@ namespace LastWarAutoScreenshot
     // caught, so the flag is never set.  A true C# delegate bypasses that entirely.
     public static class EmergencyStopMonitor
     {
-        private static int[]  _hotkeyVKeyCodes;
-        private static bool   _mouseGestureEnabled;
-        private static int[]  _mouseGestureVKeyCodes;
-        private static int    _mouseGestureRequiredPollCount;
-        // Accessed only on the single timer-thread; no contention.
-        private static int    _mouseGestureCurrentPollCount;
-        // Number of consecutive polls where not all gesture buttons were held.
-        // Allows up to 1 missed poll (from an injected MOUSEEVENTF_LEFTUP during a
-        // macro click) without resetting the accumulated hold count.
-        private static int    _mouseGestureBreakCount;
+        private static int[] _hotkeyVKeyCodes;
 
         // Read by the PowerShell macro thread, written by the timer thread.
         // volatile ensures neither compiler nor CPU reorders or caches the read.
@@ -119,19 +110,10 @@ namespace LastWarAutoScreenshot
         // Called by Start-LWASEmergencyStopMonitor before the timer starts.
         // All writes happen before timer.Start(), which provides the required
         // memory-barrier so the timer thread sees the initialised values.
-        public static void Configure(
-            int[] hotkeyVKeyCodes,
-            bool  mouseGestureEnabled,
-            int[] mouseGestureVKeyCodes,
-            int   mouseGestureRequiredPollCount)
+        public static void Configure(int[] hotkeyVKeyCodes)
         {
-            _hotkeyVKeyCodes               = hotkeyVKeyCodes;
-            _mouseGestureEnabled           = mouseGestureEnabled;
-            _mouseGestureVKeyCodes         = mouseGestureVKeyCodes;
-            _mouseGestureRequiredPollCount = mouseGestureRequiredPollCount;
-            _mouseGestureCurrentPollCount  = 0;
-            _mouseGestureBreakCount        = 0;
-            StopRequested                  = false;
+            _hotkeyVKeyCodes = hotkeyVKeyCodes;
+            StopRequested    = false;
         }
 
         // Attached to System.Timers.Timer.Elapsed via System.Delegate.CreateDelegate
@@ -158,47 +140,6 @@ namespace LastWarAutoScreenshot
                 {
                     StopRequested = true;
                     return;
-                }
-            }
-
-            // Mouse gesture check — both mouse buttons held for the required number of
-            // consecutive polls.
-            if (_mouseGestureEnabled)
-            {
-                int[] gestureCodes = _mouseGestureVKeyCodes;
-                if (gestureCodes != null && gestureCodes.Length > 0)
-                {
-                    bool allHeld = true;
-                    foreach (int vk in gestureCodes)
-                    {
-                        if ((MouseControlAPI.GetAsyncKeyState(vk) & 0x8000) == 0)
-                        {
-                            allHeld = false;
-                            break;
-                        }
-                    }
-                    if (allHeld)
-                    {
-                        _mouseGestureBreakCount = 0;
-                        _mouseGestureCurrentPollCount++;
-                        if (_mouseGestureCurrentPollCount >= _mouseGestureRequiredPollCount)
-                            StopRequested = true;
-                    }
-                    else
-                    {
-                        // Tolerate up to 1 missed poll before resetting the hold counter.
-                        // The macro injects MOUSEEVENTF_LEFTUP on every click, which causes
-                        // GetAsyncKeyState(VK_LBUTTON) to return 0 for the poll immediately
-                        // after the injected button-up event — even when the user is physically
-                        // holding the button.  Without tolerance, the accumulated count resets
-                        // on nearly every macro click, making the gesture impossible to trigger.
-                        _mouseGestureBreakCount++;
-                        if (_mouseGestureBreakCount > 1)
-                        {
-                            _mouseGestureCurrentPollCount = 0;
-                            _mouseGestureBreakCount       = 0;
-                        }
-                    }
                 }
             }
         }

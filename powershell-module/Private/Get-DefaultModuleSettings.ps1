@@ -98,15 +98,11 @@ function Get-DefaultModuleSettings {
             PathPointCount                 = 20
         }
         EmergencyStop = [PSCustomObject]@{
-            AutoStart                  = $true
+            AutoStart      = $true
             # 'Ctrl+Alt+Q' is the default emergency stop hotkey combination.
             # Users can reconfigure this to any key combination available on their keyboard.
-            HotkeyKeyNames             = 'Ctrl+Alt+Q'
-            PollIntervalMs             = 100
-            # Hold both mouse buttons (VK_LBUTTON 0x01, VK_RBUTTON 0x02) for this duration to trigger stop.
-            # VK codes for mouse buttons are fixed and keyboard-layout-independent.
-            MouseGestureEnabled        = $true
-            MouseGestureHoldDurationMs = 3000
+            HotkeyKeyNames = 'Ctrl+Alt+Q'
+            PollIntervalMs = 100
         }
         Screenshots = [PSCustomObject]@{
             StoragePath                    = 'C:\LastWarAutoScreenshot\Screenshots'
@@ -311,11 +307,6 @@ $script:ConfigValidationSchema = @{
         Description = 'Whether the emergency stop monitor starts automatically when an automation sequence begins'
         Nullable    = $false
     }
-    'EmergencyStop.MouseGestureEnabled'           = @{
-        Type        = 'bool'
-        Description = 'Whether the two-button mouse gesture is enabled as an alternate emergency stop trigger'
-        Nullable    = $false
-    }
     'EmergencyStop.PollIntervalMs'                = @{
         Type        = 'int'
         Min         = 10
@@ -323,14 +314,6 @@ $script:ConfigValidationSchema = @{
         Description = 'Interval in ms between emergency stop key-state polls'
         Nullable    = $false
     }
-    'EmergencyStop.MouseGestureHoldDurationMs'    = @{
-        Type        = 'int'
-        Min         = 500
-        Max         = 30000
-        Description = 'Duration in ms both mouse buttons must be held to trigger emergency stop'
-        Nullable    = $false
-    }
-
     # --- Screenshots ---
     'Screenshots.StoragePath'                     = @{
         Type        = 'string'

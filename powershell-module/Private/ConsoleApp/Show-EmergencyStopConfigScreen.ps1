@@ -17,12 +17,12 @@ function Show-EmergencyStopConfigScreen {
           3. Iterates each schema-backed EmergencyStop key in order.  The prompt type depends
              on the key type:
 
-             Bool keys (AutoStart, MouseGestureEnabled):
+             Bool keys (AutoStart):
                Uses a ConfirmationPrompt (yes/no).  DefaultValue is set to the current value
                so pressing Enter keeps it unchanged in interactive terminals.  In tests, push
                'y' or 'n' explicitly via $tc.Input.PushTextWithEnter('y').
 
-             Int keys (PollIntervalMs, MouseGestureHoldDurationMs):
+             Int keys (PollIntervalMs):
                Uses a TextPrompt (identical pattern to Show-LoggingConfigScreen):
                  "<Description> [<value>] (<constraints>):"
                Empty input -> keep current; '[Reset to default]' -> restore default;
@@ -45,8 +45,7 @@ function Show-EmergencyStopConfigScreen {
                - 'Discard changes'                             -> returns without saving; info panel.
 
         EmergencyStop keys covered (in order):
-          AutoStart, MouseGestureEnabled, PollIntervalMs, MouseGestureHoldDurationMs,
-          HotkeyKeyNames
+          AutoStart, PollIntervalMs, HotkeyKeyNames
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -107,25 +106,11 @@ function Show-EmergencyStopConfigScreen {
             DefGet = { param($d) $d.EmergencyStop.AutoStart }
         },
         @{
-            Key    = 'EmergencyStop.MouseGestureEnabled'
-            Type   = 'bool'
-            Get    = { param($c) $c.EmergencyStop.MouseGestureEnabled }
-            Set    = { param($c, $v) $c.EmergencyStop.MouseGestureEnabled = [bool]$v }
-            DefGet = { param($d) $d.EmergencyStop.MouseGestureEnabled }
-        },
-        @{
             Key    = 'EmergencyStop.PollIntervalMs'
             Type   = 'int'
             Get    = { param($c) $c.EmergencyStop.PollIntervalMs }
             Set    = { param($c, $v) $c.EmergencyStop.PollIntervalMs = [int]$v }
             DefGet = { param($d) $d.EmergencyStop.PollIntervalMs }
-        },
-        @{
-            Key    = 'EmergencyStop.MouseGestureHoldDurationMs'
-            Type   = 'int'
-            Get    = { param($c) $c.EmergencyStop.MouseGestureHoldDurationMs }
-            Set    = { param($c, $v) $c.EmergencyStop.MouseGestureHoldDurationMs = [int]$v }
-            DefGet = { param($d) $d.EmergencyStop.MouseGestureHoldDurationMs }
         }
     )
 

@@ -78,8 +78,7 @@ adequate detection latency for this use case.
 ## Emergency Stop
 
 Two exported functions manage the emergency-stop monitor. It polls for a
-hotkey combination (or mouse gesture) and sets a flag that aborts the
-automation loop cleanly.
+hotkey combination and sets a flag that aborts the automation loop cleanly.
 
 ### `Start-LWASEmergencyStopMonitor`
 
@@ -115,7 +114,6 @@ until the next `Start-LWASEmergencyStopMonitor` call.
 |--------|-------------|
 | `Start-LWASEmergencyStopMonitor` (clean start) | Reset to `$false` |
 | Hotkey held → `Invoke-EmergencyStopPoll` | Set to `$true` |
-| Mouse gesture held | Set to `$true` |
 | `Invoke-MacroSequence` (checks before each action) | Reads; aborts if `$true` |
 | `Stop-LWASEmergencyStopMonitor` | **Not modified** |
 
@@ -146,7 +144,5 @@ See [Configuration.md](Configuration.md) for all `EmergencyStop.*` keys.
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | Keys held but automation doesn't stop | Key name not valid on your layout | Reconfigure `HotkeyKeyNames` to a key available without a modifier on your keyboard |
-| Mouse gesture doesn't trigger | `MouseGestureEnabled` is `false` | Enable in config |
-| Gesture triggers too slowly | `MouseGestureHoldDurationMs` too high | Reduce (e.g. `1500`) |
 | `Invoke-MacroSequence` aborts immediately | Flag still `$true` from last run | Call `Start-LWASEmergencyStopMonitor` to re-arm |
 | One of the hotkeys is held at startup | Flag set immediately on start | Release all keys before starting automation |

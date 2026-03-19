@@ -56,7 +56,7 @@ New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
   micro-pauses, and overshoot/correction to dodge bot detection
 - **Flexible target regions** - define a bounding box or circle; each click
   lands at a random point within it
-- **Emergency stop** - `Ctrl+Alt+Q` (configurable)
+- **Emergency stop** - configurable hotkey combination (default `Ctrl+Alt+Q`)
 - **Configurable logging** - file, Windows Event Log, or both
 - **Screenshot capture** - user-defined window regions saved as PNG with
   configurable naming; similarity detection to automatically detect scroll-list end
@@ -167,15 +167,14 @@ open you will see an error and be returned to the macro list.
 
 ### Emergency stop integration
 
-Two emergency stop mechanisms are available during macro execution:
+An emergency stop mechanism is available during macro execution:
 
 - **Keyboard hotkey:** hold `Ctrl+Alt+Q` simultaneously.
   - `#` is only a standalone key on UK keyboard layouts. On other layouts,
     reconfigure `EmergencyStop.HotkeyKeyNames` via **Configure module →
     Emergency stop settings** in the app (e.g. change to `"Ctrl+Shift+P"`).
-- **Mouse gesture:** hold both left and right mouse buttons for 3 seconds.
 
-Either trigger halts the current action at the next safe check point,
+This trigger halts the current action at the next safe check point,
 displays how many actions completed, and exits cleanly.
 
 ### Target window validation
