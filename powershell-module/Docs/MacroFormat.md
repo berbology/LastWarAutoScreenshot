@@ -9,7 +9,7 @@ provided for advanced users and contributors.
 
 ## File location and naming
 
-Macro files are stored in the `Private/Macros/` folder inside the module root.
+Macro files are stored at `$env:APPDATA\LastWarAutoScreenshot\Macros\`.
 
 **Filename format:** `yyyyMMdd_HHmmss_<name>.json`
 

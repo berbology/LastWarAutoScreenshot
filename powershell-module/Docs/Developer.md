@@ -389,3 +389,4 @@ a stuck button would otherwise make the system unusable.
 | [Logging.md](Logging.md) | Log backends, levels, troubleshooting, Event Log registration |
 | [ProjectPlan.md](ProjectPlan.md) | Full phase-by-phase task list and architecture decisions |
 | [Spectre.Console docs](https://spectreconsole.net/) | Official library documentation |
+| [Pester docs](https://pester.dev) | Official Pester v5 documentation and API reference |
