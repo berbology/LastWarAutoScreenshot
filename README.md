@@ -40,6 +40,9 @@ captures in Windows games and other applications - built predominantly for Last 
 
 ## Getting Started
 
+For a detailed first-use walkthrough (select window → record a macro → run it →
+emergency stop) see [QuickStart.md](powershell-module/Docs/QuickStart.md).
+
 ### 1. Download
 
 1. Download latest from [Releases](https://github.com/berbology/LastWarAutoScreenshot/releases)
@@ -67,9 +70,6 @@ Start-LWASConsole
 The interactive console app is your entry point for everything: selecting a
 target window, adjusting mouse behaviour, configuring storage, and running
 macros.
-
-For a first-use walkthrough (select window → record a macro → run it →
-emergency stop) see [QuickStart.md](powershell-module/Docs/QuickStart.md).
 
 ### 3. Target a window
 
