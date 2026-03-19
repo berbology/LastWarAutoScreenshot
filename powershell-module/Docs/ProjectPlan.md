@@ -4782,31 +4782,31 @@ All design questions have been resolved. The decisions below are recorded for re
 
 ### Tasks
 
-1. [ ] Remove `Docs/RefactorPlan.md`
-   1.1 [ ] Delete `powershell-module/Docs/RefactorPlan.md`
-   1.2 [ ] Search all `Docs/*.md` files and root `README.md` for any links to `RefactorPlan.md`; remove any found
+1. [x] Remove `Docs/RefactorPlan.md`
+   1.1 [x] Delete `powershell-module/Docs/RefactorPlan.md`
+   1.2 [x] Search all `Docs/*.md` files and root `README.md` for any links to `RefactorPlan.md`; remove any found
 
-2. [ ] Fix stale phase references and update the root `README.md` features list
-   2.1 [ ] Update the Roadmap section of root `README.md` (currently reads "Current status: Phase 4 (Macro Recording) in progress") to reflect Phase 7 complete and Phase 8 in progress
-   2.2 [ ] Update the Features list in root `README.md`: remove the `_(Phase 4)_` and `_(Phase 6)_` phase labels from feature bullets; add a planned/forthcoming item for the ESP32-S3 USB hardware HID mouse toggle (hardware device presenting as a physical HID mouse, toggled alongside the existing `SendInput` software approach, providing greater resilience to anti-cheat detection)
-   2.3 [ ] Update the Roadmap section in `Docs/README.md` (currently reads "Phase 5 complete. Phase 6 is next") — this file is renamed in task 6; the stale roadmap text is corrected here so the rename begins with clean content
-   2.4 [ ] Update `CLAUDE.md` "Current status: Phase 7 (Module Installation & Versioning)" → "Phase 8 (Documentation & Examples)"
-   2.5 [ ] Remove stale phase-qualifier notes in `Developer.md` (e.g. `"Macros are stored in Private/Macros/ (Phase 4)"` in the repository structure section)
+2. [x] Fix stale phase references and update the root `README.md` features list
+   2.1 [x] Update the Roadmap section of root `README.md` (currently reads "Current status: Phase 4 (Macro Recording) in progress") to reflect Phase 7 complete and Phase 8 in progress
+   2.2 [x] Update the Features list in root `README.md`: remove the `_(Phase 4)_` and `_(Phase 6)_` phase labels from feature bullets; add a planned/forthcoming item for the ESP32-S3 USB hardware HID mouse toggle (hardware device presenting as a physical HID mouse, toggled alongside the existing `SendInput` software approach, providing greater resilience to anti-cheat detection)
+   2.3 [x] Update the Roadmap section in `Docs/README.md` (currently reads "Phase 5 complete. Phase 6 is next") — this file is renamed in task 6; the stale roadmap text is corrected here so the rename begins with clean content
+   2.4 [x] Update `CLAUDE.md` "Current status: Phase 7 (Module Installation & Versioning)" → "Phase 8 (Documentation & Examples)"
+   2.5 [x] Remove stale phase-qualifier notes in `Developer.md` (e.g. `"Macros are stored in Private/Macros/ (Phase 4)"` in the repository structure section)
 
-3. [ ] Add window-relative coordinate system reference to `MacroFormat.md`
-   3.1 [ ] Add a `## Window-relative coordinate system` section immediately before the existing `## Action type reference` section, containing:
+3. [x] Add window-relative coordinate system reference to `MacroFormat.md`
+   3.1 [x] Add a `## Window-relative coordinate system` section immediately before the existing `## Action type reference` section, containing:
       - Definition: all coordinates are expressed as fractions of the window's client-area width (X axis) and height (Y axis); origin `(0.0, 0.0)` is the top-left corner; `(1.0, 1.0)` is the bottom-right corner; X increases rightward, Y increases downward
       - ASCII diagram marking the four corners, centre, and axes
       - Explanation that pixel positions are computed at execution time from the live window bounds — moving or resizing the game window does not invalidate recorded coordinates
       - Conversion example: window 800 × 600 px, `relativeX: 0.5, relativeY: 0.25` → pixel (400, 150)
       - Note that coordinate values outside `[0.0, 1.0]` are invalid and will cause a validation error at save time
-   3.2 [ ] Review the field description cells in the `MoveToPoint`, `MoveToRegion`, `DragClick`, and `Screenshot` action tables; where descriptions re-explain the coordinate system inline, replace with a short cross-reference (e.g. "See [Window-relative coordinate system](#window-relative-coordinate-system)")
+   3.2 [x] Review the field description cells in the `MoveToPoint`, `MoveToRegion`, `DragClick`, and `Screenshot` action tables; where descriptions re-explain the coordinate system inline, replace with a short cross-reference (e.g. "See [Window-relative coordinate system](#window-relative-coordinate-system)")
 
-4. [ ] Create example configuration file
-   4.1 [ ] Create `examples/` directory at the repository root
-   4.2 [ ] Create `examples/ModuleConfig-example.jsonc` containing every configuration key at its default value, grouped by `MouseControl`, `EmergencyStop`, `Screenshots` (including `SimilarityCheck`), and `Logging` categories, with a `// comment` on each line explaining the setting, its type, and accepted values or range
-   4.3 [ ] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
-   4.4 [ ] Add a link to `examples/` in the root `README.md` contents section under "For Users"
+4. [x] Create example configuration file
+   4.1 [x] Create `examples/` directory at the repository root
+   4.2 [x] Create `examples/ModuleConfig-example.jsonc` containing every configuration key at its default value, grouped by `MouseControl`, `EmergencyStop`, `Screenshots` (including `SimilarityCheck`), and `Logging` categories, with a `// comment` on each line explaining the setting, its type, and accepted values or range
+   4.3 [x] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
+   4.4 [x] Add a link to `examples/` in the root `README.md` contents section under "For Users"
 
 5. [ ] Create `Docs/QuickStart.md`
    5.1 [ ] Write a first-use walkthrough covering:

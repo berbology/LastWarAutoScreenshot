@@ -56,13 +56,12 @@ New-EventLog -LogName Application -Source "LastWarAutoScreenshot"
   micro-pauses, and overshoot/correction to dodge bot detection
 - **Flexible target regions** - define a bounding box or circle; each click
   lands at a random point within it
-- **Emergency stop** - `Ctrl+Alt+Q` (UK) or hold both mouse buttons for
-  3 s to abort any running automation
+- **Emergency stop** - `Ctrl+Alt+Q` (configurable)
 - **Configurable logging** - file, Windows Event Log, or both
 - **Screenshot capture** - user-defined window regions saved as PNG with
   configurable naming; similarity detection to automatically detect scroll-list end
 - **Macro recording** - record click sequences via the app
-- **Task Scheduler integration** (Phase 6) - automated, repeating execution
+- **Task Scheduler integration** - automated, repeating execution
 
 ## Documentation
 
@@ -234,6 +233,7 @@ pattern is:
 ```
 
 **Example output:**
+
 ```
 get-vs-scores_vs-screenshot-region_20260307_143022_0001.png
 ```
@@ -338,10 +338,9 @@ and action type reference.
 
 ## Roadmap
 
-See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 5 (Screenshot
-Management) complete. Phase 6 (Configuration & Scheduling) is next.
+See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 7 complete.
+Phase 8 (Documentation & Examples) in progress.
 
 ## License
 
 MIT - see LICENSE file.
-

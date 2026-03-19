@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PowerShell 7+ module (`LastWarAutoScreenshot`) that automates human-like mouse interactions and screen captures on Windows, targeting the game Last War: Survival. Uses Win32 P/Invoke via inline C# for mouse control and window enumeration, and Spectre.Console for the interactive console UI.
 
-**Current status:** Phase 7 (Module Installation & Versioning).
+**Current status:** Phase 8 (Documentation & Examples).
 
 ## Commands
 
@@ -75,7 +75,7 @@ powershell-module/
 └── Docs/                        # Architecture and phase documentation
 ```
 
-Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`. Macros will be stored in `Private/Macros/` (Phase 4, not yet implemented).
+Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`. Macros are stored at `$env:APPDATA\LastWarAutoScreenshot\Macros\`.
 
 ## Architecture
 

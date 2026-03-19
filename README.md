@@ -19,6 +19,7 @@ adaptable to any application.
 - [User Guide](powershell-module/Docs/README.md)
 - [Configuration reference](powershell-module/Docs/Configuration.md)
 - [Macro format reference](powershell-module/Docs/MacroFormat.md)
+- [Examples](examples/)
 
 ### For Developers
 
@@ -99,19 +100,23 @@ The main menu loads immediately. Nothing needs editing before you start.
 - **Emergency stop** — `Ctrl+Alt+Q` (UK layout) or hold both mouse buttons
   for 3 seconds to abort any running automation
 - **Configurable logging** — file, Windows Event Log, or both
-- **Macro recording** _(Phase 4)_ — record click sequences via the app and
-  replay them on demand
-- **Screenshot capture** _(Phase 6)_ — user-defined regions, PNG/JPEG,
-  configurable naming
-- **Task Scheduler integration** _(Phase 5)_ — automated, repeating execution
+- **Macro recording** — record click sequences via the app and replay them
+  on demand
+- **Screenshot capture** — user-defined regions, PNG, configurable naming
+- **Task Scheduler integration** — automated, repeating execution
+- **ESP32-S3 USB hardware HID mouse toggle** _(planned)_ — a hardware device
+  presenting as a genuine physical HID mouse, toggled alongside the existing
+  `SendInput` software approach; input arrives at the driver level,
+  indistinguishable from a physical mouse, providing greater resilience to
+  anti-cheat detection
 
 ---
 
 ## Roadmap
 
 See [ProjectPlan.md](powershell-module/Docs/ProjectPlan.md) for the full
-phase-by-phase task list. Current status: Phase 4 (Macro Recording) in
-progress.
+phase-by-phase task list. Current status: Phase 7 complete. Phase 8
+(Documentation & Examples) in progress.
 
 ## License
 
