@@ -24,7 +24,6 @@ captures in Windows games and other applications - built predominantly for Last 
 - [Developer Guide](powershell-module/Docs/Developer.md)
 - [Console app architecture](powershell-module/Docs/ConsoleApp.md)
 - [Configuration File Example](examples/)
-- [Cmdlets] Control macro execution via Powershell cmdlets
 - [Window management](powershell-module/Docs/WindowManagement.md)
 - [Logging](powershell-module/Docs/Logging.md)
 - [Project plan](powershell-module/Docs/ProjectPlan.md)
@@ -93,6 +92,7 @@ emergency stop) see [QuickStart.md](powershell-module/Docs/QuickStart.md).
 ## Features
 
 - **Interactive console app** - Spectre.Console-powered configuration, macro creation, execution and scheduling
+- **Cmdlets** - Control macro execution via Powershell cmdlets
 - **Window management** - enumerate all open windows, select target,
   auto-restore if minimised
 - **Human-like mouse movement** - Bézier paths, ease-in/out, jitter,
