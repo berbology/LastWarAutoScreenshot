@@ -12,6 +12,7 @@ These instructions define how commit messages should be generated for this proje
    5. IMPORTANT: Only include issue numbers using 'Fixes #123' or 'Closes #456' format if they correspond to real issues or tasks. Do NOT make up placeholder fake ones!
 2. **Imperative Mood**: Use the imperative mood (e.g., "Add feature" instead of "Added feature").
 3. **Structure**:
+   - NEVER add decorations such as borders, horizontal rules etc
    - **Header**: A single line summarizing the change (max 50 characters).
      - Use types: feat, fix, docs, style, refactor, perf, test, chore, ci, move
      - Include scope when relevant (e.g., api, ui, auth)

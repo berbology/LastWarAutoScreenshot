@@ -4808,21 +4808,21 @@ All design questions have been resolved. The decisions below are recorded for re
    4.3 [x] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
    4.4 [x] Add a link to `examples/` in the root `README.md` contents section under "For Users"
 
-5. [ ] Create `Docs/QuickStart.md`
-   5.1 [ ] Write a first-use walkthrough covering:
+5. [x] Create `Docs/QuickStart.md`
+   5.1 [x] Write a first-use walkthrough covering:
       - Prerequisites: module installed, game running in windowed or borderless-windowed mode
       - Launch: `Import-Module LastWarAutoScreenshot`, then `Start-LWASConsole`
       - Step 1 — Select a target window: main menu → "Select target window" → choose the game window from the list
       - Step 2 — Record a simple macro: main menu → "Record macro" → enter a name → add a MoveToPoint, LeftClick, Delay, MoveToPoint, LeftClick sequence → Save
       - Step 3 — Run the macro: main menu → "Run macro" → select the macro → review the summary → confirm
       - Step 4 — Emergency stop: `Ctrl+Alt+Q` hotkey or hold both mouse buttons for 3 seconds
-   5.2 [ ] Add a link to `QuickStart.md` in the root `README.md` "Get Started" section, immediately after the "2. Launch the app" step
-   5.3 [ ] Add a link to `QuickStart.md` in `Docs/README.md` (pre-rename) Getting Started section so the link is in place before the rename in task 6
+   5.2 [x] Add a link to `QuickStart.md` in the root `README.md` "Get Started" section, immediately after the "2. Launch the app" step
+   5.3 [x] Add a link to `QuickStart.md` in `Docs/README.md` (pre-rename) Getting Started section so the link is in place before the rename in task 6
 
-6. [ ] Rename `Docs/README.md` → `Docs/UserGuide.md` and update all links
-   6.1 [ ] Rename the file; add a brief audience note to the introduction paragraph making clear this document is for end users, not contributors
-   6.2 [ ] Remove the developer-oriented git-clone / `Import-Module` from path getting-started block from `UserGuide.md` (this content already exists in `Developer.md`); replace with a one-line pointer to the root README install section
-   6.3 [ ] Update all links to `Docs/README.md` across the repository:
+6. [x] Rename `Docs/README.md` → `Docs/UserGuide.md` and update all links
+   6.1 [x] Rename the file; add a brief audience note to the introduction paragraph making clear this document is for end users, not contributors
+   6.2 [x] Remove the developer-oriented git-clone / `Import-Module` from path getting-started block from `UserGuide.md` (this content already exists in `Developer.md`); replace with a one-line pointer to the root README install section
+   6.3 [x] Update all links to `Docs/README.md` across the repository:
       - Root `README.md`: `powershell-module/Docs/README.md` → `powershell-module/Docs/UserGuide.md`
       - `Developer.md`: `README.md` → `UserGuide.md`
       - `MacroFormat.md`: `README.md` → `UserGuide.md`
@@ -4830,9 +4830,9 @@ All design questions have been resolved. The decisions below are recorded for re
       - `WindowManagement.md`: any references to `README.md`
       - `Logging.md`: any references to `README.md`
 
-7. [ ] Add comment-based help to `Public/Get-LWASMonitorProcess.ps1`
-   7.1 [ ] Add `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.OUTPUTS`, and at least two `.EXAMPLE` blocks to `Get-LWASMonitorProcess.ps1`, following the same style as `Get-LWASMacro.ps1`
-   7.2 [ ] Read each of the three `scripts/` files (`Install-LWAS.ps1`, `Uninstall-LWAS.ps1`, `New-LWASRelease.ps1`) and confirm each has a complete help block (`.SYNOPSIS`, `.DESCRIPTION`, at least one `.PARAMETER` per parameter, at least one `.EXAMPLE`); add any missing sections
+7. [x] Add comment-based help to `Public/Get-LWASMonitorProcess.ps1`
+   7.1 [x] Add `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.OUTPUTS`, and at least two `.EXAMPLE` blocks to `Get-LWASMonitorProcess.ps1`, following the same style as `Get-LWASMacro.ps1`
+   7.2 [x] Read each of the three `scripts/` files (`Install-LWAS.ps1`, `Uninstall-LWAS.ps1`, `New-LWASRelease.ps1`) and confirm each has a complete help block (`.SYNOPSIS`, `.DESCRIPTION`, at least one `.PARAMETER` per parameter, at least one `.EXAMPLE`); add any missing sections
 
 8. [ ] Documentation clarity sweep
    8.1 [ ] Read all `Docs/*.md` files in full; remove or update any references to code, functions, or behaviour that no longer exists (including removed features, old function signatures, and superseded design notes)

@@ -1,5 +1,8 @@
 # Last War AutoScript — User Guide
 
+This guide is for **end users** who want to install and use the module. If you
+are contributing to the codebase, see [Developer.md](Developer.md) instead.
+
 PowerShell 7+ module that automates human-like mouse interactions and screen
 captures in Windows game windows — built specifically for Last War: Survival,
 adaptable to any application.
@@ -7,9 +10,6 @@ adaptable to any application.
 > **Anti-cheat warning:** Automating input may violate the game's terms of
 > service and could trigger anti-cheat systems. Use at your own risk. The
 > authors take no responsibility for bans or account actions.
-
-> **Contributing?** See [Developer.md](Developer.md) for the module
-> architecture, testing guide, and how to add new screens.
 
 ## Requirements
 
@@ -20,18 +20,18 @@ adaptable to any application.
 
 ## Getting Started
 
-```powershell
-# Clone and import
-git clone https://github.com/berbology/LastWarAutoScreenshot.git
-cd LastWarAutoScreenshot
-Import-Module .\powershell-module\LastWarAutoScreenshot.psd1
+Install the module — see the [main README](../../README.md#get-started).
+Then launch the app:
 
-# Launch the interactive app - this is your entry point
+```powershell
+Import-Module LastWarAutoScreenshot
 Start-LWASConsole
 ```
 
 The app walks you through everything: picking a target window, configuring
 mouse behaviour, setting up storage, recording macros, and capturing screenshots.
+
+For a first-use walkthrough see [QuickStart.md](QuickStart.md).
 
 ### First run
 
@@ -98,7 +98,7 @@ app — no JSON editing required.
    Accept confirms the position; Redo lets you re-capture; Cancel returns
    to the action menu.
 6. Once you have added all the actions you want, select **"Save macro"** to
-   write the file to `Private/Macros/`.
+   write the file to disk.
 
 ### Coordinate capture workflow
 
@@ -157,7 +157,7 @@ them in the sequence:
 ### Selecting and running a saved macro
 
 1. From the main menu select **"Run macro"** (only visible when at least one
-   `*.json` file exists in `Private/Macros/`).
+   saved macro exists).
 2. Choose the macro from the list (displayed as `<name> (dd/MM/yy HH:mm:ss)`).
 3. A summary table shows all actions before you confirm.
 4. Select **"Yes, run now"** to start execution.
@@ -309,7 +309,7 @@ From the main menu select **"Manage macros"** (always visible).
 
 ### File location and naming convention
 
-Macro files are stored in `Private/Macros/` within the module root.
+Macro files are stored in `%APPDATA%\LastWarAutoScreenshot\Macros\`.
 
 **Filename format:** `yyyyMMdd_HHmmss_<name>.json`
 

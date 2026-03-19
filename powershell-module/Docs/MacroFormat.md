@@ -561,7 +561,7 @@ Records the workflow for capturing Arms Race score screenshots.
 
 ## See also
 
-- [README.md](README.md) — full user guide including macro recording
+- [UserGuide.md](UserGuide.md) — full user guide including macro recording
   walkthrough and managing macros
 - [ConsoleApp.md](ConsoleApp.md) — console app screen map and `IAnsiConsole`
   injection pattern for contributors
