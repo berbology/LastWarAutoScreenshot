@@ -1192,15 +1192,15 @@
 
 **Action type specifications:**
 
-| Type | Required properties | Optional | Notes |
-|------|-------------------|----------|-------|
-| `MoveToPoint` | `position.relativeX` (double 0.0–1.0), `position.relativeY` (double 0.0–1.0) | `name` | Moves mouse to exact relative coordinate |
-| `MoveToRegion` | `region.type` (`'Box'` or `'Circle'`); if Box: `region.relativeX`, `region.relativeY`, `region.relativeWidth`, `region.relativeHeight` (all double 0.0–1.0); if Circle: `region.relativeCentreX`, `region.relativeCentreY`, `region.relativeRadius` (all double 0.0–1.0) | `name` | Random point within region selected at execution time via `Get-RandomTargetPosition` |
-| `LeftClick` | *(none)* | `name` | Clicks at current mouse position (typically follows a Move action) |
-| `DragClick` | `start.relativeX`, `start.relativeY`, `end.relativeX`, `end.relativeY` (all double 0.0–1.0) | `name` | Mouse down at start, Bezier path to end, mouse up |
-| `Screenshot` | `region.topLeft.relativeX`, `region.topLeft.relativeY`, `region.bottomRight.relativeX`, `region.bottomRight.relativeY` (all double 0.0–1.0) | `name` | Capture deferred to Phase 6; logs warning and skips during execution |
-| `Delay` | `seconds` (double, 0.1–3600) | `name` | Pauses execution for the specified duration |
-| `Loop` | `iterations` (int, 1–10000), `actionNames` (string array, non-empty) | `name` | Executes referenced named actions in order, repeated N times; cannot reference other Loops |
+| Type           | Required properties                                                                                                                                                                                                                                                      | Optional | Notes                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------ |
+| `MoveToPoint`  | `position.relativeX` (double 0.0–1.0), `position.relativeY` (double 0.0–1.0)                                                                                                                                                                                             | `name`   | Moves mouse to exact relative coordinate                                                   |
+| `MoveToRegion` | `region.type` (`'Box'` or `'Circle'`); if Box: `region.relativeX`, `region.relativeY`, `region.relativeWidth`, `region.relativeHeight` (all double 0.0–1.0); if Circle: `region.relativeCentreX`, `region.relativeCentreY`, `region.relativeRadius` (all double 0.0–1.0) | `name`   | Random point within region selected at execution time via `Get-RandomTargetPosition`       |
+| `LeftClick`    | *(none)*                                                                                                                                                                                                                                                                 | `name`   | Clicks at current mouse position (typically follows a Move action)                         |
+| `DragClick`    | `start.relativeX`, `start.relativeY`, `end.relativeX`, `end.relativeY` (all double 0.0–1.0)                                                                                                                                                                              | `name`   | Mouse down at start, Bezier path to end, mouse up                                          |
+| `Screenshot`   | `region.topLeft.relativeX`, `region.topLeft.relativeY`, `region.bottomRight.relativeX`, `region.bottomRight.relativeY` (all double 0.0–1.0)                                                                                                                              | `name`   | Capture deferred to Phase 6; logs warning and skips during execution                       |
+| `Delay`        | `seconds` (double, 0.1–3600)                                                                                                                                                                                                                                             | `name`   | Pauses execution for the specified duration                                                |
+| `Loop`         | `iterations` (int, 1–10000), `actionNames` (string array, non-empty)                                                                                                                                                                                                     | `name`   | Executes referenced named actions in order, repeated N times; cannot reference other Loops |
 
 ### Reference: example macro sequences
 
@@ -1871,15 +1871,15 @@ test cases throughout Phase 4 implementation.
       - Checks `$script:EmergencyStopRequested` before executing; if set, returns immediately with `Success=$false`, `Message='Emergency stop active'`, `Skipped=$true`
       - Dispatches based on `$Action.type`:
 
-        | Type | Execution |
-        |------|-----------|
-        | `MoveToPoint` | `ConvertTo-ScreenCoordinates` → `Invoke-GetCursorPosition` → `Get-BezierPoints` → `Invoke-MouseMovePath` |
-        | `MoveToRegion` | `Get-RandomTargetPosition` (Box or Circle) → `ConvertTo-ScreenCoordinates` → Bezier path as above |
-        | `LeftClick` | `Invoke-MouseClick` at current position (no X/Y parameters — clicks in place) |
-        | `DragClick` | `ConvertTo-ScreenCoordinates` for start and end → `Invoke-MouseDragClick` |
-        | `Screenshot` | `Write-LastWarLog -Level Warning 'Screenshot capture not yet implemented — skipping action'`; returns `Success=$true`, `Skipped=$true` |
-        | `Delay` | `Start-Sleep -Seconds $Action.seconds` |
-        | `Loop` | For `1..$Action.iterations`: for each name in `$Action.actionNames`: resolve from `$ActionLookup` → recursive call to `Invoke-MacroAction` (same `$ActionLookup` passed through); emergency stop checked between each iteration and each action within the loop |
+        | Type           | Execution                                                                                                                                                                                                                                                       |
+        | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+        | `MoveToPoint`  | `ConvertTo-ScreenCoordinates` → `Invoke-GetCursorPosition` → `Get-BezierPoints` → `Invoke-MouseMovePath`                                                                                                                                                        |
+        | `MoveToRegion` | `Get-RandomTargetPosition` (Box or Circle) → `ConvertTo-ScreenCoordinates` → Bezier path as above                                                                                                                                                               |
+        | `LeftClick`    | `Invoke-MouseClick` at current position (no X/Y parameters — clicks in place)                                                                                                                                                                                   |
+        | `DragClick`    | `ConvertTo-ScreenCoordinates` for start and end → `Invoke-MouseDragClick`                                                                                                                                                                                       |
+        | `Screenshot`   | `Write-LastWarLog -Level Warning 'Screenshot capture not yet implemented — skipping action'`; returns `Success=$true`, `Skipped=$true`                                                                                                                          |
+        | `Delay`        | `Start-Sleep -Seconds $Action.seconds`                                                                                                                                                                                                                          |
+        | `Loop`         | For `1..$Action.iterations`: for each name in `$Action.actionNames`: resolve from `$ActionLookup` → recursive call to `Invoke-MacroAction` (same `$ActionLookup` passed through); emergency stop checked between each iteration and each action within the loop |
 
       - Includes a `$Depth` parameter (default 0, max 1) to guard against unexpected recursion — Loop actions increment depth; if depth exceeds 1, logs Error `'Loop nesting detected — aborting'` and returns `Success=$false` (this should never happen due to validation, but provides defence in depth)
       - Returns `[PSCustomObject]@{Success=[bool]; Message=[string]; Skipped=[bool]}`
@@ -1969,7 +1969,7 @@ test cases throughout Phase 4 implementation.
       - If the current config's `ProcessName` differs from the macro's `targetWindow.processName`: display warning panel `"[yellow]This macro was recorded for process '<macro-process>' but the current target window is '<config-process>'. The macro may not work correctly.[/]"` and show `SelectionPrompt` `'Continue anyway'` / `'Cancel'`; if `'Cancel'`, return to step 1
 
       **Step 5 — Confirm and execute:**
-      - `SelectionPrompt`: `"Run this macro?"` with choices `'Yes, run now'`, `'Cancel'`
+      - `SelectionPrompt`: `"Run this macro?"` with choices `'Run'`, `'Cancel'`
       - If `'Cancel'`: return to step 1
       - Call `Invoke-MacroSequence -MacroData $macro.Data -WindowHandle $config.WindowHandle -Console $Console`
       - Display results:
@@ -2260,7 +2260,7 @@ test cases throughout Phase 4 implementation.
 
 - **Storage path auto-creation:** If `StoragePath` is configured but the directory does not exist, it is created automatically at first capture via `New-Item -ItemType Directory -Force` with an `Info` log. If `StoragePath` is empty/unconfigured, screenshot actions are skipped with a `Warning` and `Skipped=$true` returned (not an error — consistent with Phase 4 deferred behaviour).
 
-#=# Phase 5 scope (what is and is not included)
+### Phase 5 scope (what is and is not included)
 
 **Included:** `ScreenCaptureAPI.cs` (Win32 `PrintWindow(PW_RENDERFULLCONTENT)` + `System.Drawing` PNG save; C# similarity comparison via deterministic grid sampling), `Invoke-CaptureWindowRegion.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion` — required for Pester mockability), `Invoke-CompareImages.ps1` (thin wrapper over `[LastWarAutoScreenshot.ScreenCaptureAPI]::CompareImages` — required for Pester mockability), `Resolve-ScreenshotFilename.ps1` (with 200-character resolved-length validation), `Invoke-CaptureScreenRegion.ps1`, `Test-ScreenshotSimilarity.ps1`, `Invoke-MacroAction.ps1` updated (Screenshot action now captures; N-consecutive similarity threshold; Loop dispatch handles `SimilarityStop` for `StopLoop`), `Invoke-MacroSequence.ps1` updated (context initialisation, `SimilarityStop` success messaging), `Show-ScreenshotConfigScreen.ps1`, `Show-ConfigMenuScreen.ps1` updated, `Get-StorageInfo.ps1` enhanced (disk free space, screenshot count, date range), `Show-StorageInfoScreen.ps1` enhanced (Explorer shortcut, disk free warning, screenshot count display), `Show-RunMacroScreen.ps1` pre-flight screenshot check, full Pester test coverage, documentation.
 
@@ -3086,6 +3086,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
 
 | Input name | R | G | B |
 -----------------------------------
+
 | `black` | 0 | 0 | 0 |
 | `white` | 255 | 255 | 255 |
 | `red` | 255 | 0 | 0 |
@@ -3218,13 +3219,16 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
       - **Refactor existing `CaptureWindowRegion` (6-parameter) into a delegation wrapper:**
         - Retain the existing public 6-parameter signature unchanged (no breaking change to callers)
         - Change the body to a single delegation call:
+
           ```csharp
           return CaptureWindowRegion(windowHandle, relativeX, relativeY,
               relativeWidth, relativeHeight, outputPath,
               Array.Empty<Rectangle>(), Color.Black);
           ```
+
         - Retain the full existing XML doc comment unchanged
       - **Add new 8-parameter `CaptureWindowRegion` overload** — full XML doc comment required:
+
         ```csharp
         public static bool CaptureWindowRegion(
             IntPtr windowHandle,
@@ -3234,8 +3238,10 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
             System.Drawing.Rectangle[] maskPixelRects,
             System.Drawing.Color maskColour)
         ```
+
         - Move all existing implementation logic (validation, `GetWindowRect`, DC creation, `PrintWindow`, `bmp.Clone`, save, `finally` GDI cleanup) into this overload
         - After the `bmp.Clone(...)` call that produces the `region` bitmap and before `region.Save(...)`, insert the masking block:
+
           ```csharp
           if (maskPixelRects != null && maskPixelRects.Length > 0)
           {
@@ -3250,6 +3256,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
               }
           }
           ```
+
         - All existing GDI object disposal in `finally` is unchanged
         - XML `.remarks` on the new overload: "Mask pixel rectangles must be pre-computed by the caller in the coordinate space of the cropped bitmap (origin at the top-left of the capture region). Rectangles extending outside the bitmap bounds are clipped silently by GDI+. Pass an empty array or `null` for `maskPixelRects` to skip masking."
    2. [x] 4.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1`:
@@ -3266,16 +3273,20 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
 5. [x] Update `Invoke-CaptureWindowRegion.ps1`
    1. [x] 5.1: Update `powershell-module/Private/Invoke-CaptureWindowRegion.ps1`:
       - Add two optional parameters after the existing `$OutputPath` parameter:
+
         ```powershell
         [System.Drawing.Rectangle[]]$MaskPixelRects = @(),
         [System.Drawing.Color]$MaskColour = [System.Drawing.Color]::Black
         ```
+
       - Update the function body from the existing one-liner to pass the two new parameters through to the C# overload:
+
         ```powershell
         return [LastWarAutoScreenshot.ScreenCaptureAPI]::CaptureWindowRegion(
             $WindowHandle, $RelativeX, $RelativeY, $RelativeWidth, $RelativeHeight,
             $OutputPath, $MaskPixelRects, $MaskColour)
         ```
+
       - Existing callers that omit the new parameters continue to work — the defaults (`@()` and `Color.Black`) match the behaviour of the original 6-parameter C# overload
       - Update comment-based help: add `.PARAMETER MaskPixelRects` and `.PARAMETER MaskColour` entries
    2. [x] 5.2: Update `powershell-module/Tests/ScreenCaptureAPI.Tests.ps1` (the existing smoke-test section from Phase 5 task 2.3.3):
@@ -3287,6 +3298,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
    1. [x] 6.1: Update `powershell-module/Private/Invoke-CaptureScreenRegion.ps1`:
       - Add `System.Drawing.Common` is already loaded by the module at import time (via `psm1`) — no additional `Add-Type` call needed here
       - After validating the screenshot action and before calling `Invoke-CaptureWindowRegion`, add the mask preparation block:
+
         ```powershell
         # Compute pixel-space mask rectangles from window-relative maskRegions
         $maskPixelRects = [System.Drawing.Rectangle[]]@()
@@ -3339,7 +3351,9 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
             $maskPixelRects = $rectList.ToArray()
         }
         ```
+
       - Update the `Invoke-CaptureWindowRegion` call to pass `$maskPixelRects` and `$maskColour`:
+
         ```powershell
         $captureSuccess = Invoke-CaptureWindowRegion `
             -WindowHandle   $WindowHandle `
@@ -3351,6 +3365,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
             -MaskPixelRects $maskPixelRects `
             -MaskColour     $maskColour
         ```
+
       - No changes to the similarity detection, storage guard, filename resolution, or any other existing logic
    2. [x] 6.2: Update `powershell-module/Tests/Invoke-CaptureScreenRegion.Tests.ps1`:
       - Add `BeforeEach` mock for `Get-WindowBounds` returning a fixed-size bounds object (e.g. Width=1000, Height=2000) for mask-related tests
@@ -3372,6 +3387,7 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
 7. [x] Update `Show-RecordMacroScreen.ps1` — mask region recording flow and display
    1. [x] 7.1: Update the Screenshot action recording branch in `powershell-module/Private/ConsoleApp/Show-RecordMacroScreen.ps1`:
       - After the screenshot region bottom-right is accepted (the existing two-point capture with validation), add the mask recording loop:
+
         ```powershell
         $maskRegions = [System.Collections.Generic.List[object]]::new()
         $addMask = Invoke-YesNoPrompt -Console $Console -Message 'Add a black-out region to this screenshot?'
@@ -3408,13 +3424,16 @@ The following 23 combinations are the complete set recognised by `Resolve-MaskCo
             $addMask = Invoke-YesNoPrompt -Console $Console -Message 'Add another black-out region?'
         }
         ```
+
       - Construct the Screenshot action object: if `$maskRegions.Count -gt 0`, include the `maskRegions` property; otherwise omit it (keeping the JSON clean for steps without masks):
+
         ```powershell
         $action = [PSCustomObject]@{ type = 'Screenshot'; region = $region }
         if ($maskRegions.Count -gt 0) {
             $action | Add-Member -NotePropertyName maskRegions -NotePropertyValue $maskRegions.ToArray()
         }
         ```
+
       - Note: `Invoke-YesNoPrompt` is assumed to be an existing or new private helper that displays a yes/no selection prompt via `CreateSelectionPrompt` and returns `$true` / `$false`. If it does not already exist, create it as a private function `Invoke-YesNoPrompt -Console [IAnsiConsole] -Message [string]` using `ConsoleAppBridge::CreateSelectionPrompt` with choices `@('Yes', 'No')` and returning `$true` for `'Yes'`.
    2. [x] 7.2: Update the step detail rendering in `Show-RecordMacroScreen.ps1` for Screenshot actions in the step table:
       - Locate the existing logic that formats Screenshot action details for the step list display
@@ -3793,10 +3812,12 @@ script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.
      `SW_MINIMIZE`/`SW_MAXIMIZE` constants):
      - Add `public const int SW_RESTORE = 9;` alongside the existing constants
      - Add XML doc comment:
+
        ```csharp
        /// <summary>Restores the window to its original size and position.
        /// Reverses SW_SHOWMINIMIZED (2) or SW_SHOWMAXIMIZED (3).</summary>
        ```
+
    - [x] 5.2: Update `powershell-module/Private/Set-WindowState.ps1`:
      - Extend the `-State` parameter's `[ValidateSet(...)]` attribute to include `'Restore'`
        alongside the existing valid values
@@ -3816,11 +3837,13 @@ script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.
 
    - [x] 6.1: Add `MacroExecution` section to `powershell-module/Private/Get-DefaultModuleSettings.ps1`:
      - Add a new `MacroExecution` hashtable in the defaults object:
+
        ```powershell
        MacroExecution = @{
            WindowRestoreDelayMs = 500
        }
        ```
+
      - Add `'MacroExecution.WindowRestoreDelayMs'` to `$script:ConfigValidationSchema`:
        - `Type = 'int'`, `Min = 0`, `Max = 10000`
        - `Description = 'Milliseconds to wait after restoring a minimised window before starting
@@ -3868,6 +3891,7 @@ script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.
           exceptions, call `Write-Error` with exception message, set `$success = $false`
        7. **Cleanup** in `finally`: call `Stop-LWASEmergencyStopMonitor`
        8. Write result to pipeline:
+
           ```powershell
           [PSCustomObject]@{
               Success      = $success
@@ -3876,6 +3900,7 @@ script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.
               Message      = $message
           }
           ```
+
      - Full comment-based help; `.EXAMPLE` showing the pipeline pattern with `Get-LWASTargetWindow`
 
    - [x] 6.4: Update `FunctionsToExport` in `LastWarAutoScreenshot.psd1`: add
@@ -3922,6 +3947,7 @@ script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.
      - Creates the `Schedulers` directory if it does not exist:
        `New-Item -ItemType Directory -Path (Split-Path $launcherPath) -Force | Out-Null`
      - Generates launcher script content as a here-string:
+
        ```powershell
        # LWAS Launcher — auto-generated by Register-LWASScheduledTask — do not edit manually
        # Task    : <TaskName>
@@ -3932,6 +3958,7 @@ script lives at `$env:APPDATA\LastWarAutoScreenshot\Schedulers\LWAS_<macroName>.
        Get-LWASTargetWindow -ProcessName '<ProcessName>' |
            Start-LWASAutomationSequence -MacroName '<MacroName>'
        ```
+
      - Writes file with `Set-Content -Path $launcherPath -Value $content -Encoding UTF8`
      - Returns the full launcher path string
      - Full comment-based help; `.NOTES` states the file must be deleted by
@@ -4731,10 +4758,97 @@ All design questions have been resolved. The decisions below are recorded for re
 
 ## Phase 8: Documentation & Examples
 
-1. [ ] Create example configuration files with inline comments
-2. [ ] Document window-relative coordinate system
-3. [ ] Provide quick start guide with simple working example
-4. [ ] Document all exported PowerShell functions as they are created
+### Architecture decisions (for future reference)
+
+- **`Docs/README.md` renamed to `Docs/UserGuide.md`:** The existing name was ambiguous — within `Docs/`, `README.md` does not render automatically in GitHub's folder view as the root one does. Renaming to `UserGuide.md` makes the intended audience explicit and eliminates confusion with the root `README.md`. All internal links are updated to match.
+
+- **Example config file format — JSONC:** The example `ModuleConfig-example.jsonc` uses the JSON with Comments (`.jsonc`) format to allow inline `//` annotations explaining each setting. This file is for reference only and cannot be used directly as `ModuleConfig.json`. A companion `examples/README.md` makes this clear and points to `Configuration.md` for the full reference.
+
+- **Quick start guide as a standalone doc (`Docs/QuickStart.md`):** The root `README.md` "Get Started" section covers installation and first launch. A separate `QuickStart.md` provides a richer first-use walkthrough (select window → record a macro → run it → emergency stop) without bloating the root README with step-by-step instructions.
+
+- **ConsoleApp README files — rewritten, not merged:** `Tests/ConsoleApp/README.md` and `Private/ConsoleApp/README.md` are each rewritten as accurate, focused documents for their respective folders. No cross-folder content. The current `Tests/ConsoleApp/README.md` mistakenly includes `Private/ConsoleApp/` content appended to it; this is corrected.
+
+- **ESP32-S3 hardware HID mouse toggle — documented as planned feature:** The `esp32-s3-mouse-emulator/` folder stub README describes a forthcoming USB hardware mouse emulator based on the ESP32-S3 microcontroller. The device presents to the OS as a genuine physical HID mouse and provides an alternative to the current `SendInput` software approach. Both methods will be selectable at runtime. Using hardware HID substantially reduces anti-cheat detection risk because mouse input originates at the driver level, perfectly emulating physical mouse hardware.
+
+---
+
+### Phase 8 scope (what is and is not included)
+
+**Included:** Remove `Docs/RefactorPlan.md`; fix stale phase references across `README.md`, `Docs/README.md`, and `CLAUDE.md`; update root `README.md` features list (remove phase labels from bullets, add ESP32-S3 hardware HID mouse toggle as a planned feature); add window-relative coordinate system reference section to `MacroFormat.md`; create `examples/ModuleConfig-example.jsonc` and `examples/README.md`; create `Docs/QuickStart.md`; rename `Docs/README.md` → `Docs/UserGuide.md` and update all links; add comment-based help to `Public/Get-LWASMonitorProcess.ps1`; verify help blocks in all `scripts/` files; full documentation clarity sweep across all `Docs/*.md` and root `README.md`; create `powershell-module/README.md`, `powershell-module/Tests/README.md`, `powershell-module/lib/README.md`, `scripts/README.md`, and `esp32-s3-mouse-emulator/README.md`; rewrite `Tests/ConsoleApp/README.md` and `Private/ConsoleApp/README.md`.
+
+**Explicitly out of scope:** `ProjectPlan.md` itself; comment-based help for `Private/` functions; changes to module code; updating the psd1 version number; creating example macro JSON files (annotated examples already exist in `MacroFormat.md`); documentation for Phase 9 or Phase 10 features before they are implemented.
+
+---
+
+### Tasks
+
+1. [ ] Remove `Docs/RefactorPlan.md`
+   1.1 [ ] Delete `powershell-module/Docs/RefactorPlan.md`
+   1.2 [ ] Search all `Docs/*.md` files and root `README.md` for any links to `RefactorPlan.md`; remove any found
+
+2. [ ] Fix stale phase references and update the root `README.md` features list
+   2.1 [ ] Update the Roadmap section of root `README.md` (currently reads "Current status: Phase 4 (Macro Recording) in progress") to reflect Phase 7 complete and Phase 8 in progress
+   2.2 [ ] Update the Features list in root `README.md`: remove the `_(Phase 4)_` and `_(Phase 6)_` phase labels from feature bullets; add a planned/forthcoming item for the ESP32-S3 USB hardware HID mouse toggle (hardware device presenting as a physical HID mouse, toggled alongside the existing `SendInput` software approach, providing greater resilience to anti-cheat detection)
+   2.3 [ ] Update the Roadmap section in `Docs/README.md` (currently reads "Phase 5 complete. Phase 6 is next") — this file is renamed in task 6; the stale roadmap text is corrected here so the rename begins with clean content
+   2.4 [ ] Update `CLAUDE.md` "Current status: Phase 7 (Module Installation & Versioning)" → "Phase 8 (Documentation & Examples)"
+   2.5 [ ] Remove stale phase-qualifier notes in `Developer.md` (e.g. `"Macros are stored in Private/Macros/ (Phase 4)"` in the repository structure section)
+
+3. [ ] Add window-relative coordinate system reference to `MacroFormat.md`
+   3.1 [ ] Add a `## Window-relative coordinate system` section immediately before the existing `## Action type reference` section, containing:
+      - Definition: all coordinates are expressed as fractions of the window's client-area width (X axis) and height (Y axis); origin `(0.0, 0.0)` is the top-left corner; `(1.0, 1.0)` is the bottom-right corner; X increases rightward, Y increases downward
+      - ASCII diagram marking the four corners, centre, and axes
+      - Explanation that pixel positions are computed at execution time from the live window bounds — moving or resizing the game window does not invalidate recorded coordinates
+      - Conversion example: window 800 × 600 px, `relativeX: 0.5, relativeY: 0.25` → pixel (400, 150)
+      - Note that coordinate values outside `[0.0, 1.0]` are invalid and will cause a validation error at save time
+   3.2 [ ] Review the field description cells in the `MoveToPoint`, `MoveToRegion`, `DragClick`, and `Screenshot` action tables; where descriptions re-explain the coordinate system inline, replace with a short cross-reference (e.g. "See [Window-relative coordinate system](#window-relative-coordinate-system)")
+
+4. [ ] Create example configuration file
+   4.1 [ ] Create `examples/` directory at the repository root
+   4.2 [ ] Create `examples/ModuleConfig-example.jsonc` containing every configuration key at its default value, grouped by `MouseControl`, `EmergencyStop`, `Screenshots` (including `SimilarityCheck`), and `Logging` categories, with a `// comment` on each line explaining the setting, its type, and accepted values or range
+   4.3 [ ] Create `examples/README.md` explaining: `.jsonc` files use JSON with Comments syntax and cannot be used directly as `ModuleConfig.json` (the real file is created automatically with defaults on first run); link to `Configuration.md` for the full reference
+   4.4 [ ] Add a link to `examples/` in the root `README.md` contents section under "For Users"
+
+5. [ ] Create `Docs/QuickStart.md`
+   5.1 [ ] Write a first-use walkthrough covering:
+      - Prerequisites: module installed, game running in windowed or borderless-windowed mode
+      - Launch: `Import-Module LastWarAutoScreenshot`, then `Start-LWASConsole`
+      - Step 1 — Select a target window: main menu → "Select target window" → choose the game window from the list
+      - Step 2 — Record a simple macro: main menu → "Record macro" → enter a name → add a MoveToPoint, LeftClick, Delay, MoveToPoint, LeftClick sequence → Save
+      - Step 3 — Run the macro: main menu → "Run macro" → select the macro → review the summary → confirm
+      - Step 4 — Emergency stop: `Ctrl+Alt+Q` hotkey or hold both mouse buttons for 3 seconds
+   5.2 [ ] Add a link to `QuickStart.md` in the root `README.md` "Get Started" section, immediately after the "2. Launch the app" step
+   5.3 [ ] Add a link to `QuickStart.md` in `Docs/README.md` (pre-rename) Getting Started section so the link is in place before the rename in task 6
+
+6. [ ] Rename `Docs/README.md` → `Docs/UserGuide.md` and update all links
+   6.1 [ ] Rename the file; add a brief audience note to the introduction paragraph making clear this document is for end users, not contributors
+   6.2 [ ] Remove the developer-oriented git-clone / `Import-Module` from path getting-started block from `UserGuide.md` (this content already exists in `Developer.md`); replace with a one-line pointer to the root README install section
+   6.3 [ ] Update all links to `Docs/README.md` across the repository:
+      - Root `README.md`: `powershell-module/Docs/README.md` → `powershell-module/Docs/UserGuide.md`
+      - `Developer.md`: `README.md` → `UserGuide.md`
+      - `MacroFormat.md`: `README.md` → `UserGuide.md`
+      - `ConsoleApp.md`: any references to `README.md`
+      - `WindowManagement.md`: any references to `README.md`
+      - `Logging.md`: any references to `README.md`
+
+7. [ ] Add comment-based help to `Public/Get-LWASMonitorProcess.ps1`
+   7.1 [ ] Add `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.OUTPUTS`, and at least two `.EXAMPLE` blocks to `Get-LWASMonitorProcess.ps1`, following the same style as `Get-LWASMacro.ps1`
+   7.2 [ ] Read each of the three `scripts/` files (`Install-LWAS.ps1`, `Uninstall-LWAS.ps1`, `New-LWASRelease.ps1`) and confirm each has a complete help block (`.SYNOPSIS`, `.DESCRIPTION`, at least one `.PARAMETER` per parameter, at least one `.EXAMPLE`); add any missing sections
+
+8. [ ] Documentation clarity sweep
+   8.1 [ ] Read all `Docs/*.md` files in full; remove or update any references to code, functions, or behaviour that no longer exists (including removed features, old function signatures, and superseded design notes)
+   8.2 [ ] Identify and resolve content duplication across docs files: where the same information appears in more than one file, keep it in the most appropriate file and replace other occurrences with a cross-reference link
+   8.3 [ ] Review `Developer.md` for any user-facing content (instructions a non-developer end-user might need); move to `UserGuide.md` or add a link from it
+   8.4 [ ] Audit every link in every `Docs/*.md` file and in the root `README.md`; fix any broken or stale links (including any links that still point to `Docs/README.md` after task 6)
+   8.5 [ ] Add Pester v5 docs link (`https://pester.dev`) to the `Developer.md` Further reading table and to the root `README.md` For Developers section (Spectre.Console is already linked; Pester is not)
+
+9. [ ] Create and update folder README.md files
+   9.1 [ ] Create `powershell-module/README.md`: developer-oriented introduction — what each subfolder contains (`src/`, `lib/`, `Public/`, `Private/`, `Tests/`, `Docs/`), how to import the module from source, and how to run the test suite
+   9.2 [ ] Create `powershell-module/Tests/README.md`: overview of the test suite — how it is structured, how to run the full suite vs a single file, what the `_Integration` and `_TypeDefinition` filename suffixes mean, and a note that `ConsoleApp/` has its own README
+   9.3 [ ] Rewrite `powershell-module/Tests/ConsoleApp/README.md`: remove the appended `Private/ConsoleApp/` content; rewrite as an accurate, concise reference for the ConsoleApp test harness only — TestConsole setup, `InModuleScope` pattern, and an accurate file-to-screen-function mapping table for all current test files in that folder
+   9.4 [ ] Rewrite `powershell-module/Private/ConsoleApp/README.md`: accurate, up-to-date summary of every current screen function file in `Private/ConsoleApp/`, what each does, and a brief "Adding a new screen" pointer to `Developer.md` for the full guide; remove any stale or inaccurate file entries
+   9.5 [ ] Create `powershell-module/lib/README.md`: explains the bundled DLLs (`Spectre.Console.dll`, `Spectre.Console.Testing.dll`), why they are tracked in git rather than fetched at runtime, current versions (from `VERSIONS.txt`), and the process for updating them (PR required, full test run, update `VERSIONS.txt`)
+   9.6 [ ] Create `scripts/README.md`: describes each script (`Install-LWAS.ps1` — bootstrap install from a release zip, self-elevates; `Uninstall-LWAS.ps1` — removes module and optionally AppData; `New-LWASRelease.ps1` — bumps version, runs tests, creates release zip), when to use each, and any prerequisites
+   9.7 [ ] Create `esp32-s3-mouse-emulator/README.md` stub: explains that this folder contains firmware for a planned USB HID hardware mouse emulator based on the ESP32-S3 microcontroller; describes the purpose — the device presents to the OS as a genuine physical HID mouse and provides an alternative to the current `SendInput` software approach; both methods will be selectable at runtime; using hardware HID substantially reduces anti-cheat detection risk because input arrives at the driver level, indistinguishable from a physical mouse; marks the feature as not yet implemented
 
 ## Phase 9: Azure Integration (Future)
 
@@ -4770,4 +4884,3 @@ All design questions have been resolved. The decisions below are recorded for re
     - Have page 1, page 2 if required - press [F1] previous page, [F2] next page
   - Don't iterate through all options for each category as we currently do, select a single config option on main config page to set it
   - Show user key names not codes for configuration requiring key presses
-  -
