@@ -36,7 +36,7 @@ captures in Windows games and other applications - built predominantly for Last 
 
 - Windows 11
 - PowerShell 7.0+
-- Administrator privileges - Install script only
+- Administrator privileges - Install script only (self-elevating)
 
 ## Getting Started
 
