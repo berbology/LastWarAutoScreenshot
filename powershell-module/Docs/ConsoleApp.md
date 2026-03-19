@@ -1,7 +1,7 @@
 ## Console App
 
 The interactive console app (`Start-LWASConsole`) is the primary
-interface for all setup, configuration, and (from Phase 4) macro management.
+interface for all setup, configuration, and macro management.
 It uses [Spectre.Console](https://spectreconsole.net/) for rich terminal
 rendering.
 
@@ -26,9 +26,17 @@ Main Menu
 │   ├── Logging settings
 │   ├── Mouse control settings
 │   ├── Emergency stop settings
-│   └── Storage & log file info
-├── Record macro            → Phase 4 (shows "Not yet available")
-├── Run macro               → Phase 4 (greyed out when no macros exist)
+│   ├── Screenshot settings
+│   ├── Set default code editor
+│   └── Edit module configuration
+├── Record macro            → build a macro action by action; save
+│                             (only shown when a target window is configured)
+├── Run macro               → select and execute a saved macro
+│                             (only shown when a window is configured and macros exist)
+├── Manage macros           → view, edit, and delete saved macros
+│                             (only shown when macros exist)
+├── Manage schedules        → view, create, and remove Windows Scheduled Tasks
+├── Storage info            → screenshot storage usage and log file stats
 └── Exit
 ```
 
@@ -40,15 +48,20 @@ break the config via the UI.
 
 ### Macros folder
 
-Macros are stored as JSON in `Private/Macros/` inside the module root.
+Macros are stored as JSON files at:
+
+```
+$env:APPDATA\LastWarAutoScreenshot\Macros\
+```
 
 **Filename convention:** `yyyyMMdd_HHmmss_<name>.json`
 
 Example: `20260310_143022_OpenAllianceShop.json`
 
-The `Run macro` menu option is greyed out when no `*.json` files exist in
-that folder. When macros are present it shows a selectable list parsed from
-the filenames. The macro format is defined in Phase 4.
+The `Run macro` menu option is only shown when both a target window is
+configured and `*.json` files exist in the macros folder. See
+[MacroFormat.md](MacroFormat.md) for the full JSON schema and action type
+reference.
 
 ---
 
@@ -66,8 +79,9 @@ module self-contained.
 **`VERSIONS.txt` format:**
 
 ```
-Spectre.Console=0.49.1
-Spectre.Console.Testing=0.49.1
+Spectre.Console=0.54.0
+Spectre.Console.Testing=0.54.0
+TFM=net9.0
 ```
 
 **Updating the bundled DLLs:**
@@ -76,13 +90,13 @@ Spectre.Console.Testing=0.49.1
 
    ```powershell
    Invoke-WebRequest `
-       "https://www.nuget.org/api/v2/package/Spectre.Console/0.49.1" `
+       "https://www.nuget.org/api/v2/package/Spectre.Console/0.54.0" `
        -OutFile spectre.nupkg
    Rename-Item spectre.nupkg spectre.zip
    Expand-Archive spectre.zip -DestinationPath spectre_extracted
    ```
 
-2. Copy `lib/net6.0/Spectre.Console.dll` from the extracted folder to
+2. Copy `lib/net9.0/Spectre.Console.dll` from the extracted folder to
    `powershell-module/lib/Spectre.Console.dll`.
 
 3. Repeat for `Spectre.Console.Testing`, placing the DLL in

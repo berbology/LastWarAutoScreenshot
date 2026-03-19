@@ -9,7 +9,7 @@ provided for advanced users and contributors.
 
 ## File location and naming
 
-Macro files are stored in the `Private/Macros/` folder inside the module root.
+Macro files are stored at `$env:APPDATA\LastWarAutoScreenshot\Macros\`.
 
 **Filename format:** `yyyyMMdd_HHmmss_<name>.json`
 
@@ -96,6 +96,36 @@ the sequence in the order defined by its `actionNames` array.
 
 ---
 
+## Window-relative coordinate system
+
+All coordinates in macro files are expressed as fractions of the target
+window's client-area width (X axis) and height (Y axis).
+
+- Origin `(0.0, 0.0)` is the **top-left** corner of the window.
+- `(1.0, 1.0)` is the **bottom-right** corner.
+- X increases rightward; Y increases downward.
+
+```
+(0.0, 0.0) ─────────────── (1.0, 0.0)
+     │                           │
+     │          (0.5, 0.5)       │
+     │                           │
+(0.0, 1.0) ─────────────── (1.0, 1.0)
+```
+
+Pixel positions are computed at **execution time** from the live window
+bounds. Moving or resizing the game window does not invalidate recorded
+coordinates — the same fractional values map correctly to new pixel positions
+automatically.
+
+**Conversion example:** window 800 × 600 px, `relativeX: 0.5`,
+`relativeY: 0.25` → pixel (400, 150).
+
+Coordinate values outside `[0.0, 1.0]` are **invalid** and will cause a
+validation error at save time.
+
+---
+
 ## Action type reference
 
 ### `MoveToPoint`
@@ -113,10 +143,12 @@ Move the mouse to an exact window-relative position.
 }
 ```
 
+See [Window-relative coordinate system](#window-relative-coordinate-system).
+
 | Field | Type | Range | Description |
 |-------|------|-------|-------------|
-| `position.relativeX` | double | 0.0–1.0 | Horizontal position relative to window width. 0.0 = left edge, 1.0 = right edge. |
-| `position.relativeY` | double | 0.0–1.0 | Vertical position relative to window height. 0.0 = top edge, 1.0 = bottom edge. |
+| `position.relativeX` | double | 0.0–1.0 | Horizontal position (0.0 = left, 1.0 = right). |
+| `position.relativeY` | double | 0.0–1.0 | Vertical position (0.0 = top, 1.0 = bottom). |
 
 ---
 
@@ -210,6 +242,8 @@ the end position, then release. Used for scroll gestures.
 }
 ```
 
+See [Window-relative coordinate system](#window-relative-coordinate-system).
+
 | Field | Type | Range | Description |
 |-------|------|-------|-------------|
 | `start.relativeX` | double | 0.0–1.0 | Horizontal start position. |
@@ -245,6 +279,8 @@ during execution (non-fatal — the macro continues normally).
     ]
 }
 ```
+
+See [Window-relative coordinate system](#window-relative-coordinate-system).
 
 | Field | Type | Range | Description |
 |-------|------|-------|-------------|
@@ -525,7 +561,7 @@ Records the workflow for capturing Arms Race score screenshots.
 
 ## See also
 
-- [README.md](README.md) — full user guide including macro recording
+- [UserGuide.md](UserGuide.md) — full user guide including macro recording
   walkthrough and managing macros
 - [ConsoleApp.md](ConsoleApp.md) — console app screen map and `IAnsiConsole`
   injection pattern for contributors

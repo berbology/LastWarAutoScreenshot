@@ -2,7 +2,7 @@
 
 Reference for contributors and anyone working on the module internals.
 
-For the user-facing guide see [README.md](README.md). For the project task
+For the user-facing guide see [UserGuide.md](UserGuide.md). For the project task
 list and architecture decisions see [ProjectPlan.md](ProjectPlan.md).
 
 ---
@@ -108,7 +108,7 @@ powershell-module/
 ```
 
 Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`.
-Macros are stored in `Private/Macros/` (Phase 4).
+Macros are stored at `$env:APPDATA\LastWarAutoScreenshot\Macros\`.
 
 ---
 
@@ -389,3 +389,4 @@ a stuck button would otherwise make the system unusable.
 | [Logging.md](Logging.md) | Log backends, levels, troubleshooting, Event Log registration |
 | [ProjectPlan.md](ProjectPlan.md) | Full phase-by-phase task list and architecture decisions |
 | [Spectre.Console docs](https://spectreconsole.net/) | Official library documentation |
+| [Pester docs](https://pester.dev) | Official Pester v5 documentation and API reference |
