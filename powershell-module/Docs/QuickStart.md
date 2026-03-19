@@ -78,8 +78,7 @@ Two mechanisms are available at any time during execution:
 
 | Method | How to trigger |
 |--------|----------------|
-| **Keyboard hotkey** | Hold `Ctrl+Alt+Q` simultaneously |
-| **Mouse gesture** | Hold both left and right mouse buttons for 3 seconds |
+| **Keyboard hotkey** (configurable) | Hold `Ctrl+Alt+Q` simultaneously |
 
 Either trigger halts the current action at the next safe checkpoint, reports
 how many actions completed, and exits cleanly. To change the hotkey, go to
