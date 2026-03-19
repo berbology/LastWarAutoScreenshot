@@ -11,19 +11,20 @@ captures in Windows games and other applications - built predominantly for Last 
 
 ## Contents
 
-### Users
+### User
 
 - [Getting Started](#getting-started)
 - [Features](#features)
 - [User Guide](powershell-module/Docs/UserGuide.md)
 - [Configuration reference](powershell-module/Docs/Configuration.md)
 - [Macro format reference](powershell-module/Docs/MacroFormat.md)
-- [Examples](examples/)
 
-### Developers
+### Developer
 
 - [Developer Guide](powershell-module/Docs/Developer.md)
 - [Console app architecture](powershell-module/Docs/ConsoleApp.md)
+- [Configuration File Example](examples/)
+- [Cmdlets] Control macro execution via Powershell cmdlets
 - [Window management](powershell-module/Docs/WindowManagement.md)
 - [Logging](powershell-module/Docs/Logging.md)
 - [Project plan](powershell-module/Docs/ProjectPlan.md)
