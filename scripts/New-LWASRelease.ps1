@@ -111,6 +111,23 @@ if (-not $installedModule -and -not $SkipTests) {
     }
 }
 
+# Module is installed but Tests folder is absent — reinstall with -IncludeTests automatically
+if ($installedModule -and -not $SkipTests) {
+    $installedTestsPath = Join-Path $installedModule.ModuleBase 'Tests'
+    if (-not (Test-Path $installedTestsPath)) {
+        Write-Warning "Module installed at '$($installedModule.ModuleBase)' but Tests folder is missing. Reinstalling with -IncludeTests..."
+        $installScript = Join-Path $PSScriptRoot 'Install-LWAS.ps1'
+        $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
+        if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+            & $installScript -Force -IncludeTests
+        }
+        else {
+            Start-Process pwsh -Verb RunAs -Wait -ArgumentList "-File `"$installScript`" -Force -IncludeTests"
+        }
+        $installedModule = Get-Module -Name 'LastWarAutoScreenshot' -ListAvailable | Select-Object -First 1
+    }
+}
+
 # Run Pester suite unless -SkipTests
 if (-not $SkipTests) {
     if (-not $installedModule) {

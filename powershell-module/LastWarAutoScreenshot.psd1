@@ -12,7 +12,7 @@
 RootModule = 'LastWarAutoScreenshot.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0'
+ModuleVersion = '1.0.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -111,7 +111,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'v1.0.0 — v1.0.0 - Initial release. Features: window management, mouse control, console UI, macro recording and playback, screenshot capture with optional similarity detection and image region masking, configuration and scheduling, module installation.'
+        ReleaseNotes = 'v1.0.1 — Test suite fix patch. Features: Remove duplicate tests, consolidate similar tests, improve test console usage, fix false test passes, remove redundant tests, mock console output functions to reduce test run output noise, rename poorly named tests.'
 
         # Prerelease string of this module
         # Prerelease = ''
