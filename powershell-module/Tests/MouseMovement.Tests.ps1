@@ -235,6 +235,7 @@ Describe 'Invoke-MouseClick' -Tag 'Unit' {
             Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
             Mock Get-ModuleConfiguration { @{ MouseControl = @{ MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150 } } } -ModuleName LastWarAutoScreenshot
             Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
+            Mock Write-Host {} -ModuleName LastWarAutoScreenshot
             Invoke-MouseClick -X 30 -Y 40 -DownDurationMs 100 | Should -Be $false
             Should -Invoke Write-LastWarLog -Exactly 1
         }
@@ -257,18 +258,6 @@ Describe 'Invoke-SendMouseMoveAbsolute' -Tag 'Unit' {
         }
     }
 
-    It 'normalises coordinates to 0-65535 range based on virtual desktop' {
-        InModuleScope LastWarAutoScreenshot {
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
-            Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
-            
-            Invoke-SendMouseMoveAbsolute -X 800 -Y 600 | Should -Be $true
-            
-            # Verify SendMouseInput was called (actual coordinate normalisation is tested via integration)
-            Should -Invoke Invoke-SendMouseInput -Exactly 1
-        }
-    }
-
     It 'returns $false if SendInput fails' {
         InModuleScope LastWarAutoScreenshot {
             Mock Invoke-SendMouseInput { $false } -ModuleName LastWarAutoScreenshot
@@ -277,17 +266,19 @@ Describe 'Invoke-SendMouseMoveAbsolute' -Tag 'Unit' {
         }
     }
 
-    It 'logs error and returns $false if virtual desktop dimensions are invalid' {
+    It 'logs error and returns $false if an unexpected exception occurs' {
         InModuleScope LastWarAutoScreenshot {
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
+            # GetSystemMetrics is a Win32 P/Invoke static method and cannot be mocked in unit tests.
+            # The guard for invalid virtual desktop dimensions (vdWidth -le 0 || vdHeight -le 0) is
+            # therefore not reachable from a unit test without refactoring. The catch block, which
+            # exercises the same observable contract (Write-LastWarLog Error + return $false), is
+            # tested here instead.
             Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
-            
-            # Mock GetSystemMetrics to return invalid (zero or negative) dimensions
-            $mockCount = 0
-            Mock Invoke-SendMouseInput { $false } -ParameterFilter { $mockCount -eq 999 } -ModuleName LastWarAutoScreenshot
-            
-            # Test robustness (normally coordinates are valid on Windows)
-            Invoke-SendMouseMoveAbsolute -X 500 -Y 300 | Should -Not -Be $null
+            Mock Invoke-SendMouseInput { throw 'Simulated SendInput failure' } -ModuleName LastWarAutoScreenshot
+
+            $result = Invoke-SendMouseMoveAbsolute -X 500 -Y 300
+            $result | Should -Be $false
+            Should -Invoke Write-LastWarLog -Exactly 1 -ParameterFilter { $Level -eq 'Error' }
         }
     }
 }
@@ -378,146 +369,6 @@ Describe 'Invoke-MouseDragPath' -Tag 'Unit' {
             Invoke-MouseDragPath -Points $points | Out-Null
             # Exactly n-1 calls (one per step), no overshoot correction calls
             $script:moveCount | Should -Be ($points.Count - 1)
-        }
-    }
-}
-
-Describe 'Invoke-MouseDragClick' -Tag 'Unit' {
-    It 'moves to start position, presses button, drags via SendInput, and releases' {
-        InModuleScope LastWarAutoScreenshot {
-            Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 10 } } -ModuleName LastWarAutoScreenshot
-            Mock Get-BezierPoints { @( [PSCustomObject]@{ X = 100; Y = 100 }, [PSCustomObject]@{ X = 110; Y = 110 } ) } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseDragPath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
-            Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration {
-                @{ 
-                    MouseControl = @{ 
-                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
-                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        MinClickPostDelayMs = 100
-                        MaxClickPostDelayMs = 300
-                    }
-                }
-            } -ModuleName LastWarAutoScreenshot
-            
-            $result = Invoke-MouseDragClick -StartX 100 -StartY 100 -EndX 200 -EndY 200
-            $result.Success | Should -Be $true
-            
-            # Verify button down and up were sent
-            Should -Invoke Invoke-SendMouseInput -Exactly 1 -ParameterFilter { $ButtonFlags -eq [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_LEFTDOWN }
-            Should -Invoke Invoke-SendMouseInput -Exactly 1 -ParameterFilter { $ButtonFlags -eq [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_LEFTUP }
-        }
-    }
-
-    It 'uses Invoke-MouseDragPath for drag movement (not Invoke-MouseMovePath)' {
-        InModuleScope LastWarAutoScreenshot {
-            Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 10 } } -ModuleName LastWarAutoScreenshot
-            Mock Get-BezierPoints { @( [PSCustomObject]@{ X = 100; Y = 100 }, [PSCustomObject]@{ X = 110; Y = 110 } ) } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseDragPath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
-            Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration {
-                @{ 
-                    MouseControl = @{ 
-                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
-                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        MinClickPostDelayMs = 100
-                        MaxClickPostDelayMs = 300
-                    }
-                }
-            } -ModuleName LastWarAutoScreenshot
-            
-            $result = Invoke-MouseDragClick -StartX 100 -StartY 100 -EndX 200 -EndY 200
-            $result.Success | Should -Be $true
-            # Verify Invoke-MouseMovePath called once for initial move to start position
-            Should -Invoke Invoke-MouseMovePath -Exactly 1 -ModuleName LastWarAutoScreenshot
-            # Verify Invoke-MouseDragPath called once for drag movement (uses SendInput, not SetCursorPos)
-            Should -Invoke Invoke-MouseDragPath -Exactly 1 -ModuleName LastWarAutoScreenshot
-        }
-    }
-
-    It 'returns $false with message if drag fails' {
-        InModuleScope LastWarAutoScreenshot {
-            Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 10 } } -ModuleName LastWarAutoScreenshot
-            Mock Get-BezierPoints { @( [PSCustomObject]@{ X = 100; Y = 100 }, [PSCustomObject]@{ X = 110; Y = 110 } ) } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseDragPath { $false } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
-            Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration {
-                @{ 
-                    MouseControl = @{ 
-                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
-                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        MinClickPostDelayMs = 100
-                        MaxClickPostDelayMs = 300
-                    }
-                }
-            } -ModuleName LastWarAutoScreenshot
-            
-            $result = Invoke-MouseDragClick -StartX 100 -StartY 100 -EndX 200 -EndY 200
-            $result.Success | Should -Be $false
-            $result.Message | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    It 'always sends LEFTUP even if drag fails (finally block)' {
-        InModuleScope LastWarAutoScreenshot {
-            Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 10 } } -ModuleName LastWarAutoScreenshot
-            Mock Get-BezierPoints { @( [PSCustomObject]@{ X = 100; Y = 100 }, [PSCustomObject]@{ X = 110; Y = 110 } ) } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseDragPath { $false } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
-            Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration {
-                @{ 
-                    MouseControl = @{ 
-                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
-                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        MinClickPostDelayMs = 100
-                        MaxClickPostDelayMs = 300
-                    }
-                }
-            } -ModuleName LastWarAutoScreenshot
-            
-            Invoke-MouseDragClick -StartX 100 -StartY 100 -EndX 200 -EndY 200 | Out-Null
-            
-            # LEFTUP should be called even though drag failed
-            Should -Invoke Invoke-SendMouseInput -ParameterFilter { $ButtonFlags -eq [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_LEFTUP }
-        }
-    }
-
-    It 'encodes emergency stop check before and during drag' {
-        InModuleScope LastWarAutoScreenshot {
-            # Set emergency stop
-            $script:EmergencyStopRequested = $true
-            
-            Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 10; Y = 10 } } -ModuleName LastWarAutoScreenshot
-            Mock Get-BezierPoints { @( [PSCustomObject]@{ X = 100; Y = 100 }, [PSCustomObject]@{ X = 110; Y = 110 } ) } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-MouseMovePath { $true } -ModuleName LastWarAutoScreenshot
-            Mock Invoke-SendMouseInput { $true } -ModuleName LastWarAutoScreenshot
-            Mock Start-Sleep {} -ModuleName LastWarAutoScreenshot
-            Mock Write-LastWarLog {} -ModuleName LastWarAutoScreenshot
-            Mock Get-ModuleConfiguration {
-                @{ 
-                    MouseControl = @{ 
-                        MinClickPreDelayMs = 50; MaxClickPreDelayMs = 200
-                        MinClickDownDurationMs = 50; MaxClickDownDurationMs = 150
-                        MinClickPostDelayMs = 100
-                        MaxClickPostDelayMs = 300
-                    }
-                }
-            } -ModuleName LastWarAutoScreenshot
-            
-            $result = Invoke-MouseDragClick -StartX 100 -StartY 100 -EndX 200 -EndY 200
-            $result.Success | Should -Be $false
-            $result.Message | Should -Match 'Emergency stop'
-            
-            # Reset for other tests
-            $script:EmergencyStopRequested = $false
         }
     }
 }

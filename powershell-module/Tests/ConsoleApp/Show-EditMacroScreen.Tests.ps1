@@ -13,25 +13,35 @@ BeforeAll {
 Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
     BeforeEach {
-        # Create a fresh TestConsole for each test to prevent output accumulation.
-        # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
         InModuleScope 'LastWarAutoScreenshot' {
+            # Create a fresh TestConsole for each test to prevent output accumulation.
+            # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
             $script:tc = [Spectre.Console.Testing.TestConsole]::new()
             $script:tc.Profile.Width  = $script:TestConsoleWidth
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
+
+            # Store the shared mock scriptblock in module script scope so every It block
+            # can reference it without copy-pasting the definition.
+            # Sequence: [0] MoveToPoint name='action-a', [1] LeftClick, [2] Loop name='my-loop' iterations=3
+            $script:mockMacroData = {
+                [PSCustomObject]@{
+                    Valid    = $true
+                    Messages = @()
+                    Data     = [PSCustomObject]@{
+                        version      = '1.0'
+                        metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
+                        targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
+                        sequence     = [object[]]@(
+                            [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
+                            [PSCustomObject]@{ type = 'LeftClick' },
+                            [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
+                        )
+                    }
+                }
+            }
         }
     }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Shared helper: scriptblock that returns a fresh 3-action macro each
-    # time it is invoked, preventing inter-test mutation.
-    #
-    # Sequence:
-    #   [0] MoveToPoint  name='action-a'  position=(0.5, 0.3)
-    #   [1] LeftClick    (unnamed)
-    #   [2] Loop         name='my-loop'   iterations=3  actionNames=['action-a']
-    # ════════════════════════════════════════════════════════════════════════
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Dynamic menu options — Back only visible when no changes
@@ -40,22 +50,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Output contains [[Back]] and does not contain Save changes or Discard changes' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile -MockWith $mockMacroData
 
                 $tc = $script:tc
@@ -81,22 +76,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Output contains Save changes and Discard changes after a rename' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
@@ -128,22 +108,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Calls Rename-MacroFile with the new name' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
@@ -164,22 +129,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile after a successful rename' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile { [PSCustomObject]@{ Success = $true; NewFilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
@@ -206,22 +156,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Rename-MacroFile' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Rename-MacroFile {}
                 Mock Save-MacroFile   {}
@@ -242,22 +177,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Save-MacroFile' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile {}
 
@@ -282,22 +202,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Saves the macro with the updated actionNames in the Loop action' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -332,22 +237,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not include the old step name in the Loop actionNames after rename' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -375,22 +265,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Writes a message about the updated loop reference to the console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -422,22 +297,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Saves the macro with the name set on the LeftClick action' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -477,22 +337,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Saves the macro with the originally-second step now first in the sequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -533,22 +378,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Saves the macro with the originally-first step now second in the sequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -588,22 +418,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not show Move up in the step options' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile -MockWith $mockMacroData
 
                 $tc = $script:tc
@@ -641,22 +456,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not show Move down in the step options' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile -MockWith $mockMacroData
 
                 $tc = $script:tc
@@ -696,22 +496,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Writes a success message containing saved successfully to the console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
@@ -745,22 +530,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Displays an error and does not exit the edit menu' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $false; FilePath = ''; Message = 'Disk full.' } }
 
@@ -794,22 +564,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile exactly once before the failure' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile  -MockWith $mockMacroData
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $false; FilePath = ''; Message = 'Disk full.' } }
 
@@ -847,22 +602,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Save-MacroFile' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Get-LWASMacro { @() }
                 Mock Save-MacroFile   {}
@@ -887,22 +627,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Rename-MacroFile' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Get-LWASMacro { @() }
                 Mock Rename-MacroFile {}
@@ -930,22 +655,7 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
         It 'Returns the user to the edit menu without saving' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockMacroData = {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version      = '1.0'
-                            metadata     = [PSCustomObject]@{ name = 'test-macro'; createdUtc = '2026-01-01T00:00:00Z'; modifiedUtc = '2026-01-01T00:00:00Z'; description = '' }
-                            targetWindow = [PSCustomObject]@{ processName = 'LastWar'; windowTitle = 'Last War: Survival' }
-                            sequence     = [object[]]@(
-                                [PSCustomObject]@{ type = 'MoveToPoint'; name = 'action-a'; position = [PSCustomObject]@{ relativeX = 0.5; relativeY = 0.3 } },
-                                [PSCustomObject]@{ type = 'LeftClick' },
-                                [PSCustomObject]@{ type = 'Loop'; name = 'my-loop'; iterations = 3; actionNames = [object[]]@('action-a') }
-                            )
-                        }
-                    }
-                }
+                $mockMacroData = $script:mockMacroData
                 Mock Get-MacroFile    -MockWith $mockMacroData
                 Mock Get-LWASMacro { @() }
                 Mock Save-MacroFile   {}

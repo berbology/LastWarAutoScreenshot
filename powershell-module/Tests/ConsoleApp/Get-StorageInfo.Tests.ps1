@@ -15,7 +15,7 @@ Describe 'Get-StorageInfo' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When Screenshots.StoragePath is an empty string (not yet configured)' {
 
-        It 'Returns IsConfigured=$false' {
+        It 'Returns IsConfigured=$false and zero values for all numeric properties' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ModuleConfiguration {
                     [PSCustomObject]@{
@@ -27,70 +27,10 @@ Describe 'Get-StorageInfo' -Tag 'Unit' {
                 }
 
                 $result = Get-StorageInfo
-                $result.IsConfigured | Should -BeFalse
-            }
-        }
-
-        It 'Returns 0.0 for UsedGB' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{
-                        Screenshots = [PSCustomObject]@{
-                            StoragePath  = ''
-                            MaxStorageGB = 2.0
-                        }
-                    }
-                }
-
-                $result = Get-StorageInfo
-                $result.UsedGB | Should -Be 0.0
-            }
-        }
-
-        It 'Returns 0.0 for MaxGB' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{
-                        Screenshots = [PSCustomObject]@{
-                            StoragePath  = ''
-                            MaxStorageGB = 2.0
-                        }
-                    }
-                }
-
-                $result = Get-StorageInfo
-                $result.MaxGB | Should -Be 0.0
-            }
-        }
-
-        It 'Returns 0.0 for UsedPercent' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{
-                        Screenshots = [PSCustomObject]@{
-                            StoragePath  = ''
-                            MaxStorageGB = 2.0
-                        }
-                    }
-                }
-
-                $result = Get-StorageInfo
-                $result.UsedPercent | Should -Be 0.0
-            }
-        }
-
-        It 'Returns 0.0 for LogFileSizeGB' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-ModuleConfiguration {
-                    [PSCustomObject]@{
-                        Screenshots = [PSCustomObject]@{
-                            StoragePath  = ''
-                            MaxStorageGB = 2.0
-                        }
-                    }
-                }
-
-                $result = Get-StorageInfo
+                $result.IsConfigured  | Should -BeFalse
+                $result.UsedGB        | Should -Be 0.0
+                $result.MaxGB         | Should -Be 0.0
+                $result.UsedPercent   | Should -Be 0.0
                 $result.LogFileSizeGB | Should -Be 0.0
             }
         }
@@ -294,8 +234,8 @@ Describe 'Get-StorageInfo' -Tag 'Unit' {
                 } -ParameterFilter { $Recurse -eq $true }
 
                 $result = Get-StorageInfo
-                $result.LogFileSizeGB | Should -BeGreaterThan 0.04
-                $result.LogFileSizeGB | Should -BeLessThan  0.06
+                # 52428800 / 1073741824 = 0.048828125 exactly (25/512)
+                $result.LogFileSizeGB | Should -Be ([double]52428800 / 1GB)
             }
         }
 

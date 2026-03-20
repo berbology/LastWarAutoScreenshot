@@ -151,6 +151,8 @@ Describe 'Get-LWASTargetWindow' {
 
                 $result = @(Get-LWASTargetWindow -ProcessName 'notepad.exe' -First)
                 $result.Count | Should -Be 1
+                $result[0].ProcessName | Should -Be 'notepad.exe'
+                $result[0].WindowTitle | Should -Be 'Notepad'
             }
         }
 
@@ -161,7 +163,7 @@ Describe 'Get-LWASTargetWindow' {
 
                 $result = @(Get-LWASTargetWindow -ProcessName 'chrome.exe' -First -ErrorAction SilentlyContinue)
                 $result.Count | Should -Be 0
-                Should -Invoke Write-Error -Times 1
+                Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*No window found*' }
             }
         }
 

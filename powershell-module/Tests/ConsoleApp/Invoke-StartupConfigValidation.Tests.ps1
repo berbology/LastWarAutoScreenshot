@@ -7,18 +7,19 @@ BeforeAll {
     # Spectre.Console.Testing.dll is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
-
-    # Create a single shared TestConsole for all tests in this file.
-    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
-    InModuleScope 'LastWarAutoScreenshot' {
-        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
-        $script:tc.Profile.Width  = $script:TestConsoleWidth
-        $script:tc.Profile.Height = $script:TestConsoleHeight
-        $script:tc.Profile.Capabilities.Interactive = $true
-    }
 }
 
 Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     Context 'When the config file does not exist (Get-ModuleConfiguration returns defaults)' {
 
@@ -56,20 +57,20 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
             }
         }
 
-        It 'Writes nothing to the Console output when all values are valid' {
+        It 'Calls Test-ConfigValue with the default value for Logging.MinimumLogLevel' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
                         Logging       = [PSCustomObject]@{ MinimumLogLevel = 'Info' }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
+                        MouseControl  = [PSCustomObject]@{ OvershootFactor = 0.5 }
+                        EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 100 }
                     }
                 }
                 Mock Test-ConfigValue -MockWith { [PSCustomObject]@{ Valid = $true; Message = '' } }
 
                 $tc = $script:tc
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
-                $tc.Output | Should -BeNullOrEmpty
+                Should -Invoke Test-ConfigValue -ParameterFilter { $Key -eq 'Logging.MinimumLogLevel' -and $Value -eq 'Info' } -Exactly 1
             }
         }
     }
@@ -93,20 +94,20 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
             }
         }
 
-        It 'Does not write any panel to the Console when all values pass' {
+        It 'Calls Test-ConfigValue with non-default values loaded from the config file' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
-                        Logging       = [PSCustomObject]@{ MinimumLogLevel = 'Info' }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
+                        Logging       = [PSCustomObject]@{ MinimumLogLevel = 'Warning'; Backend = 'File' }
+                        MouseControl  = [PSCustomObject]@{ OvershootFactor = 0.3; EasingEnabled = $true }
+                        EmergencyStop = [PSCustomObject]@{ PollIntervalMs = 250; AutoStart = $false }
                     }
                 }
                 Mock Test-ConfigValue -MockWith { [PSCustomObject]@{ Valid = $true; Message = '' } }
 
                 $tc = $script:tc
                 Invoke-StartupConfigValidation -Console $tc | Out-Null
-                $tc.Output | Should -BeNullOrEmpty
+                Should -Invoke Test-ConfigValue -ParameterFilter { $Key -eq 'Logging.Backend' -and $Value -eq 'File' } -Exactly 1
             }
         }
     }
@@ -394,7 +395,7 @@ Describe 'Invoke-StartupConfigValidation' -Tag 'Unit' {
                 $result.PSObject.Properties.Name | Should -Contain 'HasErrors'
                 $result.PSObject.Properties.Name | Should -Contain 'Messages'
                 $result.HasErrors | Should -BeOfType [bool]
-                , $result.Messages | Should -BeOfType [array]
+                ,$result.Messages | Should -BeOfType [array]
             }
         }
     }

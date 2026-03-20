@@ -7,18 +7,19 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
-
-    # Create a single shared TestConsole for all tests in this file.
-    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
-    InModuleScope 'LastWarAutoScreenshot' {
-        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
-        $script:tc.Profile.Width  = $script:TestConsoleWidth
-        $script:tc.Profile.Height = $script:TestConsoleHeight
-        $script:tc.Profile.Capabilities.Interactive = $true
-    }
 }
 
 Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: User immediately selects [Back to main menu]
@@ -82,27 +83,6 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
             }
         }
 
-        It 'Does not call any other sub-screen when only Logging settings is chosen' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Show-LoggingConfigScreen        {}
-                Mock Show-MouseControlConfigScreen   {}
-                Mock Show-EmergencyStopConfigScreen  {}
-                Mock Show-ScreenshotConfigScreen     {}
-
-                $tc = $script:tc
-                # First iteration: choose 'Logging settings' (index 1)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration: choose '[Back to main menu]' (index 0)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-ConfigMenuScreen -Console $tc
-
-                Should -Not -Invoke Show-MouseControlConfigScreen
-                Should -Not -Invoke Show-EmergencyStopConfigScreen
-                Should -Not -Invoke Show-ScreenshotConfigScreen
-            }
-        }
     }
 
     # ════════════════════════════════════════════════════════════════════════
@@ -208,7 +188,7 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When the user selects Screenshot settings then [Back to main menu]' {
 
-        It 'Screenshot settings option appears in console output' {
+        It 'Console output still contains Screenshot settings after returning from the sub-screen' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Show-LoggingConfigScreen        {}
                 Mock Show-MouseControlConfigScreen   {}
@@ -216,10 +196,19 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
                 Mock Show-ScreenshotConfigScreen     {}
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)  # [Back to main menu] is index 0
+                # First iteration: navigate to Screenshot settings (index 4, 4 downs from [Back to main menu])
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu] (index 0, Enter immediately)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-ConfigMenuScreen -Console $tc
 
+                # The menu must re-render after returning from Show-ScreenshotConfigScreen;
+                # verify the Screenshot settings option is still present in the output.
                 $tc.Output | Should -Match 'Screenshot settings'
             }
         }

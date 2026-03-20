@@ -14,7 +14,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-Describe "Get-EnumeratedWindows" -Tag "Unit" {
+Describe "Get-EnumeratedWindows" -Tag "Integration" {
 
     Context "Parameter validation" {
 

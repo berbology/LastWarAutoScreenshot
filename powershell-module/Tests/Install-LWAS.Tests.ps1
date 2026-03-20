@@ -26,6 +26,8 @@ Describe 'Install-LWAS' {
             Mock Invoke-WebRequest {}
             Mock Expand-Archive {}
             Mock Read-Host { return 'N' }
+            Mock Write-Host {}
+            Mock Write-Warning {}
         }
     }
 
@@ -94,11 +96,11 @@ Describe 'Install-LWAS' {
                     return $false
                 }
 
-                $output = Install-LWAS 3>&1
+                Install-LWAS 3>&1 | Out-Null
 
                 Should -Invoke Copy-Item -Times 0
                 Should -Invoke Read-Host -Times 0
-                ($output -like '*already installed*') | Should -Not -BeNullOrEmpty
+                Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*already installed*' }
             }
         }
 

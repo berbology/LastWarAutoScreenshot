@@ -48,7 +48,7 @@ Describe 'FileLogBackend Logging Enhancements' -Tag 'Integration' {
         }
     }
 
-    It 'handles permission errors gracefully' {
+    It 'throws when the log file is locked (permission error)' {
         InModuleScope LastWarAutoScreenshot {
             $badPath = Join-Path $env:TEMP ("TestLog_permission_" + [guid]::NewGuid().ToString() + ".log")
             $backend = [LastWarAutoScreenshot.FileLogBackend]::new($badPath)

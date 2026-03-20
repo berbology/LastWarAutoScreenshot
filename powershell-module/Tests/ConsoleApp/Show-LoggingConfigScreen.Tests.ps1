@@ -7,25 +7,26 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
-
-    # Create a single shared TestConsole for all tests in this file.
-    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
-    InModuleScope 'LastWarAutoScreenshot' {
-        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
-        $script:tc.Profile.Width  = $script:TestConsoleWidth
-        $script:tc.Profile.Height = $script:TestConsoleHeight
-        $script:tc.Profile.Capabilities.Interactive = $true
-    }
 }
 
 Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Table renders current values
     # ════════════════════════════════════════════════════════════════════════
     Context 'Initial table display' {
 
-        It 'Console output contains all five Logging key names' {
+        It 'Console output contains all five Logging key names and current config values' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockConfig = {
                     [PSCustomObject]@{
@@ -59,38 +60,6 @@ Describe 'Show-LoggingConfigScreen' -Tag 'Unit' {
                 $tc.Output | Should -Match 'MaxSizeMB'
                 $tc.Output | Should -Match 'MaxAgeDays'
                 $tc.Output | Should -Match 'MaxLogFileCount'
-            }
-        }
-
-        It 'Console output contains the current values from the loaded config' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockConfig = {
-                    [PSCustomObject]@{
-                        Logging = [PSCustomObject]@{
-                            MinimumLogLevel = 'Info'
-                            Backend         = 'File'
-                            FileBackend     = [PSCustomObject]@{
-                                MaxSizeMB          = 50
-                                MaxAgeDays         = 30
-                                MaxLogFileCount = 500
-                            }
-                        }
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith $mockConfig
-                Mock Save-ModuleSettings {}
-                Mock Write-LastWarLog {}
-
-                $tc = $script:tc
-                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::Enter) }
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-LoggingConfigScreen -Console $tc
-
                 $tc.Output | Should -Match 'Info'
                 $tc.Output | Should -Match 'File'
             }

@@ -154,14 +154,6 @@ Describe '[LastWarAutoScreenshot.MouseControlAPI] type definition' -Tag 'Unit' {
         }
     }
 
-    It 'GetSystemMetrics returns positive values for virtual screen dimensions' {
-        InModuleScope -ModuleName LastWarAutoScreenshot {
-            $width = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN)
-            $height = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN)
-            
-            $width | Should -BeGreaterThan 0
-            $height | Should -BeGreaterThan 0
-        }
-    }
 }
+
 

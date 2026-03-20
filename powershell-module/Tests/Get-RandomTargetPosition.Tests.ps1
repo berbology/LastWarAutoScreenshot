@@ -5,12 +5,15 @@
 # Covers bounds, distribution, clamping, and invalid-input behaviour for the private
 # Get-RandomTargetPosition function.
 
+BeforeAll {
+    $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
+    Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
+    Import-Module $moduleManifest -Force
+}
+
 Describe 'Get-RandomTargetPosition' -Tag 'Unit' {
 
     BeforeAll {
-        $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
-        Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
-    Import-Module $moduleManifest -Force
         Mock Write-LastWarLog { } -ModuleName LastWarAutoScreenshot
     }
 
@@ -97,10 +100,11 @@ Describe 'Get-RandomTargetPosition' -Tag 'Unit' {
 
     Context 'Circle parameter set: distribution clusters near centre' {
 
-        It 'mean X of 100 points is within 10% of radius from centre X' {
+        It 'mean X of 100 points is within 20% of radius from centre X' {
             InModuleScope LastWarAutoScreenshot {
-                # Statistical note: z ≈ 2 for 10%-of-radius threshold with 100 samples (~95% pass rate).
-                # Multiplier increased to 0.16 to account for sampling variance (~98% pass rate).
+                # Statistical note: for a uniform disk of radius r, std dev of X = r/2 = 0.15.
+                # Standard error of mean with 100 samples = 0.015. Tolerance of 0.20*r = 0.060
+                # is ~4 standard errors, giving a pass rate of >99.99%.
                 $testCircle = [PSCustomObject]@{
                     RelativeCentreX = 0.5
                     RelativeCentreY = 0.5
@@ -112,14 +116,15 @@ Describe 'Get-RandomTargetPosition' -Tag 'Unit' {
                     $sumX += $pt.RelativeX
                 }
                 $meanX = $sumX / 100.0
-                [math]::Abs($meanX - $testCircle.RelativeCentreX) | Should -BeLessThan ($testCircle.RelativeRadius * 0.16)
+                [math]::Abs($meanX - $testCircle.RelativeCentreX) | Should -BeLessThan ($testCircle.RelativeRadius * 0.20)
             }
         }
 
-        It 'mean Y of 100 points is within 10% of radius from centre Y' {
+        It 'mean Y of 100 points is within 20% of radius from centre Y' {
             InModuleScope LastWarAutoScreenshot {
-                # Statistical note: z ≈ 2 for 10%-of-radius threshold with 100 samples (~95% pass rate).
-                # Multiplier increased to 0.16 to account for sampling variance (~98% pass rate).
+                # Statistical note: for a uniform disk of radius r, std dev of Y = r/2 = 0.15.
+                # Standard error of mean with 100 samples = 0.015. Tolerance of 0.20*r = 0.060
+                # is ~4 standard errors, giving a pass rate of >99.99%.
                 $testCircle = [PSCustomObject]@{
                     RelativeCentreX = 0.5
                     RelativeCentreY = 0.5
@@ -131,7 +136,7 @@ Describe 'Get-RandomTargetPosition' -Tag 'Unit' {
                     $sumY += $pt.RelativeY
                 }
                 $meanY = $sumY / 100.0
-                [math]::Abs($meanY - $testCircle.RelativeCentreY) | Should -BeLessThan ($testCircle.RelativeRadius * 0.16)
+                [math]::Abs($meanY - $testCircle.RelativeCentreY) | Should -BeLessThan ($testCircle.RelativeRadius * 0.20)
             }
         }
     }

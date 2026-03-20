@@ -369,34 +369,24 @@ Describe 'Invoke-CaptureScreenRegion' -Tag 'Unit' {
             }
         }
 
-        It 'passes empty rectangle array when MaskRegions is absent (null)' {
-            InModuleScope LastWarAutoScreenshot {
+        It 'passes empty rectangle array when MaskRegions is <Description>' -TestCases @(
+            @{ Description = 'absent (null)';    MaskRegions = $null }
+            @{ Description = 'an empty array';   MaskRegions = @() }
+        ) {
+            param($MaskRegions)
+            InModuleScope LastWarAutoScreenshot -Parameters @{ MaskRegions = $MaskRegions } {
+                param($MaskRegions)
                 $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
-                Invoke-CaptureScreenRegion `
-                    -WindowHandle               ([IntPtr]::new(1)) `
-                    -RegionTopLeftRelativeX     0.0 `
-                    -RegionTopLeftRelativeY     0.0 `
-                    -RegionBottomRightRelativeX 1.0 `
-                    -RegionBottomRightRelativeY 1.0 `
-                    -ScreenshotContext          $ctx | Out-Null
-
-                Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
-                    $MaskPixelRects.Length -eq 0
+                $splat = @{
+                    WindowHandle               = [IntPtr]::new(1)
+                    RegionTopLeftRelativeX     = 0.0
+                    RegionTopLeftRelativeY     = 0.0
+                    RegionBottomRightRelativeX = 1.0
+                    RegionBottomRightRelativeY = 1.0
+                    ScreenshotContext          = $ctx
                 }
-            }
-        }
-
-        It 'passes empty rectangle array when MaskRegions is an empty array' {
-            InModuleScope LastWarAutoScreenshot {
-                $ctx = @{ Index = 0; MacroName = 'Test'; ActionName = 'shot'; PreviousScreenshotPath = $null }
-                Invoke-CaptureScreenRegion `
-                    -WindowHandle               ([IntPtr]::new(1)) `
-                    -RegionTopLeftRelativeX     0.0 `
-                    -RegionTopLeftRelativeY     0.0 `
-                    -RegionBottomRightRelativeX 1.0 `
-                    -RegionBottomRightRelativeY 1.0 `
-                    -MaskRegions                @() `
-                    -ScreenshotContext          $ctx | Out-Null
+                if ($null -ne $MaskRegions) { $splat['MaskRegions'] = $MaskRegions }
+                Invoke-CaptureScreenRegion @splat | Out-Null
 
                 Should -Invoke Invoke-CaptureWindowRegion -Times 1 -ParameterFilter {
                     $MaskPixelRects.Length -eq 0

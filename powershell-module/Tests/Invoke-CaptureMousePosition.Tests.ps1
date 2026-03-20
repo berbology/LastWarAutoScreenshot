@@ -63,30 +63,6 @@ Describe 'Invoke-CaptureMousePosition' -Tag 'Unit' {
             }
         }
 
-        It 'Returns an object with RelativeX, RelativeY, AbsoluteX, and AbsoluteY properties' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 300; Y = 200 } }
-                Mock Get-WindowBounds {
-                    [PSCustomObject]@{ Left = 100; Top = 100; Right = 500; Bottom = 500; Width = 400; Height = 400 }
-                }
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Capabilities.Interactive = $true
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                $result = Invoke-CaptureMousePosition `
-                    -WindowHandle ([IntPtr]::new(1001)) `
-                    -Console $tc `
-                    -PromptMessage 'Test prompt'
-
-                $result.PSObject.Properties.Name | Should -Contain 'RelativeX'
-                $result.PSObject.Properties.Name | Should -Contain 'RelativeY'
-                $result.PSObject.Properties.Name | Should -Contain 'AbsoluteX'
-                $result.PSObject.Properties.Name | Should -Contain 'AbsoluteY'
-            }
-        }
-
         It 'Displays the PromptMessage text in the console output' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Invoke-GetCursorPosition { [PSCustomObject]@{ X = 300; Y = 200 } }

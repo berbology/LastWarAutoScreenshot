@@ -39,17 +39,18 @@ function New-MockMacro {
     }
 }
 
-function New-ScheduleTestConsole {
-    InModuleScope 'LastWarAutoScreenshot' {
-        $tc = [Spectre.Console.Testing.TestConsole]::new()
-        $tc.Profile.Width  = $script:TestConsoleWidth
-        $tc.Profile.Height = $script:TestConsoleHeight
-        $tc.Profile.Capabilities.Interactive = $true
-        return $tc
-    }
-}
-
 Describe 'Show-ScheduleScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ══════════════════════════════════════════════════════════════════════════
     # Context: No tasks configured
@@ -61,10 +62,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Get-LWASScheduledTask { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Back to main menu
@@ -79,10 +77,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Get-LWASScheduledTask { @() }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Back to main menu
@@ -117,10 +112,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Back to main menu
@@ -144,10 +136,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Unregister-LWASScheduledTask {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Action prompt: [0] Create new schedule, [1] Remove a schedule,
                 # [2] [[Back to main menu]]
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -174,10 +163,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Register-LWASScheduledTask {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # First iteration: Create new schedule (Enter) → shows error → loops back
                 # Second iteration: Back to main menu (2×Down + Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Create new schedule
@@ -208,10 +194,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Register-LWASScheduledTask {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
                 # Create new schedule → macro prompt shows [0] my-macro, [1] [[Back]]
                 # Navigate to [[Back]] then select it
                 $tc.Input.PushKey([ConsoleKey]::Enter)       # Create new schedule
@@ -244,10 +227,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 # Wizard: Create new schedule → my-macro → process → date → 15 min → indefinitely → delay 0 → confirm
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
@@ -289,10 +269,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
@@ -330,10 +307,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
@@ -368,10 +342,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
@@ -406,10 +377,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
@@ -452,10 +420,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro (first)
@@ -494,10 +459,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 }
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # Create new schedule
                 $tc.Input.PushKey([ConsoleKey]::Enter)                        # my-macro
@@ -536,10 +498,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Unregister-LWASScheduledTask {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 # Action: Remove a schedule (Down + Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -570,10 +529,7 @@ Describe 'Show-ScheduleScreen' -Tag 'Unit' {
                 Mock Unregister-LWASScheduledTask {}
                 Mock Write-LastWarLog {}
 
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                $tc.Profile.Width  = $script:TestConsoleWidth
-                $tc.Profile.Height = $script:TestConsoleHeight
-                $tc.Profile.Capabilities.Interactive = $true
+                $tc = $script:tc
 
                 # Action: Remove a schedule
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)

@@ -667,7 +667,7 @@ Describe 'Test-MacroFile' -Tag 'Unit' {
             $macro.PSObject.Properties.Remove('version')
             $result = Test-MacroFile -MacroData $macro
             $result.Valid | Should -BeFalse
-            $result.Messages | Should -Contain ($result.Messages | Where-Object { $_ -match 'version' })
+            $result.Messages | Should -Contain "Macro is missing the 'version' field."
         }
     }
 

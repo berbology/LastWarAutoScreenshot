@@ -9,20 +9,19 @@ BeforeAll {
     Add-Type -Path $testingDll
 
     Add-Type -AssemblyName 'System.Drawing.Common'
-
-    # Create a single shared TestConsole for all tests in this file.
-    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
-    InModuleScope 'LastWarAutoScreenshot' {
-        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
-        $script:tc.Profile.Width  = $script:TestConsoleWidth
-        $script:tc.Profile.Height = $script:TestConsoleHeight
-        $script:tc.Profile.Capabilities.Interactive = $true
-    }
 }
 
 Describe 'Show-ScreenshotConfigScreen' -Tag 'Unit' {
 
     BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+
         InModuleScope -ModuleName 'LastWarAutoScreenshot' {
             Mock Get-ModuleConfiguration {
                 [PSCustomObject]@{

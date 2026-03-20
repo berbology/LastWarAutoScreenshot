@@ -13,29 +13,59 @@ Describe '[LastWarAutoScreenshot.MouseControlAPI] P/Invoke Integration Tests' -T
     Context 'SendInput' {
         It 'Successfully sends a mouse movement input without throwing' {
             InModuleScope -ModuleName LastWarAutoScreenshot {
-                # Create MOUSEINPUT structure for small movement
-                $mouseInput = New-Object 'LastWarAutoScreenshot.MouseControlAPI+MOUSEINPUT'
-                $mouseInput.dx = 1
-                $mouseInput.dy = 1
-                $mouseInput.mouseData = 0
-                $mouseInput.dwFlags = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE
-                $mouseInput.time = 0
-                $mouseInput.dwExtraInfo = [System.IntPtr]::Zero
+                # Save current cursor position before moving
+                $startPoint = New-Object 'LastWarAutoScreenshot.MouseControlAPI+POINT'
+                [LastWarAutoScreenshot.MouseControlAPI]::GetCursorPos([ref]$startPoint) | Out-Null
 
-                # Create INPUT structure wrapper
-                $inputStruct = New-Object 'LastWarAutoScreenshot.MouseControlAPI+INPUT'
-                $inputStruct.type = [LastWarAutoScreenshot.MouseControlAPI]::INPUT_MOUSE
-                $inputStruct.mi = $mouseInput
+                try {
+                    # Create MOUSEINPUT structure for small movement
+                    $mouseInput = New-Object 'LastWarAutoScreenshot.MouseControlAPI+MOUSEINPUT'
+                    $mouseInput.dx = 1
+                    $mouseInput.dy = 1
+                    $mouseInput.mouseData = 0
+                    $mouseInput.dwFlags = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE
+                    $mouseInput.time = 0
+                    $mouseInput.dwExtraInfo = [System.IntPtr]::Zero
 
-                # Create array and call SendInput
-                $inputArray = @($inputStruct)
-                $inputSize = [System.Runtime.InteropServices.Marshal]::SizeOf($inputStruct)
+                    # Create INPUT structure wrapper
+                    $inputStruct = New-Object 'LastWarAutoScreenshot.MouseControlAPI+INPUT'
+                    $inputStruct.type = [LastWarAutoScreenshot.MouseControlAPI]::INPUT_MOUSE
+                    $inputStruct.mi = $mouseInput
 
-                # Call SendInput - will throw on exception
-                $result = [LastWarAutoScreenshot.MouseControlAPI]::SendInput(1, $inputArray, $inputSize)
+                    # Create array and call SendInput
+                    $inputArray = @($inputStruct)
+                    $inputSize = [System.Runtime.InteropServices.Marshal]::SizeOf($inputStruct)
 
-                # Result should be 1 (one input successfully inserted)
-                $result | Should -Be 1
+                    # Call SendInput - will throw on exception
+                    $result = [LastWarAutoScreenshot.MouseControlAPI]::SendInput(1, $inputArray, $inputSize)
+
+                    # Result should be 1 (one input successfully inserted)
+                    $result | Should -Be 1
+                } finally {
+                    # Restore cursor to saved position using absolute normalised coordinates
+                    $vdLeft   = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_XVIRTUALSCREEN)
+                    $vdTop    = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_YVIRTUALSCREEN)
+                    $vdWidth  = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN)
+                    $vdHeight = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN)
+                    $restoreX = [int](($startPoint.X - $vdLeft) * 65535 / $vdWidth)
+                    $restoreY = [int](($startPoint.Y - $vdTop)  * 65535 / $vdHeight)
+
+                    $restoreInput = New-Object 'LastWarAutoScreenshot.MouseControlAPI+MOUSEINPUT'
+                    $restoreInput.dx = $restoreX
+                    $restoreInput.dy = $restoreY
+                    $restoreInput.mouseData = 0
+                    $restoreInput.dwFlags = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE `
+                                           -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_ABSOLUTE `
+                                           -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_VIRTUALDESK
+                    $restoreInput.time = 0
+                    $restoreInput.dwExtraInfo = [System.IntPtr]::Zero
+
+                    $restoreStruct = New-Object 'LastWarAutoScreenshot.MouseControlAPI+INPUT'
+                    $restoreStruct.type = [LastWarAutoScreenshot.MouseControlAPI]::INPUT_MOUSE
+                    $restoreStruct.mi = $restoreInput
+
+                    [void][LastWarAutoScreenshot.MouseControlAPI]::SendInput(1, @($restoreStruct), [System.Runtime.InteropServices.Marshal]::SizeOf($restoreStruct))
+                }
             }
         }
 
@@ -131,11 +161,16 @@ Describe '[LastWarAutoScreenshot.MouseControlAPI] P/Invoke Integration Tests' -T
             }
         }
 
+        # KNOWN FLAKINESS RISK: GetAsyncKeyState also clears the "pressed since last call" bit
+        # (bit 0) on first read, so $state1 and $state2 can legitimately differ if the key was
+        # pressed between test runs. VK_F24 (0x87) is used here as it is extremely rarely pressed,
+        # but any physical key press between the two calls will cause a non-deterministic failure.
+        # This is inherent to the live Win32 approach and cannot be avoided without mocking.
         It 'Returns consistent state values for the same key across calls' {
             InModuleScope -ModuleName LastWarAutoScreenshot {
-                # VK_ESCAPE (0x1B)
-                $state1 = [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState(0x1B)
-                $state2 = [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState(0x1B)
+                # VK_F24 (0x87) — rarely used key, minimises race condition risk
+                $state1 = [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState(0x87)
+                $state2 = [LastWarAutoScreenshot.MouseControlAPI]::GetAsyncKeyState(0x87)
 
                 # States should be equal (key state shouldn't change in this short window)
                 $state1 | Should -Be $state2
@@ -169,32 +204,62 @@ Describe '[LastWarAutoScreenshot.MouseControlAPI] P/Invoke Integration Tests' -T
     Context 'SendInput with MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK' {
         It 'Successfully sends absolute move input without throwing' {
             InModuleScope -ModuleName LastWarAutoScreenshot {
-                $vdWidth = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN)
-                $vdHeight = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN)
+                # Save current cursor position before moving
+                $startPoint = New-Object 'LastWarAutoScreenshot.MouseControlAPI+POINT'
+                [LastWarAutoScreenshot.MouseControlAPI]::GetCursorPos([ref]$startPoint) | Out-Null
 
-                # Normalise a screen coordinate to 0-65535 range
-                $normX = [int](32767)  # Mid-range
-                $normY = [int](32767)
+                try {
+                    $vdWidth = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN)
+                    $vdHeight = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN)
 
-                $mouseInput = New-Object 'LastWarAutoScreenshot.MouseControlAPI+MOUSEINPUT'
-                $mouseInput.dx = $normX
-                $mouseInput.dy = $normY
-                $mouseInput.mouseData = 0
-                $mouseInput.dwFlags = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE `
-                                     -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_ABSOLUTE `
-                                     -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_VIRTUALDESK
-                $mouseInput.time = 0
-                $mouseInput.dwExtraInfo = [System.IntPtr]::Zero
+                    # Normalise a screen coordinate to 0-65535 range
+                    $normX = [int](32767)  # Mid-range
+                    $normY = [int](32767)
 
-                $inputStruct = New-Object 'LastWarAutoScreenshot.MouseControlAPI+INPUT'
-                $inputStruct.type = [LastWarAutoScreenshot.MouseControlAPI]::INPUT_MOUSE
-                $inputStruct.mi = $mouseInput
+                    $mouseInput = New-Object 'LastWarAutoScreenshot.MouseControlAPI+MOUSEINPUT'
+                    $mouseInput.dx = $normX
+                    $mouseInput.dy = $normY
+                    $mouseInput.mouseData = 0
+                    $mouseInput.dwFlags = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE `
+                                         -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_ABSOLUTE `
+                                         -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_VIRTUALDESK
+                    $mouseInput.time = 0
+                    $mouseInput.dwExtraInfo = [System.IntPtr]::Zero
 
-                $inputArray = @($inputStruct)
-                $inputSize = [System.Runtime.InteropServices.Marshal]::SizeOf($inputStruct)
+                    $inputStruct = New-Object 'LastWarAutoScreenshot.MouseControlAPI+INPUT'
+                    $inputStruct.type = [LastWarAutoScreenshot.MouseControlAPI]::INPUT_MOUSE
+                    $inputStruct.mi = $mouseInput
 
-                $result = [LastWarAutoScreenshot.MouseControlAPI]::SendInput(1, $inputArray, $inputSize)
-                $result | Should -Be 1
+                    $inputArray = @($inputStruct)
+                    $inputSize = [System.Runtime.InteropServices.Marshal]::SizeOf($inputStruct)
+
+                    $result = [LastWarAutoScreenshot.MouseControlAPI]::SendInput(1, $inputArray, $inputSize)
+                    $result | Should -Be 1
+                } finally {
+                    # Restore cursor to saved position using absolute normalised coordinates
+                    $vdLeft   = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_XVIRTUALSCREEN)
+                    $vdTop    = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_YVIRTUALSCREEN)
+                    $vdWidth  = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CXVIRTUALSCREEN)
+                    $vdHeight = [LastWarAutoScreenshot.MouseControlAPI]::GetSystemMetrics([LastWarAutoScreenshot.MouseControlAPI]::SM_CYVIRTUALSCREEN)
+                    $restoreX = [int](($startPoint.X - $vdLeft) * 65535 / $vdWidth)
+                    $restoreY = [int](($startPoint.Y - $vdTop)  * 65535 / $vdHeight)
+
+                    $restoreInput = New-Object 'LastWarAutoScreenshot.MouseControlAPI+MOUSEINPUT'
+                    $restoreInput.dx = $restoreX
+                    $restoreInput.dy = $restoreY
+                    $restoreInput.mouseData = 0
+                    $restoreInput.dwFlags = [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_MOVE `
+                                           -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_ABSOLUTE `
+                                           -bor [LastWarAutoScreenshot.MouseControlAPI]::MOUSEEVENTF_VIRTUALDESK
+                    $restoreInput.time = 0
+                    $restoreInput.dwExtraInfo = [System.IntPtr]::Zero
+
+                    $restoreStruct = New-Object 'LastWarAutoScreenshot.MouseControlAPI+INPUT'
+                    $restoreStruct.type = [LastWarAutoScreenshot.MouseControlAPI]::INPUT_MOUSE
+                    $restoreStruct.mi = $restoreInput
+
+                    [void][LastWarAutoScreenshot.MouseControlAPI]::SendInput(1, @($restoreStruct), [System.Runtime.InteropServices.Marshal]::SizeOf($restoreStruct))
+                }
             }
         }
     }

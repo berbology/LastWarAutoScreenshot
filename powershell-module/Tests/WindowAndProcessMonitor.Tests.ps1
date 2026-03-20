@@ -23,11 +23,8 @@ Describe 'Test-WindowHandleValid' -Tag 'Unit' {
     Context 'With an invalid window handle' {
         It 'Returns $false for an invalid handle' {
             InModuleScope LastWarAutoScreenshot {
-                Write-Host '===============================================================' -ForegroundColor Red
-                Write-Host 'Ignore expected error message about unsupported window handle below:' -ForegroundColor Red
                 $result = Test-WindowHandleValid -WindowHandle 999999 -IsWindowFn { $false }
                 $result | Should -Be $false
-                Write-Host '===============================================================' -ForegroundColor Red
             }
         }
     }
@@ -37,6 +34,7 @@ Describe 'Test-WindowHandleValid' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 $result = Test-WindowHandleValid -WindowHandle @(1,2,3)
                 $result | Should -Be $false
+                Should -Invoke Write-LastWarLog -Exactly 1 -ParameterFilter { $Message -match 'Unsupported WindowHandle type' -and $Level -eq 'Error' }
             }
         }
     }

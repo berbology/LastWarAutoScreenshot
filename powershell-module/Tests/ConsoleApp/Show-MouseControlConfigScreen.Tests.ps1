@@ -7,18 +7,19 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
-
-    # Create a single shared TestConsole for all tests in this file.
-    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
-    InModuleScope 'LastWarAutoScreenshot' {
-        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
-        $script:tc.Profile.Width  = $script:TestConsoleWidth
-        $script:tc.Profile.Height = $script:TestConsoleHeight
-        $script:tc.Profile.Capabilities.Interactive = $true
-    }
 }
 
 Describe 'Show-MouseControlConfigScreen' -Tag 'Unit' {
+
+    BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
 
     # ════════════════════════════════════════════════════════════════════════
     # Context: Table renders current values

@@ -6,10 +6,8 @@ BeforeAll {
 
 Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
     BeforeAll {
-        # Use AppData\LastWarAutoScreenshot for test configuration files
-        $script:testConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshotTest'
-        New-Item -Path $script:testConfigDir -ItemType Directory -Force | Out-Null
-        $script:testConfigPath = Join-Path -Path $script:testConfigDir -ChildPath 'TestConfig.json'
+        $script:testConfigDir = $TestDrive
+        $script:testConfigPath = Join-Path -Path $TestDrive -ChildPath 'TestConfig.json'
 
         # Suppress Write-Host calls made from inside the module (e.g. the 'saved to:' success message).
         # Must be inside InModuleScope so Pester intercepts the command in the module's session state,
@@ -297,9 +295,8 @@ Describe 'Save-ModuleConfiguration' -Tag 'Unit' {
 
 Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
     BeforeAll {
-        $script:testConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshotTest'
-        New-Item -Path $script:testConfigDir -ItemType Directory -Force | Out-Null
-        $script:testConfigPath = Join-Path -Path $script:testConfigDir -ChildPath 'TestConfig.json'
+        $script:testConfigDir = $TestDrive
+        $script:testConfigPath = Join-Path -Path $TestDrive -ChildPath 'TestConfig.json'
     }
 
     Context 'When configuration file exists' {
@@ -583,80 +580,30 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             $phase5Config | ConvertTo-Json -Depth 5 | Set-Content -Path $script:testConfigPath -Force
         }
 
-        It 'Should preserve StorageWarningThresholdPercent' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+        It 'Should preserve top-level Screenshots field <Field> as <Expected>' -ForEach @(
+            @{ Field = 'StorageWarningThresholdPercent'; Expected = 75 }
+            @{ Field = 'FileFormat'; Expected = 'PNG' }
+            @{ Field = 'FilenamePattern'; Expected = '{MacroName}_{Timestamp}' }
+            @{ Field = 'MaskColour'; Expected = 'FFAA55' }
+        ) {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; Field = $Field; Expected = $Expected } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.StorageWarningThresholdPercent | Should -Be 75
+                $config.Screenshots.$Field | Should -Be $Expected
             }
         }
 
-        It 'Should preserve FileFormat' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+        It 'Should preserve SimilarityCheck field <Field> as <Expected>' -ForEach @(
+            @{ Field = 'Enabled'; Expected = $true }
+            @{ Field = 'Threshold'; Expected = 0.95 }
+            @{ Field = 'SampleCount'; Expected = 500 }
+            @{ Field = 'FullScan'; Expected = $true }
+            @{ Field = 'TolerancePerChannel'; Expected = 5 }
+            @{ Field = 'Action'; Expected = 'StopMacro' }
+            @{ Field = 'ConsecutiveThreshold'; Expected = 3 }
+        ) {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; Field = $Field; Expected = $Expected } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.FileFormat | Should -Be 'PNG'
-            }
-        }
-
-        It 'Should preserve FilenamePattern' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.FilenamePattern | Should -Be '{MacroName}_{Timestamp}'
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.Enabled' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Enabled | Should -Be $true
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.Threshold' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Threshold | Should -Be 0.95
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.SampleCount' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.SampleCount | Should -Be 500
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.FullScan' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.FullScan | Should -Be $true
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.TolerancePerChannel' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.TolerancePerChannel | Should -Be 5
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.Action' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopMacro'
-            }
-        }
-
-        It 'Should preserve SimilarityCheck.ConsecutiveThreshold' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.ConsecutiveThreshold | Should -Be 3
-            }
-        }
-
-        It 'Should preserve MaskColour' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.MaskColour | Should -Be 'FFAA55'
+                $config.Screenshots.SimilarityCheck.$Field | Should -Be $Expected
             }
         }
 
@@ -688,87 +635,31 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
             $phase3Config | ConvertTo-Json -Depth 5 | Set-Content -Path $script:testConfigPath -Force
         }
 
-        It 'Should inject StorageWarningThresholdPercent with default 90' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+        It 'Should inject default Screenshots field <Field> as <Expected>' -ForEach @(
+            @{ Field = 'StorageWarningThresholdPercent'; Expected = 90 }
+            @{ Field = 'FileFormat'; Expected = 'PNG' }
+            @{ Field = 'FilenamePattern'; Expected = '{MacroName}_{ActionName}_{Timestamp}_{Index}' }
+            @{ Field = 'MaskColour'; Expected = '0,0,0' }
+        ) {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; Field = $Field; Expected = $Expected } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.StorageWarningThresholdPercent | Should -Be 90
+                $config.Screenshots.$Field | Should -Be $Expected
             }
         }
 
-        It 'Should inject FileFormat with default PNG' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.FileFormat | Should -Be 'PNG'
-            }
-        }
-
-        It 'Should inject FilenamePattern with default value' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.FilenamePattern | Should -Be '{MacroName}_{ActionName}_{Timestamp}_{Index}'
-            }
-        }
-
-        It 'Should inject MaskColour with default 0,0,0' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.MaskColour | Should -Be '0,0,0'
-            }
-        }
-
-        It 'Should create SimilarityCheck sub-object' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
+        It 'Should create SimilarityCheck sub-object and inject default field <Field> as <Expected>' -ForEach @(
+            @{ Field = 'Enabled'; Expected = $false }
+            @{ Field = 'Threshold'; Expected = 0.98 }
+            @{ Field = 'SampleCount'; Expected = 1000 }
+            @{ Field = 'FullScan'; Expected = $false }
+            @{ Field = 'TolerancePerChannel'; Expected = 10 }
+            @{ Field = 'Action'; Expected = 'StopLoop' }
+            @{ Field = 'ConsecutiveThreshold'; Expected = 1 }
+        ) {
+            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath; Field = $Field; Expected = $Expected } {
                 $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
                 $config.Screenshots.SimilarityCheck | Should -Not -BeNullOrEmpty
-            }
-        }
-
-        It 'Should inject SimilarityCheck.Enabled with default false' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Enabled | Should -Be $false
-            }
-        }
-
-        It 'Should inject SimilarityCheck.Threshold with default 0.98' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Threshold | Should -Be 0.98
-            }
-        }
-
-        It 'Should inject SimilarityCheck.SampleCount with default 1000' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.SampleCount | Should -Be 1000
-            }
-        }
-
-        It 'Should inject SimilarityCheck.FullScan with default false' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.FullScan | Should -Be $false
-            }
-        }
-
-        It 'Should inject SimilarityCheck.TolerancePerChannel with default 10' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.TolerancePerChannel | Should -Be 10
-            }
-        }
-
-        It 'Should inject SimilarityCheck.Action with default StopLoop' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.Action | Should -Be 'StopLoop'
-            }
-        }
-
-        It 'Should inject SimilarityCheck.ConsecutiveThreshold with default 1' {
-            InModuleScope LastWarAutoScreenshot -Parameters @{ testConfigPath = $script:testConfigPath } {
-                $config = Get-ModuleConfiguration -ConfigurationPath $testConfigPath
-                $config.Screenshots.SimilarityCheck.ConsecutiveThreshold | Should -Be 1
+                $config.Screenshots.SimilarityCheck.$Field | Should -Be $Expected
             }
         }
 
@@ -982,9 +873,8 @@ Describe 'Get-ModuleConfiguration' -Tag 'Unit' {
 
 Describe 'Test-ModuleConfigurationExists' -Tag 'Unit' {
     BeforeAll {
-        $script:testConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshotTest'
-        New-Item -Path $script:testConfigDir -ItemType Directory -Force | Out-Null
-        $script:testConfigPath = Join-Path -Path $script:testConfigDir -ChildPath 'TestConfig.json'
+        $script:testConfigDir = $TestDrive
+        $script:testConfigPath = Join-Path -Path $TestDrive -ChildPath 'TestConfig.json'
     }
 
     Context 'When configuration file exists' {

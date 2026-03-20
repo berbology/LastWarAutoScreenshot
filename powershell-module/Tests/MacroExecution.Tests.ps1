@@ -131,8 +131,17 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
         }
     }
 
-    It 'DragClick: calls ConvertTo-ScreenCoordinates twice and Invoke-MouseDragClick with screen coords' {
+    It 'DragClick: calls ConvertTo-ScreenCoordinates twice and Invoke-MouseDragClick with correct start and end screen coords' {
         InModuleScope LastWarAutoScreenshot {
+            # Override BeforeEach mock with distinct return values per call site so that
+            # reversed or duplicated routing of start/end coordinates will be detected.
+            Mock ConvertTo-ScreenCoordinates { [PSCustomObject]@{ X = 10; Y = 20 } } -ParameterFilter {
+                $RelativeX -eq 0.1 -and $RelativeY -eq 0.2
+            }
+            Mock ConvertTo-ScreenCoordinates { [PSCustomObject]@{ X = 80; Y = 90 } } -ParameterFilter {
+                $RelativeX -eq 0.8 -and $RelativeY -eq 0.9
+            }
+
             $action = [PSCustomObject]@{
                 type  = 'DragClick'
                 start = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.2 }
@@ -143,7 +152,7 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
 
             Should -Invoke ConvertTo-ScreenCoordinates -Times 2
             Should -Invoke Invoke-MouseDragClick -Times 1 -ParameterFilter {
-                $StartX -eq 100 -and $StartY -eq 200 -and $EndX -eq 100 -and $EndY -eq 200
+                $StartX -eq 10 -and $StartY -eq 20 -and $EndX -eq 80 -and $EndY -eq 90
             }
             $result.Success | Should -BeTrue
         }
@@ -519,8 +528,8 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                     }
                 }
             }
-            # First sub-action call succeeds normally; second returns SimilarityStop=$true
-            $callCount = 0
+            # First call returns not-similar; second returns similar (triggers StopLoop)
+            $script:_loopSimCallCount = 0
             Mock Invoke-CaptureScreenRegion {
                 [PSCustomObject]@{ Success = $true; Skipped = $false; FilePath = 'TestDrive:\Screenshots\test.png'; Message = '' }
             }
@@ -532,7 +541,6 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
                     [PSCustomObject]@{ Similar = $false; MatchPercent = 0.5; Skipped = $false; Message = '' }
                 }
             }
-            $script:_loopSimCallCount = 0
 
             $shot = [PSCustomObject]@{
                 type   = 'Screenshot'

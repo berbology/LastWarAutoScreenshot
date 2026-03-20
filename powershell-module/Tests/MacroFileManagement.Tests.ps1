@@ -275,7 +275,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
 
         InModuleScope LastWarAutoScreenshot {
             $result = @(Get-LWASMacro)
-            $result.Count | Should -Be 0 | Out-Null
+            $result.Count | Should -Be 0
             Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Warning' }
         }
     }
@@ -287,7 +287,7 @@ Describe 'Get-LWASMacro' -Tag 'Unit' {
 
         InModuleScope LastWarAutoScreenshot {
             $result = @(Get-LWASMacro)
-            $result.Count | Should -Be 0 | Out-Null
+            $result.Count | Should -Be 0
             Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Warning' }
         }
     }

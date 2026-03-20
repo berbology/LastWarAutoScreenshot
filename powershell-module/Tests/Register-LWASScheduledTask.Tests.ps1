@@ -170,7 +170,7 @@ Describe 'Register-LWASScheduledTask' -Tag 'Unit' {
                     -MacroName 'my-macro' `
                     -ProcessName 'lastwar.exe' `
                     -StartAt ([datetime]'2026-06-01 08:00') `
-                    -WhatIf | Out-Null
+                    -WhatIf
 
                 Should -Invoke Invoke-RegisterScheduledTask -Times 0 -ModuleName LastWarAutoScreenshot
             }

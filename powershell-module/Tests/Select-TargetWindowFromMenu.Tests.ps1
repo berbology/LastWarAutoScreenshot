@@ -23,6 +23,15 @@ BeforeAll {
 }
 
 Describe 'Show-MenuLoop logging' -Tag 'Unit' {
+
+    BeforeEach {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-Host {}
+            Mock Write-Warning {}
+            Mock Write-Information {}
+        }
+    }
+
     Context 'Logging integration' {
         It 'Should log error when no windows found after filtering' {
             InModuleScope LastWarAutoScreenshot {
@@ -39,6 +48,7 @@ Describe 'Show-MenuLoop logging' -Tag 'Unit' {
             $mockWindowsOuter = @(New-MockWindowData)
             InModuleScope LastWarAutoScreenshot -Parameters @{ mockWindows = $mockWindowsOuter } {
                 Mock -CommandName Write-LastWarLog -MockWith {}
+                Mock -CommandName Write-Host -MockWith {}
                 Mock -CommandName 'Test-WindowExists' -MockWith { return $false }
                 $script:closedCallCount = 0
                 Mock -CommandName 'Get-UserSelection' -MockWith {
@@ -59,6 +69,7 @@ Describe 'Show-MenuLoop logging' -Tag 'Unit' {
             $mockWindowsOuter = @(New-MockWindowData)
             InModuleScope LastWarAutoScreenshot -Parameters @{ mockWindows = $mockWindowsOuter } {
                 Mock -CommandName Write-LastWarLog -MockWith {}
+                Mock -CommandName Write-Host -MockWith {}
                 $script:invalidCallCount = 0
                 Mock -CommandName 'Get-UserSelection' -MockWith {
                     $script:invalidCallCount++
@@ -131,6 +142,15 @@ Describe 'Show-MenuLoop logging' -Tag 'Unit' {
 }
 
 Describe 'Select-TargetWindowFromMenu' -Tag 'Unit' {
+
+    BeforeEach {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-Host {}
+            Mock Write-Warning {}
+            Mock Write-Information {}
+        }
+    }
+
     Context 'When accepting pipeline input' {
         BeforeAll {
             $mockWindows = @(
@@ -197,45 +217,39 @@ Describe 'Select-TargetWindowFromMenu' -Tag 'Unit' {
         It 'Should pass ProcessName parameter to Get-EnumeratedWindows' {
             InModuleScope LastWarAutoScreenshot {
                 Mock -CommandName 'Get-EnumeratedWindows' -MockWith {
-                    param($ProcessName)
-                    $ProcessName | Should -Be 'LastWar'
                     return $mockWindows
                 }
                 Mock -CommandName 'Show-MenuLoop' -MockWith {
                     return $mockWindows[0]
                 }
                 $result = Select-TargetWindowFromMenu -ProcessName 'LastWar'
-                Should -Invoke Get-EnumeratedWindows -Exactly 1
+                Should -Invoke Get-EnumeratedWindows -Exactly 1 -ParameterFilter { $ProcessName -eq 'LastWar' }
             }
         }
         
         It 'Should pass ExcludeMinimized parameter to Get-EnumeratedWindows' {
             InModuleScope LastWarAutoScreenshot {
                 Mock -CommandName 'Get-EnumeratedWindows' -MockWith {
-                    param($ExcludeMinimized)
-                    $ExcludeMinimized | Should -Be $true
                     return $mockWindows
                 }
                 Mock -CommandName 'Show-MenuLoop' -MockWith {
                     return $mockWindows[0]
                 }
                 $result = Select-TargetWindowFromMenu -ExcludeMinimized
-                Should -Invoke Get-EnumeratedWindows -Exactly 1
+                Should -Invoke Get-EnumeratedWindows -Exactly 1 -ParameterFilter { $ExcludeMinimized -eq $true }
             }
         }
         
         It 'Should pass VisibleOnly parameter to Get-EnumeratedWindows' {
             InModuleScope LastWarAutoScreenshot {
                 Mock -CommandName 'Get-EnumeratedWindows' -MockWith {
-                    param($VisibleOnly)
-                    $VisibleOnly | Should -Be $true
                     return $mockWindows
                 }
                 Mock -CommandName 'Show-MenuLoop' -MockWith {
                     return $mockWindows[0]
                 }
                 $result = Select-TargetWindowFromMenu -VisibleOnly
-                Should -Invoke Get-EnumeratedWindows -Exactly 1
+                Should -Invoke Get-EnumeratedWindows -Exactly 1 -ParameterFilter { $VisibleOnly -eq $true }
             }
         }
     }

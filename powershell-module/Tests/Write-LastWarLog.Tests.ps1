@@ -119,6 +119,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
                 # Ensure source-existence check passes so execution reaches Write-EventLog.
                 Mock Test-EventLogSourceExists { $true }
                 Mock Write-EventLog { throw 'Simulated EventLog failure' }
+                Mock Write-Warning {}
                 $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'EventLog fallback test' -Level 'Info' -FunctionName 'TestFunc' -ForceLog -BackendNames 'EventLog'

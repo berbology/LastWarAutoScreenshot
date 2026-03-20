@@ -19,20 +19,7 @@ Describe 'New-LWASLauncherScript' -Tag 'Unit' {
         }
     }
 
-    It 'Creates the launcher file at the expected path' {
-        InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $result = New-LWASLauncherScript `
-                -TaskName 'LWAS_my-macro' `
-                -MacroName 'my-macro' `
-                -ProcessName 'lastwar.exe' `
-                -ModulePath 'C:\Modules\LastWarAutoScreenshot.psd1'
-
-            $expectedPath = Join-Path $td 'LastWarAutoScreenshot\Schedulers\LWAS_my-macro.ps1'
-            Test-Path -LiteralPath $expectedPath | Should -BeTrue
-        }
-    }
-
-    It 'Returns the expected launcher file path string' {
+    It 'Creates the launcher file and returns its path' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
             $result = New-LWASLauncherScript `
                 -TaskName 'LWAS_my-macro' `
@@ -42,6 +29,7 @@ Describe 'New-LWASLauncherScript' -Tag 'Unit' {
 
             $expectedPath = Join-Path $td 'LastWarAutoScreenshot\Schedulers\LWAS_my-macro.ps1'
             $result | Should -BeExactly $expectedPath
+            Test-Path -LiteralPath $expectedPath | Should -BeTrue
         }
     }
 

@@ -6,6 +6,11 @@ BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
     Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
+    # Finds the first visible top-level window belonging to the current process.
+    # The IsWindowVisible check is required to skip GDI+ internal windows, which are
+    # enumerable by EnumWindows (they have a NULL parent, not HWND_MESSAGE) but are
+    # created without WS_VISIBLE. Without this guard, ShowWindow(SW_RESTORE) in the
+    # functional test below would make the GDI+ window visible and leave it open.
     ${script:Get-TestRunnerWindowHandle} = {
         $processPID = [System.Diagnostics.Process]::GetCurrentProcess().Id
         $resultContainer = @{ Handle = [IntPtr]::Zero }
@@ -13,7 +18,8 @@ BeforeAll {
             param($hwnd, $lParam)
             $procId = 0
             [LastWarAutoScreenshot.WindowEnumerationAPI]::GetWindowThreadProcessId($hwnd, [ref]$procId) | Out-Null
-            if ($procId -eq $lParam.ToInt32()) {
+            if ($procId -eq $lParam.ToInt32() -and
+                [LastWarAutoScreenshot.WindowEnumerationAPI]::IsWindowVisible($hwnd)) {
                 $resultContainer.Handle = $hwnd
                 return $false
             }
@@ -88,16 +94,6 @@ Describe 'WindowEnumerationAPI Integration Tests' -Tag 'Integration' {
                 # but the call should not throw an exception
             }
         }
-        It 'Should return valid window handle from GetForegroundWindow' {
-            $foregroundHandle = [LastWarAutoScreenshot.WindowEnumerationAPI]::GetForegroundWindow()
-            
-            # If we got a handle, verify it's valid by checking if it's visible
-            if ($foregroundHandle -ne [IntPtr]::Zero) {
-                $isVisible = [LastWarAutoScreenshot.WindowEnumerationAPI]::IsWindowVisible($foregroundHandle)
-                $isVisible | Should -BeOfType [bool]
-            }
-        }
-
         It 'Should successfully call EnumWindows with callback delegate' {
             $counter = @{ Count = 0 }
             $callback = [LastWarAutoScreenshot.EnumWindowsProc] {

@@ -45,7 +45,6 @@ function Test-WindowHandleValid {
     try {
         if ($WindowHandle -is [array]) {
             Write-LastWarLog -Message "Unsupported WindowHandle type: $($WindowHandle.GetType().FullName)" -Level Error -FunctionName 'Test-WindowHandleValid' -Context "ParameterValidation"
-            Write-Host "`e[31mERROR: Unsupported WindowHandle type: $($WindowHandle.GetType().FullName)`e[0m"
             return $false
         }
         $hWnd = if ($WindowHandle -is [IntPtr]) {
@@ -54,7 +53,6 @@ function Test-WindowHandleValid {
             [IntPtr]::new([int64]$WindowHandle)
         } else {
             Write-LastWarLog -Message "Unsupported WindowHandle type: $($WindowHandle.GetType().FullName)" -Level Error -FunctionName 'Test-WindowHandleValid' -Context "ParameterValidation"
-            Write-Host "`e[31mERROR: Unsupported WindowHandle type: $($WindowHandle.GetType().FullName)`e[0m"
             return $false
         }
         $exists = & $IsWindowFn $hWnd

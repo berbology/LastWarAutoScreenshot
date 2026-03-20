@@ -7,6 +7,12 @@ BeforeAll {
 
 Describe 'Resolve-MaskColour' -Tag 'Unit' {
 
+    BeforeEach {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-Warning {}
+        }
+    }
+
     Context 'Named colour lookup' {
 
         It 'resolves <Name> to R=<R> G=<G> B=<B>' -ForEach @(

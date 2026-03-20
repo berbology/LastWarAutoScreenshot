@@ -67,7 +67,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When the user selects [Back to main menu] from the macro list' {
 
-        It 'Returns $null' {
+        It 'Returns $null without throwing when back is selected immediately' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-LWASMacro {
                     @([PSCustomObject]@{
@@ -86,32 +86,9 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 # Macro list: [0] [Back to main menu], [1] test-macro — select back (index 0, default)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
-                $result = Show-ManageMacrosScreen -Console $tc
-
+                $result = $null
+                { $result = Show-ManageMacrosScreen -Console $tc } | Should -Not -Throw
                 $result | Should -BeNullOrEmpty
-            }
-        }
-
-        It 'Does not throw when back is selected immediately' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-LWASMacro {
-                    @([PSCustomObject]@{
-                        FileName    = '20260101_120000_test-macro.json'
-                        FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
-                        Name        = 'test-macro'
-                        CreatedUtc  = [datetime]'2026-01-01T12:00:00Z'
-                        DisplayDate = '01/01/26 12:00:00'
-                        ActionCount = 1
-                        Valid       = $true
-                    })
-                }
-                Mock Write-LastWarLog {}
-
-                $tc = $script:tc
-                # Select back button at index 0
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                { Show-ManageMacrosScreen -Console $tc } | Should -Not -Throw
             }
         }
     }
@@ -309,7 +286,7 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When the user confirms deletion of a macro' {
 
-        It 'Calls Remove-MacroFile exactly once' {
+        It 'Calls Remove-MacroFile exactly once with the correct FilePath' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-LWASMacro {
                     @([PSCustomObject]@{
@@ -341,40 +318,6 @@ Describe 'Show-ManageMacrosScreen' -Tag 'Unit' {
                 Show-ManageMacrosScreen -Console $tc
 
                 Should -Invoke Remove-MacroFile -Exactly 1
-            }
-        }
-
-        It 'Calls Remove-MacroFile with the correct FilePath' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-LWASMacro {
-                    @([PSCustomObject]@{
-                        FileName    = '20260101_120000_test-macro.json'
-                        FilePath    = 'C:\fake\macros\20260101_120000_test-macro.json'
-                        Name        = 'test-macro'
-                        CreatedUtc  = [datetime]'2026-01-01T12:00:00Z'
-                        DisplayDate = '01/01/26 12:00:00'
-                        ActionCount = 1
-                        Valid       = $true
-                    })
-                }
-                Mock Remove-MacroFile { $true }
-                Mock Write-LastWarLog {}
-
-                $tc = $script:tc
-                # Select macro at index 1
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Select Delete macro option (2 DownArrows to index 2)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Confirm deletion
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Back to main menu
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-ManageMacrosScreen -Console $tc
-
                 Should -Invoke Remove-MacroFile -Exactly 1 -ParameterFilter {
                     $FilePath -eq 'C:\fake\macros\20260101_120000_test-macro.json'
                 }

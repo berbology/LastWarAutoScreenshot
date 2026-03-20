@@ -7,20 +7,19 @@ BeforeAll {
     # Spectre.Console.Testing.dll ships in lib\test\ and is required for TestConsole
     $testingDll = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'lib\test\Spectre.Console.Testing.dll'
     Add-Type -Path $testingDll
-
-    # Create a single shared TestConsole for all tests in this file.
-    # Width/height are set from module-scope variables defined in LastWarAutoScreenshot.psm1.
-    InModuleScope 'LastWarAutoScreenshot' {
-        $script:tc = [Spectre.Console.Testing.TestConsole]::new()
-        $script:tc.Profile.Width  = $script:TestConsoleWidth
-        $script:tc.Profile.Height = $script:TestConsoleHeight
-        $script:tc.Profile.Capabilities.Interactive = $true
-    }
 }
 
 Describe 'Show-MainMenu' -Tag 'Unit' {
 
     BeforeEach {
+        # Create a fresh TestConsole for each test to prevent output accumulation.
+        InModuleScope 'LastWarAutoScreenshot' {
+            $script:tc = [Spectre.Console.Testing.TestConsole]::new()
+            $script:tc.Profile.Width  = $script:TestConsoleWidth
+            $script:tc.Profile.Height = $script:TestConsoleHeight
+            $script:tc.Profile.Capabilities.Interactive = $true
+        }
+
         # All tests in this Describe assume a target window has been configured unless
         # overridden inside a specific Context/It block.
         InModuleScope -ModuleName 'LastWarAutoScreenshot' {
@@ -95,36 +94,17 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Output contains the disabled Run macro label when no macros are present' {
+        It 'Output does not contain Run macro label when no macros are present' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-MainMenu -Console $tc | Out-Null
-                # Verify that selecting by pressing Enter on the 4th option (Exit) works
-                # This indirectly confirms that "Run macro" is not a selectable choice
-                $tc.Output | Should -Match 'Exit|Configure|Record'
+                $tc.Output | Should -Not -Match 'Run macro'
             }
         }
 
-        It 'Navigating 3 DownArrows does not select RunMacro (RunMacro not available when no macros)' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $tc = $script:tc
-                # With no macros, Manage macros is not in list; 3 DownArrows reaches Manage schedules
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                $result = Show-MainMenu -Console $tc
-                $result | Should -Not -Be 'RunMacro'
-            }
-        }
     }
 
     Context 'When macros are present' {
@@ -192,14 +172,14 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
     Context 'Manage macros option' {
 
-        It 'Manage macros option always appears in output when no macros are present' {
+        It 'Manage macros option does not appear in output when no macros are present' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-MainMenu -Console $tc | Out-Null
-                $tc.Output | Should -Match 'Manage macros'
+                $tc.Output | Should -Not -Match 'Manage macros'
             }
         }
 
@@ -214,23 +194,6 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
                 Show-MainMenu -Console $tc | Out-Null
                 $tc.Output | Should -Match 'Manage macros'
-            }
-        }
-
-        It 'Manage macros is not in menu when no macros present: 3 DownArrows reaches ManageSchedules' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $tc = $script:tc
-                # Manage macros is not added to the list when no macros exist.
-                # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage schedules, [4] Storage info, [5] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                $result = Show-MainMenu -Console $tc
-                $result | Should -Be 'ManageSchedules'
             }
         }
     }
@@ -295,18 +258,15 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
         It 'Output contains Manage schedules as a choice' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $freshTc = [Spectre.Console.Testing.TestConsole]::new()
-                $freshTc.Profile.Width  = $script:TestConsoleWidth
-                $freshTc.Profile.Height = $script:TestConsoleHeight
-                $freshTc.Profile.Capabilities.Interactive = $true
-                $freshTc.Input.PushKey([ConsoleKey]::Enter)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)
 
-                Show-MainMenu -Console $freshTc | Out-Null
-                $freshTc.Output | Should -Match 'Manage schedules'
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Match 'Manage schedules'
             }
         }
 
-        It 'Returns ManageSchedules when Manage schedules is selected (3 DownArrows, has window, no macros)' {
+        It 'Navigating to Manage schedules renders the item and returns ManageSchedules (3 DownArrows, has window, no macros)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
@@ -319,6 +279,7 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
                 $result = Show-MainMenu -Console $tc
                 $result | Should -Be 'ManageSchedules'
+                $tc.Output | Should -Match 'Manage schedules'
             }
         }
     }
@@ -343,16 +304,11 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
         It 'Does not include Record macro in the menu' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                # Use a fresh TestConsole so accumulated output from prior tests does not
-                # interfere with the Should -Not -Match assertion.
-                $freshTc = [Spectre.Console.Testing.TestConsole]::new()
-                $freshTc.Profile.Width  = $script:TestConsoleWidth
-                $freshTc.Profile.Height = $script:TestConsoleHeight
-                $freshTc.Profile.Capabilities.Interactive = $true
-                $freshTc.Input.PushKey([ConsoleKey]::Enter)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)
 
-                Show-MainMenu -Console $freshTc | Out-Null
-                $freshTc.Output | Should -Not -Match 'Record macro'
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Not -Match 'Record macro'
             }
         }
 
@@ -361,16 +317,11 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
                 Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
-                # Use a fresh TestConsole so accumulated output from prior tests does not
-                # interfere with the Should -Not -Match assertion.
-                $freshTc = [Spectre.Console.Testing.TestConsole]::new()
-                $freshTc.Profile.Width  = $script:TestConsoleWidth
-                $freshTc.Profile.Height = $script:TestConsoleHeight
-                $freshTc.Profile.Capabilities.Interactive = $true
-                $freshTc.Input.PushKey([ConsoleKey]::Enter)
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)
 
-                Show-MainMenu -Console $freshTc | Out-Null
-                $freshTc.Output | Should -Not -Match 'Run macro'
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Not -Match 'Run macro'
             }
         }
 

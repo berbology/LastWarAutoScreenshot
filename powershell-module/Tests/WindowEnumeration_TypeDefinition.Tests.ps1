@@ -4,22 +4,6 @@ BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
     Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
-    ${script:Get-TestRunnerWindowHandle} = {
-        $processPID = [System.Diagnostics.Process]::GetCurrentProcess().Id
-        $resultContainer = @{ Handle = [IntPtr]::Zero }
-        $callback = [LastWarAutoScreenshot.EnumWindowsProc] {
-            param($hwnd, $lParam)
-            $procId = 0
-            [LastWarAutoScreenshot.WindowEnumerationAPI]::GetWindowThreadProcessId($hwnd, [ref]$procId) | Out-Null
-            if ($procId -eq $lParam.ToInt32()) {
-                $resultContainer.Handle = $hwnd
-                return $false
-            }
-            return $true
-        }.GetNewClosure()
-        [LastWarAutoScreenshot.WindowEnumerationAPI]::EnumWindows($callback, [IntPtr]$processPID) | Out-Null
-        return $resultContainer.Handle
-    }
 }
 
 Describe 'WindowEnumeration_TypeDefinition' -Tag 'Unit' {
@@ -37,6 +21,9 @@ Describe 'WindowEnumeration_TypeDefinition' -Tag 'Unit' {
         }
     }
 
+    # NOTE: The tests in this context make live Win32 API calls (IsWindowVisible,
+    # GetWindowTextLength, GetWindowText) with invalid/zero handles. They are not
+    # pure unit tests — they exercise real kernel calls against the live environment.
     Context 'Error Handling' {
         It 'Should handle invalid window handle gracefully in IsWindowVisible' {
             $invalidHandle = [IntPtr]::Zero

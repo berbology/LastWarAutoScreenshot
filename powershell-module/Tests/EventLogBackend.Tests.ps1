@@ -11,6 +11,7 @@ Describe 'EventLog backend in Write-LastWarLog' -Tag 'Unit' {
         BeforeEach {
             InModuleScope LastWarAutoScreenshot {
                 Mock Test-EventLogSourceExists { $true }
+                Mock Write-Warning {}
             }
         }
         It 'Calls Write-EventLog when EventLog backend is selected' {
@@ -90,9 +91,8 @@ Describe 'EventLog backend in Write-LastWarLog' -Tag 'Unit' {
         It 'Emits a warning when Write-EventLog fails' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Write-EventLog { throw 'Permission denied' }
-                $warnings = Write-LastWarLog -Message 'Test' -Level 'Error' -FunctionName 'TestFunc' -ForceLog -BackendNames 'EventLog' 3>&1 |
-                    Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
-                $warnings | Should -Not -BeNullOrEmpty
+                Write-LastWarLog -Message 'Test' -Level 'Error' -FunctionName 'TestFunc' -ForceLog -BackendNames 'EventLog'
+                Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*Permission denied*' }
             }
         }
     }
