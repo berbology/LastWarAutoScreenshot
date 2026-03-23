@@ -12,11 +12,17 @@ BeforeAll {
 Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
 
     BeforeEach {
+        Remove-Item -Path 'Env:\LWAS_SAS_TOKEN' -ErrorAction SilentlyContinue
+        Remove-Item -Path 'Env:\LWAS_SAS_EXISTING' -ErrorAction SilentlyContinue
+        Remove-Item -Path 'Env:\LWAS_SAS_NEW' -ErrorAction SilentlyContinue
         InModuleScope 'LastWarAutoScreenshot' {
             $script:tc = [Spectre.Console.Testing.TestConsole]::new()
             $script:tc.Profile.Width  = $script:TestConsoleWidth
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
+            Mock Get-LWASSASTokenEnvVarNames { @() }
+            Mock Test-LWASSASTokenIsValid { $true }
+            Mock Update-LWASUploadProfileSASToken { $true }
         }
     }
 
@@ -26,9 +32,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
     #          DeleteAfterDays (empty=30).
     # Does NOT push the confirmation key — caller supplies that.
 
-    # ════════════════════════════════════════════════════════════════════════
-    # Context 9.4.1: All fields entered successfully
-    # ════════════════════════════════════════════════════════════════════════
+    # All fields entered successfully
     Context 'When all fields are entered successfully' {
 
         It 'Calls Save-UploadProfileFile once with the entered values' {
@@ -51,8 +55,8 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 # Container
                 $tc.Input.PushText('mycontainer')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # SAS env var
-                $tc.Input.PushText('LWAS_SAS_TOKEN')
+                # SAS token suffix — becomes LWAS_SAS_TOKEN
+                $tc.Input.PushText('TOKEN')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Blob path (empty = default)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -71,18 +75,17 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Show-EditUploadProfileScreen -Console $tc
 
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.name          -eq 'my-profile'  -and
-                    $Profile.accountName   -eq 'myaccount'   -and
-                    $Profile.containerName -eq 'mycontainer' -and
-                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN'
+                    $Profile.name           -eq 'my-profile'     -and
+                    $Profile.accountName    -eq 'myaccount'      -and
+                    $Profile.containerName  -eq 'mycontainer'    -and
+                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN' -and
+                    $Profile.cloudProvider  -eq 'azure'
                 }
             }
         }
     }
 
-    # ════════════════════════════════════════════════════════════════════════
-    # Context 9.4.2: Duplicate name causes prompt to loop
-    # ════════════════════════════════════════════════════════════════════════
+    # Duplicate name causes prompt to loop
     Context 'When the first name entered is a duplicate' {
 
         It 'Re-prompts for name and calls Save-UploadProfileFile only after a unique name is entered' {
@@ -115,7 +118,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushText('ctr')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushText('LWAS_SAS')
+                $tc.Input.PushText('TOKEN')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
@@ -135,9 +138,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
         }
     }
 
-    # ════════════════════════════════════════════════════════════════════════
-    # Context 9.4.3: Empty blob path pattern uses default
-    # ════════════════════════════════════════════════════════════════════════
+    # Empty blob path pattern uses default
     Context 'When the blob path pattern field is left empty' {
 
         It 'Saves the profile with the default blob path pattern' {
@@ -157,7 +158,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushText('ctr')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushText('LWAS_SAS')
+                $tc.Input.PushText('TOKEN')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Empty blob path pattern — press Enter without typing
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -178,9 +179,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
         }
     }
 
-    # ════════════════════════════════════════════════════════════════════════
-    # Context 9.4.4: User selects Cancel at the confirmation prompt
-    # ════════════════════════════════════════════════════════════════════════
+    # User selects Cancel at the confirmation prompt
     Context 'When the user selects Cancel at the confirmation prompt' {
 
         It 'Does not call Save-UploadProfileFile and returns $null' {
@@ -200,7 +199,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushText('ctr')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushText('LWAS_SAS')
+                $tc.Input.PushText('TOKEN')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
@@ -220,12 +219,10 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
         }
     }
 
-    # ════════════════════════════════════════════════════════════════════════
-    # Context 9.4.5: Env var guidance panel appears in output
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the SAS token env var is entered' {
+    # When no existing LWAS_SAS_* environment variables exist
+    Context 'When no existing LWAS_SAS_* environment variables exist' {
 
-        It 'Writes the env var guidance panel to the console output' {
+        It 'Shows the info panel and prompts for a suffix to create a new variable' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ValidMacroName {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
@@ -233,16 +230,19 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
 
-                $tc.Input.PushText('guidance-test')
+                $tc.Input.PushText('info-panel-test')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushText('acct')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushText('ctr')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushText('LWAS_SAS_TOKEN')
+                # Suffix — becomes LWAS_SAS_TOKEN
+                $tc.Input.PushText('TOKEN')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
@@ -250,14 +250,503 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 $tc.Input.PushText('N')
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
-                # Cancel to keep test focused on output assertion
+                # Cancel
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-EditUploadProfileScreen -Console $tc
 
-                $tc.Output | Should -Match 'Set the env var before running uploads'
+                $tc.Output | Should -Match 'No LWAS_SAS'
                 $tc.Output | Should -Match 'LWAS_SAS_TOKEN'
+            }
+        }
+    }
+
+    # When existing LWAS_SAS_* environment variables exist
+    Context 'When existing LWAS_SAS_* environment variables exist' {
+
+        It '5.4.2: Shows existing var names and Create new in the selection prompt' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @('LWAS_SAS_PROD', 'LWAS_SAS_DEV') }
+                Mock Test-LWASSASTokenIsValid { $true }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('selection-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Select first item: LWAS_SAS_PROD
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Cancel
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'LWAS_SAS_PROD'
+                $tc.Output | Should -Match 'LWAS_SAS_DEV'
+                $tc.Output | Should -Match 'Create new'
+            }
+        }
+
+        It 'Uses the selected existing variable and skips the suffix prompt' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @('LWAS_SAS_PROD') }
+                Mock Test-LWASSASTokenIsValid { $true }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('existing-var-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Select LWAS_SAS_PROD (first item)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # No suffix input — suffix prompt is skipped
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
+                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_PROD'
+                }
+                $tc.Output | Should -Not -Match 'unique suffix'
+            }
+        }
+
+        It 'Shows the suffix prompt when Create new is selected' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @('LWAS_SAS_PROD') }
+                Mock Test-LWASSASTokenIsValid { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('create-new-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Navigate to Create new (index 1) and select it
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Enter suffix
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Cancel
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'unique suffix'
+            }
+        }
+    }
+
+    # Suffix validation
+    Context 'When entering a new suffix' {
+
+        AfterEach {
+            Remove-Item -Path 'Env:\LWAS_SAS_EXISTING' -ErrorAction SilentlyContinue
+            Remove-Item -Path 'Env:\LWAS_SAS_NEW' -ErrorAction SilentlyContinue
+        }
+
+        It '5.4.5: Shows a red error on invalid suffix characters and re-prompts' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('invalid-suffix-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Invalid suffix (contains space) — causes error and re-prompt
+                $tc.Input.PushText('MY SUFFIX')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Valid suffix on second attempt
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Cancel
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'letters, digits, and underscores'
+            }
+        }
+
+        It 'Shows a red error when the suffix produces an already-existing variable name' {
+            $env:LWAS_SAS_EXISTING = 'sv=fake'
+
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('collision-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Suffix that collides with LWAS_SAS_EXISTING
+                $tc.Input.PushText('EXISTING')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Non-colliding suffix on second attempt
+                $tc.Input.PushText('NEW')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Cancel
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'already exists'
+            }
+        }
+    }
+
+    # Save path — auto-token logic
+    Context 'When saving the profile' {
+
+        It 'Does not call Update-LWASUploadProfileSASToken when the token is already valid' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('valid-token-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                Should -Not -Invoke Update-LWASUploadProfileSASToken
+            }
+        }
+
+        It 'Calls Update-LWASUploadProfileSASToken exactly once when the token is absent or expired' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('expired-token-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                Should -Invoke Update-LWASUploadProfileSASToken -Exactly 1
+            }
+        }
+
+        It 'Shows a warning panel containing Connect-AzAccount when Update returns false' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASUploadProfileSASToken { $false }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('update-fail-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'Connect-AzAccount'
+            }
+        }
+
+        It 'Shows a green success message containing the env var name when Update returns true' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('update-ok-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'SAS token updated'
+                $tc.Output | Should -Match 'LWAS_SAS_TOKEN'
+            }
+        }
+
+        It 'Saves the profile with cloudProvider set to azure' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('cloud-provider-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
+                    $Profile.cloudProvider -eq 'azure'
+                }
+            }
+        }
+    }
+
+    # Summary panel validity indicator
+    Context 'When showing the summary panel' {
+
+        It 'Shows (Will be requested on save) when the token is absent or expired' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $false }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('validity-false-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Cancel — only summary is shown, save path not executed
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match 'Will be requested on save'
+            }
+        }
+
+        It 'Shows (Valid) when the token passes Test-LWASSASTokenIsValid' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('validity-true-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Cancel — only summary is shown, save path not executed
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                $tc.Output | Should -Match '\(Valid\)'
             }
         }
     }

@@ -12,18 +12,17 @@ function Show-EditUploadProfileScreen {
           - Name                   : validated via Get-ValidMacroName and uniqueness check
           - Azure account name     : non-empty string
           - Container name         : non-empty string
-          - SAS token env var      : letters, digits, and underscores only
+          - SAS token env var      : selected from existing LWAS_SAS_* variables or created
+                                     with a validated suffix (becomes LWAS_SAS_{SUFFIX})
           - Blob path pattern      : defaults to {MacroName}/{Date}/{Filename} on empty entry
           - Max retry attempts     : integer 1–10, default 3
           - Retry base delay (ms)  : integer 100–60000, default 500
           - Delete local after upload : Y/N prompt, default N
           - Delete local after days   : integer 1–3650, default 30
 
-        An informational panel explaining how to set the SAS token environment variable
-        is shown after the env var prompt.
-
-        On confirmation 'Yes': saves the profile via Save-UploadProfileFile, shows a
-        success message, and returns the saved profile object.
+        On confirmation 'Yes': saves the profile via Save-UploadProfileFile. If the SAS
+        token is absent or expired, Update-LWASUploadProfileSASToken is called automatically.
+        Shows a success message and returns the saved profile object.
 
         On 'Cancel': returns $null without saving.
 
@@ -46,7 +45,7 @@ function Show-EditUploadProfileScreen {
         [Spectre.Console.IAnsiConsole]$Console
     )
 
-    # ── Name ─────────────────────────────────────────────────────────────────
+    # Name
 
     $profileName = $null
     while ($null -eq $profileName) {
@@ -74,7 +73,7 @@ function Show-EditUploadProfileScreen {
         $profileName = $nameResult.SanitisedName
     }
 
-    # ── Azure account name ────────────────────────────────────────────────────
+    # Azure account name
 
     $accountName = $null
     while ($null -eq $accountName) {
@@ -90,7 +89,7 @@ function Show-EditUploadProfileScreen {
         $accountName = $rawAccount.Trim()
     }
 
-    # ── Container name ────────────────────────────────────────────────────────
+    # Container name
 
     $containerName = $null
     while ($null -eq $containerName) {
@@ -106,29 +105,50 @@ function Show-EditUploadProfileScreen {
         $containerName = $rawContainer.Trim()
     }
 
-    # ── SAS token environment variable ───────────────────────────────────────
+    # SAS token environment variable
 
-    $sasTokenEnvVar = $null
+    $sasTokenEnvVar   = $null
+    $existingVarNames = @(Get-LWASSASTokenEnvVarNames)
+
+    if ($existingVarNames.Count -eq 0) {
+        $infoPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+            'No LWAS_SAS_* environment variables found. A new one will be created.',
+            'SAS Token'
+        )
+        $Console.Write($infoPanel)
+    } else {
+        $sasVarPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            'Select SAS token environment variable:',
+            [string[]]($existingVarNames + @('Create new'))
+        )
+        $sasVarChoice = $sasVarPrompt.Show($Console)
+        if ($sasVarChoice -ne 'Create new') {
+            $sasTokenEnvVar = $sasVarChoice
+        }
+    }
+
     while ($null -eq $sasTokenEnvVar) {
-        $sasPrompt            = [Spectre.Console.TextPrompt[string]]::new('SAS token environment variable name:')
-        $sasPrompt.AllowEmpty = $false
-        $rawSas               = $sasPrompt.Show($Console)
+        $suffixPrompt            = [Spectre.Console.TextPrompt[string]]::new('Enter a unique suffix for the new SAS token variable (will become LWAS_SAS_{SUFFIX}):')
+        $suffixPrompt.AllowEmpty = $false
+        $rawSuffix               = $suffixPrompt.Show($Console)
 
-        if ($rawSas -notmatch '^[A-Z0-9_a-z]+$') {
-            $Console.Write([Spectre.Console.Markup]::new("[red]Environment variable name must contain only letters, digits, and underscores.[/]`n"))
+        if ($rawSuffix -notmatch '^[A-Za-z0-9_]{1,30}$') {
+            $Console.Write([Spectre.Console.Markup]::new("[red]Suffix must be 1–30 characters and contain only letters, digits, and underscores.[/]`n"))
             continue
         }
 
-        $sasTokenEnvVar = $rawSas
+        $candidateName = "LWAS_SAS_$($rawSuffix.ToUpper())"
+        $safeName      = [Spectre.Console.Markup]::Escape($candidateName)
+
+        if ($null -ne [Environment]::GetEnvironmentVariable($candidateName)) {
+            $Console.Write([Spectre.Console.Markup]::new("[red]Environment variable '$safeName' already exists. Choose a different suffix.[/]`n"))
+            continue
+        }
+
+        $sasTokenEnvVar = $candidateName
     }
 
-    # Show env var guidance panel
-    $safeSasVar   = [Spectre.Console.Markup]::Escape($sasTokenEnvVar)
-    $guidanceText = "Set the env var before running uploads:`n  Temporary:   `$env:$safeSasVar = 'sv=...'`n  Persistent:  [[Environment]]::SetEnvironmentVariable('$safeSasVar', 'sv=...', 'User')"
-    $guidancePanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($guidanceText, 'SAS Token Setup')
-    $Console.Write($guidancePanel)
-
-    # ── Blob path pattern ─────────────────────────────────────────────────────
+    # Blob path pattern
 
     $defaultBlobPattern  = '{MacroName}/{Date}/{Filename}'
     $blobPrompt          = [Spectre.Console.TextPrompt[string]]::new("Blob path pattern [[$defaultBlobPattern]]:")
@@ -136,7 +156,7 @@ function Show-EditUploadProfileScreen {
     $rawBlobPattern      = $blobPrompt.Show($Console)
     $blobPathPattern     = if ([string]::IsNullOrEmpty($rawBlobPattern)) { $defaultBlobPattern } else { $rawBlobPattern }
 
-    # ── Max retry attempts ────────────────────────────────────────────────────
+    # Max retry attempts
 
     $maxRetryAttempts = $null
     while ($null -eq $maxRetryAttempts) {
@@ -156,7 +176,7 @@ function Show-EditUploadProfileScreen {
         }
     }
 
-    # ── Retry base delay (ms) ─────────────────────────────────────────────────
+    # Retry base delay (ms)
 
     $retryBaseDelayMs = $null
     while ($null -eq $retryBaseDelayMs) {
@@ -176,14 +196,14 @@ function Show-EditUploadProfileScreen {
         }
     }
 
-    # ── Delete local after upload ─────────────────────────────────────────────
+    # Delete local after upload
 
     $deleteLocalPrompt            = [Spectre.Console.TextPrompt[string]]::new('Delete local file after successful upload? (Y/N) [[N]]:')
     $deleteLocalPrompt.AllowEmpty = $true
     $deleteLocalInput             = $deleteLocalPrompt.Show($Console)
     $deleteLocalAfterUpload       = ($deleteLocalInput -match '^[Yy]')
 
-    # ── Delete local after days ───────────────────────────────────────────────
+    # Delete local after days
 
     $deleteLocalAfterDays = $null
     while ($null -eq $deleteLocalAfterDays) {
@@ -203,14 +223,18 @@ function Show-EditUploadProfileScreen {
         }
     }
 
-    # ── Summary panel ─────────────────────────────────────────────────────────
+    # Summary panel
+
+    $currentToken      = [Environment]::GetEnvironmentVariable($sasTokenEnvVar)
+    $tokenIsValid      = Test-LWASSASTokenIsValid -SasToken $currentToken
+    $validityIndicator = if ($tokenIsValid) { ' [green](Valid)[/]' } else { ' [yellow](Will be requested on save)[/]' }
 
     $deleteLocalStr = if ($deleteLocalAfterUpload) { 'Yes' } else { 'No' }
     $summaryLines   = @(
         "Name:                 $([Spectre.Console.Markup]::Escape($profileName))"
         "Account:              $([Spectre.Console.Markup]::Escape($accountName))"
         "Container:            $([Spectre.Console.Markup]::Escape($containerName))"
-        "SAS Token Env Var:    $([Spectre.Console.Markup]::Escape($sasTokenEnvVar))"
+        "SAS Token Env Var:    $([Spectre.Console.Markup]::Escape($sasTokenEnvVar))$validityIndicator"
         "Blob Path Pattern:    $([Spectre.Console.Markup]::Escape($blobPathPattern))"
         "Max Retry Attempts:   $maxRetryAttempts"
         "Retry Base Delay ms:  $retryBaseDelayMs"
@@ -223,7 +247,7 @@ function Show-EditUploadProfileScreen {
     )
     $Console.Write($summaryPanel)
 
-    # ── Confirmation ──────────────────────────────────────────────────────────
+    # Confirmation
 
     $confirmPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
         'Save this profile?', @('Yes', 'Cancel')
@@ -238,6 +262,7 @@ function Show-EditUploadProfileScreen {
     $profile = [PSCustomObject]@{
         name                   = $profileName
         provider               = 'AzureBlobStorage'
+        cloudProvider          = 'azure'
         accountName            = $accountName
         containerName          = $containerName
         sasTokenEnvVar         = $sasTokenEnvVar
@@ -253,6 +278,20 @@ function Show-EditUploadProfileScreen {
     Save-UploadProfileFile -Profile $profile
 
     $safeProfileName = [Spectre.Console.Markup]::Escape($profileName)
+    $safeSasVar      = [Spectre.Console.Markup]::Escape($sasTokenEnvVar)
+    $savedToken      = [Environment]::GetEnvironmentVariable($sasTokenEnvVar)
+    if (-not (Test-LWASSASTokenIsValid -SasToken $savedToken)) {
+        $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $profile
+        if ($tokenUpdated) {
+            $Console.Write([Spectre.Console.Markup]::new("[green]SAS token updated and stored in '$safeSasVar'.[/]`n"))
+        } else {
+            $warningPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                'Profile saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount).',
+                'SAS Token Warning'
+            )
+            $Console.Write($warningPanel)
+        }
+    }
     $Console.Write([Spectre.Console.Markup]::new("[green]Upload profile '$safeProfileName' saved successfully.[/]`n"))
 
     return $profile

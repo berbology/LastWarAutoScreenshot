@@ -6066,25 +6066,25 @@ for renewal).
      Supports pipeline input so callers can pipe the output of `Get-LWASUploadProfile`.
 
    - [x] 4.2: Create `Tests/Update-LWASUploadProfileSASToken.Tests.ps1`:
-      - [ ] 4.2.1: Profile with `cloudProvider = 'gcp'` → `Write-Error` called once; `$false`
+      - [x] 4.2.1: Profile with `cloudProvider = 'gcp'` → `Write-Error` called once; `$false`
         returned; no Az cmdlets invoked
-      - [ ] 4.2.2: `cloudProvider = 'azure'` but `Assert-LWASAzStorageModule` returns `$false`
+      - [x] 4.2.2: `cloudProvider = 'azure'` but `Assert-LWASAzStorageModule` returns `$false`
         (mock it to return `$false`) → function returns `$false`; no Az cmdlets invoked
         (error writing is the responsibility of `Assert-LWASAzStorageModule`, not this function)
-      - [ ] 4.2.3: Az module available but `sasTokenEnvVar` is empty → `Write-Error` called; `$false`
+      - [x] 4.2.3: Az module available but `sasTokenEnvVar` is empty → `Write-Error` called; `$false`
         returned
-      - [ ] 4.2.4: All checks pass; `New-AzStorageContainerSASToken` returns a valid token string →
+      - [x] 4.2.4: All checks pass; `New-AzStorageContainerSASToken` returns a valid token string →
         `[Environment]::SetEnvironmentVariable` called at User scope; `Set-Item Env:\` called;
         `$true` returned
-      - [ ] 4.2.5: `New-AzStorageContainerSASToken` throws (simulated "not connected") → `Write-Error`
+      - [x] 4.2.5: `New-AzStorageContainerSASToken` throws (simulated "not connected") → `Write-Error`
         message contains `"Connect-AzAccount"`; `$false` returned; env var not set
-      - [ ] 4.2.6: Token returned with leading `?` → stored token has `?` stripped
-      - [ ] 4.2.7: `-WhatIf` flag → no `SetEnvironmentVariable` call; no Az cmdlets invoked;
+      - [x] 4.2.6: Token returned with leading `?` → stored token has `?` stripped
+      - [x] 4.2.7: `-WhatIf` flag → no `SetEnvironmentVariable` call; no Az cmdlets invoked;
         `$false` returned
-      - [ ] 4.2.8: Pipeline input with two valid Azure profiles → `New-AzStorageContainerSASToken`
+      - [x] 4.2.8: Pipeline input with two valid Azure profiles → `New-AzStorageContainerSASToken`
         called once per profile; env var set for each; `$true` returned each time
 
-5. [ ] Update `Show-EditUploadProfileScreen` — SAS token selection prompt
+5. [x] Update `Show-EditUploadProfileScreen` — SAS token selection prompt
 
    **Design decision — UX when no `LWAS_SAS_*` variables exist yet:**
 
@@ -6098,24 +6098,24 @@ for renewal).
    is the cleanest first-run experience. The UI change is minimal and the user is shown an
    informational message explaining what will happen.
 
-   - [ ] 5.1: Update `Private/ConsoleApp/Show-EditUploadProfileScreen.ps1` — replace the
+   - [x] 5.1: Update `Private/ConsoleApp/Show-EditUploadProfileScreen.ps1` — replace the
      SAS token free-text prompt section (the `while ($null -eq $sasTokenEnvVar)` block and the
      guidance panel) with the following flow:
 
-     - [ ] 5.1.1: Call `Get-LWASSASTokenEnvVarNames`. Store result in `$existingVarNames`.
+     - [x] 5.1.1: Call `Get-LWASSASTokenEnvVarNames`. Store result in `$existingVarNames`.
 
-     - [ ] 5.1.2: **No existing vars path** (`$existingVarNames.Count -eq 0`): display an info
+     - [x] 5.1.2: **No existing vars path** (`$existingVarNames.Count -eq 0`): display an info
        panel: `"No LWAS_SAS_* environment variables found. A new one will be created."` then
        proceed directly to the suffix-entry prompt (5.1.4).
 
-     - [ ] 5.1.3: **Existing vars path** (`$existingVarNames.Count -gt 0`): show a
+     - [x] 5.1.3: **Existing vars path** (`$existingVarNames.Count -gt 0`): show a
        `SelectionPrompt` with title `"Select SAS token environment variable:"` listing all names
        from `$existingVarNames` plus `"Create new"` as the last option. Store the result in
        `$sasVarChoice`.
        - If `$sasVarChoice -ne 'Create new'`: set `$sasTokenEnvVar = $sasVarChoice` and skip to
          the post-selection step (5.1.5).
 
-     - [ ] 5.1.4: **Suffix-entry prompt** (reached when no existing vars, or user chose
+     - [x] 5.1.4: **Suffix-entry prompt** (reached when no existing vars, or user chose
        `"Create new"`):
        - Show text prompt: `"Enter a unique suffix for the new SAS token variable (will become LWAS_SAS_{SUFFIX}):"`
        - Validate: 1–30 characters, letters/digits/underscores only. On invalid input, show
@@ -6125,17 +6125,17 @@ for renewal).
          `[red]Environment variable '$safeName' already exists. Choose a different suffix.[/]`
          and re-prompt.
 
-     - [ ] 5.1.5: Remove the old "Set the env var before running uploads" guidance panel. Token
+     - [x] 5.1.5: Remove the old "Set the env var before running uploads" guidance panel. Token
        management is now handled automatically on save.
 
-   - [ ] 5.2: Update the summary panel in `Show-EditUploadProfileScreen` — add a validity
+   - [x] 5.2: Update the summary panel in `Show-EditUploadProfileScreen` — add a validity
      indicator to the `SAS Token Env Var` line:
      - Read the current token: `[Environment]::GetEnvironmentVariable($sasTokenEnvVar)`
      - If `Test-LWASSASTokenIsValid` returns `$true`: append `[green](Valid)[/]` to the line.
      - If `$false` (absent, empty, or expired): append
        `[yellow](Will be requested on save)[/]` to the line.
 
-   - [ ] 5.3: Update the save block in `Show-EditUploadProfileScreen` — after
+   - [x] 5.3: Update the save block in `Show-EditUploadProfileScreen` — after
      `Save-UploadProfileFile`:
      - Read the current token: `[Environment]::GetEnvironmentVariable($sasTokenEnvVar)`
      - If `Test-LWASSASTokenIsValid` returns `$false`: call
@@ -6148,30 +6148,30 @@ for renewal).
      - Add `cloudProvider = 'azure'` to the profile object prior to calling
        `Save-UploadProfileFile`.
 
-   - [ ] 5.4: Update `Tests/ConsoleApp/Show-EditUploadProfileScreen.Tests.ps1`:
-      - [ ] 5.4.1: `Get-LWASSASTokenEnvVarNames` returns empty → info panel shown; user prompted
+   - [x] 5.4: Update `Tests/ConsoleApp/Show-EditUploadProfileScreen.Tests.ps1`:
+      - [x] 5.4.1: `Get-LWASSASTokenEnvVarNames` returns empty → info panel shown; user prompted
         for suffix; `sasTokenEnvVar` is `'LWAS_SAS_{SUFFIX}'`
-      - [ ] 5.4.2: `Get-LWASSASTokenEnvVarNames` returns one or more names → selection prompt
+      - [x] 5.4.2: `Get-LWASSASTokenEnvVarNames` returns one or more names → selection prompt
         shown containing those names plus `"Create new"`
-      - [ ] 5.4.3: User selects existing var name from prompt → `sasTokenEnvVar` equals that
+      - [x] 5.4.3: User selects existing var name from prompt → `sasTokenEnvVar` equals that
         name; no suffix prompt shown
-      - [ ] 5.4.4: User selects `"Create new"` from selection → suffix prompt shown;
+      - [x] 5.4.4: User selects `"Create new"` from selection → suffix prompt shown;
         `sasTokenEnvVar` is `'LWAS_SAS_{SUFFIX}'`
-      - [ ] 5.4.5: Suffix with invalid characters → `[red]` error shown; prompt loops
-      - [ ] 5.4.6: Suffix that produces an already-existing var name → `[red]` error shown;
+      - [x] 5.4.5: Suffix with invalid characters → `[red]` error shown; prompt loops
+      - [x] 5.4.6: Suffix that produces an already-existing var name → `[red]` error shown;
         prompt loops
-      - [ ] 5.4.7: On save, `Test-LWASSASTokenIsValid` returns `$true` →
+      - [x] 5.4.7: On save, `Test-LWASSASTokenIsValid` returns `$true` →
         `Update-LWASUploadProfileSASToken` is **not** called; only success message shown
-      - [ ] 5.4.8: On save, `Test-LWASSASTokenIsValid` returns `$false` →
+      - [x] 5.4.8: On save, `Test-LWASSASTokenIsValid` returns `$false` →
         `Update-LWASUploadProfileSASToken` called exactly once
-      - [ ] 5.4.9: On save, `Update-LWASUploadProfileSASToken` returns `$false` → warning panel
+      - [x] 5.4.9: On save, `Update-LWASUploadProfileSASToken` returns `$false` → warning panel
         shown containing `"Connect-AzAccount"`
-      - [ ] 5.4.10: On save, `Update-LWASUploadProfileSASToken` returns `$true` → success message
+      - [x] 5.4.10: On save, `Update-LWASUploadProfileSASToken` returns `$true` → success message
         contains the env var name
-      - [ ] 5.4.11: Saved profile object has `cloudProvider = 'azure'`
-      - [ ] 5.4.12: Summary panel contains `(Will be requested on save)` when token is absent or
+      - [x] 5.4.11: Saved profile object has `cloudProvider = 'azure'`
+      - [x] 5.4.12: Summary panel contains `(Will be requested on save)` when token is absent or
         expired
-      - [ ] 5.4.13: Summary panel contains `(Valid)` when current token passes
+      - [x] 5.4.13: Summary panel contains `(Valid)` when current token passes
         `Test-LWASSASTokenIsValid`
 
 6. [ ] Update `New-LWASUploadProfile` — command-line path
