@@ -5997,7 +5997,7 @@ for renewal).
       - [x] 3.6.7: No errors or warnings are written in any of the above cases — `Write-Error`
         and `Write-Warning` are never called by this function
 
-4. [ ] `Update-LWASUploadProfileSASToken` — public function
+4. [x] `Update-LWASUploadProfileSASToken` — public function
 
    **Design decision — Azure authentication handling:**
 
@@ -6021,7 +6021,7 @@ for renewal).
    **Preferred: Option A.** YAGNI. A profile-level expiry field can be added in Phase 10 if
    users request shorter token lifetimes for security reasons.
 
-   - [ ] 4.1: Create `Public/Update-LWASUploadProfileSASToken.ps1`:
+   - [x] 4.1: Create `Public/Update-LWASUploadProfileSASToken.ps1`:
 
      ```powershell
      function Update-LWASUploadProfileSASToken {
@@ -6065,7 +6065,7 @@ for renewal).
 
      Supports pipeline input so callers can pipe the output of `Get-LWASUploadProfile`.
 
-   - [ ] 4.2: Create `Tests/Update-LWASUploadProfileSASToken.Tests.ps1`:
+   - [x] 4.2: Create `Tests/Update-LWASUploadProfileSASToken.Tests.ps1`:
       - [ ] 4.2.1: Profile with `cloudProvider = 'gcp'` → `Write-Error` called once; `$false`
         returned; no Az cmdlets invoked
       - [ ] 4.2.2: `cloudProvider = 'azure'` but `Assert-LWASAzStorageModule` returns `$false`
