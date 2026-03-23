@@ -196,6 +196,42 @@ Describe 'Install-LWAS' {
         }
     }
 
+    Context 'UploadProfiles directory' {
+
+        It '11.3: UploadProfiles directory does not exist — New-Item called with the UploadProfiles child path' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Test-Path {
+                    param($Path, $PathType)
+                    if ($Path -match 'Spectre\.Console') { return $true }
+                    return $false
+                }
+
+                Install-LWAS 2>&1 | Out-Null
+
+                Should -Invoke New-Item -ParameterFilter {
+                    $Path -match 'UploadProfiles' -and $ItemType -eq 'Directory'
+                }
+            }
+        }
+
+        It '11.3b: UploadProfiles directory already exists — New-Item not called for UploadProfiles path' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Test-Path {
+                    param($Path, $PathType)
+                    if ($Path -match 'Spectre\.Console') { return $true }
+                    if ($Path -match 'UploadProfiles') { return $true }
+                    return $false
+                }
+
+                Install-LWAS -Verbose 4>&1 | Out-Null
+
+                Should -Invoke New-Item -Times 0 -ParameterFilter {
+                    $Path -match 'UploadProfiles' -and $ItemType -eq 'Directory'
+                }
+            }
+        }
+    }
+
     Context 'DLL verification' {
 
         It '7.13: Spectre.Console.dll present — Invoke-WebRequest not called; output contains already present' {

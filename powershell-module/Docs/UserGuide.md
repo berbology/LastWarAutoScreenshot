@@ -36,7 +36,7 @@ For a first-use walkthrough see [QuickStart.md](QuickStart.md).
 ### First run
 
 On a clean install with no config file, `Start-LWASConsole` creates
-a default `ModuleConfig.json` in `$env:APPDATA\LastWarAutoScreenshot\` and
+a default `ModuleConfig.jsonc` in `$env:APPDATA\LastWarAutoScreenshot\` and
 presents the main menu immediately. No manual config editing needed.
 
 If you need to register the Windows Event Log source (one-time, admin only):
@@ -249,6 +249,41 @@ get-vs-scores_vs-screenshot-region_20260307_143022_0001.png
 The resolved filename (excluding the storage path prefix) is capped at 200
 characters. Only PNG is supported; the format is lossless and avoids
 compression artefacts that could cause false positives in similarity detection.
+
+---
+
+## Screenshot Uploads
+
+Upload profiles let you push captured screenshots to Azure Blob Storage automatically,
+either as an inline macro step or on demand from the command line.
+
+Each profile stores the storage account name, container name, and the *name* of the
+environment variable that holds the SAS token — the token itself is never written to disk.
+
+### Setting up a profile
+
+Create a profile via the console app (**Configure module → Upload profiles → Add profile**)
+or via the command line:
+
+```powershell
+New-LWASUploadProfile -Name 'azure-1' -AccountName 'myaccount' `
+    -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_AZURE_SAS'
+```
+
+### Adding an upload step to a macro
+
+Add an `UploadScreenshots` action to a macro sequence. Set the scope to `MacroSequence`
+to upload all screenshots captured during the run, or `NamedStep` to upload only the
+files captured by a specific named `Screenshot` action.
+
+### Uploading from the command line
+
+```powershell
+Send-LWASScreenshots -UploadProfileName 'azure-1'
+```
+
+For full details — prerequisites, blob path patterns, retry behaviour, and
+troubleshooting — see [AzureIntegration.md](AzureIntegration.md).
 
 ---
 

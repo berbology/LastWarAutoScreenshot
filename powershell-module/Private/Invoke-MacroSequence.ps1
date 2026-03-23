@@ -67,11 +67,13 @@ function Invoke-MacroSequence {
     # Initialise screenshot context — shared across all actions and loop iterations
     # so index and previous-path tracking are continuous throughout execution.
     $screenshotContext = @{
-        Index                   = 0
-        MacroName               = $MacroData.metadata.name
-        ActionName              = ''
-        PreviousScreenshotPath  = $null
-        ConsecutiveSimilarCount = 0
+        Index                     = 0
+        MacroName                 = $MacroData.metadata.name
+        ActionName                = ''
+        PreviousScreenshotPath    = $null
+        ConsecutiveSimilarCount   = 0
+        CapturedFiles             = [System.Collections.Generic.List[string]]::new()
+        CapturedFilesByActionName = @{}
     }
 
     $similarityStop = $false

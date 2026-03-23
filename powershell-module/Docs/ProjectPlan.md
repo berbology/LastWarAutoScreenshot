@@ -4848,15 +4848,1435 @@ All design questions have been resolved. The decisions below are recorded for re
    9.6 [x] Create `scripts/README.md`: describes each script (`Install-LWAS.ps1` — bootstrap install from a release zip, self-elevates; `Uninstall-LWAS.ps1` — removes module and optionally AppData; `New-LWASRelease.ps1` — bumps version, runs tests, creates release zip), when to use each, and any prerequisites
    9.7 [x] Create `esp32-s3-mouse-emulator/README.md` stub: explains that this folder contains firmware for a planned USB HID hardware mouse emulator based on the ESP32-S3 microcontroller; describes the purpose — the device presents to the OS as a genuine physical HID mouse and provides an alternative to the current `SendInput` software approach; both methods will be selectable at runtime; using hardware HID substantially reduces anti-cheat detection risk because input arrives at the driver level, indistinguishable from a physical mouse; marks the feature as not yet implemented
 
-## Phase 9: Azure Integration (Future)
+## Phase 9: Azure Integration
 
-1. [ ] Prepare for future Azure Blob upload integration:
+### Architecture decisions (future reference)
 
-- Design extensible screenshot saving logic
-- SAS token-based authentication
-- Exponential backoff with jitter for upload retry logic
-- Configurable retry attempts
-- Upload failure handling with same retry logic as other operations
+- **HTTP transport — Azure Blob Storage REST API via `Invoke-WebRequest`:** Screenshots are small
+  files (typically < 5 MB each); a single `PUT` request per file is sufficient and requires no
+  external module. SAS token is appended to the request URL. This keeps the module fully
+  self-contained with zero runtime dependencies — consistent with the existing approach of bundled
+  DLLs and no NuGet at runtime.
+
+- **No `Az` PowerShell module dependency:** The `Az` module family (particularly `Az.Storage`) is a
+  large external dependency requiring `Connect-AzAccount` or service principal configuration.
+  Avoiding it eliminates installation friction. Future providers (GCloud, AWS) are an architectural
+  extension point, not in scope for this phase.
+
+- **Upload profiles stored as individual JSON files in `UploadProfiles\` subdirectory:** Mirrors the
+  `Macros\` pattern — each named profile is a separate file at
+  `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles\{name}.json`. This makes individual
+  profiles easy to inspect, back up, or delete, and avoids growing `WindowConfig.json` further.
+
+- **Credentials stored via environment variable reference only — never written to disk:** The
+  profile JSON stores only the *name* of the environment variable holding the SAS token (e.g.
+  `"SasTokenEnvVar": "LWAS_AZURE_SAS_TOKEN_1"`). The token itself never touches disk. Users set
+  the env var in their PowerShell profile or system environment variables. This is documented
+  prominently in the profile setup wizard and in `AzureIntegration.md`.
+
+- **Retry engine via shared `Invoke-WithRetry` private function:** A single scriptblock-based
+  retry helper is used by both the inline macro upload (`Invoke-MacroAction`) and the
+  command-line batch upload (`Send-LWASScreenshots`). Formula:
+  `delay = min(baseDelayMs × 2^(attempt−1) + random(0, baseDelayMs), 30 000 ms)`.
+  Non-retryable HTTP status codes (400, 401, 403, 404) throw immediately; retryable codes
+  (429, 500, 502, 503, 504) trigger backoff.
+
+- **`UploadScreenshots` macro action is inline and blocking:** The upload step executes
+  synchronously when reached in the sequence, consistent with how `Screenshot` actions work.
+  A warning is shown at macro save time if an `UploadScreenshots` step is not the last action
+  in the sequence, making the blocking behaviour explicit. The user can save anyway.
+
+- **Screenshot file tracking via `ScreenshotContext` extension:** The existing `ScreenshotContext`
+  hashtable (passed through `Invoke-MacroSequence` → `Invoke-MacroAction`) gains two new keys:
+  `CapturedFiles` (a `List[string]` of all paths captured this run) and
+  `CapturedFilesByActionName` (a hashtable mapping Screenshot action name → list of paths).
+  This enables the `NamedStep` scope for `UploadScreenshots`.
+
+- **`UploadScreenshots` scope restricted to the current macro run:** Only files captured
+  during the current sequence run are eligible for the `UploadScreenshots` macro action.
+  Uploading arbitrary files from `StoragePath` is available exclusively via the command-line
+  `Send-LWASScreenshots` function.
+
+- **Blob path pattern — configurable per profile, same placeholder syntax as `FilenamePattern`:**
+  Placeholders: `{MacroName}`, `{Date}` (`yyyy-MM-dd`), `{Time}` (`HH-mm-ss`), `{Filename}`
+  (original filename with extension). Default: `{MacroName}/{Date}/{Filename}` — groups blobs
+  by macro name and upload date. Stored in the profile JSON as `BlobPathPattern`.
+
+- **Local file retention — two independent per-profile controls:**
+  - `DeleteLocalAfterUpload` (bool, default `$false`): delete each file immediately after
+    successful upload.
+  - `DeleteLocalAfterDays` (int, default `30`): delete files older than N days from
+    `StoragePath` at the end of each `UploadScreenshots` step or `Send-LWASScreenshots` call,
+    regardless of upload status. Both controls may be active simultaneously.
+
+- **Progress reporting — `Write-Progress` for command-line, `Write-Verbose` / `Write-LastWarLog`
+  for inline macro execution:** `Write-Progress` is used by `Send-LWASScreenshots` only;
+  it is not safe to call inside a running macro sequence where Spectre.Console controls the
+  terminal.
+
+---
+
+### Phase 9 scope (what is and is not included)
+
+**Included:** Upload profile data model and CRUD (private + public functions); Azure Blob Storage
+REST upload engine with retry; `Invoke-WithRetry` shared helper; blob path resolver; `UploadScreenshots`
+macro action type (schema, validation, execution); `ScreenshotContext` extension for file tracking;
+four new public functions (`Get-LWASUploadProfile`, `New-LWASUploadProfile`,
+`Remove-LWASUploadProfile`, `Send-LWASScreenshots`); two new console screens
+(`Show-UploadProfilesScreen`, `Show-EditUploadProfileScreen`); updates to
+`Show-ConfigMenuScreen` and `Show-RecordMacroScreen`; unit and integration tests for all new
+code; `Install-LWAS` / `Uninstall-LWAS` updates for the new directory; documentation.
+
+**Explicitly out of scope:** GCloud and AWS providers; chunked/multipart upload for files > 256 MB
+(screenshots are never that large); upload scheduling (separate from macro sequences);
+re-uploading previously-uploaded files; PowerShell Gallery publication.
+
+---
+
+### Tasks
+
+1. [x] Upload profile data model and file storage
+
+   - [x] 1.1: Define the upload profile JSON schema. Each file at
+     `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles\{name}.json` contains:
+
+     ```json
+     {
+       "name": "azure-storage-1",
+       "provider": "AzureBlobStorage",
+       "accountName": "mystorageaccount",
+       "containerName": "screenshots",
+       "sasTokenEnvVar": "LWAS_AZURE_SAS_TOKEN_1",
+       "blobPathPattern": "{MacroName}/{Date}/{Filename}",
+       "maxRetryAttempts": 3,
+       "retryBaseDelayMs": 500,
+       "deleteLocalAfterUpload": false,
+       "deleteLocalAfterDays": 30,
+       "createdUtc": "2026-03-21T12:00:00Z",
+       "modifiedUtc": "2026-03-21T12:00:00Z"
+     }
+     ```
+
+     Valid name: `[a-zA-Z0-9_-]`, 1–50 characters (same rules as macro names).
+     `maxRetryAttempts`: int, 1–10. `retryBaseDelayMs`: int, 100–60 000.
+     `deleteLocalAfterDays`: int, 1–3 650.
+
+   - [x] 1.2: Create `Private/Get-UploadProfile.ps1`:
+
+     ```powershell
+     function Get-UploadProfile {
+         [CmdletBinding()]
+         param(
+             [string]$Name,
+             [string]$ProfilesDirectory
+         )
+     }
+     ```
+
+     `$ProfilesDirectory` defaults to `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles`.
+     Without `-Name`: enumerates all `*.json` files, parses each, returns as an array
+     (empty array when none exist — never `$null`).
+     With `-Name`: returns the single profile object, or `$null` if not found.
+     Each returned object has all schema fields; missing optional fields are populated with
+     defaults so callers never need to null-check individual properties.
+     Logs errors via `Write-LastWarLog`.
+
+   - [x] 1.3: Create `Private/Save-UploadProfileFile.ps1`:
+
+     ```powershell
+     function Save-UploadProfileFile {
+         [CmdletBinding()]
+         param(
+             [Parameter(Mandatory)] [PSCustomObject]$Profile,
+             [string]$ProfilesDirectory
+         )
+     }
+     ```
+
+     Creates `ProfilesDirectory` if it does not exist.
+     Sets `modifiedUtc` to the current UTC time before writing.
+     Serialises the profile object as JSON (`ConvertTo-Json -Depth 3`) and writes to
+     `{ProfilesDirectory}\{Profile.name}.json` with UTF-8 encoding.
+     Logs success at Info level via `Write-LastWarLog`.
+
+   - [x] 1.4: Create `Private/Remove-UploadProfileFile.ps1`:
+
+     ```powershell
+     function Remove-UploadProfileFile {
+         [CmdletBinding()]
+         param(
+             [Parameter(Mandatory)] [string]$Name,
+             [string]$ProfilesDirectory
+         )
+     }
+     ```
+
+     Resolves the file path; errors with `Write-Error` if not found; calls `Remove-Item`
+     and logs success at Info level via `Write-LastWarLog`.
+
+   - [x] 1.5: Create unit tests in `Tests/UploadProfileManagement.Tests.ps1`:
+      - [x] 1.5.1: `Get-UploadProfile` with no files returns an empty array
+      - [x] 1.5.2: `Get-UploadProfile` with two profile files returns two objects with all
+        schema fields present
+      - [x] 1.5.3: `Get-UploadProfile -Name 'profile-1'` returns the correct single object
+      - [x] 1.5.4: `Get-UploadProfile -Name 'does-not-exist'` returns `$null`
+      - [x] 1.5.5: `Get-UploadProfile` injects default values for any missing optional fields
+        (e.g. a file without `blobPathPattern` receives the default value)
+      - [x] 1.5.6: `Save-UploadProfileFile` calls `ConvertTo-Json` and `Set-Content` with the
+        correct path; `modifiedUtc` is updated; directory created if absent (mocked `New-Item`)
+      - [x] 1.5.7: `Remove-UploadProfileFile` calls `Remove-Item` with the correct path
+      - [x] 1.5.8: `Remove-UploadProfileFile` calls `Write-Error` when the file does not exist
+
+   - [x] 1.6: Create integration tests in `Tests/UploadProfileManagement_Integration.Tests.ps1`:
+      - [x] 1.6.1: `Save-UploadProfileFile` → `Get-UploadProfile` round-trip writes and reads
+        a real JSON file under a temp directory; all fields survive serialisation
+      - [x] 1.6.2: `Remove-UploadProfileFile` deletes the file created in 1.6.1
+      - [x] 1.6.3: Multiple `Save-UploadProfileFile` calls → `Get-UploadProfile` without `-Name`
+        returns all profiles; count matches
+      - All integration tests use a temp directory under `$env:TEMP`; cleanup in `AfterAll`
+
+2. [x] Blob path resolver
+
+   - [x] 2.1: Create `Private/Resolve-BlobPath.ps1`:
+
+     ```powershell
+     function Resolve-BlobPath {
+         [CmdletBinding()]
+         [OutputType([string])]
+         param(
+             [Parameter(Mandatory)] [string]$BlobPathPattern,
+             [Parameter(Mandatory)] [string]$MacroName,
+             [Parameter(Mandatory)] [string]$Filename,
+             [datetime]$UploadTime
+         )
+     }
+     ```
+
+     `$UploadTime` defaults to `[datetime]::UtcNow`.
+     Substitutes: `{MacroName}`, `{Date}` (`yyyy-MM-dd`), `{Time}` (`HH-mm-ss`),
+     `{Filename}` (full filename including extension).
+     Returns the resolved blob path string (e.g. `'my-macro/2026-03-21/screenshot_001.png'`).
+     Unrecognised placeholders are left unchanged and logged at Warning level.
+
+   - [x] 2.2: Create unit tests in `Tests/Resolve-BlobPath.Tests.ps1`:
+      - [x] 2.2.1: Default pattern `{MacroName}/{Date}/{Filename}` resolves all three tokens
+      - [x] 2.2.2: `{Time}` resolves to `HH-mm-ss` format
+      - [x] 2.2.3: Unknown placeholder `{Foo}` is left unchanged in the output
+      - [x] 2.2.4: Pattern with no placeholders returns the pattern unchanged
+      - [x] 2.2.5: `MacroName` containing characters that are valid in a profile name but
+        might be URL-sensitive (`-`, `_`) are preserved as-is in the blob path
+      - [x] 2.2.6: A fixed `UploadTime` value produces a deterministic output (no flakiness)
+
+3. [x] Retry engine
+
+   - [x] 3.1: Create `Private/Invoke-WithRetry.ps1`:
+
+     ```powershell
+     function Invoke-WithRetry {
+         [CmdletBinding()]
+         [OutputType([object])]
+         param(
+             [Parameter(Mandatory)] [scriptblock]$ScriptBlock,
+             [int]$MaxAttempts   = 3,
+             [int]$BaseDelayMs   = 500,
+             [int[]]$RetryOnHttpStatus = @(429, 500, 502, 503, 504)
+         )
+     }
+     ```
+
+     Executes `$ScriptBlock`. On failure:
+     - If the exception contains an HTTP status code in `$RetryOnHttpStatus`: waits
+       `min(BaseDelayMs × 2^(attempt−1) + random(0, BaseDelayMs), 30 000)` ms then retries.
+     - Otherwise: re-throws immediately (non-retryable).
+     After exhausting `MaxAttempts`: re-throws the last exception.
+     Logs each retry attempt at Warning level via `Write-LastWarLog`, including attempt number,
+     delay, and HTTP status code.
+     Returns the value returned by `$ScriptBlock` on success.
+
+   - [x] 3.2: Create unit tests in `Tests/Invoke-WithRetry.Tests.ps1`:
+      - [x] 3.2.1: Scriptblock succeeds on first attempt — returns result, no delay
+      - [x] 3.2.2: Scriptblock fails once with a retryable code then succeeds — returns
+        result after one retry; `Write-LastWarLog` called once with `Warning`
+      - [x] 3.2.3: Scriptblock always fails with a retryable code — throws after
+        `MaxAttempts` attempts; `Write-LastWarLog` called `MaxAttempts - 1` times
+      - [x] 3.2.4: Scriptblock fails with a non-retryable code (e.g. 404) — throws immediately
+        without any delay; no `Write-LastWarLog` retry warning
+      - [x] 3.2.5: Scriptblock fails with a generic (non-HTTP) exception — throws immediately;
+        no retry
+      - [x] 3.2.6: Delay formula is bounded at 30 000 ms for very large `BaseDelayMs` values
+        (mock `Start-Sleep` to assert it is never called with more than 30 000 ms)
+
+4. [x] Azure Blob Storage upload engine
+
+   - [x] 4.1: Create `Private/Invoke-AzureBlobUpload.ps1`:
+
+     ```powershell
+     function Invoke-AzureBlobUpload {
+         [CmdletBinding()]
+         [OutputType([PSCustomObject])]
+         param(
+             [Parameter(Mandatory)] [string]$FilePath,
+             [Parameter(Mandatory)] [string]$AccountName,
+             [Parameter(Mandatory)] [string]$ContainerName,
+             [Parameter(Mandatory)] [string]$BlobPath,
+             [Parameter(Mandatory)] [string]$SasToken,
+             [int]$MaxRetryAttempts = 3,
+             [int]$RetryBaseDelayMs = 500
+         )
+     }
+     ```
+
+     Constructs the PUT URL:
+     `https://{AccountName}.blob.core.windows.net/{ContainerName}/{BlobPath}?{SasToken}`
+     Reads the file as bytes with `[System.IO.File]::ReadAllBytes($FilePath)`.
+     Calls `Invoke-WithRetry` wrapping:
+
+     ```
+     Invoke-WebRequest -Uri $url -Method Put -Body $bytes
+         -Headers @{ 'x-ms-blob-type' = 'BlockBlob' } -UseBasicParsing -ErrorAction Stop
+     ```
+
+     Returns `[PSCustomObject]@{ Success = $true; BlobUrl = $url; FilePath = $FilePath }`
+     on success, or `[PSCustomObject]@{ Success = $false; Message = ...; FilePath = $FilePath }`
+     on failure after all retries.
+     Logs success at Info level and failure at Error level via `Write-LastWarLog`.
+     Does NOT read the SAS token from an env var — that is the caller's responsibility
+     (separation of concerns; makes the function directly testable).
+
+   - [x] 4.2: Create unit tests in `Tests/Invoke-AzureBlobUpload.Tests.ps1`:
+      - [x] 4.2.1: Successful upload — `Invoke-WebRequest` called with correct URL, method,
+        headers, and body bytes; returns `Success = $true` with `BlobUrl` set
+      - [x] 4.2.2: URL construction — `BlobPath` is correctly embedded between container name
+        and SAS token (no double-slash, correct `?` separator)
+      - [x] 4.2.3: `Invoke-WebRequest` fails with a 429 — `Invoke-WithRetry` is called
+        (assert via mock); after retries exhausted, returns `Success = $false`
+      - [x] 4.2.4: `Invoke-WebRequest` fails with a 403 (bad SAS token) — returns
+        `Success = $false` without retry; error logged
+      - [x] 4.2.5: File does not exist — returns `Success = $false` with a descriptive message
+        before any web request is attempted
+
+5. [x] MacroSchema extension — `UploadScreenshots` action type
+
+   - [x] 5.1: Add `'UploadScreenshots'` to `$script:MacroActionTypes` in `MacroSchema.ps1`:
+
+     ```powershell
+     'UploadScreenshots' = @{
+         Required = @('uploadProfileName', 'scope')
+         # scope: 'MacroSequence' | 'NamedStep'
+         # screenshotActionName: required when scope = 'NamedStep'
+         Optional = @('screenshotActionName')
+     }
+     ```
+
+   - [x] 5.2: Add `UploadScreenshots` validation block in `Test-MacroAction`:
+      - [x] 5.2.1: `uploadProfileName` must be non-empty
+      - [x] 5.2.2: `scope` must be exactly `'MacroSequence'` or `'NamedStep'`
+        (case-sensitive); any other value is an error
+      - [x] 5.2.3: When `scope = 'NamedStep'`: `screenshotActionName` must be present and
+        non-empty; it must exist in `$ExistingNames`; the referenced action's type (from
+        `$ActionTypeLookup`) must be `'Screenshot'` — referencing any other type is an error
+
+   - [x] 5.3: Update `Tests/MacroSchema.Tests.ps1` with new test cases:
+      - [x] 5.3.1: Valid `UploadScreenshots` with `scope = 'MacroSequence'` — passes validation
+      - [x] 5.3.2: Valid `UploadScreenshots` with `scope = 'NamedStep'` and a valid
+        `screenshotActionName` that references a Screenshot action — passes validation
+      - [x] 5.3.3: `scope` is an unrecognised value — fails with descriptive message
+      - [x] 5.3.4: `scope = 'NamedStep'` with no `screenshotActionName` — fails validation
+      - [x] 5.3.5: `scope = 'NamedStep'` with `screenshotActionName` that does not exist in
+        `$ExistingNames` — fails validation
+      - [x] 5.3.6: `scope = 'NamedStep'` with `screenshotActionName` that references a
+        non-Screenshot action (e.g. a `Delay`) — fails validation
+      - [x] 5.3.7: `uploadProfileName` is empty — fails validation
+      - [x] 5.3.8: `UploadScreenshots` in a complete `Test-MacroFile` call with a valid
+        sequence passes; total error count is zero
+
+6. [x] `ScreenshotContext` extension — captured file tracking
+
+   - [x] 6.1: In `Invoke-MacroSequence.ps1`, extend the `$screenshotContext` hashtable
+     initialisation to include two new keys:
+
+     ```powershell
+     $screenshotContext = @{
+         # ... existing keys unchanged ...
+         CapturedFiles           = [System.Collections.Generic.List[string]]::new()
+         CapturedFilesByActionName = @{}
+     }
+     ```
+
+   - [x] 6.2: In `Invoke-MacroAction.ps1` (the `'Screenshot'` case), immediately after
+     `$captureResult.Success` is confirmed `$true` and `$captureResult.FilePath` is available:
+
+     ```powershell
+     $ScreenshotContext.CapturedFiles.Add($captureResult.FilePath)
+     $actionKey = $ScreenshotContext.ActionName
+     if (-not $ScreenshotContext.CapturedFilesByActionName.ContainsKey($actionKey)) {
+         $ScreenshotContext.CapturedFilesByActionName[$actionKey] = [System.Collections.Generic.List[string]]::new()
+     }
+     $ScreenshotContext.CapturedFilesByActionName[$actionKey].Add($captureResult.FilePath)
+     ```
+
+   - [x] 6.3: Update `Tests/MacroExecution.Tests.ps1` with new test cases:
+      - [x] 6.3.1: After a sequence containing one Screenshot action, `CapturedFiles` contains
+        one entry matching the captured file path (mock `Invoke-CaptureScreenRegion` to return
+        a fake `FilePath`)
+      - [x] 6.3.2: After a sequence containing two Screenshot actions with different names,
+        `CapturedFilesByActionName` contains two keys each with one entry
+      - [x] 6.3.3: When a Screenshot action is skipped (e.g. `StoragePath` not configured),
+        no entry is added to `CapturedFiles` or `CapturedFilesByActionName`
+
+7. [x] `Invoke-MacroAction` extension — `UploadScreenshots` case
+
+   - [x] 7.1: Add `'UploadScreenshots'` to the `switch` in `Invoke-MacroAction.ps1`:
+
+      - [x] 7.1.1: Guard — if `$ScreenshotContext` is `$null`, return
+        `Skipped = $true` with a warning logged (same guard as the Screenshot case).
+
+      - [x] 7.1.2: Load the upload profile via `Get-UploadProfile -Name $Action.uploadProfileName`.
+        If `$null`, return `Success = $false` with a descriptive message logged at Error level
+        and do not attempt upload.
+
+      - [x] 7.1.3: Resolve the SAS token:
+        `$sasToken = [Environment]::GetEnvironmentVariable($profile.sasTokenEnvVar)`.
+        If `$null` or empty, return `Success = $false` with message:
+        `"Environment variable '$($profile.sasTokenEnvVar)' is not set. Set it to the SAS token before running this sequence."`.
+        Log at Error level.
+
+      - [x] 7.1.4: Resolve the file list based on `$Action.scope`:
+        - `'MacroSequence'`: `$filesToUpload = $ScreenshotContext.CapturedFiles`
+        - `'NamedStep'`: `$filesToUpload = $ScreenshotContext.CapturedFilesByActionName[$Action.screenshotActionName]`
+          If the key is absent or the list is empty, log a Warning and return `Success = $true;
+          Skipped = $true` (no files to upload is not an error).
+
+      - [x] 7.1.5: Upload loop — for each `$filePath` in `$filesToUpload`:
+        - Resolve blob path: call `Resolve-BlobPath` using `$profile.blobPathPattern`,
+          `$ScreenshotContext.MacroName`, and the filename.
+        - Call `Invoke-AzureBlobUpload` with all resolved parameters.
+        - If `Success = $true` and `$profile.deleteLocalAfterUpload -eq $true`:
+          call `Remove-Item -Path $filePath -Force -ErrorAction SilentlyContinue`.
+        - If `Success = $false`: log the failure at Warning level and continue to next file
+          (partial upload failure does not abort the upload step, but the overall action
+          result will reflect the failure count).
+
+      - [x] 7.1.6: After the upload loop, apply `DeleteLocalAfterDays` cleanup:
+        Enumerate all files in `(Get-ModuleConfiguration).Screenshots.StoragePath` older than
+        `$profile.deleteLocalAfterDays` days; call `Remove-Item` on each. Log count at Info level.
+        If `StoragePath` is not configured or the directory does not exist, skip silently.
+
+      - [x] 7.1.7: Return:
+        - `Success = $true` if all uploads succeeded (or there were zero failures).
+        - `Success = $false; Message = "$failureCount of $totalCount uploads failed."` if any
+          file failed after all retries. This causes `Invoke-MacroSequence` to log and report
+          a step failure but does not trigger emergency stop.
+
+   - [x] 7.2: Update `Tests/MacroExecution.Tests.ps1` with `UploadScreenshots` test cases:
+      - [x] 7.2.1: `ScreenshotContext` is `$null` — action returns `Skipped = $true`
+      - [x] 7.2.2: Profile not found — `Get-UploadProfile` mocked to return `$null` — action
+        returns `Success = $false`
+      - [x] 7.2.3: SAS token env var not set — `[Environment]::GetEnvironmentVariable` returns
+        `$null` — action returns `Success = $false` with descriptive message
+      - [x] 7.2.4: Scope `MacroSequence` — `Invoke-AzureBlobUpload` called for each file in
+        `CapturedFiles`; `Success = $true` returned
+      - [x] 7.2.5: Scope `NamedStep` — only files from the named action are uploaded
+      - [x] 7.2.6: Scope `NamedStep` with no matching files — returns `Skipped = $true`
+      - [x] 7.2.7: `DeleteLocalAfterUpload = $true` — `Remove-Item` called for each
+        successfully uploaded file
+      - [x] 7.2.8: One file upload fails after retries — action returns `Success = $false`;
+        remaining files are still uploaded (loop does not abort on first failure)
+      - [x] 7.2.9: `DeleteLocalAfterDays` cleanup — `Remove-Item` called for files older than
+        the configured threshold in `StoragePath` (mock `Get-ChildItem` and `Get-Date`)
+
+8. [x] Public command-line functions
+
+   - [x] 8.1: Create `Public/Get-LWASUploadProfile.ps1`:
+      - [x] 8.1.1: `[CmdletBinding()]`, optional `-Name [string]` parameter.
+      - [x] 8.1.2: Without `-Name`: calls `Get-UploadProfile` (no name argument); returns the
+        array of all profiles. Returns an empty array (not `$null`) when none exist; writes
+        `"No upload profiles configured."` via `Write-Verbose`.
+      - [x] 8.1.3: With `-Name`: calls `Get-UploadProfile -Name $Name`; returns the profile
+        object. If not found, writes `Write-Warning "Upload profile '$Name' not found."` and
+        returns `$null`.
+      - [x] 8.1.4: Full comment-based help: `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER Name`,
+        `.OUTPUTS`, at least two `.EXAMPLE` blocks.
+      - [x] 8.1.5: Add `'Get-LWASUploadProfile'` to `FunctionsToExport` in
+        `LastWarAutoScreenshot.psd1`.
+
+   - [x] 8.2: Create `Public/New-LWASUploadProfile.ps1`:
+      - [x] 8.2.1: `[CmdletBinding()]` with parameters:
+        - `-Name [string]` (Mandatory)
+        - `-AccountName [string]` (Mandatory): Azure Storage account name
+        - `-ContainerName [string]` (Mandatory): Blob container name
+        - `-SasTokenEnvVar [string]` (Mandatory): Name of the env var holding the SAS token
+        - `-BlobPathPattern [string]` (optional, default `'{MacroName}/{Date}/{Filename}'`)
+        - `-MaxRetryAttempts [int]` (optional, default `3`, validated 1–10)
+        - `-RetryBaseDelayMs [int]` (optional, default `500`, validated 100–60 000)
+        - `-DeleteLocalAfterUpload [switch]` (optional, default `$false`)
+        - `-DeleteLocalAfterDays [int]` (optional, default `30`, validated 1–3 650)
+      - [x] 8.2.2: Validate `-Name` using `Get-ValidMacroName` (already in `MacroSchema.ps1`);
+        check uniqueness against existing profiles via `Get-UploadProfile`.
+      - [x] 8.2.3: Validate `-SasTokenEnvVar`: non-empty, no spaces or special characters
+        (`[^A-Z0-9_a-z]`); write a warning if the env var is not currently set (but do not
+        block the save — the user may set it later).
+      - [x] 8.2.4: Build the profile `PSCustomObject` (all schema fields); set `createdUtc`
+        and `modifiedUtc` to `[datetime]::UtcNow` in ISO 8601 format; call
+        `Save-UploadProfileFile`.
+      - [x] 8.2.5: Write `"Upload profile '$Name' saved."` on success.
+      - [x] 8.2.6: Full comment-based help with two `.EXAMPLE` blocks.
+      - [x] 8.2.7: Add `'New-LWASUploadProfile'` to `FunctionsToExport`.
+
+   - [x] 8.3: Create `Public/Remove-LWASUploadProfile.ps1`:
+      - [x] 8.3.1: `[CmdletBinding(SupportsShouldProcess)]` with parameters:
+        - `-Name [string]` (Mandatory)
+        - `-Force [switch]`
+      - [x] 8.3.2: Check profile exists via `Get-UploadProfile -Name $Name`; if not found,
+        call `Write-Error "Upload profile '$Name' not found."` and return.
+      - [x] 8.3.3: Without `-Force`: prompt
+        `"Remove upload profile '$Name'? This cannot be undone. [Y/N]"` via `Read-Host`;
+        return if user answers anything other than `Y` or `y`.
+      - [x] 8.3.4: With `-Force`: skip prompt; proceed directly to removal.
+      - [x] 8.3.5: `ShouldProcess` check: `if ($PSCmdlet.ShouldProcess($Name, 'Remove upload profile'))`;
+        call `Remove-UploadProfileFile -Name $Name` inside the check.
+      - [x] 8.3.6: Write `"Upload profile '$Name' removed."` on success.
+      - [x] 8.3.7: Full comment-based help, including `-WhatIf` in an `.EXAMPLE` block.
+      - [x] 8.3.8: Add `'Remove-LWASUploadProfile'` to `FunctionsToExport`.
+
+   - [x] 8.4: Create `Public/Send-LWASScreenshots.ps1`:
+      - [x] 8.4.1: `[CmdletBinding(SupportsShouldProcess)]` with parameters:
+        - `-UploadProfileName [string]` (Mandatory)
+        - `-FolderPath [string]` (optional; defaults to `(Get-ModuleConfiguration).Screenshots.StoragePath`)
+        - `-Filter [string]` (optional, default `'*.png'`)
+      - [x] 8.4.2: Load the profile via `Get-UploadProfile -Name $UploadProfileName`; error
+        and return if not found.
+      - [x] 8.4.3: Resolve and validate `$FolderPath`: if empty/null (StoragePath not
+        configured), write `Write-Error` and return. If directory does not exist, write
+        `Write-Warning` and return.
+      - [x] 8.4.4: Resolve SAS token from env var; error and return if not set.
+      - [x] 8.4.5: Enumerate files: `Get-ChildItem -Path $FolderPath -Filter $Filter -File`.
+        Write `"No files matching '$Filter' found in '$FolderPath'."` via `Write-Verbose`
+        if empty.
+      - [x] 8.4.6: For each file, `ShouldProcess` check — when `-WhatIf` is active, output
+        `"What if: Would upload '$($file.Name)' to profile '$UploadProfileName'"` and skip
+        the actual upload. When not `-WhatIf`:
+        - Call `Resolve-BlobPath` for the blob path.
+        - Call `Invoke-AzureBlobUpload`.
+        - Call `Write-Progress` with `Activity 'Uploading screenshots'`,
+          `Status $file.Name`, and `PercentComplete` based on file index / total.
+        - Apply `DeleteLocalAfterUpload` per profile setting.
+      - [x] 8.4.7: After the loop, call `Write-Progress -Completed`. Apply `DeleteLocalAfterDays`
+        cleanup (same logic as in `Invoke-MacroAction` task 7.1.6).
+      - [x] 8.4.8: Report summary: `"Uploaded $successCount of $totalCount files."` If any
+        failed: `Write-Warning "Failed to upload $failureCount file(s). Check the log for details."`.
+      - [x] 8.4.9: Full comment-based help including `-WhatIf`, `-Filter`, and two `.EXAMPLE` blocks.
+      - [x] 8.4.10: Add `'Send-LWASScreenshots'` to `FunctionsToExport`.
+
+   - [x] 8.5: Create unit tests in `Tests/Get-LWASUploadProfile.Tests.ps1`:
+      - [x] 8.5.1: No profiles configured — returns empty array, no error
+      - [x] 8.5.2: Profiles exist — returns array with correct count; each element has
+        all expected properties
+      - [x] 8.5.3: `-Name` with existing profile — returns the single matching object
+      - [x] 8.5.4: `-Name` with non-existent profile — returns `$null`; `Write-Warning` called
+
+   - [x] 8.6: Create unit tests in `Tests/New-LWASUploadProfile.Tests.ps1`:
+      - [x] 8.6.1: All mandatory parameters supplied — `Save-UploadProfileFile` called with
+        a profile object containing all fields; function writes success message
+      - [x] 8.6.2: Default values applied — `BlobPathPattern`, `MaxRetryAttempts`,
+        `RetryBaseDelayMs`, `DeleteLocalAfterUpload`, `DeleteLocalAfterDays` all match defaults
+        when not supplied
+      - [x] 8.6.3: `-Name` with invalid characters — `Write-Error` called; `Save-UploadProfileFile`
+        not called
+      - [x] 8.6.4: Duplicate name — `Get-UploadProfile` returns existing profile with same name —
+        `Write-Error` called; `Save-UploadProfileFile` not called
+      - [x] 8.6.5: `-SasTokenEnvVar` containing spaces — `Write-Error` called
+      - [x] 8.6.6: `-SasTokenEnvVar` env var not currently set — `Write-Warning` called but
+        profile is still saved
+      - [x] 8.6.7: `-MaxRetryAttempts` outside range (0 or 11) — `Write-Error` called
+      - [x] 8.6.8: `-DeleteLocalAfterDays` outside range (0 or 3651) — `Write-Error` called
+
+   - [x] 8.7: Create unit tests in `Tests/Remove-LWASUploadProfile.Tests.ps1`:
+      - [x] 8.7.1: Profile not found — `Write-Error` called; `Remove-UploadProfileFile` not called
+      - [x] 8.7.2: Without `-Force`, user answers `'Y'` — `Remove-UploadProfileFile` called
+      - [x] 8.7.3: Without `-Force`, user answers `'N'` — `Remove-UploadProfileFile` not called
+      - [x] 8.7.4: `-Force` specified — `Remove-UploadProfileFile` called without `Read-Host` prompt
+      - [x] 8.7.5: `-WhatIf` specified — `Remove-UploadProfileFile` not called; WhatIf message shown
+
+   - [x] 8.8: Create unit tests in `Tests/Send-LWASScreenshots.Tests.ps1`:
+      - [x] 8.8.1: Profile not found — `Write-Error` called; no upload attempted
+      - [x] 8.8.2: `FolderPath` resolves from config when not supplied; `Write-Error` when
+        `StoragePath` is empty
+      - [x] 8.8.3: SAS token env var not set — `Write-Error` called; no upload attempted
+      - [x] 8.8.4: No files matching `Filter` — `Write-Verbose` called; no upload attempted
+      - [x] 8.8.5: Two files present — `Invoke-AzureBlobUpload` called twice; `Write-Progress`
+        called for each file; success summary written
+      - [x] 8.8.6: One file fails — `Write-Warning` includes failure count in summary
+      - [x] 8.8.7: `-WhatIf` — `Invoke-AzureBlobUpload` not called; WhatIf output written for
+        each file
+      - [x] 8.8.8: `DeleteLocalAfterUpload = $true` — `Remove-Item` called for each successfully
+        uploaded file
+      - [x] 8.8.9: `DeleteLocalAfterDays` cleanup — `Remove-Item` called for files older than
+        threshold
+
+   - [x] 8.9: Create integration tests in `Tests/UploadProfileCLI_Integration.Tests.ps1`:
+      - [x] 8.9.1: `New-LWASUploadProfile` → `Get-LWASUploadProfile` → `Remove-LWASUploadProfile`
+        round-trip with real file I/O in a temp `UploadProfiles\` directory
+      - [x] 8.9.2: `New-LWASUploadProfile` followed by `Get-LWASUploadProfile -Name` returns the
+        correct profile with all fields intact after JSON serialisation
+      - [x] 8.9.3: `Remove-LWASUploadProfile -Force` removes the file; subsequent
+        `Get-LWASUploadProfile -Name` returns `$null`
+      - All integration tests use a temp directory; cleanup in `AfterAll`
+
+9. [x] Console UI — upload profile management screens
+
+   - [x] 9.1: Create `Private/ConsoleApp/Show-UploadProfilesScreen.ps1`:
+      - [x] 9.1.1: Function signature follows the established `[Spectre.Console.IAnsiConsole]$Console`
+        injection pattern.
+      - [x] 9.1.2: Loads all profiles via `Get-UploadProfile`; displays them in a
+        `ConsoleAppBridge.CreateTable` with columns: `Name`, `Account`, `Container`,
+        `Env Var`, `Blob Pattern`, `Delete After (days)`.
+      - [x] 9.1.3: When no profiles exist, shows a panel:
+        `"No upload profiles configured. Select 'Add profile' to create one."`.
+      - [x] 9.1.4: Selection prompt choices (in order):
+        - `'[[Add profile]]'` — always shown
+        - `'[[Remove profile]]'` — shown only when at least one profile exists
+        - `'[[Back]]'`
+      - [x] 9.1.5: `'Add profile'` → calls `Show-EditUploadProfileScreen`; on return, reloads
+        the profile list and redraws.
+      - [x] 9.1.6: `'Remove profile'` → shows a second selection prompt listing all profile
+        names plus `'[[Cancel]]'`; on selection, calls `Remove-UploadProfileFile`; redisplays.
+      - [x] 9.1.7: `'Back'` → returns `$null`.
+      - [x] 9.1.8: Full comment-based help.
+
+   - [x] 9.2: Create `Private/ConsoleApp/Show-EditUploadProfileScreen.ps1`:
+      - [x] 9.2.1: Function signature with `[Spectre.Console.IAnsiConsole]$Console` injection.
+      - [x] 9.2.2: Prompts for each field in sequence using `$Console.Ask` or equivalent,
+        with inline validation before advancing:
+        - **Name**: validated via `Get-ValidMacroName` + uniqueness check; re-prompts on failure.
+        - **Azure account name**: non-empty; re-prompts if blank.
+        - **Container name**: non-empty; re-prompts if blank.
+        - **SAS token env var name**: must match `^[A-Z0-9_a-z]+$`; re-prompts on failure.
+        - **Blob path pattern**: default shown as `{MacroName}/{Date}/{Filename}`; accepted as-is
+          on empty entry (uses default).
+        - **Max retry attempts** (1–10): default `3`.
+        - **Retry base delay ms** (100–60 000): default `500`.
+        - **Delete local after upload** (`Y/N`): default `N`.
+        - **Delete local after days** (1–3 650): default `30`.
+      - [x] 9.2.3: After all fields collected, shows a summary panel and confirms:
+        `"Save this profile? [[Yes]] / [[Cancel]]"`.
+      - [x] 9.2.4: On `'Yes'`: calls `Save-UploadProfileFile`; shows a brief success message;
+        returns the saved profile object.
+      - [x] 9.2.5: On `'Cancel'` at any point: returns `$null` without saving.
+      - [x] 9.2.6: Displays an informational panel after the env var prompt:
+        `"Set the env var before running:`$env:LWAS_AZURE_SAS_TOKEN_1 = 'sv=...'`
+        For persistence: [Environment]::SetEnvironmentVariable('LWAS_AZURE_SAS_TOKEN_1', 'sv=...', 'User')"`.
+      - [x] 9.2.7: Full comment-based help.
+
+   - [x] 9.3: Create unit tests in `Tests/ConsoleApp/Show-UploadProfilesScreen.Tests.ps1`:
+      - [x] 9.3.1: No profiles — info panel text contains `'No upload profiles configured'`;
+        `'Remove profile'` choice is absent from the selection prompt
+      - [x] 9.3.2: Two profiles — table output contains both profile names;
+        `'Remove profile'` choice is present
+      - [x] 9.3.3: User selects `'Add profile'` — `Show-EditUploadProfileScreen` is invoked
+      - [x] 9.3.4: User selects `'Remove profile'` then selects a profile name —
+        `Remove-UploadProfileFile` called with that profile name
+      - [x] 9.3.5: User selects `'Back'` — function returns `$null`
+
+   - [x] 9.4: Create unit tests in `Tests/ConsoleApp/Show-EditUploadProfileScreen.Tests.ps1`:
+      - [x] 9.4.1: All fields entered successfully — `Save-UploadProfileFile` called once with
+        a profile object containing the entered values
+      - [x] 9.4.2: Invalid name (duplicate) — prompt loops; `Save-UploadProfileFile` not called
+        until a valid name is entered
+      - [x] 9.4.3: Empty blob path pattern entry — default `{MacroName}/{Date}/{Filename}` used
+      - [x] 9.4.4: User selects `'Cancel'` at the confirmation prompt — `Save-UploadProfileFile`
+        not called; function returns `$null`
+      - [x] 9.4.5: Env var guidance panel text is written to the console output
+
+10. [x] Console app integration — config menu and macro record screen
+
+    - [x] 10.1: Update `Private/ConsoleApp/Show-ConfigMenuScreen.ps1`:
+       - [x] 10.1.1: Add `'[[Upload profiles]]'` to the selection prompt choices, positioned
+         immediately before `'[[Back]]'`.
+       - [x] 10.1.2: In the dispatch switch/if block, add a case for `'Upload profiles'` that
+         calls `Show-UploadProfilesScreen -Console $Console` and loops back to the config
+         menu (consistent with how other config sub-screens work).
+
+    - [x] 10.2: Update `Private/ConsoleApp/Show-RecordMacroScreen.ps1`:
+       - [x] 10.2.1: In the "Add action" selection prompt, add `'[[UploadScreenshots]]'` to the
+         action type list.
+       - [x] 10.2.2: When `'UploadScreenshots'` is selected:
+         - Load all profiles via `Get-UploadProfile`. If none exist, display a warning panel:
+           `"No upload profiles configured. Add one via Config → Upload profiles."` and
+           return to the action list without adding a step.
+         - Show a profile selection prompt (list of profile names plus `'[[Cancel]]'`).
+         - Show a scope selection prompt:
+           `'All screenshots in this macro sequence'` / `'Screenshots from named sequence step'`.
+         - If `'Named step'` selected: show a selection prompt of existing Screenshot action
+           names from the current sequence. If none exist, display a warning:
+           `"No Screenshot actions in this sequence yet. Add a Screenshot step first."` and
+           return without adding.
+         - Construct the `UploadScreenshots` action object and append to the sequence.
+       - [x] 10.2.3: At save time — before calling the save function, scan the sequence for
+         any `UploadScreenshots` action that is not the last step. If found:
+         - Display a Spectre.Console warning panel listing the action name(s) and the message:
+           `"An UploadScreenshots step is not the last action in this sequence. All subsequent
+            steps will be blocked until the upload completes. Save anyway?"`
+         - Show a `'[[Save anyway]]'` / `'[[Cancel]]'` prompt. Cancel returns to the sequence
+           editor without saving.
+
+    - [x] 10.3: Update `Tests/ConsoleApp/Show-ConfigMenuScreen.Tests.ps1`:
+       - [x] 10.3.1: Add test: selecting `'Upload profiles'` invokes `Show-UploadProfilesScreen`
+         (assert via mock)
+       - [x] 10.3.2: Add test: `'Upload profiles'` choice is present in the config menu prompt
+
+    - [x] 10.4: Update `Tests/ConsoleApp/Show-RecordMacroScreen.Tests.ps1`:
+       - [x] 10.4.1: `'UploadScreenshots'` is present in the add-action list
+       - [x] 10.4.2: Selecting `'UploadScreenshots'` when no profiles exist — warning panel
+         shown; no action added to sequence
+       - [x] 10.4.3: Selecting `'UploadScreenshots'` with profiles available, scope
+         `'MacroSequence'` — action added with correct `uploadProfileName` and
+         `scope = 'MacroSequence'`
+       - [x] 10.4.4: Selecting `'UploadScreenshots'`, scope `'NamedStep'`, with Screenshot
+         actions in sequence — action added with `scope = 'NamedStep'` and
+         `screenshotActionName` set
+       - [x] 10.4.5: Selecting `'UploadScreenshots'`, scope `'NamedStep'`, with no Screenshot
+         actions in sequence — warning shown; no action added
+       - [x] 10.4.6: Save with `UploadScreenshots` as last step — no warning shown;
+         save proceeds
+       - [x] 10.4.7: Save with `UploadScreenshots` NOT as last step — warning panel shown;
+         user confirms `'Save anyway'` — save proceeds
+       - [ ] 10.4.8: Save with `UploadScreenshots` NOT as last step — warning panel shown;
+         user selects `'Cancel'` — save does not proceed; sequence editor remains open
+
+11. [x] Installation and uninstallation updates
+
+    - [x] 11.1: Update `Public/Install-LWAS.ps1` — in the AppData directory creation step
+      (task 3.6 of Phase 7), add creation of the `UploadProfiles\` subdirectory:
+
+      ```powershell
+      $uploadProfilesPath = Join-Path $appDataPath 'UploadProfiles'
+      if (-not (Test-Path -Path $uploadProfilesPath -PathType Container)) {
+          New-Item -Path $uploadProfilesPath -ItemType Directory -Force | Out-Null
+          Write-Output "Created upload profiles directory: $uploadProfilesPath"
+      } else {
+          Write-Output "Upload profiles directory already exists, skipping."
+      }
+      ```
+
+    - [x] 11.2: Update `scripts/Uninstall-LWAS.ps1` — the `$env:APPDATA\LastWarAutoScreenshot\`
+      removal prompt (task 5.7 of Phase 7) already removes the whole directory including
+      `UploadProfiles\` when the user confirms. No code change needed, but update the prompt
+      message to mention upload profiles explicitly:
+      `"Remove config, macro, upload profile, and scheduler files at $appDataPath? [Y/N]"`
+
+    - [x] 11.3: Update `Tests/Install-LWAS.Tests.ps1` — add test:
+      `UploadProfiles\` subdirectory creation — `New-Item` called with the `UploadProfiles`
+      child path when the directory does not exist.
+
+12. [x] Documentation
+
+    - [x] 12.1: Create `powershell-module/Docs/AzureIntegration.md` covering:
+       - Overview — what the upload feature does and when to use it
+       - Prerequisites — Azure Storage account, Blob container, SAS token with write+list
+         permissions on the container
+       - Setting up a profile via the console app (Config → Upload profiles → Add profile)
+       - Setting up a profile via the command line
+         (`New-LWASUploadProfile` with all parameters shown)
+       - Setting the SAS token environment variable — temporary
+         (`$env:VAR = '...'`) and persistent
+         (`[Environment]::SetEnvironmentVariable('VAR', '...', 'User')`)
+       - Blob path pattern reference — all placeholders with examples
+       - Adding an `UploadScreenshots` step to a macro — scope options explained with examples
+       - Running an upload from the command line (`Send-LWASScreenshots`, `-WhatIf` usage)
+       - Local file retention — `DeleteLocalAfterUpload` and `DeleteLocalAfterDays` explained
+       - Retry behaviour — formula, retryable vs non-retryable status codes
+       - Troubleshooting table: env var not set / SAS token expired / container not found /
+         partial upload failures
+
+    - [x] 12.2: Update root `README.md`:
+       - Add `Get-LWASUploadProfile`, `New-LWASUploadProfile`, `Remove-LWASUploadProfile`,
+         `Send-LWASScreenshots` to the command reference section
+       - Add "Azure Blob Storage screenshot upload with retry" to the Features list
+       - Add a link to `AzureIntegration.md` in the Documentation section
+
+    - [x] 12.3: Update `powershell-module/Docs/UserGuide.md` — add a brief "Screenshot uploads"
+      section describing the upload profiles concept and the `UploadScreenshots` macro step;
+      cross-reference `AzureIntegration.md` for full details.
+
+    - [x] 12.4: Update `CLAUDE.md` "Current status" line:
+      `Phase 8 (Documentation & Examples)` → `Phase 9 (Azure Integration)`.
+
+    - [x] 12.5: Update `examples/ModuleConfig-example.jsonc` — add a comment block in the
+      `Screenshots` section noting that upload profiles are stored separately in
+      `UploadProfiles\{name}.json` and are not part of `ModuleConfig.json`; reference
+      `AzureIntegration.md` for the profile schema.
+
+13. [ ] Final validation
+
+    - [x] 13.1: Run the complete, unfiltered Pester suite (`Invoke-Pester -Path .\powershell-module\Tests -Output Detailed`):
+       - Record total test count; must meet or exceed Phase 8 final baseline plus all new
+         Phase 9 tests added across tasks 1–11.
+       - Zero failures, zero errors.
+       - If any previously-passing test now fails, halt and investigate before proceeding.
+
+    - [x] 13.2: Manually smoke-test upload profile CRUD via command line (no real Azure
+      account needed for CRUD):
+       - `New-LWASUploadProfile -Name 'test-azure-1' -AccountName 'myaccount' -ContainerName 'shots' -SasTokenEnvVar 'LWAS_TEST_SAS'`
+       - `Get-LWASUploadProfile` — verify profile listed
+       - `Get-LWASUploadProfile -Name 'test-azure-1'` — verify all fields correct
+       - `Remove-LWASUploadProfile -Name 'test-azure-1' -Force`
+       - `Get-LWASUploadProfile` — verify empty
+
+    - [x] 13.3: Manually smoke-test `Send-LWASScreenshots -WhatIf`:
+       - Create a test profile; place one PNG in `StoragePath`
+       - Run `Send-LWASScreenshots -UploadProfileName 'test-azure-1' -WhatIf`
+       - Verify WhatIf output lists the file; verify the file is not deleted and no web
+         request is made (set a breakpoint or use `Write-Verbose` output)
+
+    - [x] 13.4: Manually smoke-test the console upload profile management screens:
+       - Launch `Start-LWASConsole` → Config → Upload profiles
+       - Add a profile via the wizard; verify the profile JSON file is created under
+         `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles\`
+       - Remove the profile via the screen; verify the file is deleted
+
+    - [ ] 13.5: Manually smoke-test the `UploadScreenshots` macro step in
+      `Show-RecordMacroScreen`:
+       - Record a macro with a Screenshot step then an UploadScreenshots step (not last);
+         verify the "not last step" warning is shown at save time
+       - Record a macro with UploadScreenshots as the last step; verify no warning
+       - Inspect the saved macro JSON; verify `type`, `uploadProfileName`, `scope`,
+         and (where applicable) `screenshotActionName` fields are present and correct
+
+## Phase 9b: Automated SAS Token Management
+
+### Architecture decisions (future reference)
+
+- **`cloudProvider` as a new profile field:** A dedicated `cloudProvider` string field (value:
+  `"azure"`) is added to the upload profile schema alongside the existing `provider` field. This
+  provides a clean discriminator for SAS-token-aware operations and was explicitly requested. The
+  existing `provider = "AzureBlobStorage"` field is preserved for backward compatibility with all
+  Phase 9 code. Back-filling logic in `Get-UploadProfile` defaults `cloudProvider` to `"azure"` for
+  existing profiles that pre-date Phase 9b.
+
+- **`Az.Storage` PowerShell module for SAS token generation:** `New-AzStorageContainerSASToken`
+  (from `Az.Storage`) is used rather than reimplementing Azure's HMAC-SHA256 SAS signing algorithm.
+  This eliminates a significant security and maintenance surface area. The module is **not**
+  auto-installed; `Update-LWASUploadProfileSASToken` checks for its presence and emits a clear
+  `Write-Error` with installation instructions if absent. Users who do not use Azure are never
+  prompted to install the module.
+
+- **SAS token validity via `se=` query-string parsing:** `Test-LWASSASTokenIsValid` parses the
+  signed expiry (`se=`) parameter from the SAS token query string and compares it to UTC now with a
+  5-minute safety buffer. This is a pure string operation — no Az module, no network call — making
+  the function fast, dependency-free, and fully testable. Signature tampering is not checked because
+  the token was generated by this module or by the user, not received from an untrusted source.
+
+- **Environment variable scope — User + Process on write:** On token assignment,
+  `Update-LWASUploadProfileSASToken` sets the env var at both `User` scope (persistent, survives
+  session restart, stored in the Windows registry) and `Process` scope (immediately available in the
+  current PowerShell session via `$env:VAR`). Validation reads via `[Environment]::GetEnvironmentVariable`
+  which checks User scope explicitly, ensuring the persisted value is tested rather than only the
+  in-session value.
+
+- **SAS token env var naming convention — `LWAS_SAS_` prefix:** All env vars managed by this module
+  are prefixed `LWAS_SAS_` followed by a user-supplied suffix (letters, digits, underscores, 1–30
+  characters). The full name is always uppercased on save. This makes managed vars trivially
+  discoverable via `Get-LWASSASTokenEnvVarNames`, avoids collisions with unrelated env vars, and
+  enforces consistency between the console UI path and the `New-LWASUploadProfile` command-line
+  path. The `LWAS_SAS_` prefix convention is enforced as a validation rule on `SasTokenEnvVar`
+  parameters.
+
+- **SAS token expiry — fixed 1-year window:** Tokens are generated with a 1-year expiry from the
+  time of creation (`[datetime]::UtcNow.AddYears(1)`). This is not configurable in Phase 9b (YAGNI).
+  A per-profile `sasTokenExpiryDays` field may be added in a future phase if requested.
+
+- **Azure authentication is the caller's responsibility:** `Update-LWASUploadProfileSASToken` does
+  not call `Connect-AzAccount`. If the session is not authenticated, `New-AzStorageContainerSASToken`
+  will throw and the error is surfaced with an actionable hint: `"Run Connect-AzAccount then retry."`.
+  Auto-connection would require storing credentials, which contradicts the Phase 9 decision to never
+  write credentials to disk.
+
+- **Auto-token behaviour on profile save — both UI and command-line paths:** When a profile is saved
+  (via `Show-EditUploadProfileScreen` or `New-LWASUploadProfile`) and `cloudProvider = "azure"`,
+  the selected SAS token env var is validated via `Test-LWASSASTokenIsValid`. If the token is absent
+  or expired, `Update-LWASUploadProfileSASToken` is called automatically. This is the core
+  "no manual renewal" behaviour. The user is never required to set a SAS token manually.
+
+- **`Show-EditUploadProfileScreen` SAS token step replaced with selection prompt:** The free-text
+  env var name prompt is replaced by a `SelectionPrompt` listing all existing `LWAS_SAS_*` env vars
+  plus `"Create new"`. When no `LWAS_SAS_*` vars exist, the selection is skipped entirely and the
+  user goes directly to the suffix-entry prompt. This ensures all managed vars follow the naming
+  convention and prevents typos.
+
+---
+
+### Phase 9b scope (what is and is not included)
+
+**Included:** `cloudProvider` field added to upload profile schema and back-filled in
+`Get-UploadProfile`; `Test-LWASSASTokenIsValid` public function; `Update-LWASUploadProfileSASToken`
+public function; `Get-LWASSASTokenEnvVarNames` private helper (scans all env var scopes for
+`LWAS_SAS_*` names); `Assert-LWASAzStorageModule` private helper (checks, optionally installs,
+and imports `Az.Storage`; used by all functions that invoke Az.Storage cmdlets);
+`Test-LWASAzureProfile` private helper (cloudProvider guard used by all SAS-related functions);
+updated
+`Show-EditUploadProfileScreen` (SAS token selection prompt + auto-token on save); updated
+`New-LWASUploadProfile` (auto-token on save + `LWAS_SAS_` prefix enforcement + `-CloudProvider`
+parameter); unit tests for all new and updated code; documentation updates.
+
+**Explicitly out of scope:** GCloud and AWS SAS equivalents; automatic background token renewal
+while a macro is running; configurable SAS token expiry duration; multi-subscription Azure support;
+service principal / workload identity authentication (interactive `Connect-AzAccount` only);
+`Update-LWASUploadProfileSASToken` integration into `Send-LWASScreenshots` or
+`Invoke-AzureBlobUpload` (those functions receive the token string directly and are not responsible
+for renewal).
+
+---
+
+### Tasks
+
+1. [ ] Upload profile schema update — add `cloudProvider` field
+
+   **Design decision — `cloudProvider` as a new field vs. deriving from `provider` at runtime:**
+
+   | Approach | Pros | Cons |
+   |---|---|---|
+   | A) Add `cloudProvider` as a new top-level field (`"azure"`) | Explicit; future-proof for multi-cloud; honours user's explicit request; clean discriminator for SAS logic | Minor schema bloat; two fields carry related information |
+   | B) Derive `cloudProvider` from the existing `provider` field at runtime (e.g. `"AzureBlobStorage"` → `"azure"`) | No schema change; no migration needed | Couples abstract cloud name to concrete provider string; does not match user's stated requirement |
+
+   **Preferred: Option A.** The user explicitly requested a `cloudProvider` field. The schema
+   cost is trivial. Clean separation between the storage provider implementation name (`provider`)
+   and the higher-level cloud discriminator (`cloudProvider`) also makes future multi-cloud
+   extension cleaner.
+
+   - [ ] 1.1: Update the upload profile JSON schema (Phase 9, task 1.1) to add:
+
+     ```json
+     {
+       "name": "azure-storage-1",
+       "provider": "AzureBlobStorage",
+       "cloudProvider": "azure",
+       "accountName": "mystorageaccount",
+       "containerName": "screenshots",
+       "sasTokenEnvVar": "LWAS_SAS_MY_TOKEN",
+       "blobPathPattern": "{MacroName}/{Date}/{Filename}",
+       "maxRetryAttempts": 3,
+       "retryBaseDelayMs": 500,
+       "deleteLocalAfterUpload": false,
+       "deleteLocalAfterDays": 30,
+       "createdUtc": "2026-03-22T12:00:00Z",
+       "modifiedUtc": "2026-03-22T12:00:00Z"
+     }
+     ```
+
+     Valid `cloudProvider` values: `"azure"` (only supported value in Phase 9b). Future phases
+     may add `"aws"` and `"gcp"`. Field is case-insensitive on read; always written lower-case.
+
+   - [ ] 1.2: Update `Private/Get-UploadProfile.ps1` — in the default-injection block, back-fill
+     `cloudProvider` for profiles that pre-date Phase 9b:
+
+     ```powershell
+     if (-not (Get-Member -InputObject $profile -Name 'cloudProvider' -MemberType NoteProperty)) {
+         $profile | Add-Member -NotePropertyName 'cloudProvider' -NotePropertyValue 'azure'
+     }
+     ```
+
+     All existing profiles are Azure-only (Phase 9 had no other provider), so `"azure"` is a safe
+     default.
+
+   - [ ] 1.3: Update `Private/Save-UploadProfileFile.ps1` — add a comment confirming that
+     `cloudProvider` is serialised by `ConvertTo-Json` alongside all other profile fields. No code
+     change is required; this is a documentation-only update to the function's comment-based help.
+
+   - [ ] 1.4: Update `Public/New-LWASUploadProfile.ps1` — add a `-CloudProvider` parameter:
+
+     ```powershell
+     [Parameter()]
+     [string]$CloudProvider = 'azure'
+     ```
+
+     Validate that the value is `"azure"` (case-insensitive); `Write-Error` and return if not.
+     Include `cloudProvider = $CloudProvider.ToLower()` in the profile object construction.
+
+   - [ ] 1.5: Update `Tests/UploadProfileManagement.Tests.ps1`:
+      - [ ] 1.5.1: `Get-UploadProfile` reading a file without `cloudProvider` → returned object has
+        `cloudProvider = 'azure'` (default back-fill)
+      - [ ] 1.5.2: `Get-UploadProfile` reading a file with `cloudProvider = 'azure'` → field
+        round-trips correctly; value is `'azure'`
+      - [ ] 1.5.3: `New-LWASUploadProfile` with no `-CloudProvider` → profile object has
+        `cloudProvider = 'azure'`
+      - [ ] 1.5.4: `New-LWASUploadProfile -CloudProvider 'gcp'` → `Write-Error` called; no
+        `Save-UploadProfileFile` invocation
+
+2. [ ] `Test-LWASSASTokenIsValid` — public function
+
+   **Design decision — how to check SAS token validity:**
+
+   | Approach | Pros | Cons |
+   |---|---|---|
+   | A) Parse `se=` (signed expiry) from the SAS query string | Dependency-free; no network; fast; fully testable | Only checks expiry; does not verify signature, permissions, or revocation |
+   | B) Make a real Azure REST call (e.g. test HEAD on the container) | Catches revoked tokens and permission issues | Requires network; requires Az module or HTTP; slow; adds latency to every check |
+   | C) Use Az module validation cmdlet | More complete | No such cmdlet exists for SAS validation; would require an actual test upload |
+
+   **Preferred: Option A.** Expiry is the only failure mode for tokens generated by this module
+   (signature is always valid; permissions are set at generation time). Network-based checks add
+   latency and a hard dependency on connectivity to a function that must work offline and in tests.
+
+   - [ ] 2.1: Create `Public/Test-LWASSASTokenIsValid.ps1`:
+
+     ```powershell
+     function Test-LWASSASTokenIsValid {
+         [CmdletBinding()]
+         [OutputType([bool])]
+         param(
+             [Parameter(Mandatory)]
+             [AllowEmptyString()]
+             [string]$SasToken
+         )
+     }
+     ```
+
+     Logic:
+     - Return `$false` if `$SasToken` is null or empty.
+     - Strip a leading `?` if present (Az module sometimes includes it).
+     - Parse the query string: split on `&`; for each part split on `=` (first `=` only); find
+       the pair where the key is `se` (case-insensitive).
+     - If `se` key is not found: return `$false`.
+     - Parse the value as a UTC `[datetime]` using
+       `[datetime]::TryParseExact` with format `'yyyy-MM-ddTHH:mm:ssZ'` or
+       `[datetime]::Parse` with `[System.Globalization.CultureInfo]::InvariantCulture`.
+       If parsing fails: return `$false`.
+     - Apply a 5-minute safety buffer: if `($expiryUtc - [datetime]::UtcNow).TotalMinutes -lt 5`:
+       return `$false`.
+     - Otherwise: return `$true`.
+     - Uses only `[datetime]::UtcNow`; no external calls, no Az module.
+
+   - [ ] 2.2: Create `Tests/Test-LWASSASTokenIsValid.Tests.ps1`:
+      - [ ] 2.2.1: Empty string `''` → `$false`
+      - [ ] 2.2.2: Whitespace-only string → `$false`
+      - [ ] 2.2.3: Token string with no `se=` parameter → `$false`
+      - [ ] 2.2.4: Token with `se=` set to a date 1 year in the future → `$true`
+      - [ ] 2.2.5: Token with `se=` set to a date in the past → `$false`
+      - [ ] 2.2.6: Token with `se=` set to exactly 3 minutes from now (within 5-minute buffer) →
+        `$false`
+      - [ ] 2.2.7: Token with `se=` set to exactly 6 minutes from now (outside 5-minute buffer) →
+        `$true`
+      - [ ] 2.2.8: Token with malformed `se=` value (e.g. `se=not-a-date`) → `$false`
+      - [ ] 2.2.9: Token string starting with `?` (e.g. `?sv=2021-06-08&se=...`) → leading `?`
+        stripped; parsed correctly; result matches expiry
+      - [ ] 2.2.10: Realistic multi-parameter SAS token string with `se=` in the middle → `$true`
+        when future expiry; `$false` when past expiry
+
+3. [ ] Private helper functions
+
+   - [ ] 3.1: Create `Private/Get-LWASSASTokenEnvVarNames.ps1`:
+
+     ```powershell
+     function Get-LWASSASTokenEnvVarNames {
+         [CmdletBinding()]
+         [OutputType([string[]])]
+         param()
+     }
+     ```
+
+     Scans `User`, `Machine`, and `Process` scopes via
+     `[Environment]::GetEnvironmentVariables([EnvironmentVariableTarget]::User)` etc. for
+     environment variables whose names begin with `LWAS_SAS_` (case-insensitive prefix match).
+     Returns a deduplicated, alphabetically sorted `[string[]]` of matching names. Never returns
+     `$null`; returns an empty array `@()` if no matches are found.
+
+     **Design decision — which env var scopes to scan:**
+
+     | Approach | Pros | Cons |
+     |---|---|---|
+     | A) All three scopes (User + Machine + Process) | Comprehensive; catches vars set via any mechanism | Edge-case: system admins could set `LWAS_SAS_*` at Machine scope for other purposes |
+     | B) User scope only | Matches the scope where the module writes tokens | Misses Machine-scope vars; misses vars set manually in the current session only |
+     | C) Process scope only | Fast; always up-to-date for the current session | Misses persisted vars not yet inherited into this session |
+
+     **Preferred: Option A.** The `LWAS_SAS_` prefix is distinctive enough that collision with
+     unrelated system vars is negligible. Returning all known vars gives the user the most complete
+     picture and avoids confusing situations where a token was set Machine-wide but doesn't appear
+     in the selection prompt.
+
+   - [ ] 3.2: Create `Private/Assert-LWASAzStorageModule.ps1`:
+
+     ```powershell
+     function Assert-LWASAzStorageModule {
+         [CmdletBinding()]
+         [OutputType([bool])]
+         param()
+     }
+     ```
+
+     Ensures `Az.Storage` is installed and imported into the current session. Called as the first
+     guard by every function that invokes an Az.Storage cmdlet. Returns `$true` when the module
+     is ready; returns `$false` (after writing a `Write-Error`) in every failure path so callers
+     can do a simple `if (-not (Assert-LWASAzStorageModule)) { return $false }`.
+
+     Logic:
+     1. Check `Get-Module -Name Az.Storage -ListAvailable`. If at least one result is found,
+        skip to step 3.
+     2. Module is not installed — prompt the user via `$Host.UI.PromptForChoice`:
+        ```
+        Caption : "Az.Storage module required"
+        Message : "The Az.Storage PowerShell module is required for SAS token management
+                   but is not installed. Install it now for the current user?"
+        Choices : [ "&Yes", "&No" ]
+        Default : 1  (No — safe default; does not auto-install without consent)
+        ```
+        - If user chooses **No** (or the host is non-interactive and the prompt cannot be shown):
+          `Write-Error "Az.Storage is not installed. Run: Install-Module Az.Storage -Scope CurrentUser"` and return `$false`.
+        - If user chooses **Yes**: attempt
+          `Install-Module -Name Az.Storage -Scope CurrentUser -Force -AllowClobber` inside a
+          `try/catch`. On failure: `Write-Error "Az.Storage installation failed: $($_.Exception.Message)"` and return `$false`.
+     3. Check if the module is already imported in the current session via
+        `Get-Module -Name Az.Storage` (without `-ListAvailable`). If not imported: attempt
+        `Import-Module -Name Az.Storage -ErrorAction Stop` inside a `try/catch`. On failure:
+        `Write-Error "Az.Storage could not be imported: $($_.Exception.Message)"` and return
+        `$false`.
+     4. Return `$true`.
+
+     This function is the single point of entry for Az.Storage readiness. Any future private or
+     public function that calls an `Az.Storage` cmdlet must call `Assert-LWASAzStorageModule`
+     first, before any other checks.
+
+   - [ ] 3.3: Create `Tests/Get-LWASSASTokenEnvVarNames.Tests.ps1`:
+      - [ ] 3.3.1: No `LWAS_SAS_*` vars in any scope → returns `@()` (empty array, not `$null`)
+      - [ ] 3.3.2: One `LWAS_SAS_PROD` var in User scope → `@('LWAS_SAS_PROD')` returned
+      - [ ] 3.3.3: Same name `LWAS_SAS_PROD` in both User and Process scopes →
+        deduplicated; appears exactly once in the result
+      - [ ] 3.3.4: Var with similar but non-matching prefix (`LWAS_STORAGE_TOKEN`) → not returned
+      - [ ] 3.3.5: Multiple vars across scopes → all unique names returned, sorted alphabetically
+      - [ ] 3.3.6: Var name matching prefix case-insensitively (`lwas_sas_dev`) → included;
+        returned with its original casing preserved
+
+   - [ ] 3.4: Create `Tests/Assert-LWASAzStorageModule.Tests.ps1`:
+      - [ ] 3.4.1: Module already installed and imported → `$true`; no prompt shown;
+        `Install-Module` not called; `Import-Module` not called
+      - [ ] 3.4.2: Module installed but not yet imported → `$true`; `Import-Module` called once;
+        no prompt shown; `Install-Module` not called
+      - [ ] 3.4.3: Module not installed, user chooses **Yes** to install, install succeeds,
+        import succeeds → `$true`; `Install-Module` called once; `Import-Module` called once
+      - [ ] 3.4.4: Module not installed, user chooses **No** → `Write-Error` called with install
+        instructions; `$false` returned; `Install-Module` not called
+      - [ ] 3.4.5: Module not installed, user chooses **Yes**, `Install-Module` throws →
+        `Write-Error` called with the exception message; `$false` returned
+      - [ ] 3.4.6: Module installed, `Import-Module` throws → `Write-Error` called with the
+        exception message; `$false` returned
+      - [ ] 3.4.7: No `Write-Error` is called on the success paths (3.4.1, 3.4.2, 3.4.3)
+
+   - [ ] 3.5: Create `Private/Test-LWASAzureProfile.ps1`:
+
+     ```powershell
+     function Test-LWASAzureProfile {
+         [CmdletBinding()]
+         [OutputType([bool])]
+         param(
+             [Parameter(Mandatory)]
+             [PSCustomObject]$Profile
+         )
+     }
+     ```
+
+     Returns `$true` if `$Profile.cloudProvider -ieq 'azure'`, `$false` otherwise. Does **not**
+     write any errors or warnings — consistent with the `Test-*` convention. The caller is
+     responsible for composing an appropriate error message and deciding whether to halt. This
+     separation ensures the function is usable both in contexts that want a silent bool check (e.g.
+     an `if` guard with a custom message) and in tests where side-effect-free assertions are needed.
+
+     Called by every function that operates on SAS tokens (`Update-LWASUploadProfileSASToken`,
+     and any future SAS-related functions) as the first guard, before any Az module or env var
+     operations are attempted.
+
+   - [ ] 3.6: Create `Tests/Test-LWASAzureProfile.Tests.ps1`:
+      - [ ] 3.6.1: Profile with `cloudProvider = 'azure'` → `$true`
+      - [ ] 3.6.2: Profile with `cloudProvider = 'Azure'` (mixed case) → `$true`
+        (case-insensitive comparison)
+      - [ ] 3.6.3: Profile with `cloudProvider = 'gcp'` → `$false`
+      - [ ] 3.6.4: Profile with `cloudProvider = 'aws'` → `$false`
+      - [ ] 3.6.5: Profile with `cloudProvider = ''` (empty string) → `$false`
+      - [ ] 3.6.6: Profile object with no `cloudProvider` property → `$false` (missing field is
+        not treated as Azure)
+      - [ ] 3.6.7: No errors or warnings are written in any of the above cases — `Write-Error`
+        and `Write-Warning` are never called by this function
+
+4. [ ] `Update-LWASUploadProfileSASToken` — public function
+
+   **Design decision — Azure authentication handling:**
+
+   | Approach | Pros | Cons |
+   |---|---|---|
+   | A) Require caller to be connected; surface the Az exception with an actionable hint | Secure; no credential storage; consistent with Phase 9 "no credentials on disk" policy; works for non-interactive automation when `Connect-AzAccount` has already been called | User must run `Connect-AzAccount` manually before calling this function |
+   | B) Auto-call `Connect-AzAccount` if not connected | Seamless | Triggers an interactive browser flow unexpectedly; unsafe in scripts; bad UX in a non-interactive context |
+   | C) Accept `-StorageAccountKey` as an alternative auth mechanism | Works without interactive login; useful in CI | Requires key storage or passing sensitive values on the command line, contradicting the Phase 9 security policy |
+
+   **Preferred: Option A.** Consistent with the established "no credentials on disk" principle.
+   The error message must be actionable: include `"Run Connect-AzAccount then retry."`.
+
+   **Design decision — SAS token expiry duration:**
+
+   | Approach | Pros | Cons |
+   |---|---|---|
+   | A) Fixed 1-year expiry hardcoded in the function | Simple; sensible default; no new schema fields | Not configurable per profile or per call |
+   | B) New `-ExpiryDays` parameter on this function | Flexible for the command-line use case | Extra parameter complexity; not needed currently |
+   | C) New `sasTokenExpiryDays` profile field | Per-profile configurability | Schema change; YAGNI for Phase 9b |
+
+   **Preferred: Option A.** YAGNI. A profile-level expiry field can be added in Phase 10 if
+   users request shorter token lifetimes for security reasons.
+
+   - [ ] 4.1: Create `Public/Update-LWASUploadProfileSASToken.ps1`:
+
+     ```powershell
+     function Update-LWASUploadProfileSASToken {
+         [CmdletBinding(SupportsShouldProcess)]
+         [OutputType([bool])]
+         param(
+             [Parameter(Mandatory, ValueFromPipeline)]
+             [PSCustomObject]$Profile
+         )
+     }
+     ```
+
+     Logic:
+     1. Call `Test-LWASAzureProfile -Profile $Profile`. If `$false`:
+        `Write-Error "SAS token management is only supported for Azure profiles (cloudProvider = 'azure')."` and return `$false`.
+     2. Call `Assert-LWASAzStorageModule`. If `$false`: return `$false` immediately (the assert
+        function has already written the appropriate error and, where applicable, prompted the user
+        to install).
+     3. Verify `$Profile.sasTokenEnvVar` is non-empty. If empty:
+        `Write-Error "Profile '$($Profile.name)' has no sasTokenEnvVar configured."` and return `$false`.
+     4. If `$PSCmdlet.ShouldProcess($Profile.sasTokenEnvVar, 'Request new SAS token')`:
+        ```powershell
+        $context = New-AzStorageContext -StorageAccountName $Profile.accountName -UseConnectedAccount
+        $token   = New-AzStorageContainerSASToken `
+                       -Name       $Profile.containerName `
+                       -Context    $context `
+                       -Permission 'rwdl' `
+                       -ExpiryTime ([datetime]::UtcNow.AddYears(1)) `
+                       -Protocol   HttpsOnly
+        ```
+        - Wrap the above in `try/catch`. On exception:
+          `Write-Error "Failed to generate SAS token for '$($Profile.name)'. Ensure you are connected to Azure (Connect-AzAccount). Error: $($_.Exception.Message)"` and return `$false`.
+        - Strip a leading `?` from `$token` if present.
+        - Persist: `[Environment]::SetEnvironmentVariable($Profile.sasTokenEnvVar, $token, [EnvironmentVariableTarget]::User)`
+        - Update current session: `Set-Item -Path "Env:\$($Profile.sasTokenEnvVar)" -Value $token`
+        - Log at Info level via `Write-LastWarLog`.
+        - Return `$true`.
+     5. If `-WhatIf` is in effect: return `$false` (no token set).
+
+     Supports pipeline input so callers can pipe the output of `Get-LWASUploadProfile`.
+
+   - [ ] 4.2: Create `Tests/Update-LWASUploadProfileSASToken.Tests.ps1`:
+      - [ ] 4.2.1: Profile with `cloudProvider = 'gcp'` → `Write-Error` called once; `$false`
+        returned; no Az cmdlets invoked
+      - [ ] 4.2.2: `cloudProvider = 'azure'` but `Assert-LWASAzStorageModule` returns `$false`
+        (mock it to return `$false`) → function returns `$false`; no Az cmdlets invoked
+        (error writing is the responsibility of `Assert-LWASAzStorageModule`, not this function)
+      - [ ] 4.2.3: Az module available but `sasTokenEnvVar` is empty → `Write-Error` called; `$false`
+        returned
+      - [ ] 4.2.4: All checks pass; `New-AzStorageContainerSASToken` returns a valid token string →
+        `[Environment]::SetEnvironmentVariable` called at User scope; `Set-Item Env:\` called;
+        `$true` returned
+      - [ ] 4.2.5: `New-AzStorageContainerSASToken` throws (simulated "not connected") → `Write-Error`
+        message contains `"Connect-AzAccount"`; `$false` returned; env var not set
+      - [ ] 4.2.6: Token returned with leading `?` → stored token has `?` stripped
+      - [ ] 4.2.7: `-WhatIf` flag → no `SetEnvironmentVariable` call; no Az cmdlets invoked;
+        `$false` returned
+      - [ ] 4.2.8: Pipeline input with two valid Azure profiles → `New-AzStorageContainerSASToken`
+        called once per profile; env var set for each; `$true` returned each time
+
+5. [ ] Update `Show-EditUploadProfileScreen` — SAS token selection prompt
+
+   **Design decision — UX when no `LWAS_SAS_*` variables exist yet:**
+
+   | Approach | Pros | Cons |
+   |---|---|---|
+   | A) Skip selection prompt; go directly to suffix-entry | Streamlined for first-time users; avoids single-item list | Slightly different flow between first and subsequent visits |
+   | B) Always show selection prompt, even when list contains only `"Create new"` | Consistent UX regardless of state | A one-item selection prompt feels redundant |
+   | C) Show selection prompt only when ≥1 existing vars exist; otherwise go direct | Best of both; no redundant single-item prompt | Slightly more branching code |
+
+   **Preferred: Option A.** Skipping the selection entirely when there are no existing vars
+   is the cleanest first-run experience. The UI change is minimal and the user is shown an
+   informational message explaining what will happen.
+
+   - [ ] 5.1: Update `Private/ConsoleApp/Show-EditUploadProfileScreen.ps1` — replace the
+     SAS token free-text prompt section (the `while ($null -eq $sasTokenEnvVar)` block and the
+     guidance panel) with the following flow:
+
+     - [ ] 5.1.1: Call `Get-LWASSASTokenEnvVarNames`. Store result in `$existingVarNames`.
+
+     - [ ] 5.1.2: **No existing vars path** (`$existingVarNames.Count -eq 0`): display an info
+       panel: `"No LWAS_SAS_* environment variables found. A new one will be created."` then
+       proceed directly to the suffix-entry prompt (5.1.4).
+
+     - [ ] 5.1.3: **Existing vars path** (`$existingVarNames.Count -gt 0`): show a
+       `SelectionPrompt` with title `"Select SAS token environment variable:"` listing all names
+       from `$existingVarNames` plus `"Create new"` as the last option. Store the result in
+       `$sasVarChoice`.
+       - If `$sasVarChoice -ne 'Create new'`: set `$sasTokenEnvVar = $sasVarChoice` and skip to
+         the post-selection step (5.1.5).
+
+     - [ ] 5.1.4: **Suffix-entry prompt** (reached when no existing vars, or user chose
+       `"Create new"`):
+       - Show text prompt: `"Enter a unique suffix for the new SAS token variable (will become LWAS_SAS_{SUFFIX}):"`
+       - Validate: 1–30 characters, letters/digits/underscores only. On invalid input, show
+         `[red]` error and re-prompt.
+       - Uppercase and build name: `$sasTokenEnvVar = "LWAS_SAS_$($suffix.ToUpper())"`
+       - Check if `$sasTokenEnvVar` already exists in any scope. If so, show
+         `[red]Environment variable '$safeName' already exists. Choose a different suffix.[/]`
+         and re-prompt.
+
+     - [ ] 5.1.5: Remove the old "Set the env var before running uploads" guidance panel. Token
+       management is now handled automatically on save.
+
+   - [ ] 5.2: Update the summary panel in `Show-EditUploadProfileScreen` — add a validity
+     indicator to the `SAS Token Env Var` line:
+     - Read the current token: `[Environment]::GetEnvironmentVariable($sasTokenEnvVar)`
+     - If `Test-LWASSASTokenIsValid` returns `$true`: append `[green](Valid)[/]` to the line.
+     - If `$false` (absent, empty, or expired): append
+       `[yellow](Will be requested on save)[/]` to the line.
+
+   - [ ] 5.3: Update the save block in `Show-EditUploadProfileScreen` — after
+     `Save-UploadProfileFile`:
+     - Read the current token: `[Environment]::GetEnvironmentVariable($sasTokenEnvVar)`
+     - If `Test-LWASSASTokenIsValid` returns `$false`: call
+       `Update-LWASUploadProfileSASToken -Profile $profile`.
+       - If it returns `$false`: display a yellow warning panel:
+         `"Profile saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount)."`
+       - If it returns `$true`: display `[green]SAS token updated and stored in '$safeSasVar'.[/]`
+     - If the token was already valid: show only the existing
+       `[green]Upload profile '$safeProfileName' saved successfully.[/]` message.
+     - Add `cloudProvider = 'azure'` to the profile object prior to calling
+       `Save-UploadProfileFile`.
+
+   - [ ] 5.4: Update `Tests/ConsoleApp/Show-EditUploadProfileScreen.Tests.ps1`:
+      - [ ] 5.4.1: `Get-LWASSASTokenEnvVarNames` returns empty → info panel shown; user prompted
+        for suffix; `sasTokenEnvVar` is `'LWAS_SAS_{SUFFIX}'`
+      - [ ] 5.4.2: `Get-LWASSASTokenEnvVarNames` returns one or more names → selection prompt
+        shown containing those names plus `"Create new"`
+      - [ ] 5.4.3: User selects existing var name from prompt → `sasTokenEnvVar` equals that
+        name; no suffix prompt shown
+      - [ ] 5.4.4: User selects `"Create new"` from selection → suffix prompt shown;
+        `sasTokenEnvVar` is `'LWAS_SAS_{SUFFIX}'`
+      - [ ] 5.4.5: Suffix with invalid characters → `[red]` error shown; prompt loops
+      - [ ] 5.4.6: Suffix that produces an already-existing var name → `[red]` error shown;
+        prompt loops
+      - [ ] 5.4.7: On save, `Test-LWASSASTokenIsValid` returns `$true` →
+        `Update-LWASUploadProfileSASToken` is **not** called; only success message shown
+      - [ ] 5.4.8: On save, `Test-LWASSASTokenIsValid` returns `$false` →
+        `Update-LWASUploadProfileSASToken` called exactly once
+      - [ ] 5.4.9: On save, `Update-LWASUploadProfileSASToken` returns `$false` → warning panel
+        shown containing `"Connect-AzAccount"`
+      - [ ] 5.4.10: On save, `Update-LWASUploadProfileSASToken` returns `$true` → success message
+        contains the env var name
+      - [ ] 5.4.11: Saved profile object has `cloudProvider = 'azure'`
+      - [ ] 5.4.12: Summary panel contains `(Will be requested on save)` when token is absent or
+        expired
+      - [ ] 5.4.13: Summary panel contains `(Valid)` when current token passes
+        `Test-LWASSASTokenIsValid`
+
+6. [ ] Update `New-LWASUploadProfile` — command-line path
+
+   - [ ] 6.1: Add `-CloudProvider` parameter (default `'azure'`; validate case-insensitively;
+     `Write-Error` and `return` if not `"azure"`). Include `cloudProvider = $CloudProvider.ToLower()`
+     in the profile object construction.
+
+   - [ ] 6.2: Enforce `LWAS_SAS_` prefix on `-SasTokenEnvVar`. If the supplied value does not
+     begin with `LWAS_SAS_` (case-insensitive), `Write-Error` and `return` before saving:
+
+     ```
+     "SasTokenEnvVar must begin with 'LWAS_SAS_'. Supplied: '$SasTokenEnvVar'."
+     ```
+
+   - [ ] 6.3: Replace the existing "env var not currently set" warning (lines 111–114 of
+     `New-LWASUploadProfile.ps1`) with the auto-token flow:
+     - After `Save-UploadProfileFile`, read `[Environment]::GetEnvironmentVariable($SasTokenEnvVar)`.
+     - If `Test-LWASSASTokenIsValid` returns `$false`: call
+       `Update-LWASUploadProfileSASToken -Profile $profile`.
+       - On `$false` return:
+         `Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount)."`
+       - On `$true` return: `Write-Verbose "SAS token for '$SasTokenEnvVar' updated successfully."`
+     - If `Test-LWASSASTokenIsValid` returns `$true`: no further action; existing
+       `Write-Verbose "Upload profile '$Name' saved."` message is sufficient.
+
+   - [ ] 6.4: Update tests for `New-LWASUploadProfile` (add to existing test file or create
+     `Tests/New-LWASUploadProfile.Tests.ps1` if one does not yet exist):
+      - [ ] 6.4.1: `-CloudProvider 'azure'` (default) → saved profile has
+        `cloudProvider = 'azure'`
+      - [ ] 6.4.2: `-CloudProvider 'gcp'` → `Write-Error` called; `Save-UploadProfileFile` not
+        invoked
+      - [ ] 6.4.3: `-SasTokenEnvVar 'MY_TOKEN'` (missing `LWAS_SAS_` prefix) → `Write-Error`
+        called; no profile saved
+      - [ ] 6.4.4: `-SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'` (valid prefix) → no prefix error
+      - [ ] 6.4.5: Env var holds a valid (non-expired) token → `Update-LWASUploadProfileSASToken`
+        not called
+      - [ ] 6.4.6: Env var is absent or holds an expired token → `Update-LWASUploadProfileSASToken`
+        called exactly once
+      - [ ] 6.4.7: `Update-LWASUploadProfileSASToken` returns `$false` → `Write-Warning` called;
+        profile was still saved
+
+7. [ ] Documentation updates
+
+   - [ ] 7.1: Update `powershell-module/Docs/AzureIntegration.md`:
+      - [ ] 7.1.1: Add a new "Automated SAS Token Management" section covering:
+        - Prerequisites: `Az.Storage` module (`Install-Module Az.Storage -Scope CurrentUser`) and
+          an active Azure session (`Connect-AzAccount`)
+        - How automatic renewal works: token is checked on every profile save; if absent or within
+          5 minutes of expiry, a new 1-year token is requested and stored in the env var
+        - The `LWAS_SAS_` naming convention and why it is enforced
+        - Manual renewal: `Update-LWASUploadProfileSASToken -Profile (Get-LWASUploadProfile -Name 'my-profile')`
+        - Pipeline usage: `Get-LWASUploadProfile | Update-LWASUploadProfileSASToken`
+        - How to check a token: `Test-LWASSASTokenIsValid -SasToken $env:LWAS_SAS_PROD`
+      - [ ] 7.1.2: Update the "Troubleshooting" table — add rows:
+        - `Az.Storage` not installed → `Install-Module Az.Storage -Scope CurrentUser`
+        - Not connected to Azure → `Connect-AzAccount`
+        - Token reports expired even though it has time left → 5-minute safety buffer explanation
+        - `SasTokenEnvVar must begin with 'LWAS_SAS_'` error → naming convention explanation
+
+   - [ ] 7.2: Update root `README.md`:
+      - Add `Test-LWASSASTokenIsValid` and `Update-LWASUploadProfileSASToken` to the command
+        reference section with one-line descriptions.
+
+   - [ ] 7.3: Update `CLAUDE.md` — change "Current status" line from
+     `Phase 9 (Azure Integration)` to `Phase 9b (Automated SAS Token Management)`.
+
+8. [ ] Final validation
+
+   - [ ] 8.1: Run the complete, unfiltered Pester suite:
+     (`Invoke-Pester -Path .\powershell-module\Tests -Output Detailed`)
+      - Record total test count; must meet or exceed the Phase 9 final baseline plus all new
+        Phase 9b tests added across tasks 1–7.
+      - Zero failures, zero errors.
+      - If any previously-passing test now fails, halt and investigate before proceeding.
+
+   - [ ] 8.2: Manually smoke-test `Test-LWASSASTokenIsValid`:
+      - Call with an empty string → `$false`
+      - Call with a well-formed SAS token string with a future `se=` date → `$true`
+      - Call with a token whose `se=` date is in the past → `$false`
+      - Call with a token whose `se=` date is 3 minutes in the future → `$false` (buffer)
+
+   - [ ] 8.3: Manually smoke-test `Update-LWASUploadProfileSASToken` (requires Az.Storage):
+      - Without `Az.Storage` installed → clear error message with `Install-Module` instructions
+      - With Az.Storage installed but not connected to Azure → clear error with `Connect-AzAccount`
+        hint
+      - Connected to Azure → token generated and env var set; verify with
+        `[Environment]::GetEnvironmentVariable('LWAS_SAS_TEST', 'User')`
+
+   - [ ] 8.4: Manually smoke-test the console `Show-EditUploadProfileScreen` flow:
+      - Launch `Start-LWASConsole` → Config → Upload profiles → Add profile
+      - If no `LWAS_SAS_*` vars exist: verify info panel is shown and suffix prompt is presented
+      - If `LWAS_SAS_*` vars exist: verify selection prompt lists them plus `"Create new"`
+      - Choose `"Create new"`, enter a valid suffix → verify `LWAS_SAS_{SUFFIX}` appears in the
+        summary panel
+      - Verify summary panel shows `(Will be requested on save)` before save
+      - Confirm save (connected to Azure) → verify `[green]SAS token updated…[/]` message;
+        verify env var is set at User scope
+      - Confirm save (not connected to Azure) → verify warning panel with `Connect-AzAccount` hint
+      - Inspect the saved profile JSON → verify `cloudProvider = "azure"` is present
+
+   - [ ] 8.5: Manually smoke-test `New-LWASUploadProfile` command-line auto-token path:
+      - `New-LWASUploadProfile -Name 'test-auto' -AccountName 'myaccount' -ContainerName 'shots' -SasTokenEnvVar 'LWAS_SAS_TEST'`
+        (with no `LWAS_SAS_TEST` env var set and connected to Azure) → token generated; verbose
+        message shown
+      - `New-LWASUploadProfile -Name 'test-auto2' -AccountName 'myaccount' -ContainerName 'shots' -SasTokenEnvVar 'MY_TOKEN'`
+        → `Write-Error` about `LWAS_SAS_` prefix requirement
+
+---
 
 ## Phase 10: Improvements
 

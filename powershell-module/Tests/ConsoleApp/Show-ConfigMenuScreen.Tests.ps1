@@ -448,6 +448,72 @@ Describe 'Show-ConfigMenuScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
+    # Context: Upload profiles
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user selects Upload profiles then [Back to main menu]' {
+
+        It 'Output contains the Upload profiles option' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen       {}
+                Mock Show-MouseControlConfigScreen  {}
+                Mock Show-EmergencyStopConfigScreen {}
+                Mock Show-ScreenshotConfigScreen    {}
+                Mock Show-UploadProfilesScreen      {}
+
+                $tc = $script:tc
+                # [Back to main menu] is index 0; just Enter exits
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                $tc.Output | Should -Match 'Upload profiles'
+            }
+        }
+
+        It 'Calls Show-UploadProfilesScreen exactly once when Upload profiles is selected' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen       {}
+                Mock Show-MouseControlConfigScreen  {}
+                Mock Show-EmergencyStopConfigScreen {}
+                Mock Show-ScreenshotConfigScreen    {}
+                Mock Show-UploadProfilesScreen      {}
+
+                $tc = $script:tc
+                # First iteration: Upload profiles (index 7, 7 downs from [Back to main menu])
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu] (index 0, Enter immediately)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Invoke Show-UploadProfilesScreen -Exactly 1
+            }
+        }
+
+        It 'Passes the same Console instance to Show-UploadProfilesScreen' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-LoggingConfigScreen       {}
+                Mock Show-MouseControlConfigScreen  {}
+                Mock Show-EmergencyStopConfigScreen {}
+                Mock Show-ScreenshotConfigScreen    {}
+                Mock Show-UploadProfilesScreen      {}
+
+                $tc = $script:tc
+                # First iteration: Upload profiles (index 7)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration: [Back to main menu]
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-ConfigMenuScreen -Console $tc
+
+                Should -Invoke Show-UploadProfilesScreen -Exactly 1 -ParameterFilter { $Console -eq $tc }
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
     # Context: Loop re-enters the menu after a sub-screen returns
     # ════════════════════════════════════════════════════════════════════════
     Context 'When a sub-screen is visited twice before going back' {

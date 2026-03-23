@@ -124,7 +124,7 @@ The key names are converted to virtual key codes at runtime via `ConvertFrom-Hot
 
 `#` is only a standalone key on UK keyboard layouts. On other layouts, reconfigure
 `HotkeyKeyNames` via the app (**Configure module → Emergency stop settings**) or
-by editing `ModuleConfig.json` directly:
+by editing `ModuleConfig.jsonc` directly:
 
 ```json
 "HotkeyKeyNames": "Ctrl+Shift+P"

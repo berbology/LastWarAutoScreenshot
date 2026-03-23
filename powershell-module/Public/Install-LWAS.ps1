@@ -116,28 +116,33 @@ function Install-LWAS {
     $installBase = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\LastWarAutoScreenshot'
     $installPath = Join-Path $installBase $version
 
+    $skipModuleCopy = $false
     if (Test-Path $installPath) {
         if (-not $Force) {
             Write-Warning "Version $version is already installed at '$installPath'. Use -Force to overwrite."
-            return
+            $skipModuleCopy = $true
         }
-        Write-Verbose "Version $version already installed — overwriting as requested (-Force)."
-        Remove-Item -Path $installPath -Recurse -Force -ErrorAction Stop
+        else {
+            Write-Verbose "Version $version already installed — overwriting as requested (-Force)."
+            Remove-Item -Path $installPath -Recurse -Force -ErrorAction Stop
+        }
     }
 
-    try {
-        New-Item -Path $installPath -ItemType Directory -Force | Out-Null
-        Copy-Item -Path "$moduleRoot\*" -Destination $installPath -Recurse -Force -ErrorAction Stop
-        Remove-Item -Path (Join-Path $installPath 'Docs')  -Recurse -Force -ErrorAction SilentlyContinue
-        if (-not $IncludeTests) {
-            Remove-Item -Path (Join-Path $installPath 'Tests')    -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item -Path (Join-Path $installPath 'lib\test') -Recurse -Force -ErrorAction SilentlyContinue
+    if (-not $skipModuleCopy) {
+        try {
+            New-Item -Path $installPath -ItemType Directory -Force | Out-Null
+            Copy-Item -Path "$moduleRoot\*" -Destination $installPath -Recurse -Force -ErrorAction Stop
+            Remove-Item -Path (Join-Path $installPath 'Docs')  -Recurse -Force -ErrorAction SilentlyContinue
+            if (-not $IncludeTests) {
+                Remove-Item -Path (Join-Path $installPath 'Tests')    -Recurse -Force -ErrorAction SilentlyContinue
+                Remove-Item -Path (Join-Path $installPath 'lib\test') -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            Write-Host "Module installed to $installPath"
         }
-        Write-Host "Module installed to $installPath"
-    }
-    catch {
-        Write-Error $_.Exception.Message
-        return
+        catch {
+            Write-Error $_.Exception.Message
+            return
+        }
     }
 
     # Step 5 — Register Windows Event Log source
@@ -173,6 +178,16 @@ function Install-LWAS {
     }
     else {
         Write-Verbose 'Macros directory already exists, skipping.'
+    }
+
+    # Step 8 — Create AppData UploadProfiles directory
+    $uploadProfilesPath = Join-Path $appDataPath 'UploadProfiles'
+    if (-not (Test-Path -Path $uploadProfilesPath -PathType Container)) {
+        New-Item -Path $uploadProfilesPath -ItemType Directory -Force | Out-Null
+        Write-Verbose "Created upload profiles directory: $uploadProfilesPath"
+    }
+    else {
+        Write-Verbose 'Upload profiles directory already exists, skipping.'
     }
 
     # --- Dependency verification ---

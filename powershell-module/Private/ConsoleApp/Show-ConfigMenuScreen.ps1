@@ -62,7 +62,8 @@ function Show-ConfigMenuScreen {
                 'Emergency stop settings',
                 'Screenshot settings',
                 'Set default code editor',
-                'Edit module configuration'
+                'Edit module configuration',
+                'Upload profiles'
             )
         )
         $selection = $prompt.Show($Console)
@@ -111,6 +112,10 @@ function Show-ConfigMenuScreen {
                 } else {
                     Start-Process -FilePath 'notepad.exe' -ArgumentList "`"$configPath`"" | Out-Null
                 }
+            }
+
+            'Upload profiles' {
+                Show-UploadProfilesScreen -Console $Console
             }
 
             default {

@@ -17,7 +17,7 @@ function Write-LastWarLog {
         Stack trace if error (LogStackTrace avoids conflict with PowerShell's automatic variable).
     .PARAMETER ForceLog
         Forces the log entry to be written regardless of the MinimumLogLevel setting
-        configured in ModuleConfig.json. Without this switch, entries whose Level is
+        configured in ModuleConfig.jsonc. Without this switch, entries whose Level is
         below MinimumLogLevel are silently discarded.
     #>
     [CmdletBinding()]

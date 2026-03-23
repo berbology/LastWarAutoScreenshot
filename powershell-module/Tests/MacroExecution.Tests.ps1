@@ -481,6 +481,96 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
         }
     }
 
+    Context 'Screenshot: captured file tracking' {
+        It 'Screenshot: successful capture adds FilePath to CapturedFiles' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type   = 'Screenshot'
+                    name   = 'shot1'
+                    region = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 1.0; relativeY = 1.0 }
+                    }
+                }
+                $ctx = @{
+                    Index                     = 0
+                    MacroName                 = 'test'
+                    ActionName                = ''
+                    PreviousScreenshotPath    = $null
+                    ConsecutiveSimilarCount   = 0
+                    CapturedFiles             = [System.Collections.Generic.List[string]]::new()
+                    CapturedFilesByActionName = @{}
+                }
+
+                Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx | Out-Null
+
+                $ctx.CapturedFiles.Count | Should -BeExactly 1
+                $ctx.CapturedFiles[0] | Should -BeExactly 'TestDrive:\Screenshots\test.png'
+            }
+        }
+
+        It 'Screenshot: two actions with different names populate CapturedFilesByActionName with two keys' {
+            InModuleScope LastWarAutoScreenshot {
+                $makeAction = {
+                    param([string]$name)
+                    [PSCustomObject]@{
+                        type   = 'Screenshot'
+                        name   = $name
+                        region = [PSCustomObject]@{
+                            topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                            bottomRight = [PSCustomObject]@{ relativeX = 1.0; relativeY = 1.0 }
+                        }
+                    }
+                }
+                $ctx = @{
+                    Index                     = 0
+                    MacroName                 = 'test'
+                    ActionName                = ''
+                    PreviousScreenshotPath    = $null
+                    ConsecutiveSimilarCount   = 0
+                    CapturedFiles             = [System.Collections.Generic.List[string]]::new()
+                    CapturedFilesByActionName = @{}
+                }
+
+                Invoke-MacroAction -Action (& $makeAction 'shot-a') -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx | Out-Null
+                Invoke-MacroAction -Action (& $makeAction 'shot-b') -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx | Out-Null
+
+                $ctx.CapturedFilesByActionName.Keys.Count | Should -BeExactly 2
+                $ctx.CapturedFilesByActionName['shot-a'].Count | Should -BeExactly 1
+                $ctx.CapturedFilesByActionName['shot-b'].Count | Should -BeExactly 1
+            }
+        }
+
+        It 'Screenshot: skipped capture does not add to CapturedFiles' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Invoke-CaptureScreenRegion {
+                    [PSCustomObject]@{ Success = $false; Skipped = $true; FilePath = $null; Message = 'StoragePath not configured' }
+                }
+                $action = [PSCustomObject]@{
+                    type   = 'Screenshot'
+                    name   = 'shot1'
+                    region = [PSCustomObject]@{
+                        topLeft     = [PSCustomObject]@{ relativeX = 0.0; relativeY = 0.0 }
+                        bottomRight = [PSCustomObject]@{ relativeX = 1.0; relativeY = 1.0 }
+                    }
+                }
+                $ctx = @{
+                    Index                     = 0
+                    MacroName                 = 'test'
+                    ActionName                = ''
+                    PreviousScreenshotPath    = $null
+                    ConsecutiveSimilarCount   = 0
+                    CapturedFiles             = [System.Collections.Generic.List[string]]::new()
+                    CapturedFilesByActionName = @{}
+                }
+
+                Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx | Out-Null
+
+                $ctx.CapturedFiles.Count | Should -BeExactly 0
+            }
+        }
+    }
+
     It 'Delay with seconds=5: calls Start-Sleep multiple times with -Milliseconds; returns Success=$true' {
         InModuleScope LastWarAutoScreenshot {
             $action = [PSCustomObject]@{ type = 'Delay'; seconds = 5 }
@@ -637,6 +727,285 @@ Describe 'Invoke-MacroAction' -Tag 'Unit' {
 
             $result.Success | Should -BeFalse
             $result.Message | Should -BeLike '*FlyToMoon*'
+        }
+    }
+
+    # ============================================================
+    # UploadScreenshots
+    # ============================================================
+
+    Context 'UploadScreenshots' {
+
+        BeforeEach {
+            InModuleScope LastWarAutoScreenshot {
+                $env:LWAS_TEST_SAS = 'fake-sas-token'
+                Mock Get-UploadProfile {
+                    [PSCustomObject]@{
+                        name                   = 'my-profile'
+                        accountName            = 'myaccount'
+                        containerName          = 'screenshots'
+                        sasTokenEnvVar         = 'LWAS_TEST_SAS'
+                        blobPathPattern        = '{MacroName}/{Date}/{Filename}'
+                        maxRetryAttempts       = 3
+                        retryBaseDelayMs       = 500
+                        deleteLocalAfterUpload = $false
+                        deleteLocalAfterDays   = 30
+                    }
+                }
+                Mock Invoke-AzureBlobUpload {
+                    [PSCustomObject]@{ Success = $true; BlobUrl = 'https://example.com/blob'; FilePath = $FilePath; Message = '' }
+                }
+                Mock Resolve-BlobPath { 'test-macro/2026-03-21/test.png' }
+                Mock Remove-Item {}
+                Mock Get-ChildItem { @() }
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath     = ''
+                            SimilarityCheck = [PSCustomObject]@{
+                                Enabled              = $false
+                                Threshold            = 0.98
+                                SampleCount          = 1000
+                                TolerancePerChannel  = 10
+                                FullScan             = $false
+                                Action               = 'StopLoop'
+                                ConsecutiveThreshold = 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        AfterEach {
+            Remove-Item Env:\LWAS_TEST_SAS -ErrorAction SilentlyContinue
+        }
+
+        It 'UploadScreenshots: ScreenshotContext=$null returns Skipped=$true; Get-UploadProfile not called' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{}
+
+                $result.Skipped | Should -BeTrue
+                Should -Invoke Get-UploadProfile -Times 0
+            }
+        }
+
+        It 'UploadScreenshots: profile not found returns Success=$false' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-UploadProfile { $null }
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'missing-profile'
+                    scope             = 'MacroSequence'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]::new()
+                    CapturedFilesByActionName = @{}
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx
+
+                $result.Success | Should -BeFalse
+                $result.Message | Should -BeLike '*missing-profile*'
+            }
+        }
+
+        It 'UploadScreenshots: SAS token env var not set returns Success=$false with env var name in message' {
+            InModuleScope LastWarAutoScreenshot {
+                [System.Environment]::SetEnvironmentVariable('LWAS_TEST_SAS', $null, [System.EnvironmentVariableTarget]::Process)
+                [System.Environment]::SetEnvironmentVariable('LWAS_TEST_SAS', $null, [System.EnvironmentVariableTarget]::User)
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]::new()
+                    CapturedFilesByActionName = @{}
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx
+
+                $result.Success | Should -BeFalse
+                $result.Message | Should -BeLike '*LWAS_TEST_SAS*'
+            }
+        }
+
+        It 'UploadScreenshots: scope MacroSequence uploads all CapturedFiles; returns Success=$true' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]@('C:\a.png', 'C:\b.png')
+                    CapturedFilesByActionName = @{}
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx
+
+                $result.Success | Should -BeTrue
+                $result.Skipped | Should -BeFalse
+                Should -Invoke Invoke-AzureBlobUpload -Times 2
+            }
+        }
+
+        It 'UploadScreenshots: scope NamedStep uploads only files from named action' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type                 = 'UploadScreenshots'
+                    uploadProfileName    = 'my-profile'
+                    scope                = 'NamedStep'
+                    screenshotActionName = 'shot1'
+                }
+                $listShot1 = [System.Collections.Generic.List[string]]@('C:\shot1.png')
+                $listShot2 = [System.Collections.Generic.List[string]]@('C:\shot2.png')
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]@('C:\shot1.png', 'C:\shot2.png')
+                    CapturedFilesByActionName = @{ 'shot1' = $listShot1; 'shot2' = $listShot2 }
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx
+
+                $result.Success | Should -BeTrue
+                Should -Invoke Invoke-AzureBlobUpload -Times 1
+            }
+        }
+
+        It 'UploadScreenshots: scope NamedStep with no matching files returns Skipped=$true' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type                 = 'UploadScreenshots'
+                    uploadProfileName    = 'my-profile'
+                    scope                = 'NamedStep'
+                    screenshotActionName = 'ghost'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]::new()
+                    CapturedFilesByActionName = @{}
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx
+
+                $result.Skipped | Should -BeTrue
+                Should -Invoke Invoke-AzureBlobUpload -Times 0
+            }
+        }
+
+        It 'UploadScreenshots: DeleteLocalAfterUpload=$true calls Remove-Item for each successfully uploaded file' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-UploadProfile {
+                    [PSCustomObject]@{
+                        name                   = 'my-profile'
+                        accountName            = 'myaccount'
+                        containerName          = 'screenshots'
+                        sasTokenEnvVar         = 'LWAS_TEST_SAS'
+                        blobPathPattern        = '{MacroName}/{Date}/{Filename}'
+                        maxRetryAttempts       = 3
+                        retryBaseDelayMs       = 500
+                        deleteLocalAfterUpload = $true
+                        deleteLocalAfterDays   = 30
+                    }
+                }
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]@('C:\a.png', 'C:\b.png')
+                    CapturedFilesByActionName = @{}
+                }
+
+                Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx | Out-Null
+
+                Should -Invoke Remove-Item -Times 2
+            }
+        }
+
+        It 'UploadScreenshots: one upload fails; Success=$false with count in message; other file still attempted' {
+            InModuleScope LastWarAutoScreenshot {
+                $callCount = 0
+                Mock Invoke-AzureBlobUpload {
+                    $script:callCount++
+                    if ($script:callCount -eq 1) {
+                        [PSCustomObject]@{ Success = $false; BlobUrl = ''; FilePath = $FilePath; Message = 'Network error' }
+                    } else {
+                        [PSCustomObject]@{ Success = $true; BlobUrl = 'https://example.com/blob'; FilePath = $FilePath; Message = '' }
+                    }
+                }
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]@('C:\a.png', 'C:\b.png')
+                    CapturedFilesByActionName = @{}
+                }
+
+                $result = Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx
+
+                $result.Success | Should -BeFalse
+                $result.Message | Should -BeLike '*1 of 2*'
+                Should -Invoke Invoke-AzureBlobUpload -Times 2
+            }
+        }
+
+        It 'UploadScreenshots: DeleteLocalAfterDays cleanup calls Remove-Item for files older than threshold' {
+            InModuleScope LastWarAutoScreenshot {
+                $fakeOldFile = [PSCustomObject]@{
+                    FullName      = 'C:\store\old.png'
+                    LastWriteTime = [datetime]'2025-01-01'
+                }
+                Mock Get-ChildItem { @($fakeOldFile) }
+                Mock Get-Date { [datetime]'2026-03-21' }
+                Mock Get-ModuleConfiguration {
+                    [PSCustomObject]@{
+                        Screenshots = [PSCustomObject]@{
+                            StoragePath     = 'C:\store'
+                            SimilarityCheck = [PSCustomObject]@{
+                                Enabled              = $false
+                                Threshold            = 0.98
+                                SampleCount          = 1000
+                                TolerancePerChannel  = 10
+                                FullScan             = $false
+                                Action               = 'StopLoop'
+                                ConsecutiveThreshold = 1
+                            }
+                        }
+                    }
+                }
+                Mock Test-Path { $true }
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+                $ctx = @{
+                    MacroName               = 'test'
+                    CapturedFiles           = [System.Collections.Generic.List[string]]@('C:\a.png')
+                    CapturedFilesByActionName = @{}
+                }
+
+                Invoke-MacroAction -Action $action -WindowHandle ([IntPtr]::new(1)) -ActionLookup @{} -ScreenshotContext $ctx | Out-Null
+
+                Should -Invoke Remove-Item -Times 1 -ParameterFilter { $LiteralPath -eq 'C:\store\old.png' }
+            }
         }
     }
 }

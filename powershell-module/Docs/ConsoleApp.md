@@ -13,7 +13,7 @@ Start-LWASConsole
 ```
 
 On first run with no config file: defaults are written to
-`$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json` and the main menu
+`$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc` and the main menu
 appears immediately. Config validation runs silently in the background; any
 issues are shown in a panel before the menu loads.
 
@@ -53,6 +53,9 @@ Macros are stored as JSON files at:
 ```
 $env:APPDATA\LastWarAutoScreenshot\Macros\
 ```
+
+The folder is created automatically by `Install-LWAS` (run via `scripts\Install-LWAS.ps1`)
+and is also created on first macro save if it does not already exist.
 
 **Filename convention:** `yyyyMMdd_HHmmss_<name>.json`
 

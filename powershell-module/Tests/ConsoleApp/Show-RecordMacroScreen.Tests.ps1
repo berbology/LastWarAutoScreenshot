@@ -86,9 +86,9 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action menu (empty sequence, no Create loop, no Save macro):
-                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Discard
-                # 7 DownArrows → 'Discard and exit'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Upload, 8=Discard
+                # 8 DownArrows → 'Discard and exit'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # No confirmation prompt since sequence is empty
 
@@ -133,10 +133,10 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip — unnamed)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Action menu (1 unnamed action → no Create loop, Save macro at 7):
-                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Save, 8=Discard
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Action menu (1 unnamed action → no Create loop, Save macro at 8):
+                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Upload, 8=Save, 9=Discard
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -185,8 +185,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -238,8 +238,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -280,8 +280,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -328,8 +328,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -381,8 +381,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -436,7 +436,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -489,7 +489,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -552,7 +552,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -602,7 +602,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -655,7 +655,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -709,7 +709,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -763,7 +763,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -803,7 +803,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Action name: skip
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save macro
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -845,8 +845,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -896,10 +896,10 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushText('action-two')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
-                # Action menu (2 named LeftClicks → Create loop at index 7):
-                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Create loop, 8=Save, 9=Discard
-                # 7 DownArrows → 'Create loop'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Action menu (2 named LeftClicks → Create loop at index 8):
+                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Upload, 8=Create loop, 9=Save, 10=Discard
+                # 8 DownArrows → 'Create loop'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 # Loop selection — choices: action-one(0), action-two(1), Done(2), Cancel(3)
@@ -919,10 +919,10 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 # Loop action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
-                # Action menu (3 actions; named non-Loop still exist → Create loop at 7):
-                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Create loop, 8=Save, 9=Discard
-                # 8 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Action menu (3 actions; named non-Loop still exist → Create loop at 8):
+                # 0=Move, 1=Box, 2=Circle, 3=Left, 4=Drag, 5=Screenshot, 6=Delay, 7=Upload, 8=Create loop, 9=Save, 10=Discard
+                # 9 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -955,9 +955,9 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip — unnamed)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Action menu (1 unnamed action — no Create loop, Save at 7):
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Action menu (1 unnamed action — no Create loop, Save at 8):
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -987,9 +987,9 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushText('action-one')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second menu render: Create loop now at 7, Save at 8
-                # 8 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Second menu render: Create loop now at 8, Save at 9
+                # 9 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -1019,7 +1019,7 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushText('my-macro')
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Discard immediately (sequence empty): 7 DownArrows → 'Discard and exit'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -1053,9 +1053,9 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Action menu (1 action, Save at 7, Discard at 8):
-                # 8 DownArrows → 'Discard and exit'
-                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Action menu (1 action, Save at 8, Discard at 9):
+                # 9 DownArrows → 'Discard and exit'
+                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Confirmation: Enter → 'Yes, discard' (index 0)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -1088,14 +1088,14 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 8 DownArrows → 'Discard and exit'
-                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 9 DownArrows → 'Discard and exit'
+                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Confirmation: DownArrow + Enter → 'No, continue recording' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Back in action loop — save to exit: 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # Back in action loop — save to exit: 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Show-RecordMacroScreen -Console $tc
@@ -1144,8 +1144,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -1183,12 +1183,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro'
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro'
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Save fails; error panel shown; back in action loop
-                # 8 DownArrows → 'Discard and exit' (Save still at 7, Discard at 8)
-                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 9 DownArrows → 'Discard and exit' (Save still at 8, Discard at 9)
+                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Confirmation: Enter → 'Yes, discard'
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -1230,8 +1230,8 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro' (index 7; no Create loop; Discard is at index 8)
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro' (index 8; no Create loop; Discard is at index 9)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
@@ -1264,12 +1264,338 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Action name: Enter (skip)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 7 DownArrows → 'Save macro' (index 7; no Create loop; Discard is at index 8)
-                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                # 8 DownArrows → 'Save macro' (index 8; no Create loop; Discard is at index 9)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RecordMacroScreen -Console $tc | Out-Null
                 $tc.Output | Should -Match 'my-macro'
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: UploadScreenshots action (Task 10.4)
+    # ════════════════════════════════════════════════════════════════════════
+
+    Context 'UploadScreenshots action — output' {
+
+        It '10.4.1: Upload screenshots option appears in the action menu output' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith { @() }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Discard immediately (empty sequence)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                $tc.Output | Should -Match 'Upload screenshots'
+            }
+        }
+    }
+
+    Context 'UploadScreenshots action — no profiles exist' {
+
+        It '10.4.2: Selecting Upload screenshots when no profiles exist shows warning; no action added' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith { @() }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Upload screenshots (index 7, 7 DownArrows)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Warning shown; sequence still empty — 8 DownArrows → Discard (index 8)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                $tc.Output | Should -Match 'No upload profiles configured'
+                Should -Invoke Save-MacroFile -Times 0 -Exactly
+            }
+        }
+    }
+
+    Context 'UploadScreenshots action — scope MacroSequence' {
+
+        It '10.4.3: Selecting Upload screenshots with profiles, scope MacroSequence — action added with correct fields' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith {
+                    @([PSCustomObject]@{ name = 'my-profile' })
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Upload screenshots (index 7)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Profile selection: Enter → 'my-profile' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Scope selection: Enter → 'All screenshots in this macro sequence' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro (now 1 action, Save at index 8)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                Should -Invoke Save-MacroFile -Exactly 1
+                $script:_savedMacroData.sequence[0].type              | Should -Be 'UploadScreenshots'
+                $script:_savedMacroData.sequence[0].uploadProfileName | Should -Be 'my-profile'
+                $script:_savedMacroData.sequence[0].scope             | Should -Be 'MacroSequence'
+            }
+        }
+    }
+
+    Context 'UploadScreenshots action — scope NamedStep with Screenshot actions' {
+
+        It '10.4.4: Selecting Upload screenshots, scope NamedStep with existing Screenshot — action added with scope=NamedStep and screenshotActionName set' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith {
+                    @([PSCustomObject]@{ name = 'my-profile' })
+                }
+                $script:_ssCaptureCount = 0
+                Mock Invoke-CaptureMousePosition -MockWith {
+                    $script:_ssCaptureCount++
+                    if ($script:_ssCaptureCount -eq 1) { [PSCustomObject]@{ RelativeX = 0.1; RelativeY = 0.1 } }
+                    else                               { [PSCustomObject]@{ RelativeX = 0.9; RelativeY = 0.9 } }
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                # Add named Screenshot 'ss-step': 5 DownArrows → Screenshot region
+                for ($i = 0; $i -lt 5; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Mask prompt → No
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: 'ss-step'
+                $tc.Input.PushText('ss-step')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                # Upload screenshots (index 7)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Profile: Enter → 'my-profile'
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Scope: DownArrow + Enter → 'Screenshots from named sequence step'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Step selection: Enter → 'ss-step' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                # Save macro (2 actions; named Screenshot enables Create loop at 8; Save at 9)
+                for ($i = 0; $i -lt 9; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                Should -Invoke Save-MacroFile -Exactly 1
+                $upload = $script:_savedMacroData.sequence[1]
+                $upload.type                | Should -Be 'UploadScreenshots'
+                $upload.scope               | Should -Be 'NamedStep'
+                $upload.screenshotActionName | Should -Be 'ss-step'
+            }
+        }
+    }
+
+    Context 'UploadScreenshots action — scope NamedStep with no Screenshot actions' {
+
+        It '10.4.5: Selecting Upload screenshots, scope NamedStep with no Screenshot actions — warning shown; no action added' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith {
+                    @([PSCustomObject]@{ name = 'my-profile' })
+                }
+                $script:_savedMacroData = $null
+                Mock Save-MacroFile -MockWith {
+                    $script:_savedMacroData = $MacroData
+                    @{ Success = $true; FilePath = 'C:\dummy.json' }
+                }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Upload screenshots (index 7, no actions yet)
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Profile: Enter → 'my-profile'
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Scope: DownArrow + Enter → 'Screenshots from named sequence step'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Warning shown; back in action menu — discard empty sequence
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                $tc.Output | Should -Match 'No Screenshot actions'
+                $script:_savedMacroData | Should -BeNullOrEmpty
+            }
+        }
+    }
+
+    Context 'UploadScreenshots save warning — UploadScreenshots is last step' {
+
+        It '10.4.6: Save with UploadScreenshots as last step — no warning shown; save proceeds' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith {
+                    @([PSCustomObject]@{ name = 'my-profile' })
+                }
+                Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Upload screenshots (index 7) — adds UploadScreenshots as first (and only) step
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Profile: Enter → 'my-profile'
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Scope: Enter → 'All screenshots in this macro sequence'
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Save macro (1 action; Save at 8)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                Should -Invoke Save-MacroFile -Exactly 1
+                $tc.Output | Should -Not -Match 'not the last action'
+            }
+        }
+    }
+
+    Context 'UploadScreenshots save warning — UploadScreenshots is not last step' {
+
+        It '10.4.7: Save with UploadScreenshots NOT as last step — warning shown; user confirms Save anyway — save proceeds' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-LWASMacro -MockWith { @() }
+                Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
+                Mock Write-LastWarLog {}
+                Mock Get-ValidMacroName -MockWith {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile -MockWith {
+                    @([PSCustomObject]@{ name = 'my-profile' })
+                }
+                Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
+
+                $tc = $script:tc
+                $tc.Input.PushText('my-macro')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                # Upload screenshots first (index 7) — this will NOT be the last step
+                for ($i = 0; $i -lt 7; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Profile: Enter → 'my-profile'
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Scope: Enter → 'All screenshots in this macro sequence'
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                # Add a LeftClick after (index 3)
+                for ($i = 0; $i -lt 3; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action name: skip
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                # Save macro (2 actions; no Create loop; Save at 8)
+                for ($i = 0; $i -lt 8; $i++) { $tc.Input.PushKey([ConsoleKey]::DownArrow) }
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Warning shown — confirm 'Save anyway' (index 0, Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RecordMacroScreen -Console $tc | Out-Null
+
+                $tc.Output | Should -Match 'not the last action'
+                Should -Invoke Save-MacroFile -Exactly 1
             }
         }
     }

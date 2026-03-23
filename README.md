@@ -18,6 +18,7 @@ captures in Windows games and other applications - built predominantly for Last 
 - [User Guide](powershell-module/Docs/UserGuide.md)
 - [Configuration reference](powershell-module/Docs/Configuration.md)
 - [Macro format reference](powershell-module/Docs/MacroFormat.md)
+- [Azure Blob Storage integration](powershell-module/Docs/AzureIntegration.md)
 
 ### Developer
 
@@ -105,12 +106,39 @@ macros.
   - **Looping** - Create loop steps within macro sequences to repeat actions
 - **Screenshot capture** - user-defined regions, PNG, configurable naming
   - **Region masking** - Optionally mask out one or more areas within the screenshot on-the-fly
+- **Azure Blob Storage screenshot upload with retry** - upload profiles with SAS token auth,
+  configurable blob path patterns, exponential backoff retry, and automatic local file cleanup
 - **Task Scheduler integration** - Automated execution via Windows Task Scheduler
 - **ESP32-S3 USB hardware HID mouse toggle** _(planned)_ - Hardware device
   presenting as genuine physical HID mouse, toggled alongside the existing
   `SendInput` software approach; input arrives at driver level,
   indistinguishable from a physical mouse, providing greater resilience to
   anti-cheat detection
+
+---
+
+## Command Reference
+
+### Upload profiles
+
+```powershell
+# Create an upload profile
+New-LWASUploadProfile -Name 'azure-1' -AccountName 'myaccount' `
+    -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_AZURE_SAS'
+
+# List all profiles / get a specific profile
+Get-LWASUploadProfile
+Get-LWASUploadProfile -Name 'azure-1'
+
+# Remove a profile
+Remove-LWASUploadProfile -Name 'azure-1'
+
+# Upload screenshots to Azure Blob Storage
+Send-LWASScreenshots -UploadProfileName 'azure-1'
+Send-LWASScreenshots -UploadProfileName 'azure-1' -WhatIf  # dry run
+```
+
+See [AzureIntegration.md](powershell-module/Docs/AzureIntegration.md) for full setup instructions.
 
 ---
 

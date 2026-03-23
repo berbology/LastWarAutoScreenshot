@@ -617,6 +617,143 @@ Describe 'Test-MacroAction' -Tag 'Unit' {
             }
         }
     }
+
+    Context 'UploadScreenshots' {
+
+        It 'accepts a valid UploadScreenshots action with scope MacroSequence' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'MacroSequence'
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeTrue
+            }
+        }
+
+        It 'accepts a valid UploadScreenshots action with scope NamedStep referencing an existing Screenshot action' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type                 = 'UploadScreenshots'
+                    uploadProfileName    = 'my-profile'
+                    scope                = 'NamedStep'
+                    screenshotActionName = 'shot1'
+                }
+                $result = Test-MacroAction -Action $action `
+                    -ExistingNames @('shot1') `
+                    -ActionTypeLookup @{ 'shot1' = 'Screenshot' }
+                $result.Valid | Should -BeTrue
+            }
+        }
+
+        It 'rejects an unrecognised scope value' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'AllFiles'
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'MacroSequence'
+                $result.Message | Should -Match 'NamedStep'
+            }
+        }
+
+        It 'rejects scope NamedStep when screenshotActionName is absent' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = 'my-profile'
+                    scope             = 'NamedStep'
+                }
+                $result = Test-MacroAction -Action $action -ExistingNames @()
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'screenshotActionName'
+            }
+        }
+
+        It 'rejects scope NamedStep when screenshotActionName does not exist in the sequence' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type                 = 'UploadScreenshots'
+                    uploadProfileName    = 'my-profile'
+                    scope                = 'NamedStep'
+                    screenshotActionName = 'ghost'
+                }
+                $result = Test-MacroAction -Action $action -ExistingNames @('other-action')
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'ghost'
+            }
+        }
+
+        It 'rejects scope NamedStep when screenshotActionName references a non-Screenshot action' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type                 = 'UploadScreenshots'
+                    uploadProfileName    = 'my-profile'
+                    scope                = 'NamedStep'
+                    screenshotActionName = 'step1'
+                }
+                $result = Test-MacroAction -Action $action `
+                    -ExistingNames @('step1') `
+                    -ActionTypeLookup @{ 'step1' = 'Delay' }
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'Screenshot'
+            }
+        }
+
+        It 'rejects an empty uploadProfileName' {
+            InModuleScope LastWarAutoScreenshot {
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = ''
+                    scope             = 'MacroSequence'
+                }
+                $result = Test-MacroAction -Action $action
+                $result.Valid | Should -BeFalse
+                $result.Message | Should -Match 'uploadProfileName'
+            }
+        }
+
+        It 'passes Test-MacroFile round-trip validation with a valid UploadScreenshots action' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Write-LastWarLog {}
+                $macro = [PSCustomObject]@{
+                    version      = '1.0'
+                    metadata     = [PSCustomObject]@{
+                        name        = 'upload-test'
+                        createdUtc  = '2026-01-01T00:00:00Z'
+                        modifiedUtc = '2026-01-01T00:00:00Z'
+                        description = ''
+                    }
+                    targetWindow = [PSCustomObject]@{
+                        processName = 'LastWar'
+                        windowTitle = 'Last War: Survival'
+                    }
+                    sequence     = @(
+                        [PSCustomObject]@{
+                            type   = 'Screenshot'
+                            name   = 'shot1'
+                            region = [PSCustomObject]@{
+                                topLeft     = [PSCustomObject]@{ relativeX = 0.1; relativeY = 0.1 }
+                                bottomRight = [PSCustomObject]@{ relativeX = 0.9; relativeY = 0.9 }
+                            }
+                        },
+                        [PSCustomObject]@{
+                            type              = 'UploadScreenshots'
+                            uploadProfileName = 'my-profile'
+                            scope             = 'MacroSequence'
+                        }
+                    )
+                }
+                $result = Test-MacroFile -MacroData $macro
+                $result.Valid | Should -BeTrue
+                $result.Messages | Should -HaveCount 0
+            }
+        }
+    }
 }
 
 Describe 'Test-MacroFile' -Tag 'Unit' {

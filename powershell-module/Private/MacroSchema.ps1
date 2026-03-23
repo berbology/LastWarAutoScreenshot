@@ -68,6 +68,10 @@ $script:MacroActionTypes = @{
         Required = @('iterations')
         Ranges   = @{ 'iterations' = @(1, 10000) }
     }
+    'UploadScreenshots' = @{
+        Required = @('uploadProfileName', 'scope')
+        Optional = @('screenshotActionName')
+    }
 }
 
 function Get-NestedProperty {
@@ -409,6 +413,32 @@ function Test-MacroAction {
                     return [PSCustomObject]@{ Valid = $false; Message = "Screenshot action '$name': maskRegions[$maskIndex].bottomRight.relativeY must be greater than topLeft.relativeY." }
                 }
                 $maskIndex++
+            }
+        }
+    }
+
+    # UploadScreenshots: uploadProfileName must be non-empty; scope must be case-sensitively
+    # 'MacroSequence' or 'NamedStep'; NamedStep additionally requires screenshotActionName
+    # to be present, exist in the sequence, and reference a Screenshot action.
+    if ($typeName -eq 'UploadScreenshots') {
+        $uploadProfileName = Get-NestedProperty -Object $Action -Path 'uploadProfileName'
+        if ([string]::IsNullOrWhiteSpace($uploadProfileName)) {
+            return [PSCustomObject]@{ Valid = $false; Message = "UploadScreenshots action '$name': 'uploadProfileName' must be a non-empty string." }
+        }
+        $scope = Get-NestedProperty -Object $Action -Path 'scope'
+        if ($scope -cne 'MacroSequence' -and $scope -cne 'NamedStep') {
+            return [PSCustomObject]@{ Valid = $false; Message = "UploadScreenshots action '$name': scope must be 'MacroSequence' or 'NamedStep', got '$scope'." }
+        }
+        if ($scope -ceq 'NamedStep') {
+            $screenshotActionName = Get-NestedProperty -Object $Action -Path 'screenshotActionName'
+            if ([string]::IsNullOrWhiteSpace($screenshotActionName)) {
+                return [PSCustomObject]@{ Valid = $false; Message = "UploadScreenshots action '$name': scope 'NamedStep' requires a non-empty 'screenshotActionName'." }
+            }
+            if ($ExistingNames -notcontains $screenshotActionName) {
+                return [PSCustomObject]@{ Valid = $false; Message = "UploadScreenshots action '$name': screenshotActionName '$screenshotActionName' does not exist in the sequence." }
+            }
+            if ($ActionTypeLookup.ContainsKey($screenshotActionName) -and $ActionTypeLookup[$screenshotActionName] -ne 'Screenshot') {
+                return [PSCustomObject]@{ Valid = $false; Message = "UploadScreenshots action '$name': screenshotActionName '$screenshotActionName' must reference a Screenshot action, not '$($ActionTypeLookup[$screenshotActionName])'." }
             }
         }
     }

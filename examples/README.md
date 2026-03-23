@@ -6,13 +6,13 @@ An annotated reference showing every module configuration key at its default
 value, grouped by category (`MouseControl`, `EmergencyStop`, `Screenshots`,
 `Logging`, `MacroExecution`, `CodeEditor`).
 
-**Important:** `.jsonc` files use JSON with Comments syntax. The real
-configuration file (`ModuleConfig.json`) does **not** support comments and
-cannot be replaced with this file directly. The real file is created
+**Important:** Both files use JSON with Comments (`.jsonc`) syntax, which
+PowerShell's `ConvertFrom-Json` cmdlet (v7+) handles natively. The example
+file documents all available keys; the real configuration file is created
 automatically at:
 
 ```
-%APPDATA%\LastWarAutoScreenshot\ModuleConfig.json
+%APPDATA%\LastWarAutoScreenshot\ModuleConfig.jsonc
 ```
 
 on first run, with all defaults applied. Use the interactive console app

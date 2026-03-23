@@ -140,7 +140,7 @@ else {
         $shouldRemove = $true
     }
     else {
-        $answer = Read-Host "Remove config, Macros and scheduler files at ${appDataPath}? [Y/N]"
+        $answer = Read-Host "Remove config, macro, upload profile, and scheduler files at $appDataPath? [Y/N]"
         if ($answer -match '^(y|yes)$') {
             $shouldRemove = $true
         }

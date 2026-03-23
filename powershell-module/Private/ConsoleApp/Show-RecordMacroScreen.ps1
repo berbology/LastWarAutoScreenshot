@@ -163,9 +163,10 @@ function Show-RecordMacroScreen {
                         $regionStr
                     }
                 }
-                'Delay'        { "$($action.seconds)s" }
-                'Loop'         { "$($action.actionNames -join ' -> ') x$($action.iterations)" }
-                default        { '' }
+                'Delay'             { "$($action.seconds)s" }
+                'Loop'              { "$($action.actionNames -join ' -> ') x$($action.iterations)" }
+                'UploadScreenshots' { "Profile: $($action.uploadProfileName) | Scope: $($action.scope)" }
+                default             { '' }
             }
 
             [Spectre.Console.TableExtensions]::AddRow(
@@ -189,6 +190,7 @@ function Show-RecordMacroScreen {
         $menuChoices.Add('Drag-click')
         $menuChoices.Add('Screenshot region')
         $menuChoices.Add('Add delay')
+        $menuChoices.Add('Upload screenshots')
 
         # 'Create loop' only if one or more NAMED non-Loop actions exist
         $namedNonLoopActions = @($sequence | Where-Object {
@@ -531,7 +533,80 @@ function Show-RecordMacroScreen {
                 $Console.Write([Spectre.Console.Markup]::new("[green]Delay action added to sequence (step $($sequence.Count)).[/]`n"))
             }
 
-            # ── Step 3h: Create loop ──────────────────────────────────────────
+            # ── Step 3h: Upload screenshots ───────────────────────────────────
+            'Upload screenshots' {
+                $availableProfiles = @(Get-UploadProfile)
+                if ($availableProfiles.Count -eq 0) {
+                    $warnPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                        'No upload profiles configured. Add one via Config → Upload profiles.',
+                        '[yellow]Warning[/]'
+                    )
+                    $Console.Write($warnPanel)
+                    break
+                }
+
+                $profileChoices = [System.Collections.Generic.List[string]]::new()
+                foreach ($p in $availableProfiles) { $profileChoices.Add($p.name) }
+                $profileChoices.Add('[[Cancel]]')
+
+                $profilePrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                    'Select an upload profile:', $profileChoices.ToArray()
+                )
+                $selectedProfile = $profilePrompt.Show($Console)
+                if ($selectedProfile -eq 'Cancel') { break }
+
+                $scopePrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                    'Upload scope:',
+                    @('All screenshots in this macro sequence', 'Screenshots from named sequence step')
+                )
+                $scopeChoice = $scopePrompt.Show($Console)
+
+                $uploadScope             = 'MacroSequence'
+                $uploadScreenshotName    = $null
+
+                if ($scopeChoice -eq 'Screenshots from named sequence step') {
+                    $namedScreenshots = @($sequence | Where-Object {
+                        $_.type -eq 'Screenshot' -and
+                        $_.PSObject.Properties['name'] -and
+                        -not [string]::IsNullOrEmpty($_.name)
+                    })
+                    if ($namedScreenshots.Count -eq 0) {
+                        $warnPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                            'No Screenshot actions in this sequence yet. Add a Screenshot step first.',
+                            '[yellow]Warning[/]'
+                        )
+                        $Console.Write($warnPanel)
+                        break
+                    }
+
+                    $stepChoices = [System.Collections.Generic.List[string]]::new()
+                    foreach ($ss in $namedScreenshots) { $stepChoices.Add($ss.name) }
+                    $stepChoices.Add('[[Cancel]]')
+
+                    $stepPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                        'Select screenshot action:', $stepChoices.ToArray()
+                    )
+                    $selectedStep = $stepPrompt.Show($Console)
+                    if ($selectedStep -eq 'Cancel') { break }
+
+                    $uploadScope          = 'NamedStep'
+                    $uploadScreenshotName = $selectedStep
+                }
+
+                $action = [PSCustomObject]@{
+                    type              = 'UploadScreenshots'
+                    uploadProfileName = $selectedProfile
+                    scope             = $uploadScope
+                }
+                if ($null -ne $uploadScreenshotName) {
+                    $action | Add-Member -NotePropertyName 'screenshotActionName' -NotePropertyValue $uploadScreenshotName
+                }
+
+                $sequence.Add($action)
+                $Console.Write([Spectre.Console.Markup]::new("[green]UploadScreenshots action added to sequence (step $($sequence.Count)).[/]`n"))
+            }
+
+            # ── Step 3i: Create loop ──────────────────────────────────────────
             'Create loop' {
                 # Table of named non-Loop actions available for selection
                 $availableForLoop = @($sequence | Where-Object {
@@ -561,8 +636,9 @@ function Show-RecordMacroScreen {
                                 $regionStr
                             }
                         }
-                        'Delay'        { "$($loopAction.seconds)s" }
-                        default        { '' }
+                        'Delay'             { "$($loopAction.seconds)s" }
+                        'UploadScreenshots' { "Profile: $($loopAction.uploadProfileName)" }
+                        default             { '' }
                     }
                     [Spectre.Console.TableExtensions]::AddRow(
                         $loopTable,
@@ -640,8 +716,26 @@ function Show-RecordMacroScreen {
                 $Console.Write([Spectre.Console.Markup]::new("[green]Loop action added to sequence (step $($sequence.Count)).[/]`n"))
             }
 
-            # ── Step 3i: Save macro ───────────────────────────────────────────
+            # ── Step 3j: Save macro ───────────────────────────────────────────
             'Save macro' {
+                # Warn if any UploadScreenshots step is not the last action in the sequence
+                $nonLastUploads = [System.Collections.Generic.List[object]]::new()
+                for ($idx = 0; $idx -lt ($sequence.Count - 1); $idx++) {
+                    if ($sequence[$idx].type -eq 'UploadScreenshots') {
+                        $nonLastUploads.Add($sequence[$idx]) | Out-Null
+                    }
+                }
+                if ($nonLastUploads.Count -gt 0) {
+                    $warnMsg    = 'An UploadScreenshots step is not the last action in this sequence. All subsequent steps will be blocked until the upload completes. Save anyway?'
+                    $warnPanel  = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($warnMsg, '[yellow]Warning[/]')
+                    $Console.Write($warnPanel)
+                    $saveAnywayPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                        'Continue?', @('[[Save anyway]]', '[[Cancel]]')
+                    )
+                    $saveAnywayChoice = $saveAnywayPrompt.Show($Console)
+                    if ($saveAnywayChoice -eq 'Cancel') { break }
+                }
+
                 $macroData = [PSCustomObject]@{
                     version      = $script:MacroSchemaVersion
                     metadata     = [PSCustomObject]@{
@@ -688,7 +782,7 @@ function Show-RecordMacroScreen {
                 }
             }
 
-            # ── Step 3j: Discard and exit ─────────────────────────────────────
+            # ── Step 3k: Discard and exit ─────────────────────────────────────
             'Discard and exit' {
                 if ($sequence.Count -eq 0) {
                     return $null

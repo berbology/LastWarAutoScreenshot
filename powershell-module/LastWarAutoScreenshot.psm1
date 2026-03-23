@@ -17,8 +17,9 @@ $consoleAppBridgePath = "$PSScriptRoot\src\ConsoleAppBridge.cs"
 $spectreConsolePath        = "$PSScriptRoot\lib\Spectre.Console.dll"
 $spectreTestingConsolePath = "$PSScriptRoot\lib\test\Spectre.Console.Testing.dll"
 
-$script:ModuleRootPath = $PSScriptRoot
-$script:MacrosPath     = Join-Path $env:APPDATA 'LastWarAutoScreenshot\Macros'
+$script:ModuleRootPath      = $PSScriptRoot
+$script:MacrosPath          = Join-Path $env:APPDATA 'LastWarAutoScreenshot\Macros'
+$script:UploadProfilesPath  = Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles'
 
 $privateScriptRoot = Join-Path $PSScriptRoot 'Private'
 $publicScriptRoot = Join-Path $PSScriptRoot 'Public'

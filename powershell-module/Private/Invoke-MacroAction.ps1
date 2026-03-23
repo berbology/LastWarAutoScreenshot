@@ -192,6 +192,16 @@ function Invoke-MacroAction {
                 return [PSCustomObject]@{ Success = $false; Skipped = $false; SimilarityStop = $false; Message = $captureResult.Message }
             }
 
+            # Track captured files for UploadScreenshots actions
+            if ($null -ne $ScreenshotContext.CapturedFiles) {
+                $ScreenshotContext.CapturedFiles.Add($captureResult.FilePath)
+                $actionKey = $ScreenshotContext.ActionName
+                if (-not $ScreenshotContext.CapturedFilesByActionName.ContainsKey($actionKey)) {
+                    $ScreenshotContext.CapturedFilesByActionName[$actionKey] = [System.Collections.Generic.List[string]]::new()
+                }
+                $ScreenshotContext.CapturedFilesByActionName[$actionKey].Add($captureResult.FilePath)
+            }
+
             # Similarity check — only when a previous screenshot exists and the feature is enabled
             if ($null -ne $prevPath) {
                 $simConfig = (Get-ModuleConfiguration).Screenshots.SimilarityCheck
@@ -281,6 +291,106 @@ function Invoke-MacroAction {
                 }
             }
             return [PSCustomObject]@{ Success = $true; Message = ''; Skipped = $false; SimilarityStop = $false }
+        }
+
+        'UploadScreenshots' {
+            # Guard: ScreenshotContext must be supplied by Invoke-MacroSequence
+            if ($null -eq $ScreenshotContext) {
+                Write-LastWarLog -Level Warning -FunctionName 'Invoke-MacroAction' `
+                    -Message 'ScreenshotContext not supplied — skipping UploadScreenshots action'
+                return [PSCustomObject]@{ Success = $true; Skipped = $true; SimilarityStop = $false; Message = 'ScreenshotContext not supplied' }
+            }
+
+            # Load upload profile
+            $uploadProfile = Get-UploadProfile -Name $Action.uploadProfileName
+            if ($null -eq $uploadProfile) {
+                $profileMsg = "Upload profile '$($Action.uploadProfileName)' not found."
+                Write-LastWarLog -Level Error -FunctionName 'Invoke-MacroAction' -Message $profileMsg
+                return [PSCustomObject]@{ Success = $false; Skipped = $false; SimilarityStop = $false; Message = $profileMsg }
+            }
+
+            # Resolve SAS token from environment variable — check Process, User, then Machine scope.
+            $sasEnvVarName = $uploadProfile.sasTokenEnvVar
+            $sasToken = [Environment]::GetEnvironmentVariable($sasEnvVarName) `
+                ?? [Environment]::GetEnvironmentVariable($sasEnvVarName, [EnvironmentVariableTarget]::User) `
+                ?? [Environment]::GetEnvironmentVariable($sasEnvVarName, [EnvironmentVariableTarget]::Machine)
+            if ([string]::IsNullOrEmpty($sasToken)) {
+                $sasMsg = "Environment variable '$($uploadProfile.sasTokenEnvVar)' is not set. Set it to the SAS token before running this sequence."
+                Write-LastWarLog -Level Error -FunctionName 'Invoke-MacroAction' -Message $sasMsg
+                return [PSCustomObject]@{ Success = $false; Skipped = $false; SimilarityStop = $false; Message = $sasMsg }
+            }
+
+            # Resolve file list based on scope
+            $filesToUpload = $null
+            if ($Action.scope -ceq 'MacroSequence') {
+                $filesToUpload = $ScreenshotContext.CapturedFiles
+            } elseif ($Action.scope -ceq 'NamedStep') {
+                $stepName = $Action.screenshotActionName
+                if ($ScreenshotContext.CapturedFilesByActionName.ContainsKey($stepName)) {
+                    $filesToUpload = $ScreenshotContext.CapturedFilesByActionName[$stepName]
+                }
+            }
+
+            if ($null -eq $filesToUpload -or $filesToUpload.Count -eq 0) {
+                Write-LastWarLog -Level Warning -FunctionName 'Invoke-MacroAction' `
+                    -Message "UploadScreenshots: no captured files to upload (scope='$($Action.scope)')."
+                return [PSCustomObject]@{ Success = $true; Skipped = $true; SimilarityStop = $false; Message = 'No files to upload' }
+            }
+
+            # Upload each file
+            $totalCount   = $filesToUpload.Count
+            $failureCount = 0
+
+            foreach ($filePath in $filesToUpload) {
+                $blobPath = Resolve-BlobPath `
+                    -BlobPathPattern $uploadProfile.blobPathPattern `
+                    -MacroName       $ScreenshotContext.MacroName `
+                    -Filename        ([System.IO.Path]::GetFileName($filePath))
+
+                $uploadResult = Invoke-AzureBlobUpload `
+                    -FilePath         $filePath `
+                    -AccountName      $uploadProfile.accountName `
+                    -ContainerName    $uploadProfile.containerName `
+                    -BlobPath         $blobPath `
+                    -SasToken         $sasToken `
+                    -MaxRetryAttempts $uploadProfile.maxRetryAttempts `
+                    -RetryBaseDelayMs $uploadProfile.retryBaseDelayMs
+
+                if ($uploadResult.Success -eq $true) {
+                    if ($uploadProfile.deleteLocalAfterUpload -eq $true) {
+                        Remove-Item -Path $filePath -Force -ErrorAction SilentlyContinue
+                    }
+                } else {
+                    $failureCount++
+                    Write-LastWarLog -Level Warning -FunctionName 'Invoke-MacroAction' `
+                        -Message "Failed to upload '$filePath': $($uploadResult.Message)"
+                }
+            }
+
+            # DeleteLocalAfterDays cleanup — remove old files from StoragePath
+            $storePath = (Get-ModuleConfiguration).Screenshots.StoragePath
+            if (-not [string]::IsNullOrWhiteSpace($storePath) -and (Test-Path -LiteralPath $storePath)) {
+                $cutoff  = (Get-Date).AddDays(-$uploadProfile.deleteLocalAfterDays)
+                $oldFiles = @(Get-ChildItem -Path $storePath -File -ErrorAction SilentlyContinue |
+                              Where-Object { $_.LastWriteTime -lt $cutoff })
+                foreach ($oldFile in $oldFiles) {
+                    Remove-Item -LiteralPath $oldFile.FullName -Force -ErrorAction SilentlyContinue
+                }
+                if ($oldFiles.Count -gt 0) {
+                    Write-LastWarLog -Level Info -FunctionName 'Invoke-MacroAction' `
+                        -Message "DeleteLocalAfterDays: removed $($oldFiles.Count) file(s) older than $($uploadProfile.deleteLocalAfterDays) days from '$storePath'."
+                }
+            }
+
+            if ($failureCount -gt 0) {
+                return [PSCustomObject]@{
+                    Success        = $false
+                    Skipped        = $false
+                    SimilarityStop = $false
+                    Message        = "$failureCount of $totalCount uploads failed."
+                }
+            }
+            return [PSCustomObject]@{ Success = $true; Skipped = $false; SimilarityStop = $false; Message = '' }
         }
 
         default {

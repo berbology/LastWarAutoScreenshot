@@ -1,7 +1,7 @@
 function Get-LoggingBackendConfig {
     <#
     .SYNOPSIS
-        Loads the logging backend configuration from ModuleConfig.json or a specified path.
+        Loads the logging backend configuration from ModuleConfig.jsonc or a specified path.
     .DESCRIPTION
         Reads the Logging.Backend property from the config file and returns an array of backend names (e.g., File, EventLog).
         Accepts an optional -ConfigPath parameter for testability.
@@ -10,7 +10,7 @@ function Get-LoggingBackendConfig {
     #>
     [OutputType([string[]])]
     param(
-        [string]$ConfigPath = $(Join-Path $PSScriptRoot 'ModuleConfig.json')
+        [string]$ConfigPath = $(Join-Path $PSScriptRoot 'ModuleConfig.jsonc')
     )
     if (-not (Test-Path $ConfigPath)) {
         return @('File') # Default to file backend if config missing

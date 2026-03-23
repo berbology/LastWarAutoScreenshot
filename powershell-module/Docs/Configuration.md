@@ -1,6 +1,6 @@
 ## Configuration Reference
 
-All settings live in `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json`.
+All settings live in `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc`.
 The file is created automatically with defaults on first run - you generally
 won't need to edit it by hand; use `Start-LWASConsole` → Configure
 module instead.
@@ -9,7 +9,7 @@ module instead.
 
 | Scenario | Path |
 |----------|------|
-| Default (all users) | `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.json` |
+| Default (all users) | `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc` |
 | Custom path | Pass `-ConfigurationPath` to `Get-ModuleConfiguration` / `Save-ModuleConfiguration` |
 
 ```powershell
@@ -56,7 +56,7 @@ Controls how the cursor moves to avoid looking like a bot.
 | `MaxClickPostDelayMs` | int | `300` | Maximum delay after click (ms) |
 | `PathPointCount` | int | `20` | Base Bezier point count (5-200) |
 
-**Example (ModuleConfig.json excerpt):**
+**Example (ModuleConfig.jsonc excerpt):**
 
 ```json
 "MouseControl": {
@@ -162,7 +162,7 @@ screenshots match at or above `Threshold`, the configured `Action` fires.
 | `SimilarityCheck.Action` | string | `"StopLoop"` | Action on detection: `StopLoop`, `StopMacro`, or `Warn` |
 | `SimilarityCheck.ConsecutiveThreshold` | int | `1` | Consecutive similar screenshots required before the action fires (1–100) |
 
-**Example (ModuleConfig.json excerpt):**
+**Example (ModuleConfig.jsonc excerpt):**
 
 ```json
 "Screenshots": {

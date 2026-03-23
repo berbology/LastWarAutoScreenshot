@@ -2,7 +2,7 @@
 
 The module writes structured logs to one or more configurable backends.
 Configure via the app (Configure module → Logging settings) or edit
-`ModuleConfig.json` directly.
+`ModuleConfig.jsonc` directly.
 
 ### Backends
 

@@ -100,6 +100,20 @@ if (-not (Test-Path $manifest)) {
 
 Import-Module $manifest
 
+# Ensure the user AppData directories exist in the current user's context.
+# This must run here because Install-LWAS runs elevated and $env:APPDATA can
+# resolve to the Administrator profile rather than the interactive user's profile
+# when the session was re-launched via Start-Process -Verb RunAs.
+$lwasAppDataPath = Join-Path $env:APPDATA 'LastWarAutoScreenshot'
+$lwasAppDataMacrosPath   = Join-Path $lwasAppDataPath 'Macros'
+$lwasAppDataProfilesPath = Join-Path $lwasAppDataPath 'UploadProfiles'
+foreach ($dir in @($lwasAppDataPath, $lwasAppDataMacrosPath, $lwasAppDataProfilesPath)) {
+    if (-not (Test-Path $dir)) {
+        New-Item -Path $dir -ItemType Directory -Force | Out-Null
+        Write-Verbose "Created directory: $dir"
+    }
+}
+
 $installArgs = @{}
 if ($Force)        { $installArgs['Force']        = $true }
 if ($IncludeTests) { $installArgs['IncludeTests'] = $true }

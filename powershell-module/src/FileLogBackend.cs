@@ -32,7 +32,7 @@ namespace LastWarAutoScreenshot
             _maxLogFileCount = 500;
 
             // Load settings from configuration file if available
-            string configPath = Path.Combine(_logDir, "ModuleConfig.json");
+            string configPath = Path.Combine(_logDir, "ModuleConfig.jsonc");
             if (File.Exists(configPath))
             {
                 try
