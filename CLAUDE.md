@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PowerShell 7+ module (`LastWarAutoScreenshot`) that automates human-like mouse interactions and screen captures on Windows, targeting the game Last War: Survival. Uses Win32 P/Invoke via inline C# for mouse control and window enumeration, and Spectre.Console for the interactive console UI.
 
-**Current status:** Phase 9 (Azure Integration).
+**Current status:** Phase 9b (Automated SAS Token Management).
 
 ## Commands
 

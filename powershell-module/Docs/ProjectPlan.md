@@ -6214,10 +6214,10 @@ for renewal).
       - [x] 6.4.7: `Update-LWASUploadProfileSASToken` returns `$false` → `Write-Warning` called;
         profile was still saved
 
-7. [ ] Documentation updates
+7. [x] Documentation updates
 
-   - [ ] 7.1: Update `powershell-module/Docs/AzureIntegration.md`:
-      - [ ] 7.1.1: Add a new "Automated SAS Token Management" section covering:
+   - [x] 7.1: Update `powershell-module/Docs/AzureIntegration.md`:
+      - [x] 7.1.1: Add a new "Automated SAS Token Management" section covering:
         - Prerequisites: `Az.Storage` module (`Install-Module Az.Storage -Scope CurrentUser`) and
           an active Azure session (`Connect-AzAccount`)
         - How automatic renewal works: token is checked on every profile save; if absent or within
@@ -6226,17 +6226,17 @@ for renewal).
         - Manual renewal: `Update-LWASUploadProfileSASToken -Profile (Get-LWASUploadProfile -Name 'my-profile')`
         - Pipeline usage: `Get-LWASUploadProfile | Update-LWASUploadProfileSASToken`
         - How to check a token: `Test-LWASSASTokenIsValid -SasToken $env:LWAS_SAS_PROD`
-      - [ ] 7.1.2: Update the "Troubleshooting" table — add rows:
+      - [x] 7.1.2: Update the "Troubleshooting" table — add rows:
         - `Az.Storage` not installed → `Install-Module Az.Storage -Scope CurrentUser`
         - Not connected to Azure → `Connect-AzAccount`
         - Token reports expired even though it has time left → 5-minute safety buffer explanation
         - `SasTokenEnvVar must begin with 'LWAS_SAS_'` error → naming convention explanation
 
-   - [ ] 7.2: Update root `README.md`:
+   - [x] 7.2: Update root `README.md`:
       - Add `Test-LWASSASTokenIsValid` and `Update-LWASUploadProfileSASToken` to the command
         reference section with one-line descriptions.
 
-   - [ ] 7.3: Update `CLAUDE.md` — change "Current status" line from
+   - [x] 7.3: Update `CLAUDE.md` — change "Current status" line from
      `Phase 9 (Azure Integration)` to `Phase 9b (Automated SAS Token Management)`.
 
 8. [ ] Final validation
@@ -6294,12 +6294,7 @@ for renewal).
   - What are the pros and cons of each approach?
   - Which files would need the change?
 
-10.2 [ ] Fix wordwrap workaround in tests
-
-- Many console app tests use workarounds for matching text that wraps onto next line
-- This is messy, find a way to resolve this cleanly
-
-10.3 [ ] Spectre.Console screen layout - module configuration
+10.2 [ ] Spectre.Console screen layout - module configuration
 
 - Put all configuration options on one screen
   - Currently separate screens for each category of config options, overkill. Have all config on one page under category headings
