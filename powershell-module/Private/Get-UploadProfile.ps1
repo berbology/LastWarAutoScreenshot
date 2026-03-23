@@ -43,6 +43,7 @@ function Get-UploadProfile {
 
     $defaults = @{
         provider              = 'AzureBlobStorage'
+        cloudProvider         = 'azure'
         blobPathPattern       = '{MacroName}/{Date}/{Filename}'
         maxRetryAttempts      = 3
         retryBaseDelayMs      = 500

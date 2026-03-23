@@ -15,6 +15,10 @@ function Save-UploadProfileFile {
         Directory to write the profile JSON file into. Defaults to
         $env:APPDATA\LastWarAutoScreenshot\UploadProfiles.
 
+    .NOTES
+        All profile fields — including cloudProvider — are serialised automatically by
+        ConvertTo-Json. No explicit handling of cloudProvider is required here.
+
     .OUTPUTS
         None
 

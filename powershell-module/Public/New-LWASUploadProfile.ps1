@@ -41,6 +41,10 @@ function New-LWASUploadProfile {
     .PARAMETER DeleteLocalAfterUpload
         When set, deletes each local file immediately after a successful upload.
 
+    .PARAMETER CloudProvider
+        The cloud provider for this profile. Only 'azure' is supported in Phase 9b.
+        Defaults to 'azure'.
+
     .PARAMETER DeleteLocalAfterDays
         Removes local screenshot files older than this many days after each upload
         run (1–3650). Defaults to 30.
@@ -50,11 +54,11 @@ function New-LWASUploadProfile {
 
     .EXAMPLE
         New-LWASUploadProfile -Name 'azure-1' -AccountName 'myaccount' `
-            -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_AZURE_SAS'
+            -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'
 
     .EXAMPLE
         New-LWASUploadProfile -Name 'azure-2' -AccountName 'myaccount' `
-            -ContainerName 'screens' -SasTokenEnvVar 'LWAS_AZURE_SAS2' `
+            -ContainerName 'screens' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN_2' `
             -DeleteLocalAfterUpload -DeleteLocalAfterDays 7 -MaxRetryAttempts 5
     #>
     [CmdletBinding()]
@@ -84,8 +88,17 @@ function New-LWASUploadProfile {
         [switch]$DeleteLocalAfterUpload,
 
         [Parameter()]
-        [int]$DeleteLocalAfterDays = 30
+        [int]$DeleteLocalAfterDays = 30,
+
+        [Parameter()]
+        [string]$CloudProvider = 'azure'
     )
+
+    # Validate CloudProvider
+    if ($CloudProvider -ine 'azure') {
+        Write-Error "CloudProvider '$CloudProvider' is not supported. Only 'azure' is supported in Phase 9b."
+        return
+    }
 
     # Validate name format
     $nameValidation = Get-ValidMacroName -Name $Name
@@ -133,6 +146,7 @@ function New-LWASUploadProfile {
     $profile = [PSCustomObject]@{
         name                   = $Name
         provider               = 'AzureBlobStorage'
+        cloudProvider          = $CloudProvider.ToLower()
         accountName            = $AccountName
         containerName          = $ContainerName
         sasTokenEnvVar         = $SasTokenEnvVar

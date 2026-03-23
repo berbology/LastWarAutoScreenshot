@@ -5607,7 +5607,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
       `UploadProfiles\{name}.json` and are not part of `ModuleConfig.json`; reference
       `AzureIntegration.md` for the profile schema.
 
-13. [ ] Final validation
+13. [x] Final validation
 
     - [x] 13.1: Run the complete, unfiltered Pester suite (`Invoke-Pester -Path .\powershell-module\Tests -Output Detailed`):
        - Record total test count; must meet or exceed Phase 8 final baseline plus all new
@@ -5635,7 +5635,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
          `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles\`
        - Remove the profile via the screen; verify the file is deleted
 
-    - [ ] 13.5: Manually smoke-test the `UploadScreenshots` macro step in
+    - [x] 13.5: Manually smoke-test the `UploadScreenshots` macro step in
       `Show-RecordMacroScreen`:
        - Record a macro with a Screenshot step then an UploadScreenshots step (not last);
          verify the "not last step" warning is shown at save time
@@ -5730,7 +5730,7 @@ for renewal).
 
 ### Tasks
 
-1. [ ] Upload profile schema update — add `cloudProvider` field
+1. [x] Upload profile schema update — add `cloudProvider` field
 
    **Design decision — `cloudProvider` as a new field vs. deriving from `provider` at runtime:**
 
@@ -5744,7 +5744,7 @@ for renewal).
    and the higher-level cloud discriminator (`cloudProvider`) also makes future multi-cloud
    extension cleaner.
 
-   - [ ] 1.1: Update the upload profile JSON schema (Phase 9, task 1.1) to add:
+   - [x] 1.1: Update the upload profile JSON schema (Phase 9, task 1.1) to add:
 
      ```json
      {
@@ -5767,7 +5767,7 @@ for renewal).
      Valid `cloudProvider` values: `"azure"` (only supported value in Phase 9b). Future phases
      may add `"aws"` and `"gcp"`. Field is case-insensitive on read; always written lower-case.
 
-   - [ ] 1.2: Update `Private/Get-UploadProfile.ps1` — in the default-injection block, back-fill
+   - [x] 1.2: Update `Private/Get-UploadProfile.ps1` — in the default-injection block, back-fill
      `cloudProvider` for profiles that pre-date Phase 9b:
 
      ```powershell
@@ -5779,11 +5779,11 @@ for renewal).
      All existing profiles are Azure-only (Phase 9 had no other provider), so `"azure"` is a safe
      default.
 
-   - [ ] 1.3: Update `Private/Save-UploadProfileFile.ps1` — add a comment confirming that
+   - [x] 1.3: Update `Private/Save-UploadProfileFile.ps1` — add a comment confirming that
      `cloudProvider` is serialised by `ConvertTo-Json` alongside all other profile fields. No code
      change is required; this is a documentation-only update to the function's comment-based help.
 
-   - [ ] 1.4: Update `Public/New-LWASUploadProfile.ps1` — add a `-CloudProvider` parameter:
+   - [x] 1.4: Update `Public/New-LWASUploadProfile.ps1` — add a `-CloudProvider` parameter:
 
      ```powershell
      [Parameter()]
@@ -5793,17 +5793,17 @@ for renewal).
      Validate that the value is `"azure"` (case-insensitive); `Write-Error` and return if not.
      Include `cloudProvider = $CloudProvider.ToLower()` in the profile object construction.
 
-   - [ ] 1.5: Update `Tests/UploadProfileManagement.Tests.ps1`:
-      - [ ] 1.5.1: `Get-UploadProfile` reading a file without `cloudProvider` → returned object has
+   - [x] 1.5: Update `Tests/UploadProfileManagement.Tests.ps1`:
+      - [x] 1.5.1: `Get-UploadProfile` reading a file without `cloudProvider` → returned object has
         `cloudProvider = 'azure'` (default back-fill)
-      - [ ] 1.5.2: `Get-UploadProfile` reading a file with `cloudProvider = 'azure'` → field
+      - [x] 1.5.2: `Get-UploadProfile` reading a file with `cloudProvider = 'azure'` → field
         round-trips correctly; value is `'azure'`
-      - [ ] 1.5.3: `New-LWASUploadProfile` with no `-CloudProvider` → profile object has
+      - [x] 1.5.3: `New-LWASUploadProfile` with no `-CloudProvider` → profile object has
         `cloudProvider = 'azure'`
-      - [ ] 1.5.4: `New-LWASUploadProfile -CloudProvider 'gcp'` → `Write-Error` called; no
+      - [x] 1.5.4: `New-LWASUploadProfile -CloudProvider 'gcp'` → `Write-Error` called; no
         `Save-UploadProfileFile` invocation
 
-2. [ ] `Test-LWASSASTokenIsValid` — public function
+2. [x] `Test-LWASSASTokenIsValid` — public function
 
    **Design decision — how to check SAS token validity:**
 
@@ -5817,7 +5817,7 @@ for renewal).
    (signature is always valid; permissions are set at generation time). Network-based checks add
    latency and a hard dependency on connectivity to a function that must work offline and in tests.
 
-   - [ ] 2.1: Create `Public/Test-LWASSASTokenIsValid.ps1`:
+   - [x] 2.1: Create `Public/Test-LWASSASTokenIsValid.ps1`:
 
      ```powershell
      function Test-LWASSASTokenIsValid {
@@ -5846,20 +5846,20 @@ for renewal).
      - Otherwise: return `$true`.
      - Uses only `[datetime]::UtcNow`; no external calls, no Az module.
 
-   - [ ] 2.2: Create `Tests/Test-LWASSASTokenIsValid.Tests.ps1`:
-      - [ ] 2.2.1: Empty string `''` → `$false`
-      - [ ] 2.2.2: Whitespace-only string → `$false`
-      - [ ] 2.2.3: Token string with no `se=` parameter → `$false`
-      - [ ] 2.2.4: Token with `se=` set to a date 1 year in the future → `$true`
-      - [ ] 2.2.5: Token with `se=` set to a date in the past → `$false`
-      - [ ] 2.2.6: Token with `se=` set to exactly 3 minutes from now (within 5-minute buffer) →
+   - [x] 2.2: Create `Tests/Test-LWASSASTokenIsValid.Tests.ps1`:
+      - [x] 2.2.1: Empty string `''` → `$false`
+      - [x] 2.2.2: Whitespace-only string → `$false`
+      - [x] 2.2.3: Token string with no `se=` parameter → `$false`
+      - [x] 2.2.4: Token with `se=` set to a date 1 year in the future → `$true`
+      - [x] 2.2.5: Token with `se=` set to a date in the past → `$false`
+      - [x] 2.2.6: Token with `se=` set to exactly 3 minutes from now (within 5-minute buffer) →
         `$false`
-      - [ ] 2.2.7: Token with `se=` set to exactly 6 minutes from now (outside 5-minute buffer) →
+      - [x] 2.2.7: Token with `se=` set to exactly 6 minutes from now (outside 5-minute buffer) →
         `$true`
-      - [ ] 2.2.8: Token with malformed `se=` value (e.g. `se=not-a-date`) → `$false`
-      - [ ] 2.2.9: Token string starting with `?` (e.g. `?sv=2021-06-08&se=...`) → leading `?`
+      - [x] 2.2.8: Token with malformed `se=` value (e.g. `se=not-a-date`) → `$false`
+      - [x] 2.2.9: Token string starting with `?` (e.g. `?sv=2021-06-08&se=...`) → leading `?`
         stripped; parsed correctly; result matches expiry
-      - [ ] 2.2.10: Realistic multi-parameter SAS token string with `se=` in the middle → `$true`
+      - [x] 2.2.10: Realistic multi-parameter SAS token string with `se=` in the middle → `$true`
         when future expiry; `$false` when past expiry
 
 3. [ ] Private helper functions
@@ -5912,6 +5912,7 @@ for renewal).
      1. Check `Get-Module -Name Az.Storage -ListAvailable`. If at least one result is found,
         skip to step 3.
      2. Module is not installed — prompt the user via `$Host.UI.PromptForChoice`:
+
         ```
         Caption : "Az.Storage module required"
         Message : "The Az.Storage PowerShell module is required for SAS token management
@@ -5919,6 +5920,7 @@ for renewal).
         Choices : [ "&Yes", "&No" ]
         Default : 1  (No — safe default; does not auto-install without consent)
         ```
+
         - If user chooses **No** (or the host is non-interactive and the prompt cannot be shown):
           `Write-Error "Az.Storage is not installed. Run: Install-Module Az.Storage -Scope CurrentUser"` and return `$false`.
         - If user chooses **Yes**: attempt
@@ -6012,7 +6014,7 @@ for renewal).
 
    | Approach | Pros | Cons |
    |---|---|---|
-   | A) Fixed 1-year expiry hardcoded in the function | Simple; sensible default; no new schema fields | Not configurable per profile or per call |
+   | A) Fixed 1-day expiry hardcoded in the function | Simple; sensible default; no new schema fields | Not configurable per profile or per call |
    | B) New `-ExpiryDays` parameter on this function | Flexible for the command-line use case | Extra parameter complexity; not needed currently |
    | C) New `sasTokenExpiryDays` profile field | Per-profile configurability | Schema change; YAGNI for Phase 9b |
 
@@ -6041,6 +6043,7 @@ for renewal).
      3. Verify `$Profile.sasTokenEnvVar` is non-empty. If empty:
         `Write-Error "Profile '$($Profile.name)' has no sasTokenEnvVar configured."` and return `$false`.
      4. If `$PSCmdlet.ShouldProcess($Profile.sasTokenEnvVar, 'Request new SAS token')`:
+
         ```powershell
         $context = New-AzStorageContext -StorageAccountName $Profile.accountName -UseConnectedAccount
         $token   = New-AzStorageContainerSASToken `
@@ -6050,6 +6053,7 @@ for renewal).
                        -ExpiryTime ([datetime]::UtcNow.AddYears(1)) `
                        -Protocol   HttpsOnly
         ```
+
         - Wrap the above in `try/catch`. On exception:
           `Write-Error "Failed to generate SAS token for '$($Profile.name)'. Ensure you are connected to Azure (Connect-AzAccount). Error: $($_.Exception.Message)"` and return `$false`.
         - Strip a leading `?` from `$token` if present.

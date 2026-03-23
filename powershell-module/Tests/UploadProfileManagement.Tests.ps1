@@ -151,4 +151,72 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
             Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*nonexistent*' }
         }
     }
+
+    It '9b.1.5.1: Get-UploadProfile back-fills cloudProvider = azure for profiles without the field' {
+        $profilesDir = Join-Path $TestDrive 'Profiles_9b_1_5_1'
+        New-Item -Path $profilesDir -ItemType Directory -Force | Out-Null
+
+        # Profile JSON without cloudProvider field (pre-Phase 9b)
+        $oldJson = '{"name":"legacy","provider":"AzureBlobStorage","accountName":"acct","containerName":"c","sasTokenEnvVar":"LWAS_SAS_TOKEN","blobPathPattern":"{MacroName}/{Date}/{Filename}","maxRetryAttempts":3,"retryBaseDelayMs":500,"deleteLocalAfterUpload":false,"deleteLocalAfterDays":30,"createdUtc":"2026-01-01T00:00:00Z","modifiedUtc":"2026-01-01T00:00:00Z"}'
+        $oldJson | Set-Content -Path (Join-Path $profilesDir 'legacy.json') -Encoding UTF8
+
+        InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
+            $result = Get-UploadProfile -Name 'legacy' -ProfilesDirectory $dir
+            $result | Should -Not -BeNull
+            $result.cloudProvider | Should -Be 'azure'
+        }
+    }
+
+    It '9b.1.5.2: Get-UploadProfile round-trips cloudProvider = azure when field is present' {
+        $profilesDir = Join-Path $TestDrive 'Profiles_9b_1_5_2'
+        New-Item -Path $profilesDir -ItemType Directory -Force | Out-Null
+
+        $json = '{"name":"new-profile","provider":"AzureBlobStorage","cloudProvider":"azure","accountName":"acct","containerName":"c","sasTokenEnvVar":"LWAS_SAS_TOKEN","blobPathPattern":"{MacroName}/{Date}/{Filename}","maxRetryAttempts":3,"retryBaseDelayMs":500,"deleteLocalAfterUpload":false,"deleteLocalAfterDays":30,"createdUtc":"2026-03-22T12:00:00Z","modifiedUtc":"2026-03-22T12:00:00Z"}'
+        $json | Set-Content -Path (Join-Path $profilesDir 'new-profile.json') -Encoding UTF8
+
+        InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
+            $result = Get-UploadProfile -Name 'new-profile' -ProfilesDirectory $dir
+            $result | Should -Not -BeNull
+            $result.cloudProvider | Should -Be 'azure'
+        }
+    }
+}
+
+# ============================================================
+# New-LWASUploadProfile — cloudProvider (Phase 9b task 1.5.3 / 1.5.4)
+# ============================================================
+
+Describe 'New-LWASUploadProfile — cloudProvider' -Tag 'Unit' {
+
+    BeforeEach {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-LastWarLog {}
+            Mock Get-ValidMacroName {
+                [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+            }
+            Mock Get-UploadProfile { $null }
+            Mock Save-UploadProfileFile {}
+        }
+    }
+
+    It '9b.1.5.3: New-LWASUploadProfile with no -CloudProvider saves profile with cloudProvider = azure' {
+        InModuleScope LastWarAutoScreenshot {
+            New-LWASUploadProfile -Name 'p1' -AccountName 'acct' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN'
+
+            Should -Invoke Save-UploadProfileFile -Times 1 -ParameterFilter {
+                $Profile.cloudProvider -eq 'azure'
+            }
+        }
+    }
+
+    It '9b.1.5.4: New-LWASUploadProfile -CloudProvider gcp calls Write-Error and does not save' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-Error {}
+
+            New-LWASUploadProfile -Name 'p2' -AccountName 'acct' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN' -CloudProvider 'gcp'
+
+            Should -Invoke Write-Error -Times 1
+            Should -Invoke Save-UploadProfileFile -Times 0
+        }
+    }
 }
