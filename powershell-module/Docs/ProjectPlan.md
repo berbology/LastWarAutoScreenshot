@@ -6174,20 +6174,20 @@ for renewal).
       - [x] 5.4.13: Summary panel contains `(Valid)` when current token passes
         `Test-LWASSASTokenIsValid`
 
-6. [ ] Update `New-LWASUploadProfile` — command-line path
+6. [x] Update `New-LWASUploadProfile` — command-line path
 
-   - [ ] 6.1: Add `-CloudProvider` parameter (default `'azure'`; validate case-insensitively;
+   - [x] 6.1: Add `-CloudProvider` parameter (default `'azure'`; validate case-insensitively;
      `Write-Error` and `return` if not `"azure"`). Include `cloudProvider = $CloudProvider.ToLower()`
      in the profile object construction.
 
-   - [ ] 6.2: Enforce `LWAS_SAS_` prefix on `-SasTokenEnvVar`. If the supplied value does not
+   - [x] 6.2: Enforce `LWAS_SAS_` prefix on `-SasTokenEnvVar`. If the supplied value does not
      begin with `LWAS_SAS_` (case-insensitive), `Write-Error` and `return` before saving:
 
      ```
      "SasTokenEnvVar must begin with 'LWAS_SAS_'. Supplied: '$SasTokenEnvVar'."
      ```
 
-   - [ ] 6.3: Replace the existing "env var not currently set" warning (lines 111–114 of
+   - [x] 6.3: Replace the existing "env var not currently set" warning (lines 111–114 of
      `New-LWASUploadProfile.ps1`) with the auto-token flow:
      - After `Save-UploadProfileFile`, read `[Environment]::GetEnvironmentVariable($SasTokenEnvVar)`.
      - If `Test-LWASSASTokenIsValid` returns `$false`: call
@@ -6198,20 +6198,20 @@ for renewal).
      - If `Test-LWASSASTokenIsValid` returns `$true`: no further action; existing
        `Write-Verbose "Upload profile '$Name' saved."` message is sufficient.
 
-   - [ ] 6.4: Update tests for `New-LWASUploadProfile` (add to existing test file or create
+   - [x] 6.4: Update tests for `New-LWASUploadProfile` (add to existing test file or create
      `Tests/New-LWASUploadProfile.Tests.ps1` if one does not yet exist):
-      - [ ] 6.4.1: `-CloudProvider 'azure'` (default) → saved profile has
+      - [x] 6.4.1: `-CloudProvider 'azure'` (default) → saved profile has
         `cloudProvider = 'azure'`
-      - [ ] 6.4.2: `-CloudProvider 'gcp'` → `Write-Error` called; `Save-UploadProfileFile` not
+      - [x] 6.4.2: `-CloudProvider 'gcp'` → `Write-Error` called; `Save-UploadProfileFile` not
         invoked
-      - [ ] 6.4.3: `-SasTokenEnvVar 'MY_TOKEN'` (missing `LWAS_SAS_` prefix) → `Write-Error`
+      - [x] 6.4.3: `-SasTokenEnvVar 'MY_TOKEN'` (missing `LWAS_SAS_` prefix) → `Write-Error`
         called; no profile saved
-      - [ ] 6.4.4: `-SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'` (valid prefix) → no prefix error
-      - [ ] 6.4.5: Env var holds a valid (non-expired) token → `Update-LWASUploadProfileSASToken`
+      - [x] 6.4.4: `-SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'` (valid prefix) → no prefix error
+      - [x] 6.4.5: Env var holds a valid (non-expired) token → `Update-LWASUploadProfileSASToken`
         not called
-      - [ ] 6.4.6: Env var is absent or holds an expired token → `Update-LWASUploadProfileSASToken`
+      - [x] 6.4.6: Env var is absent or holds an expired token → `Update-LWASUploadProfileSASToken`
         called exactly once
-      - [ ] 6.4.7: `Update-LWASUploadProfileSASToken` returns `$false` → `Write-Warning` called;
+      - [x] 6.4.7: `Update-LWASUploadProfileSASToken` returns `$false` → `Write-Warning` called;
         profile was still saved
 
 7. [ ] Documentation updates

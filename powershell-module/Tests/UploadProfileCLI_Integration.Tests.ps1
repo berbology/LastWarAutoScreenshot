@@ -33,18 +33,18 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
             Get-ChildItem -Path $profilesDir -Filter '*.json' -ErrorAction SilentlyContinue |
                 Remove-Item -Force
         }
-        # Set a fake SAS token so New-LWASUploadProfile does not warn
-        $env:LWAS_CLI_INT_SAS = 'sv=fake-integration-sas'
+        # Set a fake SAS token with a far-future expiry so Test-LWASSASTokenIsValid returns $true
+        $env:LWAS_SAS_CLI_INT = 'sv=2020-08-04&se=2099-01-01T00:00:00Z&sp=racwdlup'
     }
 
     AfterEach {
-        Remove-Item -Path Env:\LWAS_CLI_INT_SAS -ErrorAction SilentlyContinue
+        Remove-Item -Path Env:\LWAS_SAS_CLI_INT -ErrorAction SilentlyContinue
     }
 
-    It '8.9.1: New-LWASUploadProfile -> Get-LWASUploadProfile -> Remove-LWASUploadProfile round-trip' {
+    It 'New-LWASUploadProfile -> Get-LWASUploadProfile -> Remove-LWASUploadProfile round-trip' {
         InModuleScope LastWarAutoScreenshot {
             New-LWASUploadProfile -Name 'cli-test-1' -AccountName 'myaccount' `
-                -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_CLI_INT_SAS'
+                -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_CLI_INT'
 
             $profiles = @(Get-LWASUploadProfile)
             $profiles.Count | Should -BeGreaterOrEqual 1
@@ -57,10 +57,10 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
         }
     }
 
-    It '8.9.2: New-LWASUploadProfile followed by Get-LWASUploadProfile -Name returns correct profile with all fields intact after JSON serialisation' {
+    It 'New-LWASUploadProfile followed by Get-LWASUploadProfile -Name returns correct profile with all fields intact after JSON serialisation' {
         InModuleScope LastWarAutoScreenshot {
             New-LWASUploadProfile -Name 'cli-test-2' -AccountName 'storageacct' `
-                -ContainerName 'mycontainer' -SasTokenEnvVar 'LWAS_CLI_INT_SAS' `
+                -ContainerName 'mycontainer' -SasTokenEnvVar 'LWAS_SAS_CLI_INT' `
                 -BlobPathPattern '{MacroName}/{Date}/{Filename}' `
                 -MaxRetryAttempts 5 -RetryBaseDelayMs 750 `
                 -DeleteLocalAfterUpload -DeleteLocalAfterDays 7
@@ -71,7 +71,7 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
             $loaded.name                    | Should -Be 'cli-test-2'
             $loaded.accountName             | Should -Be 'storageacct'
             $loaded.containerName           | Should -Be 'mycontainer'
-            $loaded.sasTokenEnvVar          | Should -Be 'LWAS_CLI_INT_SAS'
+            $loaded.sasTokenEnvVar          | Should -Be 'LWAS_SAS_CLI_INT'
             $loaded.blobPathPattern         | Should -Be '{MacroName}/{Date}/{Filename}'
             $loaded.maxRetryAttempts        | Should -Be 5
             $loaded.retryBaseDelayMs        | Should -Be 750
@@ -81,10 +81,10 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
         }
     }
 
-    It '8.9.3: Remove-LWASUploadProfile -Force removes the file; subsequent Get-LWASUploadProfile -Name returns $null' {
+    It 'Remove-LWASUploadProfile -Force removes the file; subsequent Get-LWASUploadProfile -Name returns $null' {
         InModuleScope LastWarAutoScreenshot {
             New-LWASUploadProfile -Name 'cli-test-3' -AccountName 'acct' `
-                -ContainerName 'c' -SasTokenEnvVar 'LWAS_CLI_INT_SAS'
+                -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_CLI_INT'
 
             $before = Get-LWASUploadProfile -Name 'cli-test-3'
             $before | Should -Not -BeNull

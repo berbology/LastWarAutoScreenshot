@@ -9,9 +9,10 @@ function New-LWASUploadProfile {
         be referenced by UploadScreenshots macro actions and by Send-LWASScreenshots.
 
         The SAS token is stored only as the name of the environment variable that
-        holds it, not as the token itself. Set the environment variable before
-        running an upload. A warning is issued if the variable is not currently set,
-        but the profile is still saved.
+        holds it, not as the token itself. After saving, the current token is
+        validated via Test-LWASSASTokenIsValid. If the token is absent or expired,
+        Update-LWASUploadProfileSASToken is called automatically to generate and
+        persist a new one (requires Az.Storage and an active Azure session).
 
     .PARAMETER Name
         Name for the upload profile. Must match the macro naming rules: 1–50
@@ -25,7 +26,7 @@ function New-LWASUploadProfile {
 
     .PARAMETER SasTokenEnvVar
         Name of the environment variable that holds the SAS token at runtime.
-        Must consist of letters, digits, and underscores only.
+        Must begin with 'LWAS_SAS_' and consist of letters, digits, and underscores only.
 
     .PARAMETER BlobPathPattern
         Pattern for the blob path. Supports placeholders: {MacroName}, {Date},
@@ -114,16 +115,16 @@ function New-LWASUploadProfile {
         return
     }
 
+    # Validate SasTokenEnvVar prefix
+    if ($SasTokenEnvVar -notmatch '^LWAS_SAS_') {
+        Write-Error "SasTokenEnvVar must begin with 'LWAS_SAS_'. Supplied: '$SasTokenEnvVar'."
+        return
+    }
+
     # Validate SasTokenEnvVar characters
     if ($SasTokenEnvVar -match '[^A-Za-z0-9_]') {
         Write-Error "SasTokenEnvVar '$SasTokenEnvVar' contains invalid characters. Only letters, digits, and underscores are allowed."
         return
-    }
-
-    # Warn if env var is not currently set (do not block save)
-    $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
-    if ([string]::IsNullOrEmpty($currentToken)) {
-        Write-Warning "Environment variable '$SasTokenEnvVar' is not currently set. Set it to the SAS token before running an upload."
     }
 
     # Validate numeric ranges
@@ -160,5 +161,16 @@ function New-LWASUploadProfile {
     }
 
     Save-UploadProfileFile -Profile $profile
+
+    $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
+    if (-not (Test-LWASSASTokenIsValid -SasToken $currentToken)) {
+        $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $profile
+        if (-not $tokenUpdated) {
+            Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount)."
+        } else {
+            Write-Verbose "SAS token for '$SasTokenEnvVar' updated successfully."
+        }
+    }
+
     Write-Verbose "Upload profile '$Name' saved."
 }
