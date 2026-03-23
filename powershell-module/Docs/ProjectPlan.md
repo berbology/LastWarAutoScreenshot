@@ -5862,9 +5862,9 @@ for renewal).
       - [x] 2.2.10: Realistic multi-parameter SAS token string with `se=` in the middle → `$true`
         when future expiry; `$false` when past expiry
 
-3. [ ] Private helper functions
+3. [x] Private helper functions
 
-   - [ ] 3.1: Create `Private/Get-LWASSASTokenEnvVarNames.ps1`:
+   - [x] 3.1: Create `Private/Get-LWASSASTokenEnvVarNames.ps1`:
 
      ```powershell
      function Get-LWASSASTokenEnvVarNames {
@@ -5893,7 +5893,7 @@ for renewal).
      picture and avoids confusing situations where a token was set Machine-wide but doesn't appear
      in the selection prompt.
 
-   - [ ] 3.2: Create `Private/Assert-LWASAzStorageModule.ps1`:
+   - [x] 3.2: Create `Private/Assert-LWASAzStorageModule.ps1`:
 
      ```powershell
      function Assert-LWASAzStorageModule {
@@ -5937,32 +5937,32 @@ for renewal).
      public function that calls an `Az.Storage` cmdlet must call `Assert-LWASAzStorageModule`
      first, before any other checks.
 
-   - [ ] 3.3: Create `Tests/Get-LWASSASTokenEnvVarNames.Tests.ps1`:
-      - [ ] 3.3.1: No `LWAS_SAS_*` vars in any scope → returns `@()` (empty array, not `$null`)
-      - [ ] 3.3.2: One `LWAS_SAS_PROD` var in User scope → `@('LWAS_SAS_PROD')` returned
-      - [ ] 3.3.3: Same name `LWAS_SAS_PROD` in both User and Process scopes →
+   - [x] 3.3: Create `Tests/Get-LWASSASTokenEnvVarNames.Tests.ps1`:
+      - [x] 3.3.1: No `LWAS_SAS_*` vars in any scope → returns `@()` (empty array, not `$null`)
+      - [x] 3.3.2: One `LWAS_SAS_PROD` var in User scope → `@('LWAS_SAS_PROD')` returned
+      - [x] 3.3.3: Same name `LWAS_SAS_PROD` in both User and Process scopes →
         deduplicated; appears exactly once in the result
-      - [ ] 3.3.4: Var with similar but non-matching prefix (`LWAS_STORAGE_TOKEN`) → not returned
-      - [ ] 3.3.5: Multiple vars across scopes → all unique names returned, sorted alphabetically
-      - [ ] 3.3.6: Var name matching prefix case-insensitively (`lwas_sas_dev`) → included;
+      - [x] 3.3.4: Var with similar but non-matching prefix (`LWAS_STORAGE_TOKEN`) → not returned
+      - [x] 3.3.5: Multiple vars across scopes → all unique names returned, sorted alphabetically
+      - [x] 3.3.6: Var name matching prefix case-insensitively (`lwas_sas_dev`) → included;
         returned with its original casing preserved
 
-   - [ ] 3.4: Create `Tests/Assert-LWASAzStorageModule.Tests.ps1`:
-      - [ ] 3.4.1: Module already installed and imported → `$true`; no prompt shown;
+   - [x] 3.4: Create `Tests/Assert-LWASAzStorageModule.Tests.ps1`:
+      - [x] 3.4.1: Module already installed and imported → `$true`; no prompt shown;
         `Install-Module` not called; `Import-Module` not called
-      - [ ] 3.4.2: Module installed but not yet imported → `$true`; `Import-Module` called once;
+      - [x] 3.4.2: Module installed but not yet imported → `$true`; `Import-Module` called once;
         no prompt shown; `Install-Module` not called
-      - [ ] 3.4.3: Module not installed, user chooses **Yes** to install, install succeeds,
+      - [x] 3.4.3: Module not installed, user chooses **Yes** to install, install succeeds,
         import succeeds → `$true`; `Install-Module` called once; `Import-Module` called once
-      - [ ] 3.4.4: Module not installed, user chooses **No** → `Write-Error` called with install
+      - [x] 3.4.4: Module not installed, user chooses **No** → `Write-Error` called with install
         instructions; `$false` returned; `Install-Module` not called
-      - [ ] 3.4.5: Module not installed, user chooses **Yes**, `Install-Module` throws →
+      - [x] 3.4.5: Module not installed, user chooses **Yes**, `Install-Module` throws →
         `Write-Error` called with the exception message; `$false` returned
-      - [ ] 3.4.6: Module installed, `Import-Module` throws → `Write-Error` called with the
+      - [x] 3.4.6: Module installed, `Import-Module` throws → `Write-Error` called with the
         exception message; `$false` returned
-      - [ ] 3.4.7: No `Write-Error` is called on the success paths (3.4.1, 3.4.2, 3.4.3)
+      - [x] 3.4.7: No `Write-Error` is called on the success paths (3.4.1, 3.4.2, 3.4.3)
 
-   - [ ] 3.5: Create `Private/Test-LWASAzureProfile.ps1`:
+   - [x] 3.5: Create `Private/Test-LWASAzureProfile.ps1`:
 
      ```powershell
      function Test-LWASAzureProfile {
@@ -5985,16 +5985,16 @@ for renewal).
      and any future SAS-related functions) as the first guard, before any Az module or env var
      operations are attempted.
 
-   - [ ] 3.6: Create `Tests/Test-LWASAzureProfile.Tests.ps1`:
-      - [ ] 3.6.1: Profile with `cloudProvider = 'azure'` → `$true`
-      - [ ] 3.6.2: Profile with `cloudProvider = 'Azure'` (mixed case) → `$true`
+   - [x] 3.6: Create `Tests/Test-LWASAzureProfile.Tests.ps1`:
+      - [x] 3.6.1: Profile with `cloudProvider = 'azure'` → `$true`
+      - [x] 3.6.2: Profile with `cloudProvider = 'Azure'` (mixed case) → `$true`
         (case-insensitive comparison)
-      - [ ] 3.6.3: Profile with `cloudProvider = 'gcp'` → `$false`
-      - [ ] 3.6.4: Profile with `cloudProvider = 'aws'` → `$false`
-      - [ ] 3.6.5: Profile with `cloudProvider = ''` (empty string) → `$false`
-      - [ ] 3.6.6: Profile object with no `cloudProvider` property → `$false` (missing field is
+      - [x] 3.6.3: Profile with `cloudProvider = 'gcp'` → `$false`
+      - [x] 3.6.4: Profile with `cloudProvider = 'aws'` → `$false`
+      - [x] 3.6.5: Profile with `cloudProvider = ''` (empty string) → `$false`
+      - [x] 3.6.6: Profile object with no `cloudProvider` property → `$false` (missing field is
         not treated as Azure)
-      - [ ] 3.6.7: No errors or warnings are written in any of the above cases — `Write-Error`
+      - [x] 3.6.7: No errors or warnings are written in any of the above cases — `Write-Error`
         and `Write-Warning` are never called by this function
 
 4. [ ] `Update-LWASUploadProfileSASToken` — public function
