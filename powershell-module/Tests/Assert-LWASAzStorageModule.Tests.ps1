@@ -2,6 +2,15 @@ BeforeAll {
     $moduleManifest = Join-Path (Split-Path -Parent $PSScriptRoot) 'LastWarAutoScreenshot.psd1'
     Remove-Module LastWarAutoScreenshot -Force -ErrorAction SilentlyContinue
     Import-Module $moduleManifest -Force
+
+    # Stub Az cmdlets used by Assert-LWASAzureSession wrappers
+    function global:Get-AzContext {}
+    function global:Connect-AzAccount {}
+}
+
+AfterAll {
+    Remove-Item -Path 'Function:\Get-AzContext'     -ErrorAction SilentlyContinue
+    Remove-Item -Path 'Function:\Connect-AzAccount' -ErrorAction SilentlyContinue
 }
 
 Describe 'Assert-LWASAzStorageModule' -Tag 'Unit' {
@@ -178,6 +187,86 @@ Describe 'Assert-LWASAzStorageModule' -Tag 'Unit' {
             Mock Invoke-AzStorageInstallPrompt { 0 }
 
             Assert-LWASAzStorageModule | Out-Null
+
+            Should -Invoke Write-Error -Times 0
+        }
+    }
+}
+
+Describe 'Assert-LWASAzureSession' -Tag 'Unit' {
+
+    BeforeEach {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-Error {}
+        }
+    }
+
+    # Already authenticated → $true; Connect-AzAccount not called
+    It 'Active Azure context exists → $true returned; Invoke-ConnectAzAccount not called' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Invoke-GetAzContext    { [PSCustomObject]@{ Account = 'user@example.com' } }
+            Mock Invoke-ConnectAzAccount {}
+
+            $result = Assert-LWASAzureSession
+
+            $result | Should -BeTrue
+            Should -Invoke Invoke-ConnectAzAccount -Times 0
+        }
+    }
+
+    # Not authenticated; Connect-AzAccount succeeds and context appears
+    It 'No context; Invoke-ConnectAzAccount succeeds; second Get-AzContext returns context → $true' {
+        InModuleScope LastWarAutoScreenshot {
+            $script:callCount = 0
+            Mock Invoke-GetAzContext {
+                $script:callCount++
+                if ($script:callCount -ge 2) {
+                    return [PSCustomObject]@{ Account = 'user@example.com' }
+                }
+                return $null
+            }
+            Mock Invoke-ConnectAzAccount {}
+
+            $result = Assert-LWASAzureSession
+
+            $result | Should -BeTrue
+            Should -Invoke Invoke-ConnectAzAccount -Times 1
+        }
+    }
+
+    # Not authenticated; Connect-AzAccount throws → Write-Error; $false
+    It 'No context; Invoke-ConnectAzAccount throws → Write-Error with exception; $false returned' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Invoke-GetAzContext     { $null }
+            Mock Invoke-ConnectAzAccount { throw 'Interactive login not supported in this environment' }
+
+            $result = Assert-LWASAzureSession
+
+            $result | Should -BeFalse
+            Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*Azure login failed*' }
+        }
+    }
+
+    # Not authenticated; Connect-AzAccount runs but context still $null → Write-Error; $false
+    It 'No context; Invoke-ConnectAzAccount runs but context still null → Write-Error; $false returned' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Invoke-GetAzContext     { $null }
+            Mock Invoke-ConnectAzAccount {}
+
+            $result = Assert-LWASAzureSession
+
+            $result | Should -BeFalse
+            Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*Connect-AzAccount*' }
+        }
+    }
+
+    # Active context → Write-Error not called
+    It 'Active context (success path) → Write-Error not called' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Invoke-GetAzContext     { [PSCustomObject]@{ Account = 'user@example.com' } }
+            Mock Invoke-ConnectAzAccount {}
+
+            Assert-LWASAzureSession | Out-Null
 
             Should -Invoke Write-Error -Times 0
         }

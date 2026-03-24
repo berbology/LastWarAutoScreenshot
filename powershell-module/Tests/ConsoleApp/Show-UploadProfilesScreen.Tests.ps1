@@ -32,8 +32,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] [Back] — navigate to [Back] (1 down)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -49,8 +48,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] [Back]
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -91,9 +89,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] Remove profile, [2] [Back]
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile, [2] Remove profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -117,10 +113,10 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                # First iteration: [0] Add profile — press Enter
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration (loop returns to menu): [1] [Back] — 1 down + Enter
+                # First iteration: [1] Add profile — 1 down + Enter
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration (loop returns to menu): [0] [Back] — Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -136,8 +132,8 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -178,16 +174,15 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] Remove profile, [2] [Back]
-                # Select Remove profile (index 1): 1 down + Enter
+                # Choices: [0] [Back], [1] Add profile, [2] Remove profile
+                # Select Remove profile (index 2): 2 downs + Enter
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Remove sub-prompt: [0] profile-one, [1] profile-two, [2] Cancel
                 # Select profile-one (index 0): Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Back to main prompt (loop re-runs): [2] [Back] — 2 downs + Enter
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Back to main prompt (loop re-runs): [0] [Back] — Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -211,8 +206,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 Mock Remove-UploadProfileFile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] [Back] — 1 down + Enter
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Show-UploadProfilesScreen -Console $tc

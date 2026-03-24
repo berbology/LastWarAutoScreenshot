@@ -132,6 +132,12 @@ function Show-EditUploadProfileScreen {
         $suffixPrompt.AllowEmpty = $false
         $rawSuffix               = $suffixPrompt.Show($Console)
 
+        # If the user typed the full variable name (e.g. LWAS_SAS_TOKEN instead of TOKEN),
+        # strip the prefix so it is not duplicated when we prepend it below.
+        if ($rawSuffix -imatch '^LWAS_SAS_(.+)$') {
+            $rawSuffix = $Matches[1]
+        }
+
         if ($rawSuffix -notmatch '^[A-Za-z0-9_]{1,30}$') {
             $Console.Write([Spectre.Console.Markup]::new("[red]Suffix must be 1–30 characters and contain only letters, digits, and underscores.[/]`n"))
             continue

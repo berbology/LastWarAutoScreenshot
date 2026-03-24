@@ -76,11 +76,11 @@ function Show-UploadProfilesScreen {
 
         # Build selection prompt choices
         $menuChoices = [System.Collections.Generic.List[string]]::new()
+        $menuChoices.Add('[[Back]]')
         $menuChoices.Add('Add profile')
         if ($profiles.Count -gt 0) {
             $menuChoices.Add('Remove profile')
         }
-        $menuChoices.Add('[[Back]]')
 
         $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
             'Upload profiles:', $menuChoices.ToArray()

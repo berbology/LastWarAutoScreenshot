@@ -6241,14 +6241,14 @@ for renewal).
 
 8. [ ] Final validation
 
-   - [ ] 8.1: Run the complete, unfiltered Pester suite:
+   - [x] 8.1: Run the complete, unfiltered Pester suite:
      (`Invoke-Pester -Path .\powershell-module\Tests -Output Detailed`)
       - Record total test count; must meet or exceed the Phase 9 final baseline plus all new
         Phase 9b tests added across tasks 1–7.
       - Zero failures, zero errors.
       - If any previously-passing test now fails, halt and investigate before proceeding.
 
-   - [ ] 8.2: Manually smoke-test `Test-LWASSASTokenIsValid`:
+   - [x] 8.2: Manually smoke-test `Test-LWASSASTokenIsValid`:
       - Call with an empty string → `$false`
       - Call with a well-formed SAS token string with a future `se=` date → `$true`
       - Call with a token whose `se=` date is in the past → `$false`

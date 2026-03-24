@@ -100,3 +100,78 @@ function Invoke-AzStorageInstallPrompt {
     )
     return $Host.UI.PromptForChoice($caption, $message, $choices, 1)
 }
+
+function Invoke-GetAzContext {
+    <#
+    .SYNOPSIS
+        Returns the current Azure context, or $null if not authenticated.
+
+    .DESCRIPTION
+        Wraps Get-AzContext so that Assert-LWASAzureSession can be tested without
+        an active Azure session. Returns $null when no context is available.
+
+    .OUTPUTS
+        PSObject or $null
+    #>
+    [CmdletBinding()]
+    param()
+    return Get-AzContext -ErrorAction SilentlyContinue
+}
+
+function Invoke-ConnectAzAccount {
+    <#
+    .SYNOPSIS
+        Opens an interactive Azure login prompt.
+
+    .DESCRIPTION
+        Wraps Connect-AzAccount so that Assert-LWASAzureSession can be tested
+        without triggering a real browser login flow.
+    #>
+    [CmdletBinding()]
+    param()
+    Connect-AzAccount
+}
+
+function Assert-LWASAzureSession {
+    <#
+    .SYNOPSIS
+        Ensures there is an active Azure session, calling Connect-AzAccount if needed.
+
+    .DESCRIPTION
+        Checks for an active Azure context via Get-AzContext. If no context is found,
+        calls Connect-AzAccount interactively. Returns $true when a session is active;
+        $false (after writing a Write-Error) if login fails or is not possible.
+
+        Callers should guard with:
+
+            if (-not (Assert-LWASAzureSession)) { return $false }
+
+    .OUTPUTS
+        System.Boolean
+        $true when an active Azure session exists; $false on any failure.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $context = Invoke-GetAzContext
+    if ($null -ne $context) {
+        return $true
+    }
+
+    Write-Verbose 'No active Azure session found. Calling Connect-AzAccount...'
+    try {
+        Invoke-ConnectAzAccount
+    } catch {
+        Write-Error "Azure login failed: $($_.Exception.Message)"
+        return $false
+    }
+
+    $context = Invoke-GetAzContext
+    if ($null -eq $context) {
+        Write-Error 'Azure login did not result in an active session. Please run Connect-AzAccount manually and retry.'
+        return $false
+    }
+
+    return $true
+}

@@ -196,6 +196,8 @@ Describe 'New-LWASUploadProfile — cloudProvider' -Tag 'Unit' {
             }
             Mock Get-UploadProfile { $null }
             Mock Save-UploadProfileFile {}
+            Mock Test-LWASSASTokenIsValid { $true }
+            Mock Update-LWASUploadProfileSASToken { $true }
         }
     }
 

@@ -12,11 +12,15 @@ BeforeAll {
     function global:New-AzStorageContainerSASToken {
         param($Name, $Context, $Permission, $ExpiryTime, $Protocol)
     }
+    function global:Get-AzContext {}
+    function global:Connect-AzAccount {}
 }
 
 AfterAll {
-    Remove-Item -Path 'Function:\New-AzStorageContext'        -ErrorAction SilentlyContinue
+    Remove-Item -Path 'Function:\New-AzStorageContext'           -ErrorAction SilentlyContinue
     Remove-Item -Path 'Function:\New-AzStorageContainerSASToken' -ErrorAction SilentlyContinue
+    Remove-Item -Path 'Function:\Get-AzContext'                  -ErrorAction SilentlyContinue
+    Remove-Item -Path 'Function:\Connect-AzAccount'              -ErrorAction SilentlyContinue
 }
 
 Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
@@ -24,6 +28,12 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     BeforeEach {
         InModuleScope LastWarAutoScreenshot {
             Mock Write-LastWarLog {}
+            # Defensive stubs for Assert-LWASAzureSession internals — prevent any real Azure call
+            # if the higher-level Assert-LWASAzureSession mock is somehow bypassed.
+            Mock Invoke-GetAzContext     { [PSCustomObject]@{ Account = 'test@example.com' } }
+            Mock Invoke-ConnectAzAccount {}
+            # Default: Azure session is active; individual tests override when testing the failure path
+            Mock Assert-LWASAzureSession { return $true }
         }
     }
 
@@ -72,6 +82,30 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext        -Times 0
+            Should -Invoke New-AzStorageContainerSASToken -Times 0
+        }
+    }
+
+    # Assert-LWASAzureSession returns $false
+    It 'Assert-LWASAzureSession returns $false → function returns $false; Az storage cmdlets not invoked' {
+        InModuleScope LastWarAutoScreenshot {
+            $profile = [PSCustomObject]@{
+                name           = 'azure-profile'
+                cloudProvider  = 'azure'
+                sasTokenEnvVar = 'LWAS_SAS_PROD'
+                accountName    = 'myaccount'
+                containerName  = 'shots'
+            }
+
+            Mock Assert-LWASAzStorageModule { return $true }
+            Mock Assert-LWASAzureSession    { return $false }
+            Mock New-AzStorageContext {}
+            Mock New-AzStorageContainerSASToken {}
+
+            $result = Update-LWASUploadProfileSASToken -Profile $profile
+
+            $result | Should -BeFalse
+            Should -Invoke New-AzStorageContext           -Times 0
             Should -Invoke New-AzStorageContainerSASToken -Times 0
         }
     }
@@ -157,6 +191,33 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             $result | Should -BeFalse
             Should -Invoke Write-Error -Times 1 -ParameterFilter {
                 $Message -like '*Connect-AzAccount*'
+            }
+            Should -Invoke Set-Item -Times 0
+        }
+    }
+
+    # New-AzStorageContainerSASToken returns null (non-terminating error path)
+    It 'New-AzStorageContainerSASToken returns null → Write-Error called; $false returned; Set-Item not called' {
+        InModuleScope LastWarAutoScreenshot {
+            $profile = [PSCustomObject]@{
+                name           = 'azure-profile'
+                cloudProvider  = 'azure'
+                sasTokenEnvVar = 'LWAS_SAS_PROD'
+                accountName    = 'myaccount'
+                containerName  = 'shots'
+            }
+
+            Mock Assert-LWASAzStorageModule { return $true }
+            Mock New-AzStorageContext       { [PSCustomObject]@{ StorageAccountName = 'myaccount' } }
+            Mock New-AzStorageContainerSASToken { return $null }
+            Mock Write-Error {}
+            Mock Set-Item {}
+
+            $result = Update-LWASUploadProfileSASToken -Profile $profile -ErrorAction SilentlyContinue
+
+            $result | Should -BeFalse
+            Should -Invoke Write-Error -Times 1 -ParameterFilter {
+                $Message -like '*returned null*'
             }
             Should -Invoke Set-Item -Times 0
         }

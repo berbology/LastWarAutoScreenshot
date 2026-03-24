@@ -824,6 +824,195 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
+    # Context: Pre-flight SAS token check for UploadScreenshots actions
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'Pre-flight: SAS token check for UploadScreenshots actions' {
+
+        It 'Shows SAS token warning and calls Update-LWASUploadProfileSASToken when token is invalid; runs macro when token updated' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-LWASMacro -MockWith {
+                    @([PSCustomObject]@{
+                        FileName    = '20240101_120000_upload-macro.json'
+                        FilePath    = 'C:\test\Macros\20240101_120000_upload-macro.json'
+                        Name        = 'upload-macro'
+                        CreatedUtc  = '2024-01-01T12:00:00Z'
+                        DisplayDate = '01/01/24 12:00:00'
+                        ActionCount = 1
+                        Valid       = $true
+                    })
+                }
+                Mock Get-MacroFile -MockWith {
+                    [PSCustomObject]@{
+                        Valid    = $true
+                        Messages = @()
+                        Data     = [PSCustomObject]@{
+                            version  = '1.0'
+                            metadata = [PSCustomObject]@{
+                                name        = 'upload-macro'
+                                createdUtc  = '2024-01-01T12:00:00Z'
+                                modifiedUtc = '2024-01-01T12:00:00Z'
+                            }
+                            targetWindow = [PSCustomObject]@{ processName = 'game.exe'; windowTitle = 'Game' }
+                            sequence     = @([PSCustomObject]@{
+                                type              = 'UploadScreenshots'
+                                uploadProfileName = 'test-profile'
+                                scope             = 'All'
+                            })
+                        }
+                    }
+                }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-UploadProfile -MockWith {
+                    [PSCustomObject]@{
+                        name           = 'test-profile'
+                        cloudProvider  = 'azure'
+                        sasTokenEnvVar = 'LWAS_SAS_TEST'
+                        accountName    = 'myaccount'
+                        containerName  = 'shots'
+                    }
+                }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASUploadProfileSASToken { return $true }
+                Mock Invoke-MacroSequence -MockWith {
+                    [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                # Select macro → SAS warning shown → token updated → Yes, run now → dismiss pause
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RunMacroScreen -Console $tc
+                $tc.Output | Should -Match 'SAS Token Required'
+                Should -Invoke Update-LWASUploadProfileSASToken -Times 1
+                Should -Invoke Invoke-MacroSequence -Times 1 -Exactly
+            }
+        }
+
+        It 'Shows unavailable panel when Update-LWASUploadProfileSASToken returns $false; Cancel returns to macro list' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-LWASMacro -MockWith {
+                    @([PSCustomObject]@{
+                        FileName    = '20240101_120000_upload-macro.json'
+                        FilePath    = 'C:\test\Macros\20240101_120000_upload-macro.json'
+                        Name        = 'upload-macro'
+                        CreatedUtc  = '2024-01-01T12:00:00Z'
+                        DisplayDate = '01/01/24 12:00:00'
+                        ActionCount = 1
+                        Valid       = $true
+                    })
+                }
+                Mock Get-MacroFile -MockWith {
+                    [PSCustomObject]@{
+                        Valid    = $true
+                        Messages = @()
+                        Data     = [PSCustomObject]@{
+                            version  = '1.0'
+                            metadata = [PSCustomObject]@{
+                                name        = 'upload-macro'
+                                createdUtc  = '2024-01-01T12:00:00Z'
+                                modifiedUtc = '2024-01-01T12:00:00Z'
+                            }
+                            targetWindow = [PSCustomObject]@{ processName = 'game.exe'; windowTitle = 'Game' }
+                            sequence     = @([PSCustomObject]@{
+                                type              = 'UploadScreenshots'
+                                uploadProfileName = 'test-profile'
+                                scope             = 'All'
+                            })
+                        }
+                    }
+                }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-UploadProfile -MockWith {
+                    [PSCustomObject]@{
+                        name           = 'test-profile'
+                        cloudProvider  = 'azure'
+                        sasTokenEnvVar = 'LWAS_SAS_TEST'
+                        accountName    = 'myaccount'
+                        containerName  = 'shots'
+                    }
+                }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASUploadProfileSASToken { return $false }
+                Mock Invoke-MacroSequence {}
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                # Select macro → SAS fails → Cancel at unavailable prompt → loop → Back to main menu
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RunMacroScreen -Console $tc
+                $tc.Output | Should -Match 'SAS Token Unavailable'
+                $tc.Output | Should -Match 'Connect-AzAccount'
+                Should -Invoke Invoke-MacroSequence -Times 0 -Exactly
+            }
+        }
+
+        It 'Skips SAS check and proceeds normally when macro has no UploadScreenshots actions' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-LWASMacro -MockWith {
+                    @([PSCustomObject]@{
+                        FileName    = '20240101_120000_test-macro.json'
+                        FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
+                        Name        = 'test-macro'
+                        CreatedUtc  = '2024-01-01T12:00:00Z'
+                        DisplayDate = '01/01/24 12:00:00'
+                        ActionCount = 1
+                        Valid       = $true
+                    })
+                }
+                Mock Get-MacroFile -MockWith {
+                    [PSCustomObject]@{
+                        Valid    = $true
+                        Messages = @()
+                        Data     = [PSCustomObject]@{
+                            version  = '1.0'
+                            metadata = [PSCustomObject]@{
+                                name        = 'test-macro'
+                                createdUtc  = '2024-01-01T12:00:00Z'
+                                modifiedUtc = '2024-01-01T12:00:00Z'
+                            }
+                            targetWindow = [PSCustomObject]@{ processName = 'game.exe'; windowTitle = 'Game' }
+                            sequence     = @([PSCustomObject]@{ type = 'LeftClick' })
+                        }
+                    }
+                }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                }
+                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Update-LWASUploadProfileSASToken {}
+                Mock Invoke-MacroSequence -MockWith {
+                    [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
+                }
+                Mock Write-LastWarLog {}
+
+                $tc = $script:tc
+                # Select macro → Yes, run now → dismiss pause
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-RunMacroScreen -Console $tc
+                Should -Invoke Update-LWASUploadProfileSASToken -Times 0
+                Should -Invoke Invoke-MacroSequence -Times 1 -Exactly
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
     # Context: User cancels at run confirmation
     # ════════════════════════════════════════════════════════════════════════
     Context 'When the user cancels at the run confirmation prompt' {

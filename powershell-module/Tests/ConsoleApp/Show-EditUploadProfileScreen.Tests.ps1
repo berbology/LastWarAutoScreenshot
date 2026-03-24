@@ -481,6 +481,48 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
         }
     }
 
+        It 'Strips LWAS_SAS_ prefix when user types the full variable name as suffix' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Get-ValidMacroName {
+                    [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
+                }
+                Mock Get-UploadProfile { $null }
+                Mock Save-UploadProfileFile {}
+                Mock Write-LastWarLog {}
+                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Test-LWASSASTokenIsValid { $true }
+                Mock Update-LWASUploadProfileSASToken { $true }
+
+                $tc = $script:tc
+
+                $tc.Input.PushText('prefix-strip-test')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('acct')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushText('ctr')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # User types the full variable name including the LWAS_SAS_ prefix
+                $tc.Input.PushText('LWAS_SAS_TOKEN')
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # blob pattern
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # max retry
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # retry delay
+                $tc.Input.PushText('N')
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete local
+                $tc.Input.PushKey([ConsoleKey]::Enter)  # delete after days
+                # Confirm: Yes
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditUploadProfileScreen -Console $tc
+
+                # The saved profile must use LWAS_SAS_TOKEN, not LWAS_SAS_LWAS_SAS_TOKEN
+                Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
+                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN'
+                }
+            }
+        }
+    }
+
     # Save path — auto-token logic
     Context 'When saving the profile' {
 
