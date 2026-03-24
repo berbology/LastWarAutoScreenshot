@@ -6282,7 +6282,13 @@ for renewal).
 
 ---
 
-## Phase 10: Improvements
+## Phase 10: Hardware Mouse Emulation Plan
+
+See [Hardware Mouse Emulation Plan](HardwareMouseEmulationPlan.md)
+
+---
+
+## Phase 11: Improvements
 
 10.1 [ ] Inject functions for improved testability
 
@@ -6300,4 +6306,3 @@ for renewal).
   - Currently separate screens for each category of config options, overkill. Have all config on one page under category headings
     - Have page 1, page 2 if required - press [F1] previous page, [F2] next page
   - Don't iterate through all options for each category as we currently do, select a single config option on main config page to set it
-  - Show user key names not codes for configuration requiring key presses
