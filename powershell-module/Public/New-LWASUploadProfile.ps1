@@ -26,7 +26,9 @@ function New-LWASUploadProfile {
 
     .PARAMETER SasTokenEnvVar
         Name of the environment variable that holds the SAS token at runtime.
-        Must begin with 'LWAS_SAS_' and consist of letters, digits, and underscores only.
+        Must consist of letters, digits, and underscores only. The 'LWAS_SAS_'
+        prefix is required and will be added automatically if omitted; a warning
+        is emitted in that case so you know the effective variable name.
 
     .PARAMETER BlobPathPattern
         Pattern for the blob path. Supports placeholders: {MacroName}, {Date},
@@ -57,8 +59,19 @@ function New-LWASUploadProfile {
         New-LWASUploadProfile -Name 'azure-1' -AccountName 'myaccount' `
             -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'
 
+        Creates a profile using the environment variable LWAS_SAS_MY_TOKEN (prefix
+        already supplied).
+
     .EXAMPLE
         New-LWASUploadProfile -Name 'azure-2' -AccountName 'myaccount' `
+            -ContainerName 'screenshots' -SasTokenEnvVar 'MY_TOKEN'
+
+        The prefix is missing so it is added automatically. A warning is emitted:
+        "SAS token environment variable name must start with 'LWAS_SAS_' – prefix
+        added. Effective variable name: LWAS_SAS_MY_TOKEN"
+
+    .EXAMPLE
+        New-LWASUploadProfile -Name 'azure-3' -AccountName 'myaccount' `
             -ContainerName 'screens' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN_2' `
             -DeleteLocalAfterUpload -DeleteLocalAfterDays 7 -MaxRetryAttempts 5
     #>
@@ -115,10 +128,10 @@ function New-LWASUploadProfile {
         return
     }
 
-    # Validate SasTokenEnvVar prefix
+    # Auto-prefix SasTokenEnvVar if the required prefix is absent
     if ($SasTokenEnvVar -notmatch '^LWAS_SAS_') {
-        Write-Error "SasTokenEnvVar must begin with 'LWAS_SAS_'. Supplied: '$SasTokenEnvVar'."
-        return
+        $SasTokenEnvVar = "LWAS_SAS_$SasTokenEnvVar"
+        Write-Warning "SAS token environment variable name must start with 'LWAS_SAS_' - prefix added. Effective variable name: $SasTokenEnvVar"
     }
 
     # Validate SasTokenEnvVar characters

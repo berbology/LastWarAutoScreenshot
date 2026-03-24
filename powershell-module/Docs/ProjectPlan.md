@@ -6254,7 +6254,7 @@ for renewal).
       - Call with a token whose `se=` date is in the past → `$false`
       - Call with a token whose `se=` date is 3 minutes in the future → `$false` (buffer)
 
-   - [ ] 8.3: Manually smoke-test `Update-LWASUploadProfileSASToken` (requires Az.Storage):
+   - [x] 8.3: Manually smoke-test `Update-LWASUploadProfileSASToken` (requires Az.Storage):
       - Without `Az.Storage` installed → clear error message with `Install-Module` instructions
       - With Az.Storage installed but not connected to Azure → clear error with `Connect-AzAccount`
         hint

@@ -194,15 +194,18 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
         }
     }
 
-    It '-SasTokenEnvVar without LWAS_SAS_ prefix — Write-Error called; no profile saved' {
+    It '-SasTokenEnvVar without LWAS_SAS_ prefix — Write-Warning emitted; prefix added; profile saved with LWAS_SAS_ prefix' {
         InModuleScope LastWarAutoScreenshot {
-            Mock Write-Error {}
+            Mock Write-Warning {}
+            Mock Test-LWASSASTokenIsValid { $true }
 
             New-LWASUploadProfile -Name 'prefix-test' -AccountName 'acct' `
                 -ContainerName 'c' -SasTokenEnvVar 'MY_TOKEN'
 
-            Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like "*LWAS_SAS_*" }
-            Should -Invoke Save-UploadProfileFile -Times 0
+            Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like "*LWAS_SAS_*" }
+            Should -Invoke Save-UploadProfileFile -Times 1 -ParameterFilter {
+                $Profile.sasTokenEnvVar -eq 'LWAS_SAS_MY_TOKEN'
+            }
         }
     }
 
