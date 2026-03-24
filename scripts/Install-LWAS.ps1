@@ -98,7 +98,14 @@ if (-not (Test-Path $manifest)) {
     exit 1
 }
 
-Import-Module $manifest
+try {
+    Import-Module $manifest -ErrorAction Stop
+}
+catch {
+    Write-Error "Failed to import module from '$manifest': $($_.Exception.Message)"
+    $null = Read-Host 'Press Enter to close'
+    exit 1
+}
 
 # Ensure the user AppData directories exist in the current user's context.
 # This must run here because Install-LWAS runs elevated and $env:APPDATA can
@@ -122,5 +129,10 @@ foreach ($commonParam in 'Verbose', 'Debug', 'WhatIf', 'ErrorAction', 'WarningAc
         $installArgs[$commonParam] = $PSBoundParameters[$commonParam]
     }
 }
-Install-LWAS @installArgs
+try {
+    Install-LWAS @installArgs
+}
+catch {
+    Write-Error $_.Exception.Message
+}
 $null = Read-Host 'Press Enter to close'

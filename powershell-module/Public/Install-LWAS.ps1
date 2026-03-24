@@ -124,7 +124,13 @@ function Install-LWAS {
         }
         else {
             Write-Verbose "Version $version already installed — overwriting as requested (-Force)."
-            Remove-Item -Path $installPath -Recurse -Force -ErrorAction Stop
+            try {
+                Remove-Item -Path $installPath -Recurse -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Warning "Could not remove existing installation at '$installPath' — some files may be locked (e.g. the module is loaded in VS Code or another terminal). Close all sessions that have the module loaded and try again. Error: $($_.Exception.Message)"
+                return
+            }
         }
     }
 
