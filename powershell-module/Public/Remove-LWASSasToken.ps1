@@ -15,8 +15,8 @@ function Remove-LWASSasToken {
         The variable name must consist of letters, digits, and underscores only.
 
     .PARAMETER Name
-        Name of the environment variable to remove. Must consist of letters, digits,
-        and underscores only (e.g. 'LWAS_SAS_PROD').
+        Name(s) of the environment variable(s) to remove. Accepts a single string or an array of strings.
+        Each name must consist of letters, digits, and underscores only (e.g. 'LWAS_SAS_PROD').
 
     .OUTPUTS
         None
@@ -25,44 +25,49 @@ function Remove-LWASSasToken {
         Remove-LWASSasToken -Name 'LWAS_SAS_PROD'
 
     .EXAMPLE
-        Remove-LWASSasToken -Name 'LWAS_AZURE_SAS'
+        Remove-LWASSasToken -Name 'LWAS_AZURE_SAS', 'LWAS_SAS_PROD'
+
+    .EXAMPLE
+        @('LWAS_SAS_PROD', 'LWAS_AZURE_SAS') | Remove-LWASSasToken -Name $_
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [string]$Name
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [string[]]$Name
     )
 
-    if ($Name -match '[^A-Za-z0-9_]') {
-        Write-Error "Name '$Name' contains invalid characters. Only letters, digits, and underscores are allowed."
-        return
-    }
-
-    # Check existence in the two managed scopes (User and Process).
-    # Machine scope is not managed by these functions and is intentionally excluded.
-    $existsInUser    = $null -ne [Environment]::GetEnvironmentVariable($Name, [System.EnvironmentVariableTarget]::User)
-    $existsInProcess = $null -ne [Environment]::GetEnvironmentVariable($Name, [System.EnvironmentVariableTarget]::Process)
-
-    if (-not $existsInUser -and -not $existsInProcess) {
-        throw "Environment variable '$Name' not found in User or Process scope."
-    }
-
-    # Remove from User scope (HKCU:\Environment registry) so new sessions no longer inherit the value.
-    if ($existsInUser) {
-        try {
-            $regPath = 'HKCU:\Environment'
-            if ((Get-Item -Path $regPath -ErrorAction SilentlyContinue) -and (Get-ItemProperty -Path $regPath -Name $Name -ErrorAction SilentlyContinue)) {
-                Remove-ItemProperty -Path $regPath -Name $Name -ErrorAction Stop
-            }
-        } catch {
-            throw "Failed to remove environment variable '$Name' from User registry: $_"
+    foreach ($varName in $Name) {
+        if ($varName -match '[^A-Za-z0-9_]') {
+            Write-Error "Name '$varName' contains invalid characters. Only letters, digits, and underscores are allowed."
+            continue
         }
-    }
 
-    # Remove from Process scope so the current session no longer sees the value.
-    if ($existsInProcess) {
-        [Environment]::SetEnvironmentVariable($Name, $null, [System.EnvironmentVariableTarget]::Process)
-    }
+        # Check existence in the two managed scopes (User and Process).
+        # Machine scope is not managed by these functions and is intentionally excluded.
+        $existsInUser    = $null -ne [Environment]::GetEnvironmentVariable($varName, [System.EnvironmentVariableTarget]::User)
+        $existsInProcess = $null -ne [Environment]::GetEnvironmentVariable($varName, [System.EnvironmentVariableTarget]::Process)
 
-    Write-Verbose "SAS token environment variable '$Name' has been removed."
+        if (-not $existsInUser -and -not $existsInProcess) {
+            throw "Environment variable '$varName' not found in User or Process scope."
+        }
+
+        # Remove from User scope (HKCU:\Environment registry) so new sessions no longer inherit the value.
+        if ($existsInUser) {
+            try {
+                $regPath = 'HKCU:\Environment'
+                if ((Get-Item -Path $regPath -ErrorAction SilentlyContinue) -and (Get-ItemProperty -Path $regPath -Name $varName -ErrorAction SilentlyContinue)) {
+                    Remove-ItemProperty -Path $regPath -Name $varName -ErrorAction Stop
+                }
+            } catch {
+                throw "Failed to remove environment variable '$varName' from User registry: $_"
+            }
+        }
+
+        # Remove from Process scope so the current session no longer sees the value.
+        if ($existsInProcess) {
+            [Environment]::SetEnvironmentVariable($varName, $null, [System.EnvironmentVariableTarget]::Process)
+        }
+
+        Write-Verbose "SAS token environment variable '$varName' has been removed."
+    }
 }
