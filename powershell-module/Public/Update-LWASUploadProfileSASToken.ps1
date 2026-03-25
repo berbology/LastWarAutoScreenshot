@@ -95,11 +95,7 @@ function Update-LWASUploadProfileSASToken {
                 $token = $token.Substring(1)
             }
 
-            # Persist at User scope (survives session restart)
-            [Environment]::SetEnvironmentVariable($Profile.sasTokenEnvVar, $token, [EnvironmentVariableTarget]::User)
-
-            # Apply immediately to the current session
-            Set-Item -Path "Env:\$($Profile.sasTokenEnvVar)" -Value $token
+            Set-LWASSasToken -Name $Profile.sasTokenEnvVar -Token $token
 
             Write-LastWarLog -Level Info `
                 -Message "SAS token for profile '$($Profile.name)' stored in '$($Profile.sasTokenEnvVar)' (expires in ~6 days)." `

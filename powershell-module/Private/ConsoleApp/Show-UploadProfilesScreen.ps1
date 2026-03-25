@@ -32,6 +32,11 @@ function Show-UploadProfilesScreen {
         All profile data is reloaded from disk on every loop iteration so changes
         made by Show-EditUploadProfileScreen and Remove-UploadProfileFile are
         immediately reflected.
+
+        On each iteration, any profile whose sasTokenEnvVar does not yet exist as
+        a User-scoped environment variable is given an empty placeholder via
+        Set-LWASSasToken. This ensures the variable is present for all future
+        sessions even before a real token has been stored.
     #>
     [CmdletBinding()]
     param(
@@ -44,12 +49,35 @@ function Show-UploadProfilesScreen {
         # Reload profiles from disk on every iteration
         $profiles = @(Get-UploadProfile)
 
+        # Build a name→token lookup for quick validity display (no online check)
+        $tokenMap = @{}
+        foreach ($t in (Get-LWASSASToken)) {
+            $tokenMap[$t.Name] = $t
+        }
+
+        # Ensure every profile has a User-scoped env var placeholder; create one if absent.
+        foreach ($profile in $profiles) {
+            if (-not $tokenMap.ContainsKey($profile.sasTokenEnvVar)) {
+                Set-LWASSasToken -Name $profile.sasTokenEnvVar -Token ''
+                $tokenMap[$profile.sasTokenEnvVar] = [PSCustomObject]@{
+                    Name               = $profile.sasTokenEnvVar
+                    Value              = ''
+                    Valid              = $false
+                    Validation         = $null
+                    ValidationResponse = $null
+                }
+            }
+        }
+
         # Build and render the profiles table
         $profileTable = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(
-            @('Name', 'Account', 'Container', 'Env Var', 'Blob Pattern', 'Delete After (days)')
+            @('Name', 'Account', 'Container', 'Env Var', 'Token Valid', 'Blob Pattern', 'Delete After (days)')
         )
 
         foreach ($profile in $profiles) {
+            $tokenInfo  = $tokenMap[$profile.sasTokenEnvVar]
+            $tokenValid = if ($null -ne $tokenInfo) { "$($tokenInfo.Valid)" } else { 'False' }
+
             [Spectre.Console.TableExtensions]::AddRow(
                 $profileTable,
                 [string[]]@(
@@ -57,6 +85,7 @@ function Show-UploadProfilesScreen {
                     [Spectre.Console.Markup]::Escape($profile.accountName),
                     [Spectre.Console.Markup]::Escape($profile.containerName),
                     [Spectre.Console.Markup]::Escape($profile.sasTokenEnvVar),
+                    [Spectre.Console.Markup]::Escape($tokenValid),
                     [Spectre.Console.Markup]::Escape($profile.blobPathPattern),
                     "$($profile.deleteLocalAfterDays)"
                 )

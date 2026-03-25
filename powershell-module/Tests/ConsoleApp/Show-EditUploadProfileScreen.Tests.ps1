@@ -20,7 +20,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
             $script:tc.Profile.Width  = $script:TestConsoleWidth
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
-            Mock Get-LWASSASTokenEnvVarNames { @() }
+            Mock Get-LWASSASToken { @() }
             Mock Test-LWASSASTokenIsValid { $true }
             Mock Update-LWASUploadProfileSASToken { $true }
         }
@@ -230,7 +230,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
@@ -273,7 +273,10 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @('LWAS_SAS_PROD', 'LWAS_SAS_DEV') }
+                Mock Get-LWASSASToken { @(
+                    [PSCustomObject]@{ Name = 'LWAS_SAS_PROD'; Value = ''; Valid = $false },
+                    [PSCustomObject]@{ Name = 'LWAS_SAS_DEV';  Value = ''; Valid = $false }
+                ) }
                 Mock Test-LWASSASTokenIsValid { $true }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -313,7 +316,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @('LWAS_SAS_PROD') }
+                Mock Get-LWASSASToken { @([PSCustomObject]@{ Name = 'LWAS_SAS_PROD'; Value = ''; Valid = $false }) }
                 Mock Test-LWASSASTokenIsValid { $true }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -354,7 +357,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @('LWAS_SAS_PROD') }
+                Mock Get-LWASSASToken { @([PSCustomObject]@{ Name = 'LWAS_SAS_PROD'; Value = ''; Valid = $false }) }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
@@ -404,7 +407,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
@@ -447,7 +450,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
@@ -489,7 +492,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -534,7 +537,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -571,7 +574,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -608,7 +611,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
                 Mock Update-LWASUploadProfileSASToken { $false }
 
@@ -645,7 +648,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -683,7 +686,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
                 Mock Update-LWASUploadProfileSASToken { $true }
 
@@ -726,7 +729,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
 
                 $tc = $script:tc
@@ -763,7 +766,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASTokenEnvVarNames { @() }
+                Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc

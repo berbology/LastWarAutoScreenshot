@@ -5677,7 +5677,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
 - **SAS token env var naming convention — `LWAS_SAS_` prefix:** All env vars managed by this module
   are prefixed `LWAS_SAS_` followed by a user-supplied suffix (letters, digits, underscores, 1–30
   characters). The full name is always uppercased on save. This makes managed vars trivially
-  discoverable via `Get-LWASSASTokenEnvVarNames`, avoids collisions with unrelated env vars, and
+  discoverable via `Get-LWASSASToken`, avoids collisions with unrelated env vars, and
   enforces consistency between the console UI path and the `New-LWASUploadProfile` command-line
   path. The `LWAS_SAS_` prefix convention is enforced as a validation rule on `SasTokenEnvVar`
   parameters.
@@ -5710,8 +5710,8 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
 
 **Included:** `cloudProvider` field added to upload profile schema and back-filled in
 `Get-UploadProfile`; `Test-LWASSASTokenIsValid` public function; `Update-LWASUploadProfileSASToken`
-public function; `Get-LWASSASTokenEnvVarNames` private helper (scans all env var scopes for
-`LWAS_SAS_*` names); `Assert-LWASAzStorageModule` private helper (checks, optionally installs,
+public function; `Get-LWASSASToken` public function (scans all env var scopes for
+`LWAS_SAS_*` names, returns name/value/validity; replaces the former `Get-LWASSASTokenEnvVarNames` private helper); `Assert-LWASAzStorageModule` private helper (checks, optionally installs,
 and imports `Az.Storage`; used by all functions that invoke Az.Storage cmdlets);
 `Test-LWASAzureProfile` private helper (cloudProvider guard used by all SAS-related functions);
 updated
@@ -5864,21 +5864,17 @@ for renewal).
 
 3. [x] Private helper functions
 
-   - [x] 3.1: Create `Private/Get-LWASSASTokenEnvVarNames.ps1`:
+   - [x] 3.1: ~~Create `Private/Get-LWASSASTokenEnvVarNames.ps1`~~ — superseded by the public
+     `Get-LWASSASToken` function. The private helper has been removed; callers that previously
+     used `Get-LWASSASTokenEnvVarNames` now use `Get-LWASSASToken | Select-Object -ExpandProperty Name`.
 
-     ```powershell
-     function Get-LWASSASTokenEnvVarNames {
-         [CmdletBinding()]
-         [OutputType([string[]])]
-         param()
-     }
-     ```
-
-     Scans `User`, `Machine`, and `Process` scopes via
-     `[Environment]::GetEnvironmentVariables([EnvironmentVariableTarget]::User)` etc. for
-     environment variables whose names begin with `LWAS_SAS_` (case-insensitive prefix match).
-     Returns a deduplicated, alphabetically sorted `[string[]]` of matching names. Never returns
-     `$null`; returns an empty array `@()` if no matches are found.
+     `Get-LWASSASToken` scans `User`, `Machine`, and `Process` scopes for environment variables
+     whose names begin with `LWAS_SAS_` (case-insensitive prefix match). Returns a
+     `PSCustomObject[]` with `Name`, `Value`, `Valid`, `Validation`, and `ValidationResponse`
+     properties for each discovered token. `Validation` and `ValidationResponse` are always
+     present; they are `$null` when `-VerifyOnline` is not specified. Never returns `$null`;
+     returns an empty array `@()` if no matches are found. Supports optional `-Name` wildcard
+     filtering and `-VerifyOnline` for live HTTP verification.
 
      **Design decision — which env var scopes to scan:**
 
@@ -5937,15 +5933,9 @@ for renewal).
      public function that calls an `Az.Storage` cmdlet must call `Assert-LWASAzStorageModule`
      first, before any other checks.
 
-   - [x] 3.3: Create `Tests/Get-LWASSASTokenEnvVarNames.Tests.ps1`:
-      - [x] 3.3.1: No `LWAS_SAS_*` vars in any scope → returns `@()` (empty array, not `$null`)
-      - [x] 3.3.2: One `LWAS_SAS_PROD` var in User scope → `@('LWAS_SAS_PROD')` returned
-      - [x] 3.3.3: Same name `LWAS_SAS_PROD` in both User and Process scopes →
-        deduplicated; appears exactly once in the result
-      - [x] 3.3.4: Var with similar but non-matching prefix (`LWAS_STORAGE_TOKEN`) → not returned
-      - [x] 3.3.5: Multiple vars across scopes → all unique names returned, sorted alphabetically
-      - [x] 3.3.6: Var name matching prefix case-insensitively (`lwas_sas_dev`) → included;
-        returned with its original casing preserved
+   - [x] 3.3: ~~Create `Tests/Get-LWASSASTokenEnvVarNames.Tests.ps1`~~ — test file removed along
+     with the private function. Coverage for env var scanning is now provided by
+     `Tests/Get-LWASSASToken.Tests.ps1` (to be added in a future task).
 
    - [x] 3.4: Create `Tests/Assert-LWASAzStorageModule.Tests.ps1`:
       - [x] 3.4.1: Module already installed and imported → `$true`; no prompt shown;
@@ -6102,7 +6092,7 @@ for renewal).
      SAS token free-text prompt section (the `while ($null -eq $sasTokenEnvVar)` block and the
      guidance panel) with the following flow:
 
-     - [x] 5.1.1: Call `Get-LWASSASTokenEnvVarNames`. Store result in `$existingVarNames`.
+     - [x] 5.1.1: Call `Get-LWASSASToken | Select-Object -ExpandProperty Name`. Store result in `$existingVarNames`.
 
      - [x] 5.1.2: **No existing vars path** (`$existingVarNames.Count -eq 0`): display an info
        panel: `"No LWAS_SAS_* environment variables found. A new one will be created."` then
@@ -6149,10 +6139,10 @@ for renewal).
        `Save-UploadProfileFile`.
 
    - [x] 5.4: Update `Tests/ConsoleApp/Show-EditUploadProfileScreen.Tests.ps1`:
-      - [x] 5.4.1: `Get-LWASSASTokenEnvVarNames` returns empty → info panel shown; user prompted
+      - [x] 5.4.1: `Get-LWASSASToken` returns empty → info panel shown; user prompted
         for suffix; `sasTokenEnvVar` is `'LWAS_SAS_{SUFFIX}'`
-      - [x] 5.4.2: `Get-LWASSASTokenEnvVarNames` returns one or more names → selection prompt
-        shown containing those names plus `"Create new"`
+      - [x] 5.4.2: `Get-LWASSASToken` returns one or more tokens → selection prompt
+        shown containing their names plus `"Create new"`
       - [x] 5.4.3: User selects existing var name from prompt → `sasTokenEnvVar` equals that
         name; no suffix prompt shown
       - [x] 5.4.4: User selects `"Create new"` from selection → suffix prompt shown;

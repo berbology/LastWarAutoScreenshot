@@ -108,7 +108,7 @@ function Show-EditUploadProfileScreen {
     # SAS token environment variable
 
     $sasTokenEnvVar   = $null
-    $existingVarNames = @(Get-LWASSASTokenEnvVarNames)
+    $existingVarNames = @(Get-LWASSASToken | Select-Object -ExpandProperty Name)
 
     if ($existingVarNames.Count -eq 0) {
         $infoPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
@@ -146,7 +146,8 @@ function Show-EditUploadProfileScreen {
         $candidateName = "LWAS_SAS_$($rawSuffix.ToUpper())"
         $safeName      = [Spectre.Console.Markup]::Escape($candidateName)
 
-        if ($null -ne [Environment]::GetEnvironmentVariable($candidateName)) {
+        $existingToken = Get-LWASSASToken -Name $candidateName | Select-Object -First 1
+        if ($null -ne $existingToken) {
             $Console.Write([Spectre.Console.Markup]::new("[red]Environment variable '$safeName' already exists. Choose a different suffix.[/]`n"))
             continue
         }
@@ -231,7 +232,8 @@ function Show-EditUploadProfileScreen {
 
     # Summary panel
 
-    $currentToken      = [Environment]::GetEnvironmentVariable($sasTokenEnvVar)
+    $tokenInfo         = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
+    $currentToken      = if ($null -ne $tokenInfo) { $tokenInfo.Value } else { $null }
     $tokenIsValid      = Test-LWASSASTokenIsValid -SasToken $currentToken
     $validityIndicator = if ($tokenIsValid) { ' [green](Valid)[/]' } else { ' [yellow](Will be requested on save)[/]' }
 
@@ -285,7 +287,8 @@ function Show-EditUploadProfileScreen {
 
     $safeProfileName = [Spectre.Console.Markup]::Escape($profileName)
     $safeSasVar      = [Spectre.Console.Markup]::Escape($sasTokenEnvVar)
-    $savedToken      = [Environment]::GetEnvironmentVariable($sasTokenEnvVar)
+    $savedTokenInfo  = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
+    $savedToken      = if ($null -ne $savedTokenInfo) { $savedTokenInfo.Value } else { $null }
     if (-not (Test-LWASSASTokenIsValid -SasToken $savedToken)) {
         $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $profile
         if ($tokenUpdated) {

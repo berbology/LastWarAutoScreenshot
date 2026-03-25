@@ -72,8 +72,17 @@ namespace LastWarAutoScreenshot
 
             try
             {
-                InvokeRolloverIfNeeded();
+                bool rolledOver = InvokeRolloverIfNeeded();
                 File.AppendAllText(_logFilePath, logMsg + Environment.NewLine);
+                // Break NTFS file-system tunnelling: when a new file is created with the same
+                // name as a recently renamed/deleted file, Windows preserves the original
+                // creation timestamp. This would immediately re-trigger the age-based rollover
+                // on every subsequent write. Explicitly stamping the creation time after a
+                // rollover prevents that infinite-rotation loop.
+                if (rolledOver)
+                {
+                    File.SetCreationTimeUtc(_logFilePath, DateTime.UtcNow);
+                }
                 CleanupOldLogs();
             }
             catch
@@ -82,9 +91,9 @@ namespace LastWarAutoScreenshot
             }
         }
 
-        private void InvokeRolloverIfNeeded()
+        private bool InvokeRolloverIfNeeded()
         {
-            if (!File.Exists(_logFilePath)) return;
+            if (!File.Exists(_logFilePath)) return false;
 
             FileInfo fileInfo = new FileInfo(_logFilePath);
             double sizeMB = fileInfo.Length / (1024.0 * 1024.0);
@@ -94,7 +103,10 @@ namespace LastWarAutoScreenshot
             {
                 string rolloverFileName = Path.Combine(_logDir, _logBaseName + $".{DateTime.UtcNow:yyyyMMddHHmmss}");
                 File.Move(_logFilePath, rolloverFileName);
+                return true;
             }
+
+            return false;
         }
 
         private void CleanupOldLogs()

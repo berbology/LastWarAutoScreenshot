@@ -122,7 +122,7 @@ $env:LWAS_SAS_PROD = 'sv=2023-...&sig=...'
 ### Persistent (survives reboots, current user)
 
 ```powershell
-Set-LWASSasToken -EnvVarName 'LWAS_SAS_PROD' -Token 'sv=2023-...&sig=...'
+Set-LWASSasToken -Name 'LWAS_SAS_PROD' -Token 'sv=2023-...&sig=...'
 ```
 
 Or via the .NET API directly:
@@ -180,7 +180,7 @@ letters, digits, or underscores (e.g. `LWAS_SAS_PROD`). The full name is upperca
 save. This convention:
 
 - Prevents collisions with unrelated environment variables.
-- Makes all module-managed token variables discoverable via `Get-LWASSASTokenEnvVarNames`.
+- Makes all module-managed token variables discoverable via `Get-LWASSASToken`.
 - Ensures consistency between the console UI and command-line paths.
 
 ### Manual renewal
