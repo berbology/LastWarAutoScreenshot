@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **IMPORTANT:** Do NOT EVER run tests yourself. Prompt the user to run them and report results back.
 
 ## Project Overview
 
@@ -48,8 +48,6 @@ Invoke-Pester -Path .\powershell-module\Tests -Output Detailed
 # Run a single test file
 Invoke-Pester -Path .\powershell-module\Tests\ConsoleApp\Show-MainMenu.Tests.ps1 -Output Detailed
 ```
-
-> **IMPORTANT:** Do NOT run tests yourself. Prompt the user to run them and report results back.
 
 ## Repository Structure
 
