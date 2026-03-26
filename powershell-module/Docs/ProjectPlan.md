@@ -4999,20 +4999,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
      `{ProfilesDirectory}\{Profile.name}.json` with UTF-8 encoding.
      Logs success at Info level via `Write-LastWarLog`.
 
-   - [x] 1.4: Create `Private/Remove-UploadProfileFile.ps1`:
-
-     ```powershell
-     function Remove-UploadProfileFile {
-         [CmdletBinding()]
-         param(
-             [Parameter(Mandatory)] [string]$Name,
-             [string]$ProfilesDirectory
-         )
-     }
-     ```
-
-     Resolves the file path; errors with `Write-Error` if not found; calls `Remove-Item`
-     and logs success at Info level via `Write-LastWarLog`.
+   - [x] 1.4: ~~Create `Private/Remove-UploadProfileFile.ps1`~~ — superseded by `Public/Remove-LWASUploadProfile.ps1` (renamed and promoted to public in Phase 8).
 
    - [x] 1.5: Create unit tests in `Tests/UploadProfileManagement.Tests.ps1`:
       - [x] 1.5.1: `Get-UploadProfile` with no files returns an empty array
@@ -5024,13 +5011,13 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
         (e.g. a file without `blobPathPattern` receives the default value)
       - [x] 1.5.6: `Save-UploadProfileFile` calls `ConvertTo-Json` and `Set-Content` with the
         correct path; `modifiedUtc` is updated; directory created if absent (mocked `New-Item`)
-      - [x] 1.5.7: `Remove-UploadProfileFile` calls `Remove-Item` with the correct path
-      - [x] 1.5.8: `Remove-UploadProfileFile` calls `Write-Error` when the file does not exist
+      - [x] 1.5.7: ~~`Remove-UploadProfileFile` calls `Remove-Item` with the correct path~~ — superseded by `Remove-LWASUploadProfile` tests in `Tests/Remove-LWASUploadProfile.Tests.ps1`
+      - [x] 1.5.8: ~~`Remove-UploadProfileFile` calls `Write-Error` when the file does not exist~~ — superseded by `Remove-LWASUploadProfile` tests in `Tests/Remove-LWASUploadProfile.Tests.ps1`
 
    - [x] 1.6: Create integration tests in `Tests/UploadProfileManagement_Integration.Tests.ps1`:
       - [x] 1.6.1: `Save-UploadProfileFile` → `Get-UploadProfile` round-trip writes and reads
         a real JSON file under a temp directory; all fields survive serialisation
-      - [x] 1.6.2: `Remove-UploadProfileFile` deletes the file created in 1.6.1
+      - [x] 1.6.2: ~~`Remove-UploadProfileFile` deletes the file created in 1.6.1~~ — removed; covered by `Remove-LWASUploadProfile` tests
       - [x] 1.6.3: Multiple `Save-UploadProfileFile` calls → `Get-UploadProfile` without `-Name`
         returns all profiles; count matches
       - All integration tests use a temp directory under `$env:TEMP`; cleanup in `AfterAll`
@@ -5334,7 +5321,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
         return if user answers anything other than `Y` or `y`.
       - [x] 8.3.4: With `-Force`: skip prompt; proceed directly to removal.
       - [x] 8.3.5: `ShouldProcess` check: `if ($PSCmdlet.ShouldProcess($Name, 'Remove upload profile'))`;
-        call `Remove-UploadProfileFile -Name $Name` inside the check.
+        call `Remove-Item` to delete the profile file inside the check.
       - [x] 8.3.6: Write `"Upload profile '$Name' removed."` on success.
       - [x] 8.3.7: Full comment-based help, including `-WhatIf` in an `.EXAMPLE` block.
       - [x] 8.3.8: Add `'Remove-LWASUploadProfile'` to `FunctionsToExport`.
@@ -5392,11 +5379,11 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
       - [x] 8.6.8: `-DeleteLocalAfterDays` outside range (0 or 3651) — `Write-Error` called
 
    - [x] 8.7: Create unit tests in `Tests/Remove-LWASUploadProfile.Tests.ps1`:
-      - [x] 8.7.1: Profile not found — `Write-Error` called; `Remove-UploadProfileFile` not called
-      - [x] 8.7.2: Without `-Force`, user answers `'Y'` — `Remove-UploadProfileFile` called
-      - [x] 8.7.3: Without `-Force`, user answers `'N'` — `Remove-UploadProfileFile` not called
-      - [x] 8.7.4: `-Force` specified — `Remove-UploadProfileFile` called without `Read-Host` prompt
-      - [x] 8.7.5: `-WhatIf` specified — `Remove-UploadProfileFile` not called; WhatIf message shown
+      - [x] 8.7.1: Profile not found — `Write-Error` called; `Remove-Item` not called
+      - [x] 8.7.2: Without `-Force`, user answers `'Y'` — `Remove-Item` called
+      - [x] 8.7.3: Without `-Force`, user answers `'N'` — `Remove-Item` not called
+      - [x] 8.7.4: `-Force` specified — `Remove-Item` called without `Read-Host` prompt
+      - [x] 8.7.5: `-WhatIf` specified — `Remove-Item` not called; WhatIf message shown
 
    - [x] 8.8: Create unit tests in `Tests/Send-LWASScreenshots.Tests.ps1`:
       - [x] 8.8.1: Profile not found — `Write-Error` called; no upload attempted
@@ -5440,7 +5427,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
       - [x] 9.1.5: `'Add profile'` → calls `Show-EditUploadProfileScreen`; on return, reloads
         the profile list and redraws.
       - [x] 9.1.6: `'Remove profile'` → shows a second selection prompt listing all profile
-        names plus `'[[Cancel]]'`; on selection, calls `Remove-UploadProfileFile`; redisplays.
+        names plus `'[[Cancel]]'`; on selection, calls `Remove-LWASUploadProfile -Force`; redisplays.
       - [x] 9.1.7: `'Back'` → returns `$null`.
       - [x] 9.1.8: Full comment-based help.
 
@@ -5475,7 +5462,7 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
         `'Remove profile'` choice is present
       - [x] 9.3.3: User selects `'Add profile'` — `Show-EditUploadProfileScreen` is invoked
       - [x] 9.3.4: User selects `'Remove profile'` then selects a profile name —
-        `Remove-UploadProfileFile` called with that profile name
+        `Remove-LWASUploadProfile -Force` called with that profile name
       - [x] 9.3.5: User selects `'Back'` — function returns `$null`
 
    - [x] 9.4: Create unit tests in `Tests/ConsoleApp/Show-EditUploadProfileScreen.Tests.ps1`:

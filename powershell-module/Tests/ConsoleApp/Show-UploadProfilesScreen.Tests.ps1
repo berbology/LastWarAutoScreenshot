@@ -48,7 +48,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
@@ -64,7 +64,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
@@ -105,7 +105,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                     )
                 }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 # Choices: [0] [Back], [1] Add profile, [2] Remove profile — select [Back] (Enter)
@@ -129,7 +129,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 # First iteration: [1] Add profile — 1 down + Enter
@@ -148,7 +148,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -167,7 +167,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When the user selects Remove profile then selects a profile name' {
 
-        It 'Calls Remove-UploadProfileFile with the selected profile name' {
+        It 'Calls Remove-LWASUploadProfile with the selected profile name' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile {
                     @(
@@ -190,8 +190,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                     )
                 }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
-                Mock Remove-LWASSasToken {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 # Choices: [0] [Back], [1] Add profile, [2] Edit profile, [3] Remove profile
@@ -208,11 +207,8 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
 
                 Show-UploadProfilesScreen -Console $tc
 
-                Should -Invoke Remove-UploadProfileFile -Exactly 1 -ParameterFilter {
+                Should -Invoke Remove-LWASUploadProfile -Exactly 1 -ParameterFilter {
                     $Name -eq 'profile-one'
-                }
-                Should -Invoke Remove-LWASSasToken -Exactly 1 -ParameterFilter {
-                    $Name -eq 'LWAS_SAS_1'
                 }
             }
         }
@@ -227,7 +223,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
                 # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)

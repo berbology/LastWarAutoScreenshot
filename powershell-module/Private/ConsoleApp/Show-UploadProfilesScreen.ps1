@@ -18,7 +18,7 @@ function Show-UploadProfilesScreen {
                                            Show-EditUploadProfileScreen with the chosen profile
           - Remove profile               → shown only when at least one profile exists; presents
                                            a sub-prompt listing profile names plus 'Cancel';
-                                           on selection calls Remove-UploadProfileFile
+                                           on selection calls Remove-LWASUploadProfile
           - Update SAS tokens            → shown only when at least one profile exists; presents
                                            a sub-prompt listing profiles as
                                            "name (LWAS_SAS_VAR)" plus 'Cancel'; on selection
@@ -43,7 +43,7 @@ function Show-UploadProfilesScreen {
 
     .NOTES
         All profile data is reloaded from disk on every loop iteration so changes
-        made by Show-EditUploadProfileScreen and Remove-UploadProfileFile are
+        made by Show-EditUploadProfileScreen and Remove-LWASUploadProfile are
         immediately reflected.
 
         On each iteration, any profile whose sasTokenEnvVar does not yet exist as
@@ -87,20 +87,20 @@ function Show-UploadProfilesScreen {
             @('Name', 'Account', 'Container', 'Env Var', 'Token Valid', 'Blob Pattern', 'Delete After (days)')
         )
 
-        foreach ($profile in $profiles) {
-            $tokenInfo  = $tokenMap[$profile.sasTokenEnvVar]
+        foreach ($userProfile in $profiles) {
+            $tokenInfo  = $tokenMap[$userProfile.sasTokenEnvVar]
             $tokenValid = if ($null -ne $tokenInfo) { "$($tokenInfo.Valid)" } else { 'False' }
 
             [Spectre.Console.TableExtensions]::AddRow(
                 $profileTable,
                 [string[]]@(
-                    [Spectre.Console.Markup]::Escape($profile.name),
-                    [Spectre.Console.Markup]::Escape($profile.accountName),
-                    [Spectre.Console.Markup]::Escape($profile.containerName),
-                    [Spectre.Console.Markup]::Escape($profile.sasTokenEnvVar),
+                    [Spectre.Console.Markup]::Escape($userProfile.name),
+                    [Spectre.Console.Markup]::Escape($userProfile.accountName),
+                    [Spectre.Console.Markup]::Escape($userProfile.containerName),
+                    [Spectre.Console.Markup]::Escape($userProfile.sasTokenEnvVar),
                     [Spectre.Console.Markup]::Escape($tokenValid),
-                    [Spectre.Console.Markup]::Escape($profile.blobPathPattern),
-                    "$($profile.deleteLocalAfterDays)"
+                    [Spectre.Console.Markup]::Escape($userProfile.blobPathPattern),
+                    "$($userProfile.deleteLocalAfterDays)"
                 )
             ) | Out-Null
         }
@@ -166,8 +166,7 @@ function Show-UploadProfilesScreen {
 
                 $matchedProfile = $profiles | Where-Object { $_.name -eq $removeChoice } | Select-Object -First 1
                 if ($null -ne $matchedProfile) {
-                    Remove-UploadProfileFile -Name $matchedProfile.name
-                    Remove-LWASSasToken -Name $matchedProfile.sasTokenEnvVar
+                    Remove-LWASUploadProfile -Name $matchedProfile.name -Force
                 }
             }
 

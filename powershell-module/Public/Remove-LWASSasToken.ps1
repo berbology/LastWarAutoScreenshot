@@ -65,7 +65,7 @@ function Remove-LWASSasToken {
 
         # Remove from Process scope so the current session no longer sees the value.
         if ($existsInProcess) {
-            [Environment]::SetEnvironmentVariable($varName, $null, [System.EnvironmentVariableTarget]::Process)
+            [Environment]::SetEnvironmentVariable($varName, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
         }
 
         Write-Verbose "SAS token environment variable '$varName' has been removed."

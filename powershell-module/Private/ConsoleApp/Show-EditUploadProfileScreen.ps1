@@ -356,9 +356,9 @@ function Show-EditUploadProfileScreen {
         modifiedUtc            = $nowUtc
     }
 
-    # When editing and the name has changed, remove the old profile file first
+    # When editing and the name has changed, rename the old profile file first
     if ($isEditing -and ($profileName -ne $ExistingProfile.name)) {
-        Remove-UploadProfileFile -Name $ExistingProfile.name
+        Rename-LWASUploadProfile -Name $ExistingProfile.name -NewName $profileName
     }
 
     Save-UploadProfileFile -Profile $profile

@@ -73,7 +73,7 @@ PowerShellVersion = '7.0'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Start-LWASConsole', 'Start-LWASEmergencyStopMonitor', 'Stop-LWASEmergencyStopMonitor', 'Get-LWASMonitorProcess', 'Install-LWAS', 'Get-LWASTargetWindow', 'Get-LWASMacro', 'Start-LWASAutomationSequence', 'Register-LWASScheduledTask', 'Unregister-LWASScheduledTask', 'Get-LWASScheduledTask', 'Get-LWASUploadProfile', 'New-LWASUploadProfile', 'Remove-LWASUploadProfile', 'Send-LWASScreenshots', 'Set-LWASSasToken', 'Test-LWASSASTokenIsValid', 'Update-LWASUploadProfileSASToken', 'Get-LWASSASToken', 'Remove-LWASSasToken')
+FunctionsToExport = @('Start-LWASConsole', 'Start-LWASEmergencyStopMonitor', 'Stop-LWASEmergencyStopMonitor', 'Get-LWASMonitorProcess', 'Install-LWAS', 'Get-LWASTargetWindow', 'Get-LWASMacro', 'Start-LWASAutomationSequence', 'Register-LWASScheduledTask', 'Unregister-LWASScheduledTask', 'Get-LWASScheduledTask', 'Get-LWASUploadProfile', 'New-LWASUploadProfile', 'Remove-LWASUploadProfile', 'Rename-LWASUploadProfile', 'Send-LWASScreenshots', 'Set-LWASSasToken', 'Test-LWASSASTokenIsValid', 'Update-LWASUploadProfileSASToken', 'Get-LWASSASToken', 'Remove-LWASSasToken')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

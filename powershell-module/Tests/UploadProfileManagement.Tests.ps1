@@ -121,37 +121,6 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         }
     }
 
-    It '1.5.7: Remove-UploadProfileFile calls Remove-Item with the correct path' {
-        InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $dir      = Join-Path $td 'RemoveTest_1_5_7'
-            $filePath = Join-Path $dir 'my-profile.json'
-
-            New-Item -Path $dir -ItemType Directory -Force | Out-Null
-            'dummy' | Set-Content -Path $filePath -Encoding UTF8
-
-            Mock Remove-Item {}
-            Mock Write-LastWarLog {}
-
-            Remove-UploadProfileFile -Name 'my-profile' -ProfilesDirectory $dir
-
-            Should -Invoke Remove-Item -Times 1 -ParameterFilter { $LiteralPath -eq $filePath }
-        }
-    }
-
-    It '1.5.8: Remove-UploadProfileFile calls Write-Error when the file does not exist' {
-        InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
-            $dir = Join-Path $td 'RemoveTest_1_5_8'
-            New-Item -Path $dir -ItemType Directory -Force | Out-Null
-
-            Mock Write-Error {}
-            Mock Write-LastWarLog {}
-
-            Remove-UploadProfileFile -Name 'nonexistent' -ProfilesDirectory $dir
-
-            Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*nonexistent*' }
-        }
-    }
-
     It '9b.1.5.1: Get-UploadProfile back-fills cloudProvider = azure for profiles without the field' {
         $profilesDir = Join-Path $TestDrive 'Profiles_9b_1_5_1'
         New-Item -Path $profilesDir -ItemType Directory -Force | Out-Null
@@ -178,6 +147,45 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
             $result = Get-UploadProfile -Name 'new-profile' -ProfilesDirectory $dir
             $result | Should -Not -BeNull
             $result.cloudProvider | Should -Be 'azure'
+        }
+    }
+}
+
+# ============================================================
+# Remove-LWASUploadProfile — basic deletion (replaces 1.5.7, 1.5.8)
+# ============================================================
+
+Describe 'Remove-LWASUploadProfile — basic deletion' -Tag 'Unit' {
+
+    BeforeEach {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-LastWarLog {}
+            Mock Remove-Item {}
+            Mock Remove-LWASSasToken {}
+            Mock Write-Error {}
+        }
+    }
+
+    It '1.5.7: Remove-LWASUploadProfile -Force calls Remove-Item with the correct path' {
+        InModuleScope LastWarAutoScreenshot {
+            $expectedPath = Join-Path (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles') 'my-profile.json'
+            Mock Get-UploadProfile {
+                [PSCustomObject]@{ name = 'my-profile'; sasTokenEnvVar = $null }
+            }
+
+            Remove-LWASUploadProfile -Name 'my-profile' -Force
+
+            Should -Invoke Remove-Item -Times 1 -ParameterFilter { $LiteralPath -eq $expectedPath }
+        }
+    }
+
+    It '1.5.8: Remove-LWASUploadProfile calls Write-Error when the profile does not exist' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile { $null }
+
+            Remove-LWASUploadProfile -Name 'nonexistent' -Force
+
+            Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*nonexistent*' }
         }
     }
 }
