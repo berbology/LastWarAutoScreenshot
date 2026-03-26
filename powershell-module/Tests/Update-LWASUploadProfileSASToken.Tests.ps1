@@ -53,7 +53,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
 
             $result = $null
-            { $result = Update-LWASUploadProfileSASToken -Profile $gcpProfile } |
+            { $result = Update-LWASUploadProfileSASToken -Profile $gcpProfile -ErrorAction SilentlyContinue } |
                 Should -Throw -Not
             $result | Should -BeFalse
 
@@ -149,23 +149,15 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Assert-LWASAzStorageModule { return $true }
             Mock New-AzStorageContext       { [PSCustomObject]@{ StorageAccountName = 'myaccount' } }
             Mock New-AzStorageContainerSASToken { return 'sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
-            Mock Set-Item {}
-
-            $setEnvCalled = $false
-            $setEnvValue  = $null
-            $setEnvScope  = $null
-
-            # Capture [Environment]::SetEnvironmentVariable calls via a local mock approach
-            # by replacing the call path — we test the behaviour indirectly via Set-Item and
-            # verifying $true is returned. We also confirm SetEnvironmentVariable is attempted.
+            Mock Set-LWASSasToken {}
 
             $result = Update-LWASUploadProfileSASToken -Profile $profile
 
             $result | Should -BeTrue
             Should -Invoke New-AzStorageContext           -Times 1
             Should -Invoke New-AzStorageContainerSASToken -Times 1
-            Should -Invoke Set-Item                       -Times 1 -ParameterFilter {
-                $Path -eq 'Env:\LWAS_SAS_PROD'
+            Should -Invoke Set-LWASSasToken                       -Times 1 -ParameterFilter {
+                $Name -eq 'LWAS_SAS_PROD'
             }
         }
     }
@@ -237,13 +229,13 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Assert-LWASAzStorageModule { return $true }
             Mock New-AzStorageContext       { [PSCustomObject]@{ StorageAccountName = 'myaccount' } }
             Mock New-AzStorageContainerSASToken { return '?sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
-            Mock Set-Item {}
+            Mock Set-LWASSasToken {}
 
             Update-LWASUploadProfileSASToken -Profile $profile | Out-Null
 
-            Should -Invoke Set-Item -Times 1 -ParameterFilter {
-                $Path -eq 'Env:\LWAS_SAS_PROD' -and
-                -not $Value.StartsWith('?')
+            Should -Invoke Set-LWASSasToken -Times 1 -ParameterFilter {
+                $Name -eq 'LWAS_SAS_PROD' -and
+                -not $Token.StartsWith('?')
             }
         }
     }
@@ -294,7 +286,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Assert-LWASAzStorageModule { return $true }
             Mock New-AzStorageContext       { [PSCustomObject]@{ StorageAccountName = $StorageAccountName } }
             Mock New-AzStorageContainerSASToken { return 'sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
-            Mock Set-Item {}
+            Mock Set-LWASSasToken {}
 
             $results = @($profile1, $profile2 | Update-LWASUploadProfileSASToken)
 
@@ -302,7 +294,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             $results[0] | Should -BeTrue
             $results[1] | Should -BeTrue
             Should -Invoke New-AzStorageContainerSASToken -Times 2
-            Should -Invoke Set-Item                       -Times 2
+            Should -Invoke Set-LWASSasToken                       -Times 2
         }
     }
 }

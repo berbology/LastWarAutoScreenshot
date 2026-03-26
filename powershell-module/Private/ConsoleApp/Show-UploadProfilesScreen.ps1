@@ -10,11 +10,24 @@ function Show-UploadProfilesScreen {
         When no profiles exist, an informational panel is shown in place of the table.
 
         Selection prompt choices:
-          - Add profile    → calls Show-EditUploadProfileScreen; reloads and redraws on return
-          - Remove profile → shown only when at least one profile exists; presents a second
-                             prompt listing all profile names plus 'Cancel'; on selection calls
-                             Remove-UploadProfileFile
-          - [Back]         → exits the loop and returns $null
+          - Add profile                  → calls Show-EditUploadProfileScreen; reloads and
+                                           redraws on return
+          - Edit profile                 → shown only when at least one profile exists;
+                                           presents a sub-prompt listing profile names plus
+                                           'Cancel'; on selection calls
+                                           Show-EditUploadProfileScreen with the chosen profile
+          - Remove profile               → shown only when at least one profile exists; presents
+                                           a sub-prompt listing profile names plus 'Cancel';
+                                           on selection calls Remove-UploadProfileFile
+          - Update SAS tokens            → shown only when at least one profile exists; presents
+                                           a sub-prompt listing profiles as
+                                           "name (LWAS_SAS_VAR)" plus 'Cancel'; on selection
+                                           calls Update-LWASUploadProfileSASToken for the
+                                           chosen profile
+          - Update all profile SAS tokens → shown only when at least one profile exists;
+                                            calls Update-LWASUploadProfileSASToken for every
+                                            profile in one pass and reports a summary
+          - [Back]                       → exits the loop and returns $null
 
     .PARAMETER Console
         The Spectre.Console IAnsiConsole instance used for all rendering and input.
@@ -108,7 +121,10 @@ function Show-UploadProfilesScreen {
         $menuChoices.Add('[[Back]]')
         $menuChoices.Add('Add profile')
         if ($profiles.Count -gt 0) {
+            $menuChoices.Add('Edit profile')
             $menuChoices.Add('Remove profile')
+            $menuChoices.Add('Update SAS tokens')
+            $menuChoices.Add('Update all profile SAS tokens')
         }
 
         $prompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
@@ -120,6 +136,22 @@ function Show-UploadProfilesScreen {
 
             'Add profile' {
                 Show-EditUploadProfileScreen -Console $Console
+            }
+
+            'Edit profile' {
+                $editChoices = [System.Collections.Generic.List[string]]::new()
+                foreach ($p in $profiles) { $editChoices.Add($p.name) }
+                $editChoices.Add('Cancel')
+
+                $editPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                    'Select a profile to edit:', $editChoices.ToArray()
+                )
+                $editChoice = $editPrompt.Show($Console)
+
+                $matchedProfile = $profiles | Where-Object { $_.name -eq $editChoice } | Select-Object -First 1
+                if ($null -ne $matchedProfile) {
+                    Show-EditUploadProfileScreen -Console $Console -ExistingProfile $matchedProfile
+                }
             }
 
             'Remove profile' {
@@ -135,7 +167,78 @@ function Show-UploadProfilesScreen {
                 $matchedProfile = $profiles | Where-Object { $_.name -eq $removeChoice } | Select-Object -First 1
                 if ($null -ne $matchedProfile) {
                     Remove-UploadProfileFile -Name $matchedProfile.name
+                    Remove-LWASSasToken -Name $matchedProfile.sasTokenEnvVar
                 }
+            }
+
+            'Update SAS tokens' {
+                $updateChoices = [System.Collections.Generic.List[string]]::new()
+                foreach ($p in $profiles) {
+                    $updateChoices.Add("$($p.name) ($($p.sasTokenEnvVar))")
+                }
+                $updateChoices.Add('Cancel')
+
+                $updatePrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                    'Select a profile to update its SAS token:', $updateChoices.ToArray()
+                )
+                $updateChoice = $updatePrompt.Show($Console)
+
+                $matchedProfile = $null
+                foreach ($p in $profiles) {
+                    if ($updateChoice -eq "$($p.name) ($($p.sasTokenEnvVar))") {
+                        $matchedProfile = $p
+                        break
+                    }
+                }
+
+                if ($null -ne $matchedProfile) {
+                    $safeName     = [Spectre.Console.Markup]::Escape($matchedProfile.name)
+                    $safeSasVar   = [Spectre.Console.Markup]::Escape($matchedProfile.sasTokenEnvVar)
+                    $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $matchedProfile
+
+                    if ($tokenUpdated) {
+                        $Console.Write([Spectre.Console.Markup]::new("[green]SAS token for '$safeName' updated and stored in '$safeSasVar'.[/]`n"))
+                        Write-LastWarLog -Level Info `
+                            -Message "SAS token for profile '$($matchedProfile.name)' updated via console." `
+                            -FunctionName 'Show-UploadProfilesScreen'
+                    } else {
+                        $warnContent  = "SAS token for '$($matchedProfile.name)' could not be updated. Ensure you are connected to Azure (Connect-AzAccount)."
+                        $warningPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                            $warnContent,
+                            'SAS Token Warning'
+                        )
+                        $Console.Write($warningPanel)
+                    }
+                }
+            }
+
+            'Update all profile SAS tokens' {
+                $successCount = 0
+                $failCount    = 0
+
+                foreach ($p in $profiles) {
+                    $safeName     = [Spectre.Console.Markup]::Escape($p.name)
+                    $safeSasVar   = [Spectre.Console.Markup]::Escape($p.sasTokenEnvVar)
+                    $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $p
+
+                    if ($tokenUpdated) {
+                        $successCount++
+                        $Console.Write([Spectre.Console.Markup]::new("[green]SAS token for '$safeName' stored in '$safeSasVar'.[/]`n"))
+                    } else {
+                        $failCount++
+                        $Console.Write([Spectre.Console.Markup]::new("[yellow]SAS token for '$safeName' could not be updated.[/]`n"))
+                    }
+                }
+
+                Write-LastWarLog -Level Info `
+                    -Message "Bulk SAS token update complete: $successCount succeeded, $failCount failed." `
+                    -FunctionName 'Show-UploadProfilesScreen'
+
+                $summaryPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                    "$successCount profile(s) updated successfully. $failCount profile(s) failed.",
+                    'SAS Token Update Summary'
+                )
+                $Console.Write($summaryPanel)
             }
 
             default {

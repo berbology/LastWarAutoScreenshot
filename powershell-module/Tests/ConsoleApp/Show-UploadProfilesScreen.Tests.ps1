@@ -12,11 +12,30 @@ BeforeAll {
 Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
 
     BeforeEach {
+        # Clean up any leftover SAS tokens from previous test runs
+        @('LWAS_SAS_1', 'LWAS_SAS_2', 'LWAS_SAS_A', 'LWAS_SAS_B') | ForEach-Object {
+            try {
+                Remove-LWASSasToken -Name $_ -ErrorAction SilentlyContinue
+            } catch {
+                # Variable might not exist; that's fine
+            }
+        }
         InModuleScope 'LastWarAutoScreenshot' {
             $script:tc = [Spectre.Console.Testing.TestConsole]::new()
             $script:tc.Profile.Width  = $script:TestConsoleWidth
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
+
+    AfterEach {
+        # Clean up any SAS tokens created during tests
+        @('LWAS_SAS_1', 'LWAS_SAS_2', 'LWAS_SAS_A', 'LWAS_SAS_B') | ForEach-Object {
+            try {
+                Remove-LWASSasToken -Name $_ -ErrorAction SilentlyContinue
+            } catch {
+                # Variable might not exist; that's fine
+            }
         }
     }
 
@@ -172,10 +191,12 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                 }
                 Mock Show-EditUploadProfileScreen {}
                 Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASSasToken {}
 
                 $tc = $script:tc
-                # Choices: [0] [Back], [1] Add profile, [2] Remove profile
-                # Select Remove profile (index 2): 2 downs + Enter
+                # Choices: [0] [Back], [1] Add profile, [2] Edit profile, [3] Remove profile
+                # Select Remove profile (index 3): 3 downs + Enter
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -189,6 +210,9 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
 
                 Should -Invoke Remove-UploadProfileFile -Exactly 1 -ParameterFilter {
                     $Name -eq 'profile-one'
+                }
+                Should -Invoke Remove-LWASSasToken -Exactly 1 -ParameterFilter {
+                    $Name -eq 'LWAS_SAS_1'
                 }
             }
         }

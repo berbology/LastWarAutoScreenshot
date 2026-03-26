@@ -12,9 +12,14 @@ BeforeAll {
 Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
 
     BeforeEach {
-        Remove-Item -Path 'Env:\LWAS_SAS_TOKEN' -ErrorAction SilentlyContinue
-        Remove-Item -Path 'Env:\LWAS_SAS_EXISTING' -ErrorAction SilentlyContinue
-        Remove-Item -Path 'Env:\LWAS_SAS_NEW' -ErrorAction SilentlyContinue
+        # Clean up any leftover SAS tokens from previous test runs using the proper cleanup function
+        @('LWAS_SAS_TOKEN', 'LWAS_SAS_EXISTING', 'LWAS_SAS_NEW') | ForEach-Object {
+            try {
+                Remove-LWASSasToken -Name $_ -ErrorAction SilentlyContinue
+            } catch {
+                # Variable might not exist; that's fine
+            }
+        }
         InModuleScope 'LastWarAutoScreenshot' {
             $script:tc = [Spectre.Console.Testing.TestConsole]::new()
             $script:tc.Profile.Width  = $script:TestConsoleWidth
@@ -23,6 +28,17 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
             Mock Get-LWASSASToken { @() }
             Mock Test-LWASSASTokenIsValid { $true }
             Mock Update-LWASUploadProfileSASToken { $true }
+        }
+    }
+
+    AfterEach {
+        # Clean up any SAS tokens created during tests using the proper cleanup function
+        @('LWAS_SAS_TOKEN', 'LWAS_SAS_EXISTING', 'LWAS_SAS_NEW') | ForEach-Object {
+            try {
+                Remove-LWASSasToken -Name $_ -ErrorAction SilentlyContinue
+            } catch {
+                # Variable might not exist; that's fine
+            }
         }
     }
 
@@ -357,7 +373,13 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASToken { @([PSCustomObject]@{ Name = 'LWAS_SAS_PROD'; Value = ''; Valid = $false }) }
+                Mock Get-LWASSASToken {
+                    if ([string]::IsNullOrEmpty($Name)) {
+                        @([PSCustomObject]@{ Name = 'LWAS_SAS_PROD'; Value = ''; Valid = $false })
+                    } else {
+                        @()
+                    }
+                }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
@@ -450,7 +472,13 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Get-UploadProfile { $null }
                 Mock Save-UploadProfileFile {}
                 Mock Write-LastWarLog {}
-                Mock Get-LWASSASToken { @() }
+                Mock Get-LWASSASToken {
+                    if ($Name -eq 'LWAS_SAS_EXISTING') {
+                        @([PSCustomObject]@{ Name = 'LWAS_SAS_EXISTING'; Value = 'sv=fake'; Valid = $false })
+                    } else {
+                        @()
+                    }
+                }
                 Mock Test-LWASSASTokenIsValid { $true }
 
                 $tc = $script:tc
@@ -795,4 +823,3 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
             }
         }
     }
-}
