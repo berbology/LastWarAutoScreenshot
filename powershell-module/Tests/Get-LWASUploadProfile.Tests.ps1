@@ -87,6 +87,50 @@ Describe 'Get-LWASUploadProfile' -Tag 'Unit' {
         }
     }
 
+    It '8.5.5: -Property without -Name — returns only the specified properties for all profiles' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                @(
+                    [PSCustomObject]@{
+                        name           = 'profile-a'
+                        accountName    = 'acct1'
+                        containerName  = 'c1'
+                        sasTokenEnvVar = 'ENV_A'
+                    }
+                )
+            }
+
+            $result = @(Get-LWASUploadProfile -Property name, accountName)
+
+            $result.Count | Should -Be 1
+            $result[0].PSObject.Properties.Name | Should -Contain 'name'
+            $result[0].PSObject.Properties.Name | Should -Contain 'accountName'
+            $result[0].PSObject.Properties.Name | Should -Not -Contain 'containerName'
+            $result[0].PSObject.Properties.Name | Should -Not -Contain 'sasTokenEnvVar'
+        }
+    }
+
+    It '8.5.6: -Property with -Name — returns only the specified properties for the matched profile' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                [PSCustomObject]@{
+                    name           = 'azure-1'
+                    accountName    = 'myaccount'
+                    containerName  = 'screenshots'
+                    sasTokenEnvVar = 'LWAS_SAS'
+                }
+            }
+
+            $result = Get-LWASUploadProfile -Name 'azure-1' -Property name, containerName
+
+            $result | Should -Not -BeNull
+            $result.PSObject.Properties.Name | Should -Contain 'name'
+            $result.PSObject.Properties.Name | Should -Contain 'containerName'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'accountName'
+            $result.PSObject.Properties.Name | Should -Not -Contain 'sasTokenEnvVar'
+        }
+    }
+
     It '8.5.4: -Name with non-existent profile — returns $null; Write-Warning called' {
         InModuleScope LastWarAutoScreenshot {
             Mock Get-UploadProfile { $null }
