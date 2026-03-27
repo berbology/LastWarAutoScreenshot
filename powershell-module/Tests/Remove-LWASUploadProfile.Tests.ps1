@@ -162,6 +162,26 @@ Describe 'Remove-LWASUploadProfile' -Tag 'Unit' {
         }
     }
 
+    It 'Pipeline: accepts objects with a name property and removes each profile' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                param($Name)
+                if ($PSBoundParameters.ContainsKey('Name')) {
+                    [PSCustomObject]@{ name = $Name; sasTokenEnvVar = $null }
+                } else {
+                    @()
+                }
+            }
+
+            @(
+                [PSCustomObject]@{ name = 'profile-a' }
+                [PSCustomObject]@{ name = 'profile-b' }
+            ) | Remove-LWASUploadProfile -Force
+
+            Should -Invoke Remove-Item -Times 2
+        }
+    }
+
     It 'String array -Name — each profile prompted separately without -Force' {
         InModuleScope LastWarAutoScreenshot {
             Mock Get-UploadProfile {

@@ -62,6 +62,23 @@ Describe 'Remove-LWASSasToken' -Tag 'Unit' {
         }
     }
 
+    It 'Pipeline: accepts objects with a Name property and removes each token' {
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM',  'val1', [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', 'val2', [System.EnvironmentVariableTarget]::Process)
+
+        try {
+            @(
+                [PSCustomObject]@{ Name = 'LWAS_SAS_PESTER_RM'  }
+                [PSCustomObject]@{ Name = 'LWAS_SAS_PESTER_RM2' }
+            ) | Remove-LWASSasToken
+
+            [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM',  [System.EnvironmentVariableTarget]::Process) | Should -BeNull
+            [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [System.EnvironmentVariableTarget]::Process) | Should -BeNull
+        } finally {
+            [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+        }
+    }
+
     It 'Writes verbose output after successful removal' {
         [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', 'test-token', [System.EnvironmentVariableTarget]::Process)
 

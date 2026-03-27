@@ -44,17 +44,21 @@ function Remove-LWASUploadProfile {
         Remove-LWASUploadProfile -Name 'azure-1' -Force
         # If no other profiles use its SAS token, the token is removed automatically.
         # If other profiles use it, a verbose message indicates which profiles still reference it.
+
+    .EXAMPLE
+        Get-LWASUploadProfile -Name 'profile-1', 'profile-2' | Remove-LWASUploadProfile -Force
+        # Pipes profile objects returned by Get-LWASUploadProfile directly into Remove-LWASUploadProfile.
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [string[]]$Name,
 
         [Parameter()]
         [switch]$Force
     )
 
-    foreach ($profileName in $Name) {
+    process { foreach ($profileName in $Name) {
         $uploadProfile = Get-UploadProfile -Name $profileName
         if ($null -eq $uploadProfile) {
             Write-Error "Upload profile '$profileName' not found."
@@ -103,5 +107,5 @@ function Remove-LWASUploadProfile {
 
             Write-Verbose "Upload profile '$profileName' removed."
         }
-    }
+    } } # end foreach / end process
 }

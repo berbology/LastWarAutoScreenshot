@@ -28,15 +28,16 @@ function Remove-LWASSasToken {
         Remove-LWASSasToken -Name 'LWAS_AZURE_SAS', 'LWAS_SAS_PROD'
 
     .EXAMPLE
-        @('LWAS_SAS_PROD', 'LWAS_AZURE_SAS') | Remove-LWASSasToken -Name $_
+        Get-LWASSASToken -Name 'LWAS_SAS_TOKEN1', 'LWAS_SAS_TOKEN2' | Remove-LWASSasToken
+        # Pipes token objects returned by Get-LWASSASToken directly into Remove-LWASSasToken.
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [string[]]$Name
     )
 
-    foreach ($varName in $Name) {
+    process { foreach ($varName in $Name) {
         if ($varName -match '[^A-Za-z0-9_]') {
             Write-Error "Name '$varName' contains invalid characters. Only letters, digits, and underscores are allowed."
             continue
@@ -69,5 +70,5 @@ function Remove-LWASSasToken {
         }
 
         Write-Verbose "SAS token environment variable '$varName' has been removed."
-    }
+    } } # end foreach / end process
 }
