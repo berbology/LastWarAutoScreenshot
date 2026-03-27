@@ -142,4 +142,55 @@ Describe 'Get-LWASUploadProfile' -Tag 'Unit' {
             Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like "*missing*" }
         }
     }
+
+    It 'String array -Name — returns array of matching profiles' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                param($Name)
+                [PSCustomObject]@{ name = $Name; accountName = 'acct1' }
+            }
+
+            $result = @(Get-LWASUploadProfile -Name 'profile-a', 'profile-b')
+
+            $result.Count | Should -Be 2
+            $result[0].name | Should -Be 'profile-a'
+            $result[1].name | Should -Be 'profile-b'
+        }
+    }
+
+    It 'String array -Name — warns for missing entries; returns only found profiles' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Write-Warning {}
+            Mock Get-UploadProfile {
+                param($Name)
+                if ($Name -eq 'profile-a') {
+                    [PSCustomObject]@{ name = 'profile-a'; accountName = 'acct1' }
+                } else {
+                    $null
+                }
+            }
+
+            $result = @(Get-LWASUploadProfile -Name 'profile-a', 'missing')
+
+            $result.Count | Should -Be 1
+            $result[0].name | Should -Be 'profile-a'
+            Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*missing*' }
+        }
+    }
+
+    It 'String array -Name with -Property — returns only specified properties for all found profiles' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                param($Name)
+                [PSCustomObject]@{ name = $Name; accountName = 'acct1'; containerName = 'c1' }
+            }
+
+            $result = @(Get-LWASUploadProfile -Name 'profile-a', 'profile-b' -Property name, accountName)
+
+            $result.Count | Should -Be 2
+            $result[0].PSObject.Properties.Name | Should -Contain 'name'
+            $result[0].PSObject.Properties.Name | Should -Contain 'accountName'
+            $result[0].PSObject.Properties.Name | Should -Not -Contain 'containerName'
+        }
+    }
 }

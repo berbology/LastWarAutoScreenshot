@@ -122,4 +122,62 @@ Describe 'Remove-LWASUploadProfile' -Tag 'Unit' {
             Should -Invoke Remove-LWASSasToken -Times 0
         }
     }
+
+    It 'String array -Name — removes all specified profiles' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                param($Name)
+                if ($PSBoundParameters.ContainsKey('Name')) {
+                    [PSCustomObject]@{ name = $Name; sasTokenEnvVar = $null }
+                } else {
+                    @()
+                }
+            }
+
+            Remove-LWASUploadProfile -Name 'profile-a', 'profile-b' -Force
+
+            Should -Invoke Remove-Item -Times 2
+        }
+    }
+
+    It 'String array -Name — skips missing profiles with Write-Error; continues to remove found ones' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                param($Name)
+                if ($PSBoundParameters.ContainsKey('Name')) {
+                    if ($Name -eq 'profile-a') {
+                        [PSCustomObject]@{ name = 'profile-a'; sasTokenEnvVar = $null }
+                    } else {
+                        $null
+                    }
+                } else {
+                    @()
+                }
+            }
+
+            Remove-LWASUploadProfile -Name 'profile-a', 'missing' -Force
+
+            Should -Invoke Remove-Item -Times 1
+            Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*missing*not found*' }
+        }
+    }
+
+    It 'String array -Name — each profile prompted separately without -Force' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Get-UploadProfile {
+                param($Name)
+                if ($PSBoundParameters.ContainsKey('Name')) {
+                    [PSCustomObject]@{ name = $Name; sasTokenEnvVar = $null }
+                } else {
+                    @()
+                }
+            }
+            Mock Read-Host { 'Y' }
+
+            Remove-LWASUploadProfile -Name 'profile-a', 'profile-b'
+
+            Should -Invoke Read-Host -Times 2
+            Should -Invoke Remove-Item -Times 2
+        }
+    }
 }

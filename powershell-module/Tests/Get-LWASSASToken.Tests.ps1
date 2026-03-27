@@ -136,6 +136,43 @@ Describe 'Get-LWASSASToken' -Tag 'Unit' {
         $result[0].Name     | Should -Be 'LWAS_SAS_PESTER_A'
     }
 
+    It '-Name string array returns results matching any of the provided names' {
+        $futureToken = New-FakeSasToken -ExpiryValue ([datetime]::UtcNow.AddYears(1).ToString('yyyy-MM-ddTHH:mm:ssZ'))
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_A', $futureToken, [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_B', $futureToken, [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_C', $futureToken, [System.EnvironmentVariableTarget]::Process)
+
+        $result = @(Get-LWASSASToken -Name 'LWAS_SAS_PESTER_A', 'LWAS_SAS_PESTER_B')
+
+        $result.Count | Should -Be 2
+        ($result | Where-Object { $_.Name -eq 'LWAS_SAS_PESTER_A' }) | Should -Not -BeNull
+        ($result | Where-Object { $_.Name -eq 'LWAS_SAS_PESTER_B' }) | Should -Not -BeNull
+        ($result | Where-Object { $_.Name -eq 'LWAS_SAS_PESTER_C' }) | Should -BeNull
+    }
+
+    It '-Name string array with wildcard patterns returns results matching any pattern' {
+        $futureToken = New-FakeSasToken -ExpiryValue ([datetime]::UtcNow.AddYears(1).ToString('yyyy-MM-ddTHH:mm:ssZ'))
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_A', $futureToken, [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_B', $futureToken, [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_C', $futureToken, [System.EnvironmentVariableTarget]::Process)
+
+        $result = @(Get-LWASSASToken -Name 'LWAS_SAS_PESTER_A', 'LWAS_SAS_PESTER_C')
+
+        $result.Count | Should -Be 2
+        ($result | Where-Object { $_.Name -eq 'LWAS_SAS_PESTER_A' }) | Should -Not -BeNull
+        ($result | Where-Object { $_.Name -eq 'LWAS_SAS_PESTER_C' }) | Should -Not -BeNull
+        ($result | Where-Object { $_.Name -eq 'LWAS_SAS_PESTER_B' }) | Should -BeNull
+    }
+
+    It '-Name string array returns empty array when no names match' {
+        $futureToken = New-FakeSasToken -ExpiryValue ([datetime]::UtcNow.AddYears(1).ToString('yyyy-MM-ddTHH:mm:ssZ'))
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_A', $futureToken, [System.EnvironmentVariableTarget]::Process)
+
+        $result = @(Get-LWASSASToken -Name 'LWAS_SAS_PESTER_X', 'LWAS_SAS_PESTER_Y')
+
+        $result.Count | Should -Be 0
+    }
+
     It '-Property filter returns only the specified properties' {
         $futureToken = New-FakeSasToken -ExpiryValue ([datetime]::UtcNow.AddYears(1).ToString('yyyy-MM-ddTHH:mm:ssZ'))
         [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_A', $futureToken, [System.EnvironmentVariableTarget]::Process)

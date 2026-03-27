@@ -29,9 +29,11 @@ function Get-LWASSASToken {
             Get-LWASSASToken | Select-Object -ExpandProperty Name
 
     .PARAMETER Name
-        Optional. A name or wildcard pattern used to filter results. Only tokens whose
-        environment variable name matches this pattern are returned. Matching is case-insensitive.
+        Optional. One or more name(s) or wildcard pattern(s) used to filter results. Only tokens
+        whose environment variable name matches at least one of the provided patterns are returned.
+        Matching is case-insensitive.
         Example: -Name 'LWAS_SAS_PROD*' returns only variables beginning with LWAS_SAS_PROD.
+        Example: -Name 'LWAS_SAS_PROD', 'LWAS_SAS_DEV' returns those two specific tokens.
 
     .PARAMETER VerifyOnline
         When specified, tokens that pass local validity checks are also tested by issuing a
@@ -72,6 +74,10 @@ function Get-LWASSASToken {
         Returns only tokens whose environment variable name begins with 'LWAS_SAS_PROD'.
 
     .EXAMPLE
+        Get-LWASSASToken -Name 'LWAS_SAS_PROD', 'LWAS_SAS_DEV'
+        Returns tokens matching either of the two specified names.
+
+    .EXAMPLE
         Get-LWASSASToken -VerifyOnline
         Returns all tokens with full online verification. Tokens that pass local checks are
         tested with up to 3 live HTTP requests against their associated Azure storage endpoint.
@@ -85,7 +91,7 @@ function Get-LWASSASToken {
     [OutputType([PSCustomObject[]])]
     param(
         [Parameter()]
-        [string]$Name,
+        [string[]]$Name,
 
         [Parameter()]
         [switch]$VerifyOnline,
@@ -112,8 +118,11 @@ function Get-LWASSASToken {
     $uniqueNames = [string[]]@($allNames | Select-Object -Unique | Sort-Object)
 
     # Apply -Name wildcard filter when provided
-    if (-not [string]::IsNullOrEmpty($Name)) {
-        $uniqueNames = [string[]]@($uniqueNames | Where-Object { $_ -like $Name })
+    if ($PSBoundParameters.ContainsKey('Name') -and $Name.Count -gt 0) {
+        $uniqueNames = [string[]]@($uniqueNames | Where-Object {
+            $varName = $_
+            ($Name | Where-Object { $varName -ilike $_ }).Count -gt 0
+        })
     }
 
     $results = foreach ($varName in $uniqueNames) {
