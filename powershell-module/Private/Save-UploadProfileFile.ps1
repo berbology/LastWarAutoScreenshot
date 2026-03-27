@@ -23,12 +23,12 @@ function Save-UploadProfileFile {
         None
 
     .EXAMPLE
-        Save-UploadProfileFile -Profile $profile
+        Save-UploadProfileFile -UploadProfile $uploadProfile
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [PSCustomObject]$Profile,
+        [PSCustomObject]$UploadProfile,
 
         [Parameter()]
         [string]$ProfilesDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
@@ -36,12 +36,12 @@ function Save-UploadProfileFile {
 
     New-Item -Path $ProfilesDirectory -ItemType Directory -Force | Out-Null
 
-    $Profile.modifiedUtc = [datetime]::UtcNow.ToString('o')
+    $UploadProfile.modifiedUtc = [datetime]::UtcNow.ToString('o')
 
-    $filePath = Join-Path $ProfilesDirectory "$($Profile.name).json"
-    $Profile | ConvertTo-Json -Depth 3 | Set-Content -Path $filePath -Encoding UTF8
+    $filePath = Join-Path $ProfilesDirectory "$($UploadProfile.name).json"
+    $UploadProfile | ConvertTo-Json -Depth 3 | Set-Content -Path $filePath -Encoding UTF8
 
     Write-LastWarLog -Level Info `
-        -Message "Upload profile '$($Profile.name)' saved to '$filePath'." `
+        -Message "Upload profile '$($UploadProfile.name)' saved to '$filePath'." `
         -FunctionName 'Save-UploadProfileFile'
 }

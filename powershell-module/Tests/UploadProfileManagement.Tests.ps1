@@ -106,18 +106,18 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
             Mock Set-Content {}
             Mock Write-LastWarLog {}
 
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name          = 'test-profile'
                 modifiedUtc   = '2020-01-01T00:00:00Z'
                 accountName   = 'acct'
                 containerName = 'c'
             }
 
-            Save-UploadProfileFile -Profile $profile -ProfilesDirectory $dir
+            Save-UploadProfileFile -UploadProfile $uploadProfile -ProfilesDirectory $dir
 
             Should -Invoke New-Item -Times 1 -ParameterFilter { $Path -eq $dir }
             Should -Invoke Set-Content -Times 1 -ParameterFilter { $Path -eq (Join-Path $dir 'test-profile.json') }
-            $profile.modifiedUtc | Should -Not -Be '2020-01-01T00:00:00Z'
+            $uploadProfile.modifiedUtc | Should -Not -Be '2020-01-01T00:00:00Z'
         }
     }
 
@@ -214,7 +214,7 @@ Describe 'New-LWASUploadProfile — cloudProvider' -Tag 'Unit' {
             New-LWASUploadProfile -Name 'p1' -AccountName 'acct' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN'
 
             Should -Invoke Save-UploadProfileFile -Times 1 -ParameterFilter {
-                $Profile.cloudProvider -eq 'azure'
+                $uploadProfile.cloudProvider -eq 'azure'
             }
         }
     }

@@ -30,7 +30,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             $env:LWAS_SAS_TEST = 'sv=fake'
 
             $script:capturedProfile = $null
-            Mock Save-UploadProfileFile { $script:capturedProfile = $Profile } -Verifiable
+            Mock Save-UploadProfileFile { $script:capturedProfile = $UploadProfile } -Verifiable
 
             New-LWASUploadProfile -Name 'my-profile' -AccountName 'myaccount' `
                 -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_TEST' -Verbose 4>&1 | Out-Null
@@ -54,7 +54,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             $env:LWAS_SAS_TEST = 'sv=fake'
 
             $script:capturedProfile = $null
-            Mock Save-UploadProfileFile { $script:capturedProfile = $Profile }
+            Mock Save-UploadProfileFile { $script:capturedProfile = $UploadProfile }
 
             New-LWASUploadProfile -Name 'defaults-test' -AccountName 'acct' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
@@ -171,7 +171,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             $env:LWAS_SAS_TEST = 'sv=fake'
 
             $script:capturedProfile = $null
-            Mock Save-UploadProfileFile { $script:capturedProfile = $Profile }
+            Mock Save-UploadProfileFile { $script:capturedProfile = $UploadProfile }
 
             New-LWASUploadProfile -Name 'cloud-default' -AccountName 'acct' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
@@ -204,7 +204,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
 
             Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like "*LWAS_SAS_*" }
             Should -Invoke Save-UploadProfileFile -Times 1 -ParameterFilter {
-                $Profile.sasTokenEnvVar -eq 'LWAS_SAS_MY_TOKEN'
+                $UploadProfile.sasTokenEnvVar -eq 'LWAS_SAS_MY_TOKEN'
             }
         }
     }

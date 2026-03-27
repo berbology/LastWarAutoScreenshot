@@ -27,7 +27,7 @@ Describe 'UploadProfileManagement Integration' -Tag 'Integration' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $script:integrationDir } {
             Mock Write-LastWarLog {}
 
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name                  = 'round-trip'
                 provider              = 'AzureBlobStorage'
                 accountName           = 'myaccount'
@@ -42,7 +42,7 @@ Describe 'UploadProfileManagement Integration' -Tag 'Integration' {
                 modifiedUtc           = '2026-03-21T12:00:00Z'
             }
 
-            Save-UploadProfileFile -Profile $profile -ProfilesDirectory $dir
+            Save-UploadProfileFile -UploadProfile $uploadProfile -ProfilesDirectory $dir
 
             $loaded = Get-UploadProfile -Name 'round-trip' -ProfilesDirectory $dir
 
@@ -107,7 +107,7 @@ Describe 'UploadProfileManagement Integration' -Tag 'Integration' {
                     createdUtc            = '2026-03-21T12:00:00Z'
                     modifiedUtc           = '2026-03-21T12:00:00Z'
                 }
-                Save-UploadProfileFile -Profile $p -ProfilesDirectory $dir
+                Save-UploadProfileFile -UploadProfile $p -ProfilesDirectory $dir
             }
 
             $result = @(Get-UploadProfile -ProfilesDirectory $dir)

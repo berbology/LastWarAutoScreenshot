@@ -31,8 +31,8 @@ function Update-LWASUploadProfileSASToken {
         failure (wrong cloud provider, module unavailable, Az error, missing fields).
 
     .EXAMPLE
-        $profile = Get-LWASUploadProfile -Name 'azure-storage-1'
-        Update-LWASUploadProfileSASToken -Profile $profile
+        $uploadProfile = Get-LWASUploadProfile -Name 'azure-storage-1'
+        Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
 
     .EXAMPLE
         Get-LWASUploadProfile | Update-LWASUploadProfileSASToken
@@ -41,12 +41,12 @@ function Update-LWASUploadProfileSASToken {
     [OutputType([bool])]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
-        [PSCustomObject]$Profile
+        [PSCustomObject]$UploadProfile
     )
 
     process {
         # Guard: Azure profiles only
-        if (-not (Test-LWASAzureProfile -Profile $Profile)) {
+        if (-not (Test-LWASAzureProfile -UploadProfile $UploadProfile)) {
             Write-Error "SAS token management is only supported for Azure profiles (cloudProvider = 'azure')."
             return $false
         }
@@ -57,12 +57,12 @@ function Update-LWASUploadProfileSASToken {
         }
 
         # Guard: sasTokenEnvVar must be configured
-        if ([string]::IsNullOrEmpty($Profile.sasTokenEnvVar)) {
-            Write-Error "Profile '$($Profile.name)' has no sasTokenEnvVar configured."
+        if ([string]::IsNullOrEmpty($UploadProfile.sasTokenEnvVar)) {
+            Write-Error "Profile '$($UploadProfile.name)' has no sasTokenEnvVar configured."
             return $false
         }
 
-        if ($PSCmdlet.ShouldProcess($Profile.sasTokenEnvVar, 'Request new SAS token')) {
+        if ($PSCmdlet.ShouldProcess($UploadProfile.sasTokenEnvVar, 'Request new SAS token')) {
             # Guard: must be authenticated to Azure before calling storage cmdlets
             if (-not (Assert-LWASAzureSession)) {
                 return $false
@@ -70,15 +70,15 @@ function Update-LWASUploadProfileSASToken {
 
             $token = $null
             try {
-                $context = New-AzStorageContext -StorageAccountName $Profile.accountName -UseConnectedAccount
+                $context = New-AzStorageContext -StorageAccountName $UploadProfile.accountName -UseConnectedAccount
                 $token   = New-AzStorageContainerSASToken `
-                               -Name       $Profile.containerName `
+                               -Name       $UploadProfile.containerName `
                                -Context    $context `
                                -Permission 'rwdl' `
                                -ExpiryTime ([datetime]::UtcNow.AddDays(6)) `
                                -Protocol   HttpsOnly
             } catch {
-                Write-Error "Failed to generate SAS token for '$($Profile.name)'. Ensure you are connected to Azure (Connect-AzAccount). Error: $($_.Exception.Message)"
+                Write-Error "Failed to generate SAS token for '$($UploadProfile.name)'. Ensure you are connected to Azure (Connect-AzAccount). Error: $($_.Exception.Message)"
                 return $false
             }
 
@@ -86,7 +86,7 @@ function Update-LWASUploadProfileSASToken {
             # Proceeding with a null token would call SetEnvironmentVariable(name, $null) which
             # silently deletes the variable — never do that.
             if ($null -eq $token) {
-                Write-Error "Failed to generate SAS token for '$($Profile.name)': the Azure cmdlet returned null. Check the account/container names and ensure you are connected to Azure (Connect-AzAccount)."
+                Write-Error "Failed to generate SAS token for '$($UploadProfile.name)': the Azure cmdlet returned null. Check the account/container names and ensure you are connected to Azure (Connect-AzAccount)."
                 return $false
             }
 
@@ -95,10 +95,10 @@ function Update-LWASUploadProfileSASToken {
                 $token = $token.Substring(1)
             }
 
-            Set-LWASSasToken -Name $Profile.sasTokenEnvVar -Token $token
+            Set-LWASSasToken -Name $UploadProfile.sasTokenEnvVar -Token $token
 
             Write-LastWarLog -Level Info `
-                -Message "SAS token for profile '$($Profile.name)' stored in '$($Profile.sasTokenEnvVar)' (expires in ~6 days)." `
+                -Message "SAS token for profile '$($UploadProfile.name)' stored in '$($UploadProfile.sasTokenEnvVar)' (expires in ~6 days)." `
                 -FunctionName 'Update-LWASUploadProfileSASToken'
 
             return $true

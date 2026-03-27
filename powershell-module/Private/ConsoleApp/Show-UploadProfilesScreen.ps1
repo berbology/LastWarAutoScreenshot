@@ -69,11 +69,11 @@ function Show-UploadProfilesScreen {
         }
 
         # Ensure every profile has a User-scoped env var placeholder; create one if absent.
-        foreach ($profile in $profiles) {
-            if (-not $tokenMap.ContainsKey($profile.sasTokenEnvVar)) {
-                Set-LWASSasToken -Name $profile.sasTokenEnvVar -Token ''
-                $tokenMap[$profile.sasTokenEnvVar] = [PSCustomObject]@{
-                    Name               = $profile.sasTokenEnvVar
+        foreach ($userProfile in $profiles) {
+            if (-not $tokenMap.ContainsKey($userProfile.sasTokenEnvVar)) {
+                Set-LWASSasToken -Name $userProfile.sasTokenEnvVar -Token ''
+                $tokenMap[$userProfile.sasTokenEnvVar] = [PSCustomObject]@{
+                    Name               = $userProfile.sasTokenEnvVar
                     Value              = ''
                     Valid              = $false
                     Validation         = $null
@@ -193,7 +193,7 @@ function Show-UploadProfilesScreen {
                 if ($null -ne $matchedProfile) {
                     $safeName     = [Spectre.Console.Markup]::Escape($matchedProfile.name)
                     $safeSasVar   = [Spectre.Console.Markup]::Escape($matchedProfile.sasTokenEnvVar)
-                    $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $matchedProfile
+                    $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $matchedProfile
 
                     if ($tokenUpdated) {
                         $Console.Write([Spectre.Console.Markup]::new("[green]SAS token for '$safeName' updated and stored in '$safeSasVar'.[/]`n"))
@@ -218,7 +218,7 @@ function Show-UploadProfilesScreen {
                 foreach ($p in $profiles) {
                     $safeName     = [Spectre.Console.Markup]::Escape($p.name)
                     $safeSasVar   = [Spectre.Console.Markup]::Escape($p.sasTokenEnvVar)
-                    $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $p
+                    $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $p
 
                     if ($tokenUpdated) {
                         $successCount++

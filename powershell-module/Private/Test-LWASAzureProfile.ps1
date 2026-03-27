@@ -14,11 +14,11 @@ function Test-LWASAzureProfile {
 
     .OUTPUTS
         System.Boolean
-        $true if Profile.cloudProvider -ieq 'azure'; $false in all other cases
+        $true if $UploadProfile.cloudProvider -ieq 'azure'; $false in all other cases
         (missing field, null, empty string, or any other value).
 
     .EXAMPLE
-        if (-not (Test-LWASAzureProfile -Profile $profile)) {
+        if (-not (Test-LWASAzureProfile -UploadProfile $uploadProfile)) {
             Write-Error "SAS token management requires an Azure profile."
             return $false
         }
@@ -27,12 +27,12 @@ function Test-LWASAzureProfile {
     [OutputType([bool])]
     param(
         [Parameter(Mandatory)]
-        [PSCustomObject]$Profile
+        [PSCustomObject]$UploadProfile
     )
 
-    if ($null -eq $Profile.PSObject.Properties['cloudProvider']) {
+    if ($null -eq $UploadProfile.PSObject.Properties['cloudProvider']) {
         return $false
     }
 
-    return $Profile.cloudProvider -ieq 'azure'
+    return $UploadProfile.cloudProvider -ieq 'azure'
 }

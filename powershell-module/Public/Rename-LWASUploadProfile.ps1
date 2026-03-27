@@ -68,7 +68,7 @@ function Rename-LWASUploadProfile {
         Remove-Item -LiteralPath $oldFilePath -Force -ErrorAction SilentlyContinue
 
         $existingProfile.name = $NewName
-        Save-UploadProfileFile -Profile $existingProfile -ProfilesDirectory $ProfilesDirectory
+        Save-UploadProfileFile -UploadProfile $existingProfile -ProfilesDirectory $ProfilesDirectory
 
         Write-LastWarLog -Level Info `
             -Message "Upload profile renamed from '$Name' to '$NewName'." `

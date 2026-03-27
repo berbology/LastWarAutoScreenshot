@@ -53,7 +53,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
 
             $result = $null
-            { $result = Update-LWASUploadProfileSASToken -Profile $gcpProfile -ErrorAction SilentlyContinue } |
+            { $result = Update-LWASUploadProfileSASToken -UploadProfile $gcpProfile -ErrorAction SilentlyContinue } |
                 Should -Throw -Not
             $result | Should -BeFalse
 
@@ -66,7 +66,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # Assert-LWASAzStorageModule returns $false
     It 'Assert-LWASAzStorageModule returns $false → function returns $false; no Az cmdlets invoked' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -78,7 +78,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContext {}
             Mock New-AzStorageContainerSASToken {}
 
-            $result = Update-LWASUploadProfileSASToken -Profile $profile
+            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext        -Times 0
@@ -89,7 +89,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # Assert-LWASAzureSession returns $false
     It 'Assert-LWASAzureSession returns $false → function returns $false; Az storage cmdlets not invoked' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -102,7 +102,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContext {}
             Mock New-AzStorageContainerSASToken {}
 
-            $result = Update-LWASUploadProfileSASToken -Profile $profile
+            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext           -Times 0
@@ -113,7 +113,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # Empty sasTokenEnvVar
     It 'Az module available but sasTokenEnvVar is empty → Write-Error called; $false returned' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = ''
@@ -126,7 +126,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
 
             $result = $null
-            { $result = Update-LWASUploadProfileSASToken -Profile $profile -ErrorAction SilentlyContinue } |
+            { $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue } |
                 Should -Throw -Not
             $result | Should -BeFalse
 
@@ -138,7 +138,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # All checks pass; valid token returned
     It 'All checks pass; token stored at User scope and in current session; $true returned' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -151,7 +151,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken { return 'sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
             Mock Set-LWASSasToken {}
 
-            $result = Update-LWASUploadProfileSASToken -Profile $profile
+            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
 
             $result | Should -BeTrue
             Should -Invoke New-AzStorageContext           -Times 1
@@ -165,7 +165,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # New-AzStorageContainerSASToken throws
     It 'New-AzStorageContainerSASToken throws → Write-Error mentions Connect-AzAccount; $false returned; env var not set' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -178,7 +178,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Write-Error {}
             Mock Set-Item {}
 
-            $result = Update-LWASUploadProfileSASToken -Profile $profile -ErrorAction SilentlyContinue
+            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue
 
             $result | Should -BeFalse
             Should -Invoke Write-Error -Times 1 -ParameterFilter {
@@ -191,7 +191,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # New-AzStorageContainerSASToken returns null (non-terminating error path)
     It 'New-AzStorageContainerSASToken returns null → Write-Error called; $false returned; Set-Item not called' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -205,7 +205,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Write-Error {}
             Mock Set-Item {}
 
-            $result = Update-LWASUploadProfileSASToken -Profile $profile -ErrorAction SilentlyContinue
+            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue
 
             $result | Should -BeFalse
             Should -Invoke Write-Error -Times 1 -ParameterFilter {
@@ -218,7 +218,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # Token with leading '?' stripped
     It 'Token returned with leading ? → stored token has ? stripped' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -231,7 +231,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken { return '?sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
             Mock Set-LWASSasToken {}
 
-            Update-LWASUploadProfileSASToken -Profile $profile | Out-Null
+            Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile | Out-Null
 
             Should -Invoke Set-LWASSasToken -Times 1 -ParameterFilter {
                 $Name -eq 'LWAS_SAS_PROD' -and
@@ -243,7 +243,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # -WhatIf
     It '-WhatIf → no SetEnvironmentVariable; no Az cmdlets invoked; $false returned' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{
+            $uploadProfile = [PSCustomObject]@{
                 name           = 'azure-profile'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_PROD'
@@ -256,7 +256,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
             Mock Set-Item {}
 
-            $result = Update-LWASUploadProfileSASToken -Profile $profile -WhatIf
+            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -WhatIf
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext           -Times 0
@@ -268,14 +268,14 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
     # Pipeline input — two profiles
     It 'Pipeline input with two Azure profiles → New-AzStorageContainerSASToken called once per profile; $true returned each time' {
         InModuleScope LastWarAutoScreenshot {
-            $profile1 = [PSCustomObject]@{
+            $uploadProfile1 = [PSCustomObject]@{
                 name           = 'azure-profile-1'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_P1'
                 accountName    = 'account1'
                 containerName  = 'container1'
             }
-            $profile2 = [PSCustomObject]@{
+            $uploadProfile2 = [PSCustomObject]@{
                 name           = 'azure-profile-2'
                 cloudProvider  = 'azure'
                 sasTokenEnvVar = 'LWAS_SAS_P2'
@@ -288,7 +288,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken { return 'sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
             Mock Set-LWASSasToken {}
 
-            $results = @($profile1, $profile2 | Update-LWASUploadProfileSASToken)
+            $results = @($uploadProfile1, $uploadProfile2) | Update-LWASUploadProfileSASToken
 
             $results.Count | Should -Be 2
             $results[0] | Should -BeTrue

@@ -86,8 +86,8 @@ Describe 'Rename-LWASUploadProfile' -Tag 'Unit' {
                 }
             }
             Mock Save-UploadProfileFile {
-                param($Profile, $ProfilesDirectory)
-                $script:savedProfile = $Profile
+                param($UploadProfile, $ProfilesDirectory)
+                $script:savedProfile = $UploadProfile
             }
 
             Rename-LWASUploadProfile -Name 'old-profile' -NewName 'new-profile'

@@ -46,7 +46,7 @@ function Show-EditUploadProfileScreen {
 
     .EXAMPLE
         $console = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
-        $profile = Show-EditUploadProfileScreen -Console $console
+        $uploadProfile = Show-EditUploadProfileScreen -Console $console
 
     .EXAMPLE
         $existing = Get-LWASUploadProfile -Name 'my-profile'
@@ -340,7 +340,7 @@ function Show-EditUploadProfileScreen {
     }
 
     $nowUtc  = [datetime]::UtcNow.ToString('o')
-    $profile = [PSCustomObject]@{
+    $uploadProfile = [PSCustomObject]@{
         name                   = $profileName
         provider               = 'AzureBlobStorage'
         cloudProvider          = 'azure'
@@ -361,14 +361,14 @@ function Show-EditUploadProfileScreen {
         Rename-LWASUploadProfile -Name $ExistingProfile.name -NewName $profileName
     }
 
-    Save-UploadProfileFile -Profile $profile
+    Save-UploadProfileFile -UploadProfile $uploadProfile
 
     $safeProfileName = [Spectre.Console.Markup]::Escape($profileName)
     $safeSasVar      = [Spectre.Console.Markup]::Escape($sasTokenEnvVar)
     $savedTokenInfo  = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
     $savedToken      = if ($null -ne $savedTokenInfo) { $savedTokenInfo.Value } else { $null }
     if (-not (Test-LWASSASTokenIsValid -SasToken $savedToken)) {
-        $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $profile
+        $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
         if ($tokenUpdated) {
             $Console.Write([Spectre.Console.Markup]::new("[green]SAS token updated and stored in '$safeSasVar'.[/]`n"))
         } else {
@@ -387,5 +387,5 @@ function Show-EditUploadProfileScreen {
         -Message "Upload profile '$profileName' $actionWord." `
         -FunctionName 'Show-EditUploadProfileScreen'
 
-    return $profile
+    return $uploadProfile
 }

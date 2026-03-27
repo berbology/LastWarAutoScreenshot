@@ -157,7 +157,7 @@ function New-LWASUploadProfile {
     }
 
     $nowUtc = [datetime]::UtcNow.ToString('o')
-    $profile = [PSCustomObject]@{
+    $uploadProfile = [PSCustomObject]@{
         name                   = $Name
         provider               = 'AzureBlobStorage'
         cloudProvider          = $CloudProvider.ToLower()
@@ -173,11 +173,11 @@ function New-LWASUploadProfile {
         modifiedUtc            = $nowUtc
     }
 
-    Save-UploadProfileFile -Profile $profile
+    Save-UploadProfileFile -UploadProfile $uploadProfile
 
     $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
     if (-not (Test-LWASSASTokenIsValid -SasToken $currentToken)) {
-        $tokenUpdated = Update-LWASUploadProfileSASToken -Profile $profile
+        $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
         if (-not $tokenUpdated) {
             Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount)."
         } else {

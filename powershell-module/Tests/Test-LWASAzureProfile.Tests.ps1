@@ -9,48 +9,48 @@ Describe 'Test-LWASAzureProfile' -Tag 'Unit' {
     # cloudProvider = 'azure' → $true
     It 'Profile with cloudProvider = ''azure'' → $true' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{ cloudProvider = 'azure' }
-            Test-LWASAzureProfile -Profile $profile | Should -BeTrue
+            $uploadProfile = [PSCustomObject]@{ cloudProvider = 'azure' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Should -BeTrue
         }
     }
 
     # cloudProvider = 'Azure' (mixed case) → $true (case-insensitive)
     It 'Profile with cloudProvider = ''Azure'' (mixed case) → $true (case-insensitive)' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{ cloudProvider = 'Azure' }
-            Test-LWASAzureProfile -Profile $profile | Should -BeTrue
+            $uploadProfile = [PSCustomObject]@{ cloudProvider = 'Azure' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Should -BeTrue
         }
     }
 
     # cloudProvider = 'gcp' → $false
     It 'Profile with cloudProvider = ''gcp'' → $false' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{ cloudProvider = 'gcp' }
-            Test-LWASAzureProfile -Profile $profile | Should -BeFalse
+            $uploadProfile = [PSCustomObject]@{ cloudProvider = 'gcp' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Should -BeFalse
         }
     }
 
     # cloudProvider = 'aws' → $false
     It 'Profile with cloudProvider = ''aws'' → $false' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{ cloudProvider = 'aws' }
-            Test-LWASAzureProfile -Profile $profile | Should -BeFalse
+            $uploadProfile = [PSCustomObject]@{ cloudProvider = 'aws' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Should -BeFalse
         }
     }
 
     # cloudProvider = '' (empty string) → $false
     It 'Profile with cloudProvider = '''' (empty string) → $false' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{ cloudProvider = '' }
-            Test-LWASAzureProfile -Profile $profile | Should -BeFalse
+            $uploadProfile = [PSCustomObject]@{ cloudProvider = '' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Should -BeFalse
         }
     }
 
     # Profile object with no cloudProvider property → $false
     It 'Profile with no cloudProvider property → $false' {
         InModuleScope LastWarAutoScreenshot {
-            $profile = [PSCustomObject]@{ name = 'legacy-profile'; provider = 'AzureBlobStorage' }
-            Test-LWASAzureProfile -Profile $profile | Should -BeFalse
+            $uploadProfile = [PSCustomObject]@{ name = 'legacy-profile'; provider = 'AzureBlobStorage' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Should -BeFalse
         }
     }
 
@@ -65,8 +65,8 @@ Describe 'Test-LWASAzureProfile' -Tag 'Unit' {
             Mock Write-Error {}
             Mock Write-Warning {}
 
-            $profile = [PSCustomObject]@{ cloudProvider = $Cp }
-            Test-LWASAzureProfile -Profile $profile | Out-Null
+            $uploadProfile = [PSCustomObject]@{ cloudProvider = $Cp }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Out-Null
 
             Should -Invoke Write-Error   -Times 0
             Should -Invoke Write-Warning -Times 0
@@ -78,8 +78,8 @@ Describe 'Test-LWASAzureProfile' -Tag 'Unit' {
             Mock Write-Error {}
             Mock Write-Warning {}
 
-            $profile = [PSCustomObject]@{ name = 'no-cloud-provider' }
-            Test-LWASAzureProfile -Profile $profile | Out-Null
+            $uploadProfile = [PSCustomObject]@{ name = 'no-cloud-provider' }
+            Test-LWASAzureProfile -UploadProfile $uploadProfile | Out-Null
 
             Should -Invoke Write-Error   -Times 0
             Should -Invoke Write-Warning -Times 0

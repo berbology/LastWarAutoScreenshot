@@ -27,7 +27,7 @@ function Test-LWASSASTokenIsValid {
 
     .EXAMPLE
         if (-not (Test-LWASSASTokenIsValid -SasToken $env:LWAS_SAS_PROD)) {
-            Update-LWASUploadProfileSASToken -Profile $profile
+            Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
         }
     #>
     [CmdletBinding()]

@@ -91,11 +91,11 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Show-EditUploadProfileScreen -Console $tc
 
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.name           -eq 'my-profile'     -and
-                    $Profile.accountName    -eq 'myaccount'      -and
-                    $Profile.containerName  -eq 'mycontainer'    -and
-                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN' -and
-                    $Profile.cloudProvider  -eq 'azure'
+                    $UploadProfile.name           -eq 'my-profile'     -and
+                    $UploadProfile.accountName    -eq 'myaccount'      -and
+                    $UploadProfile.containerName  -eq 'mycontainer'    -and
+                    $UploadProfile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN' -and
+                    $UploadProfile.cloudProvider  -eq 'azure'
                 }
             }
         }
@@ -148,7 +148,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Show-EditUploadProfileScreen -Console $tc
 
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.name -eq 'new-profile'
+                    $UploadProfile.name -eq 'new-profile'
                 }
             }
         }
@@ -189,7 +189,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Show-EditUploadProfileScreen -Console $tc
 
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.blobPathPattern -eq '{MacroName}/{Date}/{Filename}'
+                    $UploadProfile.blobPathPattern -eq '{MacroName}/{Date}/{Filename}'
                 }
             }
         }
@@ -359,7 +359,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Show-EditUploadProfileScreen -Console $tc
 
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_PROD'
+                    $UploadProfile.sasTokenEnvVar -eq 'LWAS_SAS_PROD'
                 }
                 $tc.Output | Should -Not -Match 'unique suffix'
             }
@@ -548,7 +548,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
 
                 # The saved profile must use LWAS_SAS_TOKEN, not LWAS_SAS_LWAS_SAS_TOKEN
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN'
+                    $UploadProfile.sasTokenEnvVar -eq 'LWAS_SAS_TOKEN'
                 }
             }
         }
@@ -740,7 +740,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Show-EditUploadProfileScreen -Console $tc
 
                 Should -Invoke Save-UploadProfileFile -Exactly 1 -ParameterFilter {
-                    $Profile.cloudProvider -eq 'azure'
+                    $UploadProfile.cloudProvider -eq 'azure'
                 }
             }
         }
