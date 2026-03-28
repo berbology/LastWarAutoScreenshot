@@ -66,7 +66,7 @@ Describe 'Rename-LWASUploadProfile' -Tag 'Unit' {
                 }
             }
 
-            Rename-LWASUploadProfile -Name 'old-profile' -NewName 'new-profile' -ProfilesDirectory 'C:\Profiles'
+            Rename-LWASUploadProfile -Name 'old-profile' -NewName 'new-profile' -ProfileDirectory 'C:\Profiles'
 
             Should -Invoke Remove-Item -Times 1 -ParameterFilter {
                 $LiteralPath -like '*old-profile.json*'
@@ -86,7 +86,7 @@ Describe 'Rename-LWASUploadProfile' -Tag 'Unit' {
                 }
             }
             Mock Save-UploadProfileFile {
-                param($UploadProfile, $ProfilesDirectory)
+                param($UploadProfile, $ProfileDirectory)
                 $script:savedProfile = $UploadProfile
             }
 

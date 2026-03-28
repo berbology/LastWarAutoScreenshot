@@ -22,7 +22,7 @@ function Rename-LWASUploadProfile {
         The new name to assign to the upload profile. Must not already be in use by another
         profile.
 
-    .PARAMETER ProfilesDirectory
+    .PARAMETER ProfileDirectory
         Directory that contains the profile JSON files. Defaults to
         $env:APPDATA\LastWarAutoScreenshot\UploadProfiles.
 
@@ -44,31 +44,31 @@ function Rename-LWASUploadProfile {
         [string]$NewName,
 
         [Parameter()]
-        [string]$ProfilesDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
+        [string]$ProfileDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
     )
 
     if ($Name -eq $NewName) {
         return
     }
 
-    $existingProfile = Get-UploadProfile -Name $Name -ProfilesDirectory $ProfilesDirectory
+    $existingProfile = Get-UploadProfile -Name $Name -ProfileDirectory $ProfileDirectory
     if ($null -eq $existingProfile) {
         Write-Error "Upload profile '$Name' not found."
         return
     }
 
-    $conflictingProfile = Get-UploadProfile -Name $NewName -ProfilesDirectory $ProfilesDirectory
+    $conflictingProfile = Get-UploadProfile -Name $NewName -ProfileDirectory $ProfileDirectory
     if ($null -ne $conflictingProfile) {
         Write-Error "An upload profile named '$NewName' already exists."
         return
     }
 
     if ($PSCmdlet.ShouldProcess("'$Name' -> '$NewName'", 'Rename upload profile')) {
-        $oldFilePath = Join-Path $ProfilesDirectory "$Name.json"
+        $oldFilePath = Join-Path $ProfileDirectory "$Name.json"
         Remove-Item -LiteralPath $oldFilePath -Force -ErrorAction SilentlyContinue
 
         $existingProfile.name = $NewName
-        Save-UploadProfileFile -UploadProfile $existingProfile -ProfilesDirectory $ProfilesDirectory
+        Save-UploadProfileFile -UploadProfile $existingProfile -ProfileDirectory $ProfileDirectory
 
         Write-LastWarLog -Level Info `
             -Message "Upload profile renamed from '$Name' to '$NewName'." `

@@ -42,9 +42,9 @@ Describe 'UploadProfileManagement Integration' -Tag 'Integration' {
                 modifiedUtc           = '2026-03-21T12:00:00Z'
             }
 
-            Save-UploadProfileFile -UploadProfile $uploadProfile -ProfilesDirectory $dir
+            Save-UploadProfileFile -UploadProfile $uploadProfile -ProfileDirectory $dir
 
-            $loaded = Get-UploadProfile -Name 'round-trip' -ProfilesDirectory $dir
+            $loaded = Get-UploadProfile -Name 'round-trip' -ProfileDirectory $dir
 
             $loaded                         | Should -Not -BeNull
             $loaded.name                    | Should -Be 'round-trip'
@@ -107,10 +107,10 @@ Describe 'UploadProfileManagement Integration' -Tag 'Integration' {
                     createdUtc            = '2026-03-21T12:00:00Z'
                     modifiedUtc           = '2026-03-21T12:00:00Z'
                 }
-                Save-UploadProfileFile -UploadProfile $p -ProfilesDirectory $dir
+                Save-UploadProfileFile -UploadProfile $p -ProfileDirectory $dir
             }
 
-            $result = @(Get-UploadProfile -ProfilesDirectory $dir)
+            $result = @(Get-UploadProfile -ProfileDirectory $dir)
             $result.Count | Should -Be 3
         }
     }

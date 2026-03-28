@@ -19,7 +19,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
     It '1.5.1: Returns an empty array when the profiles directory does not exist' {
         InModuleScope LastWarAutoScreenshot -Parameters @{ td = $TestDrive } {
             $dir    = Join-Path $td 'NoSuchDir\UploadProfiles'
-            $result = @(Get-UploadProfile -ProfilesDirectory $dir)
+            $result = @(Get-UploadProfile -ProfileDirectory $dir)
             $result.Count | Should -Be 0
         }
     }
@@ -35,7 +35,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         $json2 | Set-Content -Path (Join-Path $profilesDir 'profile-2.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
-            $result = @(Get-UploadProfile -ProfilesDirectory $dir)
+            $result = @(Get-UploadProfile -ProfileDirectory $dir)
             $result.Count | Should -Be 2
 
             $schemaFields = @('name','provider','accountName','containerName','sasTokenEnvVar',
@@ -60,7 +60,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         $json2 | Set-Content -Path (Join-Path $profilesDir 'profile-2.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
-            $result = Get-UploadProfile -Name 'profile-1' -ProfilesDirectory $dir
+            $result = Get-UploadProfile -Name 'profile-1' -ProfileDirectory $dir
             $result           | Should -Not -BeNull
             $result.name      | Should -Be 'profile-1'
             $result.accountName | Should -Be 'acct1'
@@ -72,7 +72,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         New-Item -Path $profilesDir -ItemType Directory -Force | Out-Null
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
-            $result = Get-UploadProfile -Name 'does-not-exist' -ProfilesDirectory $dir
+            $result = Get-UploadProfile -Name 'does-not-exist' -ProfileDirectory $dir
             $result | Should -BeNull
         }
     }
@@ -87,7 +87,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         $minimalJson | Set-Content -Path (Join-Path $profilesDir 'minimal.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
-            $result = Get-UploadProfile -Name 'minimal' -ProfilesDirectory $dir
+            $result = Get-UploadProfile -Name 'minimal' -ProfileDirectory $dir
             $result                       | Should -Not -BeNull
             $result.blobPathPattern       | Should -Be '{MacroName}/{Date}/{Filename}'
             $result.maxRetryAttempts      | Should -Be 3
@@ -113,7 +113,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
                 containerName = 'c'
             }
 
-            Save-UploadProfileFile -UploadProfile $uploadProfile -ProfilesDirectory $dir
+            Save-UploadProfileFile -UploadProfile $uploadProfile -ProfileDirectory $dir
 
             Should -Invoke New-Item -Times 1 -ParameterFilter { $Path -eq $dir }
             Should -Invoke Set-Content -Times 1 -ParameterFilter { $Path -eq (Join-Path $dir 'test-profile.json') }
@@ -130,7 +130,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         $oldJson | Set-Content -Path (Join-Path $profilesDir 'legacy.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
-            $result = Get-UploadProfile -Name 'legacy' -ProfilesDirectory $dir
+            $result = Get-UploadProfile -Name 'legacy' -ProfileDirectory $dir
             $result | Should -Not -BeNull
             $result.cloudProvider | Should -Be 'azure'
         }
@@ -144,7 +144,7 @@ Describe 'Get-UploadProfile' -Tag 'Unit' {
         $json | Set-Content -Path (Join-Path $profilesDir 'new-profile.json') -Encoding UTF8
 
         InModuleScope LastWarAutoScreenshot -Parameters @{ dir = $profilesDir } {
-            $result = Get-UploadProfile -Name 'new-profile' -ProfilesDirectory $dir
+            $result = Get-UploadProfile -Name 'new-profile' -ProfileDirectory $dir
             $result | Should -Not -BeNull
             $result.cloudProvider | Should -Be 'azure'
         }

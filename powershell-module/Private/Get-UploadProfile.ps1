@@ -16,7 +16,7 @@ function Get-UploadProfile {
     .PARAMETER Name
         Optional. When specified, returns only the profile with this name.
 
-    .PARAMETER ProfilesDirectory
+    .PARAMETER ProfileDirectory
         Directory that contains the profile JSON files. Defaults to
         $env:APPDATA\LastWarAutoScreenshot\UploadProfiles.
 
@@ -38,7 +38,7 @@ function Get-UploadProfile {
         [string]$Name,
 
         [Parameter()]
-        [string]$ProfilesDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
+        [string]$ProfileDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
     )
 
     $defaults = @{
@@ -51,14 +51,14 @@ function Get-UploadProfile {
         deleteLocalAfterDays  = 30
     }
 
-    if (-not (Test-Path -LiteralPath $ProfilesDirectory)) {
+    if (-not (Test-Path -LiteralPath $ProfileDirectory)) {
         if ($PSBoundParameters.ContainsKey('Name')) {
             return $null
         }
         return @()
     }
 
-    $files = @(Get-ChildItem -Path $ProfilesDirectory -Filter '*.json' -ErrorAction SilentlyContinue)
+    $files = @(Get-ChildItem -Path $ProfileDirectory -Filter '*.json' -ErrorAction SilentlyContinue)
 
     $profiles = foreach ($file in $files) {
         $parsed = $null

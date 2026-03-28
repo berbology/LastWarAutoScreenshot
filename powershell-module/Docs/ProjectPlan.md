@@ -4968,12 +4968,12 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
          [CmdletBinding()]
          param(
              [string]$Name,
-             [string]$ProfilesDirectory
+             [string]$ProfileDirectory
          )
      }
      ```
 
-     `$ProfilesDirectory` defaults to `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles`.
+     `$ProfileDirectory` defaults to `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles`.
      Without `-Name`: enumerates all `*.json` files, parses each, returns as an array
      (empty array when none exist — never `$null`).
      With `-Name`: returns the single profile object, or `$null` if not found.
@@ -4988,15 +4988,15 @@ re-uploading previously-uploaded files; PowerShell Gallery publication.
          [CmdletBinding()]
          param(
              [Parameter(Mandatory)] [PSCustomObject]$Profile,
-             [string]$ProfilesDirectory
+             [string]$ProfileDirectory
          )
      }
      ```
 
-     Creates `ProfilesDirectory` if it does not exist.
+     Creates `ProfileDirectory` if it does not exist.
      Sets `modifiedUtc` to the current UTC time before writing.
      Serialises the profile object as JSON (`ConvertTo-Json -Depth 3`) and writes to
-     `{ProfilesDirectory}\{Profile.name}.json` with UTF-8 encoding.
+     `{ProfileDirectory}\{Profile.name}.json` with UTF-8 encoding.
      Logs success at Info level via `Write-LastWarLog`.
 
    - [x] 1.4: ~~Create `Private/Remove-UploadProfileFile.ps1`~~ — superseded by `Public/Remove-LWASUploadProfile.ps1` (renamed and promoted to public in Phase 8).

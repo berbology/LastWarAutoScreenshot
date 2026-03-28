@@ -6,12 +6,12 @@ function Save-UploadProfileFile {
     .DESCRIPTION
         Creates the profiles directory if it does not exist, sets modifiedUtc to the
         current UTC time, serialises the profile as JSON (depth 3), and writes to
-        {ProfilesDirectory}\{Profile.name}.json with UTF-8 encoding.
+        {ProfileDirectory}\{Profile.name}.json with UTF-8 encoding.
 
     .PARAMETER Profile
         The PSCustomObject representing the upload profile to save.
 
-    .PARAMETER ProfilesDirectory
+    .PARAMETER ProfileDirectory
         Directory to write the profile JSON file into. Defaults to
         $env:APPDATA\LastWarAutoScreenshot\UploadProfiles.
 
@@ -31,14 +31,14 @@ function Save-UploadProfileFile {
         [PSCustomObject]$UploadProfile,
 
         [Parameter()]
-        [string]$ProfilesDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
+        [string]$ProfileDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
     )
 
-    New-Item -Path $ProfilesDirectory -ItemType Directory -Force | Out-Null
+    New-Item -Path $ProfileDirectory -ItemType Directory -Force | Out-Null
 
     $UploadProfile.modifiedUtc = [datetime]::UtcNow.ToString('o')
 
-    $filePath = Join-Path $ProfilesDirectory "$($UploadProfile.name).json"
+    $filePath = Join-Path $ProfileDirectory "$($UploadProfile.name).json"
     $UploadProfile | ConvertTo-Json -Depth 3 | Set-Content -Path $filePath -Encoding UTF8
 
     Write-LastWarLog -Level Info `
