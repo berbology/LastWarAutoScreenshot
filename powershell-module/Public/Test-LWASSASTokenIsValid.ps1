@@ -64,6 +64,9 @@ function Test-LWASSASTokenIsValid {
         return $false
     }
 
+    # URL-decode the value; Az module encodes colons as %3A (e.g. 2026-04-02T22%3A22%3A43Z)
+    $seValue = [System.Uri]::UnescapeDataString($seValue)
+
     # Attempt to parse the expiry as UTC datetime
     $expiryUtc  = [datetime]::MinValue
     $parsed     = $false
