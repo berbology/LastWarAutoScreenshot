@@ -26,7 +26,7 @@ function Show-EditUploadProfileScreen {
           - Delete local after days   : integer 1–3650, default 30
 
         On confirmation 'Yes': saves the profile via Save-UploadProfileFile. If the SAS
-        token is absent or expired, Update-LWASUploadProfileSASToken is called automatically.
+        token is absent or expired, Update-LWASSASToken is called automatically.
         Shows a success message and returns the saved profile object.
 
         On 'Cancel': returns $null without saving.
@@ -368,12 +368,12 @@ function Show-EditUploadProfileScreen {
     $savedTokenInfo  = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
     $savedToken      = if ($null -ne $savedTokenInfo) { $savedTokenInfo.Value } else { $null }
     if (-not (Test-LWASSASTokenIsValid -SasToken $savedToken)) {
-        $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+        $tokenUpdated = Update-LWASSASToken -UploadProfile $uploadProfile
         if ($tokenUpdated) {
             $Console.Write([Spectre.Console.Markup]::new("[green]SAS token updated and stored in '$safeSasVar'.[/]`n"))
         } else {
             $warningPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                'Profile saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount).',
+                'Profile saved, but SAS token could not be updated automatically. Run Update-LWASSASToken after connecting to Azure (Connect-AzAccount).',
                 'SAS Token Warning'
             )
             $Console.Write($warningPanel)

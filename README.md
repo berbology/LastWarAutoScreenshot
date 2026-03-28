@@ -141,8 +141,8 @@ Send-LWASScreenshots -UploadProfileName 'azure-1' -WhatIf  # dry run
 Test-LWASSASTokenIsValid -SasToken $env:LWAS_SAS_PROD
 
 # Renew the SAS token for a profile (requires Connect-AzAccount and Az.Storage)
-Update-LWASUploadProfileSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')
-Get-LWASUploadProfile | Update-LWASUploadProfileSASToken
+Update-LWASSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')
+Get-LWASUploadProfile | Update-LWASSASToken
 ```
 
 See [AzureIntegration.md](powershell-module/Docs/AzureIntegration.md) for full setup instructions.

@@ -1,4 +1,4 @@
-function Update-LWASUploadProfileSASToken {
+function Update-LWASSASToken {
     <#
     .SYNOPSIS
         Generates a new SAS token for an Azure upload profile and stores it in the
@@ -19,7 +19,7 @@ function Update-LWASUploadProfileSASToken {
         function on a non-Azure profile is an error.
 
         Supports pipeline input so callers can pipe Get-LWASUploadProfile output:
-            Get-LWASUploadProfile | Update-LWASUploadProfileSASToken
+            Get-LWASUploadProfile | Update-LWASSASToken
 
     .PARAMETER Profile
         The upload profile PSCustomObject. Must have cloudProvider = 'azure',
@@ -32,10 +32,10 @@ function Update-LWASUploadProfileSASToken {
 
     .EXAMPLE
         $uploadProfile = Get-LWASUploadProfile -Name 'azure-storage-1'
-        Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+        Update-LWASSASToken -UploadProfile $uploadProfile
 
     .EXAMPLE
-        Get-LWASUploadProfile | Update-LWASUploadProfileSASToken
+        Get-LWASUploadProfile | Update-LWASSASToken
     #>
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
@@ -99,7 +99,7 @@ function Update-LWASUploadProfileSASToken {
 
             Write-LastWarLog -Level Info `
                 -Message "SAS token for profile '$($UploadProfile.name)' stored in '$($UploadProfile.sasTokenEnvVar)' (expires in ~6 days)." `
-                -FunctionName 'Update-LWASUploadProfileSASToken'
+                -FunctionName 'Update-LWASSASToken'
 
             return $true
         }

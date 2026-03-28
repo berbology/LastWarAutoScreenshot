@@ -258,10 +258,10 @@ function Show-RunMacroScreen {
                 )
                 $Console.Write($sasWarningPanel)
 
-                $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+                $tokenUpdated = Update-LWASSASToken -UploadProfile $uploadProfile
                 if (-not $tokenUpdated) {
                     $sasFailPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                        "Could not generate a SAS token for upload profile '$profileName'. Connect to Azure (Connect-AzAccount) and run Update-LWASUploadProfileSASToken, or continue without uploading.",
+                        "Could not generate a SAS token for upload profile '$profileName'. Connect to Azure (Connect-AzAccount) and run Update-LWASSASToken, or continue without uploading.",
                         '[yellow]Warning: SAS Token Unavailable[/]'
                     )
                     $Console.Write($sasFailPanel)

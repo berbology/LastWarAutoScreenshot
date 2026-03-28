@@ -27,7 +27,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
             $script:tc.Profile.Capabilities.Interactive = $true
             Mock Get-LWASSASToken { @() }
             Mock Test-LWASSASTokenIsValid { $true }
-            Mock Update-LWASUploadProfileSASToken { $true }
+            Mock Update-LWASSASToken { $true }
         }
     }
 
@@ -294,7 +294,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ Name = 'LWAS_SAS_DEV';  Value = ''; Valid = $false }
                 ) }
                 Mock Test-LWASSASTokenIsValid { $true }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 
@@ -334,7 +334,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @([PSCustomObject]@{ Name = 'LWAS_SAS_PROD'; Value = ''; Valid = $false }) }
                 Mock Test-LWASSASTokenIsValid { $true }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 
@@ -522,7 +522,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 
@@ -557,7 +557,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
     # Save path — auto-token logic
     Context 'When saving the profile' {
 
-        It 'Does not call Update-LWASUploadProfileSASToken when the token is already valid' {
+        It 'Does not call Update-LWASSASToken when the token is already valid' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ValidMacroName {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
@@ -567,7 +567,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 
@@ -590,11 +590,11 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
 
                 Show-EditUploadProfileScreen -Console $tc
 
-                Should -Not -Invoke Update-LWASUploadProfileSASToken
+                Should -Not -Invoke Update-LWASSASToken
             }
         }
 
-        It 'Calls Update-LWASUploadProfileSASToken exactly once when the token is absent or expired' {
+        It 'Calls Update-LWASSASToken exactly once when the token is absent or expired' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-ValidMacroName {
                     [PSCustomObject]@{ Valid = $true; SanitisedName = $Name; WasAutoFixed = $false; Message = '' }
@@ -604,7 +604,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 
@@ -627,7 +627,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
 
                 Show-EditUploadProfileScreen -Console $tc
 
-                Should -Invoke Update-LWASUploadProfileSASToken -Exactly 1
+                Should -Invoke Update-LWASSASToken -Exactly 1
             }
         }
 
@@ -641,7 +641,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
-                Mock Update-LWASUploadProfileSASToken { $false }
+                Mock Update-LWASSASToken { $false }
 
                 $tc = $script:tc
 
@@ -678,7 +678,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $false }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 
@@ -716,7 +716,7 @@ Describe 'Show-EditUploadProfileScreen' -Tag 'Unit' {
                 Mock Write-LastWarLog {}
                 Mock Get-LWASSASToken { @() }
                 Mock Test-LWASSASTokenIsValid { $true }
-                Mock Update-LWASUploadProfileSASToken { $true }
+                Mock Update-LWASSASToken { $true }
 
                 $tc = $script:tc
 

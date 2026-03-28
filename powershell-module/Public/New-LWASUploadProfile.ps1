@@ -11,7 +11,7 @@ function New-LWASUploadProfile {
         The SAS token is stored only as the name of the environment variable that
         holds it, not as the token itself. After saving, the current token is
         validated via Test-LWASSASTokenIsValid. If the token is absent or expired,
-        Update-LWASUploadProfileSASToken is called automatically to generate and
+        Update-LWASSASToken is called automatically to generate and
         persist a new one (requires Az.Storage and an active Azure session).
 
     .PARAMETER Name
@@ -177,9 +177,9 @@ function New-LWASUploadProfile {
 
     $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
     if (-not (Test-LWASSASTokenIsValid -SasToken $currentToken)) {
-        $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+        $tokenUpdated = Update-LWASSASToken -UploadProfile $uploadProfile
         if (-not $tokenUpdated) {
-            Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASUploadProfileSASToken after connecting to Azure (Connect-AzAccount)."
+            Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASSASToken after connecting to Azure (Connect-AzAccount)."
         } else {
             Write-Verbose "SAS token for '$SasTokenEnvVar' updated successfully."
         }

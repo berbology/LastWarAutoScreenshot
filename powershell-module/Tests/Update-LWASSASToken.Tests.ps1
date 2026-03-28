@@ -23,7 +23,7 @@ AfterAll {
     Remove-Item -Path 'Function:\Connect-AzAccount'              -ErrorAction SilentlyContinue
 }
 
-Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
+Describe 'Update-LWASSASToken' -Tag 'Unit' {
 
     BeforeEach {
         InModuleScope LastWarAutoScreenshot {
@@ -53,7 +53,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
 
             $result = $null
-            { $result = Update-LWASUploadProfileSASToken -UploadProfile $gcpProfile -ErrorAction SilentlyContinue } |
+            { $result = Update-LWASSASToken -UploadProfile $gcpProfile -ErrorAction SilentlyContinue } |
                 Should -Throw -Not
             $result | Should -BeFalse
 
@@ -78,7 +78,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContext {}
             Mock New-AzStorageContainerSASToken {}
 
-            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+            $result = Update-LWASSASToken -UploadProfile $uploadProfile
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext        -Times 0
@@ -102,7 +102,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContext {}
             Mock New-AzStorageContainerSASToken {}
 
-            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+            $result = Update-LWASSASToken -UploadProfile $uploadProfile
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext           -Times 0
@@ -126,7 +126,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
 
             $result = $null
-            { $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue } |
+            { $result = Update-LWASSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue } |
                 Should -Throw -Not
             $result | Should -BeFalse
 
@@ -151,7 +151,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken { return 'sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
             Mock Set-LWASSasToken {}
 
-            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile
+            $result = Update-LWASSASToken -UploadProfile $uploadProfile
 
             $result | Should -BeTrue
             Should -Invoke New-AzStorageContext           -Times 1
@@ -178,7 +178,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Write-Error {}
             Mock Set-Item {}
 
-            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue
+            $result = Update-LWASSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue
 
             $result | Should -BeFalse
             Should -Invoke Write-Error -Times 1 -ParameterFilter {
@@ -205,7 +205,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock Write-Error {}
             Mock Set-Item {}
 
-            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue
+            $result = Update-LWASSASToken -UploadProfile $uploadProfile -ErrorAction SilentlyContinue
 
             $result | Should -BeFalse
             Should -Invoke Write-Error -Times 1 -ParameterFilter {
@@ -231,7 +231,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken { return '?sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
             Mock Set-LWASSasToken {}
 
-            Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile | Out-Null
+            Update-LWASSASToken -UploadProfile $uploadProfile | Out-Null
 
             Should -Invoke Set-LWASSasToken -Times 1 -ParameterFilter {
                 $Name -eq 'LWAS_SAS_PROD' -and
@@ -256,7 +256,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken {}
             Mock Set-Item {}
 
-            $result = Update-LWASUploadProfileSASToken -UploadProfile $uploadProfile -WhatIf
+            $result = Update-LWASSASToken -UploadProfile $uploadProfile -WhatIf
 
             $result | Should -BeFalse
             Should -Invoke New-AzStorageContext           -Times 0
@@ -288,7 +288,7 @@ Describe 'Update-LWASUploadProfileSASToken' -Tag 'Unit' {
             Mock New-AzStorageContainerSASToken { return 'sv=2022-11-02&se=2027-01-01T00%3A00%3A00Z&sr=c&sp=rwdl&sig=abc123' }
             Mock Set-LWASSasToken {}
 
-            $results = @($uploadProfile1, $uploadProfile2) | Update-LWASUploadProfileSASToken
+            $results = @($uploadProfile1, $uploadProfile2) | Update-LWASSASToken
 
             $results.Count | Should -Be 2
             $results[0] | Should -BeTrue

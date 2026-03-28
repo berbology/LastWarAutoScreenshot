@@ -16,7 +16,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Save-UploadProfileFile {}
             Mock Write-Warning {}
             Mock Test-LWASSASTokenIsValid { $true }
-            Mock Update-LWASUploadProfileSASToken { $true }
+            Mock Update-LWASSASToken { $true }
         }
         Remove-Item -Path Env:\LWAS_SAS_TEST -ErrorAction SilentlyContinue
     }
@@ -111,16 +111,16 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
         }
     }
 
-    It 'SAS token invalid on save — Update-LWASUploadProfileSASToken called; Write-Warning on failure; profile still saved' {
+    It 'SAS token invalid on save — Update-LWASSASToken called; Write-Warning on failure; profile still saved' {
         InModuleScope LastWarAutoScreenshot {
             Mock Test-LWASSASTokenIsValid { $false }
-            Mock Update-LWASUploadProfileSASToken { $false }
+            Mock Update-LWASSASToken { $false }
             Mock Write-Warning {}
 
             New-LWASUploadProfile -Name 'warn-test' -AccountName 'acct' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
-            Should -Invoke Update-LWASUploadProfileSASToken -Times 1
+            Should -Invoke Update-LWASSASToken -Times 1
             Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*Connect-AzAccount*' }
             Should -Invoke Save-UploadProfileFile -Times 1
         }
@@ -221,33 +221,33 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
         }
     }
 
-    It 'Token valid on save — Update-LWASUploadProfileSASToken not called' {
+    It 'Token valid on save — Update-LWASSASToken not called' {
         InModuleScope LastWarAutoScreenshot {
             Mock Test-LWASSASTokenIsValid { $true }
 
             New-LWASUploadProfile -Name 'valid-token' -AccountName 'acct' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
-            Should -Invoke Update-LWASUploadProfileSASToken -Times 0
+            Should -Invoke Update-LWASSASToken -Times 0
         }
     }
 
-    It 'Token absent or expired on save — Update-LWASUploadProfileSASToken called exactly once' {
+    It 'Token absent or expired on save — Update-LWASSASToken called exactly once' {
         InModuleScope LastWarAutoScreenshot {
             Mock Test-LWASSASTokenIsValid { $false }
-            Mock Update-LWASUploadProfileSASToken { $true }
+            Mock Update-LWASSASToken { $true }
 
             New-LWASUploadProfile -Name 'expired-token' -AccountName 'acct' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
-            Should -Invoke Update-LWASUploadProfileSASToken -Times 1
+            Should -Invoke Update-LWASSASToken -Times 1
         }
     }
 
-    It 'Update-LWASUploadProfileSASToken returns false — Write-Warning called; profile was still saved' {
+    It 'Update-LWASSASToken returns false — Write-Warning called; profile was still saved' {
         InModuleScope LastWarAutoScreenshot {
             Mock Test-LWASSASTokenIsValid { $false }
-            Mock Update-LWASUploadProfileSASToken { $false }
+            Mock Update-LWASSASToken { $false }
             Mock Write-Warning {}
 
             New-LWASUploadProfile -Name 'update-fails' -AccountName 'acct' `

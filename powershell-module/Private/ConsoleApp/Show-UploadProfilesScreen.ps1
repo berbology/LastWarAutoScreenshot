@@ -23,9 +23,9 @@ function Show-UploadProfilesScreen {
                                            a sub-prompt listing profiles as
                                            "name (LWAS_SAS_VAR)" plus 'Update all SAS tokens'
                                            and 'Cancel'; selecting a profile calls
-                                           Update-LWASUploadProfileSASToken for the chosen
+                                           Update-LWASSASToken for the chosen
                                            profile; selecting 'Update all SAS tokens' calls
-                                           Update-LWASUploadProfileSASToken for every profile
+                                           Update-LWASSASToken for every profile
                                            in one pass and reports a summary
           - [Back]                       → exits the loop and returns $null
 
@@ -189,7 +189,7 @@ function Show-UploadProfilesScreen {
                     foreach ($p in $profiles) {
                         $safeName     = [Spectre.Console.Markup]::Escape($p.name)
                         $safeSasVar   = [Spectre.Console.Markup]::Escape($p.sasTokenEnvVar)
-                        $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $p
+                        $tokenUpdated = Update-LWASSASToken -UploadProfile $p
 
                         if ($tokenUpdated) {
                             $successCount++
@@ -221,7 +221,7 @@ function Show-UploadProfilesScreen {
                     if ($null -ne $matchedProfile) {
                         $safeName     = [Spectre.Console.Markup]::Escape($matchedProfile.name)
                         $safeSasVar   = [Spectre.Console.Markup]::Escape($matchedProfile.sasTokenEnvVar)
-                        $tokenUpdated = Update-LWASUploadProfileSASToken -UploadProfile $matchedProfile
+                        $tokenUpdated = Update-LWASSASToken -UploadProfile $matchedProfile
 
                         if ($tokenUpdated) {
                             $Console.Write([Spectre.Console.Markup]::new("[green]SAS token for '$safeName' updated and stored in '$safeSasVar'.[/]`n"))

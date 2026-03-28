@@ -828,7 +828,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'Pre-flight: SAS token check for UploadScreenshots actions' {
 
-        It 'Shows SAS token warning and calls Update-LWASUploadProfileSASToken when token is invalid; runs macro when token updated' {
+        It 'Shows SAS token warning and calls Update-LWASSASToken when token is invalid; runs macro when token updated' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
@@ -875,7 +875,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Test-LWASSASTokenIsValid { $false }
-                Mock Update-LWASUploadProfileSASToken { return $true }
+                Mock Update-LWASSASToken { return $true }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
                 }
@@ -889,12 +889,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
                 Show-RunMacroScreen -Console $tc
                 $tc.Output | Should -Match 'SAS Token Required'
-                Should -Invoke Update-LWASUploadProfileSASToken -Times 1
+                Should -Invoke Update-LWASSASToken -Times 1
                 Should -Invoke Invoke-MacroSequence -Times 1 -Exactly
             }
         }
 
-        It 'Shows unavailable panel when Update-LWASUploadProfileSASToken returns $false; Cancel returns to macro list' {
+        It 'Shows unavailable panel when Update-LWASSASToken returns $false; Cancel returns to macro list' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-LWASMacro -MockWith {
                     @([PSCustomObject]@{
@@ -941,7 +941,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                     }
                 }
                 Mock Test-LWASSASTokenIsValid { $false }
-                Mock Update-LWASUploadProfileSASToken { return $false }
+                Mock Update-LWASSASToken { return $false }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
@@ -993,7 +993,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
                 Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Update-LWASUploadProfileSASToken {}
+                Mock Update-LWASSASToken {}
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
                 }
@@ -1006,7 +1006,7 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-RunMacroScreen -Console $tc
-                Should -Invoke Update-LWASUploadProfileSASToken -Times 0
+                Should -Invoke Update-LWASSASToken -Times 0
                 Should -Invoke Invoke-MacroSequence -Times 1 -Exactly
             }
         }

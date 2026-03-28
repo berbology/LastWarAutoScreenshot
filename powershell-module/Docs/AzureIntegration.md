@@ -151,7 +151,7 @@ not need to track expiry dates or regenerate tokens manually.
   ```
 
 - **Active Azure session** — authenticate before saving a profile or calling
-  `Update-LWASUploadProfileSASToken`:
+  `Update-LWASSASToken`:
 
   ```powershell
   Connect-AzAccount
@@ -168,7 +168,7 @@ not need to track expiry dates or regenerate tokens manually.
 2. `Test-LWASSASTokenIsValid` checks the `se=` (signed expiry) field in the token. A
    five-minute safety buffer is applied — a token expiring within five minutes is treated
    as expired.
-3. If the token is absent or within the buffer period, `Update-LWASUploadProfileSASToken`
+3. If the token is absent or within the buffer period, `Update-LWASSASToken`
    generates a new token with a one-year expiry using `Az.Storage` and stores it at
    Windows User scope (persists across sessions) and in the current process scope
    (available immediately without restarting PowerShell).
@@ -188,13 +188,13 @@ save. This convention:
 To renew a token for a specific profile without re-saving it:
 
 ```powershell
-Update-LWASUploadProfileSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')
+Update-LWASSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')
 ```
 
 To renew tokens for all profiles at once:
 
 ```powershell
-Get-LWASUploadProfile | Update-LWASUploadProfileSASToken
+Get-LWASUploadProfile | Update-LWASSASToken
 ```
 
 ### Checking a token
@@ -344,13 +344,13 @@ without retrying, as these indicate a configuration error rather than a transien
 
 | Symptom | Likely cause | Resolution |
 |---------|-------------|------------|
-| `Environment variable 'LWAS_SAS_PROD' is not set` | The SAS token env var is missing or the variable name in the profile is wrong | Save the profile again to trigger auto-renewal, or run `Update-LWASUploadProfileSASToken` manually after connecting to Azure |
-| Upload fails with HTTP 403 | SAS token has expired or was generated with insufficient permissions | Run `Update-LWASUploadProfileSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')` to renew; ensure the token has Write+List permissions |
+| `Environment variable 'LWAS_SAS_PROD' is not set` | The SAS token env var is missing or the variable name in the profile is wrong | Save the profile again to trigger auto-renewal, or run `Update-LWASSASToken` manually after connecting to Azure |
+| Upload fails with HTTP 403 | SAS token has expired or was generated with insufficient permissions | Run `Update-LWASSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')` to renew; ensure the token has Write+List permissions |
 | Upload fails with HTTP 404 | Container name or storage account name is wrong | Verify `accountName` and `containerName` in the profile match the Azure portal exactly; container names are lowercase |
 | Some files upload but others fail | Transient Azure errors or network interruption | Check the log for details; re-run `Send-LWASScreenshots` — already-uploaded blobs will be overwritten (idempotent PUT) |
 | `Upload profile 'xyz' not found` | Profile name was misspelled or the profile file was deleted | Run `Get-LWASUploadProfile` to list available profiles |
 | No files uploaded, no error | `StoragePath` folder is empty or contains no PNG files | Confirm the folder contains screenshots; check `Screenshots.StoragePath` in the module config |
 | `Az.Storage` module not found | `Az.Storage` is not installed | Run `Install-Module Az.Storage -Scope CurrentUser` then retry |
 | `Connect-AzAccount` not authenticated | Azure session has expired or was never started | Run `Connect-AzAccount` to authenticate, then retry the operation |
-| `Test-LWASSASTokenIsValid` returns `$false` for a token with time remaining | The token expires within the five-minute safety buffer | This is expected behaviour — the module treats tokens expiring within five minutes as expired to avoid race conditions. Renew early by running `Update-LWASUploadProfileSASToken` |
+| `Test-LWASSASTokenIsValid` returns `$false` for a token with time remaining | The token expires within the five-minute safety buffer | This is expected behaviour — the module treats tokens expiring within five minutes as expired to avoid race conditions. Renew early by running `Update-LWASSASToken` |
 | `SasTokenEnvVar must begin with 'LWAS_SAS_'` | The supplied env var name does not follow the required naming convention | Use a name beginning with `LWAS_SAS_` (e.g. `LWAS_SAS_PROD`). This prefix is required for all profiles managed by this module |
