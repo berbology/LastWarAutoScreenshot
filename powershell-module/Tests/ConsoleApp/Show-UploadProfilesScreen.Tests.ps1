@@ -12,11 +12,30 @@ BeforeAll {
 Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
 
     BeforeEach {
+        # Clean up any leftover SAS tokens from previous test runs
+        @('LWAS_SAS_1', 'LWAS_SAS_2', 'LWAS_SAS_A', 'LWAS_SAS_B') | ForEach-Object {
+            try {
+                Remove-LWASSasToken -Name $_ -ErrorAction SilentlyContinue
+            } catch {
+                # Variable might not exist; that's fine
+            }
+        }
         InModuleScope 'LastWarAutoScreenshot' {
             $script:tc = [Spectre.Console.Testing.TestConsole]::new()
             $script:tc.Profile.Width  = $script:TestConsoleWidth
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
+        }
+    }
+
+    AfterEach {
+        # Clean up any SAS tokens created during tests
+        @('LWAS_SAS_1', 'LWAS_SAS_2', 'LWAS_SAS_A', 'LWAS_SAS_B') | ForEach-Object {
+            try {
+                Remove-LWASSasToken -Name $_ -ErrorAction SilentlyContinue
+            } catch {
+                # Variable might not exist; that's fine
+            }
         }
     }
 
@@ -29,11 +48,10 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] [Back] — navigate to [Back] (1 down)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -46,11 +64,10 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] [Back]
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -88,12 +105,10 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                     )
                 }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] Remove profile, [2] [Back]
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile, [2] Remove profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -114,13 +129,13 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                # First iteration: [0] Add profile — press Enter
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second iteration (loop returns to menu): [1] [Back] — 1 down + Enter
+                # First iteration: [1] Add profile — 1 down + Enter
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Second iteration (loop returns to menu): [0] [Back] — Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -133,11 +148,11 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
@@ -152,7 +167,7 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
     # ════════════════════════════════════════════════════════════════════════
     Context 'When the user selects Remove profile then selects a profile name' {
 
-        It 'Calls Remove-UploadProfileFile with the selected profile name' {
+        It 'Calls Remove-LWASUploadProfile with the selected profile name' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile {
                     @(
@@ -175,24 +190,24 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
                     )
                 }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] Remove profile, [2] [Back]
-                # Select Remove profile (index 1): 1 down + Enter
+                # Choices: [0] [Back], [1] Add profile, [2] Edit profile, [3] Remove profile
+                # Select Remove profile (index 3): 3 downs + Enter
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Remove sub-prompt: [0] profile-one, [1] profile-two, [2] Cancel
                 # Select profile-one (index 0): Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Back to main prompt (loop re-runs): [2] [Back] — 2 downs + Enter
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Back to main prompt (loop re-runs): [0] [Back] — Enter
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-UploadProfilesScreen -Console $tc
 
-                Should -Invoke Remove-UploadProfileFile -Exactly 1 -ParameterFilter {
+                Should -Invoke Remove-LWASUploadProfile -Exactly 1 -ParameterFilter {
                     $Name -eq 'profile-one'
                 }
             }
@@ -208,11 +223,10 @@ Describe 'Show-UploadProfilesScreen' -Tag 'Unit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Get-UploadProfile { @() }
                 Mock Show-EditUploadProfileScreen {}
-                Mock Remove-UploadProfileFile {}
+                Mock Remove-LWASUploadProfile {}
 
                 $tc = $script:tc
-                # Choices: [0] Add profile, [1] [Back] — 1 down + Enter
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Choices: [0] [Back], [1] Add profile — select [Back] (Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 $result = Show-UploadProfilesScreen -Console $tc

@@ -6,52 +6,48 @@ function Set-LWASSasToken {
     .DESCRIPTION
         Saves the supplied SAS token under the given environment variable name at
         Windows User scope (HKCU:\Environment), so it survives PowerShell session
-        restarts. The token is also applied to the current Process scope immediately,
-        meaning it is available to uploads without restarting the session.
+        restarts, and also applies it to the current Process scope so it is
+        immediately available in the running session without a restart.
 
         The variable name must match the SasTokenEnvVar stored in the upload profile
         you want to use.
 
-    .PARAMETER EnvVarName
+    .PARAMETER Name
         Name of the environment variable to set. Must consist of letters, digits,
         and underscores only (e.g. 'LWAS_AZURE_SAS').
 
     .PARAMETER Token
-        The SAS token value to store. Must not be empty.
+        The SAS token value to store. Can be empty to create a placeholder environment variable.
 
     .OUTPUTS
         None
 
     .EXAMPLE
-        Set-LWASSasToken -EnvVarName 'LWAS_AZURE_SAS' -Token 'sv=2023-01-03&...'
+        Set-LWASSasToken -Name 'LWAS_AZURE_SAS' -Token 'sv=2023-01-03&...'
 
     .EXAMPLE
-        Set-LWASSasToken -EnvVarName 'LWAS_AZURE_SAS2' -Token $myToken
+        Set-LWASSasToken -Name 'LWAS_AZURE_SAS2' -Token $myToken
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$EnvVarName,
+        [string]$Name,
 
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [string]$Token
     )
 
-    if ($EnvVarName -match '[^A-Za-z0-9_]') {
-        Write-Error "EnvVarName '$EnvVarName' contains invalid characters. Only letters, digits, and underscores are allowed."
-        return
-    }
-
-    if ([string]::IsNullOrWhiteSpace($Token)) {
-        Write-Error 'Token must not be empty.'
+    if ($Name -match '[^A-Za-z0-9_]') {
+        Write-Error "Name '$Name' contains invalid characters. Only letters, digits, and underscores are allowed."
         return
     }
 
     # Persist at User scope so new sessions inherit the value automatically.
-    [Environment]::SetEnvironmentVariable($EnvVarName, $Token, [EnvironmentVariableTarget]::User)
+    [Environment]::SetEnvironmentVariable($Name, $Token, [EnvironmentVariableTarget]::User)
 
-    # Also apply to the current process so uploads work immediately without reopening PowerShell.
-    [Environment]::SetEnvironmentVariable($EnvVarName, $Token, [EnvironmentVariableTarget]::Process)
+    # Apply immediately to the current session so callers can use the value without restarting.
+    [Environment]::SetEnvironmentVariable($Name, $Token, [EnvironmentVariableTarget]::Process)
 
-    Write-Verbose "SAS token saved to User environment variable '$EnvVarName'."
+    Write-Verbose "SAS token saved to User environment variable '$Name'."
 }

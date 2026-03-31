@@ -122,9 +122,9 @@ macros.
 ### Upload profiles
 
 ```powershell
-# Create an upload profile
+# Create an upload profile (SAS token is generated automatically on save)
 New-LWASUploadProfile -Name 'azure-1' -AccountName 'myaccount' `
-    -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_AZURE_SAS'
+    -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_PROD'
 
 # List all profiles / get a specific profile
 Get-LWASUploadProfile
@@ -136,6 +136,13 @@ Remove-LWASUploadProfile -Name 'azure-1'
 # Upload screenshots to Azure Blob Storage
 Send-LWASScreenshots -UploadProfileName 'azure-1'
 Send-LWASScreenshots -UploadProfileName 'azure-1' -WhatIf  # dry run
+
+# Check whether a SAS token is still valid
+Test-LWASSASTokenIsValid -SasToken $env:LWAS_SAS_PROD
+
+# Renew the SAS token for a profile (requires Connect-AzAccount and Az.Storage)
+Update-LWASSASToken -Profile (Get-LWASUploadProfile -Name 'azure-1')
+Get-LWASUploadProfile | Update-LWASSASToken
 ```
 
 See [AzureIntegration.md](powershell-module/Docs/AzureIntegration.md) for full setup instructions.
@@ -145,8 +152,7 @@ See [AzureIntegration.md](powershell-module/Docs/AzureIntegration.md) for full s
 ## Roadmap
 
 See [ProjectPlan.md](powershell-module/Docs/ProjectPlan.md) for full
-phase-by-phase task list. Current status: Phase 7 complete. Phase 8
-(Documentation & Examples) in progress.
+phase-by-phase task list. Current status: Phase 9b (Automated SAS Token Management).
 
 ## License
 

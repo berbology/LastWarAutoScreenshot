@@ -9,13 +9,18 @@ function New-LWASUploadProfile {
         be referenced by UploadScreenshots macro actions and by Send-LWASScreenshots.
 
         The SAS token is stored only as the name of the environment variable that
-        holds it, not as the token itself. Set the environment variable before
-        running an upload. A warning is issued if the variable is not currently set,
-        but the profile is still saved.
+        holds it, not as the token itself. After saving, the current token is
+        validated via Test-LWASSASTokenIsValid. If the token is absent or expired,
+        Update-LWASSASToken is called automatically to generate and
+        persist a new one (requires Az.Storage and an active Azure session).
 
     .PARAMETER Name
         Name for the upload profile. Must match the macro naming rules: 1–50
         characters, letters, digits, hyphens, and underscores only.
+
+    .PARAMETER ResourceGroupName
+        Azure Resource Group that contains the storage account (e.g. 'my-resource-group').
+        Required to retrieve the storage account key when generating SAS tokens.
 
     .PARAMETER AccountName
         Azure Storage account name (e.g. 'mystorageaccount').
@@ -25,7 +30,9 @@ function New-LWASUploadProfile {
 
     .PARAMETER SasTokenEnvVar
         Name of the environment variable that holds the SAS token at runtime.
-        Must consist of letters, digits, and underscores only.
+        Must consist of letters, digits, and underscores only. The 'LWAS_SAS_'
+        prefix is required and will be added automatically if omitted; a warning
+        is emitted in that case so you know the effective variable name.
 
     .PARAMETER BlobPathPattern
         Pattern for the blob path. Supports placeholders: {MacroName}, {Date},
@@ -41,6 +48,10 @@ function New-LWASUploadProfile {
     .PARAMETER DeleteLocalAfterUpload
         When set, deletes each local file immediately after a successful upload.
 
+    .PARAMETER CloudProvider
+        The cloud provider for this profile. Only 'azure' is supported in Phase 9b.
+        Defaults to 'azure'.
+
     .PARAMETER DeleteLocalAfterDays
         Removes local screenshot files older than this many days after each upload
         run (1–3650). Defaults to 30.
@@ -50,17 +61,31 @@ function New-LWASUploadProfile {
 
     .EXAMPLE
         New-LWASUploadProfile -Name 'azure-1' -AccountName 'myaccount' `
-            -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_AZURE_SAS'
+            -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'
+
+        Creates a profile using the environment variable LWAS_SAS_MY_TOKEN (prefix
+        already supplied).
 
     .EXAMPLE
         New-LWASUploadProfile -Name 'azure-2' -AccountName 'myaccount' `
-            -ContainerName 'screens' -SasTokenEnvVar 'LWAS_AZURE_SAS2' `
+            -ContainerName 'screenshots' -SasTokenEnvVar 'MY_TOKEN'
+
+        The prefix is missing so it is added automatically. A warning is emitted:
+        "SAS token environment variable name must start with 'LWAS_SAS_' – prefix
+        added. Effective variable name: LWAS_SAS_MY_TOKEN"
+
+    .EXAMPLE
+        New-LWASUploadProfile -Name 'azure-3' -AccountName 'myaccount' `
+            -ContainerName 'screens' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN_2' `
             -DeleteLocalAfterUpload -DeleteLocalAfterDays 7 -MaxRetryAttempts 5
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string]$ResourceGroupName,
 
         [Parameter(Mandatory)]
         [string]$AccountName,
@@ -84,8 +109,17 @@ function New-LWASUploadProfile {
         [switch]$DeleteLocalAfterUpload,
 
         [Parameter()]
-        [int]$DeleteLocalAfterDays = 30
+        [int]$DeleteLocalAfterDays = 30,
+
+        [Parameter()]
+        [string]$CloudProvider = 'azure'
     )
+
+    # Validate CloudProvider
+    if ($CloudProvider -ine 'azure') {
+        Write-Error "CloudProvider '$CloudProvider' is not supported. Only 'azure' is supported in Phase 9b."
+        return
+    }
 
     # Validate name format
     $nameValidation = Get-ValidMacroName -Name $Name
@@ -101,16 +135,16 @@ function New-LWASUploadProfile {
         return
     }
 
+    # Auto-prefix SasTokenEnvVar if the required prefix is absent
+    if ($SasTokenEnvVar -notmatch '^LWAS_SAS_') {
+        $SasTokenEnvVar = "LWAS_SAS_$SasTokenEnvVar"
+        Write-Warning "SAS token environment variable name must start with 'LWAS_SAS_' - prefix added. Effective variable name: $SasTokenEnvVar"
+    }
+
     # Validate SasTokenEnvVar characters
     if ($SasTokenEnvVar -match '[^A-Za-z0-9_]') {
         Write-Error "SasTokenEnvVar '$SasTokenEnvVar' contains invalid characters. Only letters, digits, and underscores are allowed."
         return
-    }
-
-    # Warn if env var is not currently set (do not block save)
-    $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
-    if ([string]::IsNullOrEmpty($currentToken)) {
-        Write-Warning "Environment variable '$SasTokenEnvVar' is not currently set. Set it to the SAS token before running an upload."
     }
 
     # Validate numeric ranges
@@ -130,9 +164,11 @@ function New-LWASUploadProfile {
     }
 
     $nowUtc = [datetime]::UtcNow.ToString('o')
-    $profile = [PSCustomObject]@{
+    $uploadProfile = [PSCustomObject]@{
         name                   = $Name
         provider               = 'AzureBlobStorage'
+        cloudProvider          = $CloudProvider.ToLower()
+        resourceGroupName      = $ResourceGroupName
         accountName            = $AccountName
         containerName          = $ContainerName
         sasTokenEnvVar         = $SasTokenEnvVar
@@ -145,6 +181,17 @@ function New-LWASUploadProfile {
         modifiedUtc            = $nowUtc
     }
 
-    Save-UploadProfileFile -Profile $profile
+    Save-UploadProfileFile -UploadProfile $uploadProfile
+
+    $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
+    if (-not (Test-LWASSASTokenIsValid -SasToken $currentToken)) {
+        $tokenUpdated = Update-LWASSASToken -Name $SasTokenEnvVar -UploadProfile $Name
+        if (-not $tokenUpdated) {
+            Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASSASToken after connecting to Azure (Connect-AzAccount)."
+        } else {
+            Write-Verbose "SAS token for '$SasTokenEnvVar' updated successfully."
+        }
+    }
+
     Write-Verbose "Upload profile '$Name' saved."
 }

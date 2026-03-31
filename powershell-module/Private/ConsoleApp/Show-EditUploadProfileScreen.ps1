@@ -1,29 +1,34 @@
 function Show-EditUploadProfileScreen {
     <#
     .SYNOPSIS
-        Displays a wizard for creating a new upload profile.
+        Displays a wizard for creating or editing an upload profile.
 
     .DESCRIPTION
         Prompts the user for each upload profile field in sequence with inline
         validation. After all fields are collected, shows a summary panel and
         asks for confirmation before saving.
 
+        When ExistingProfile is supplied the wizard runs in edit mode: each field
+        is pre-populated with the current value and pressing Enter keeps it.
+
         Fields collected (with defaults where applicable):
           - Name                   : validated via Get-ValidMacroName and uniqueness check
+                                     (uniqueness check skipped when name is unchanged in edit mode)
           - Azure account name     : non-empty string
+          - Azure resource group   : non-empty string; required for storage account key retrieval
           - Container name         : non-empty string
-          - SAS token env var      : letters, digits, and underscores only
+          - SAS token env var      : in edit mode, prompts to keep current or change;
+                                     in add mode, selected from existing LWAS_SAS_* variables
+                                     or created with a validated suffix (becomes LWAS_SAS_{SUFFIX})
           - Blob path pattern      : defaults to {MacroName}/{Date}/{Filename} on empty entry
           - Max retry attempts     : integer 1–10, default 3
           - Retry base delay (ms)  : integer 100–60000, default 500
           - Delete local after upload : Y/N prompt, default N
           - Delete local after days   : integer 1–3650, default 30
 
-        An informational panel explaining how to set the SAS token environment variable
-        is shown after the env var prompt.
-
-        On confirmation 'Yes': saves the profile via Save-UploadProfileFile, shows a
-        success message, and returns the saved profile object.
+        On confirmation 'Yes': saves the profile via Save-UploadProfileFile. If the SAS
+        token is absent or expired, Update-LWASSASToken is called automatically.
+        Shows a success message and returns the saved profile object.
 
         On 'Cancel': returns $null without saving.
 
@@ -32,29 +37,52 @@ function Show-EditUploadProfileScreen {
         Pass [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole() for production use,
         or a [Spectre.Console.Testing.TestConsole]::new() instance in Pester tests.
 
+    .PARAMETER ExistingProfile
+        Optional. The existing upload profile PSCustomObject to edit. When supplied the
+        wizard pre-populates all fields from this object and runs in edit mode.
+
     .OUTPUTS
         PSCustomObject or $null
         Returns the saved profile object on success, or $null if the user cancels.
 
     .EXAMPLE
         $console = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
-        $profile = Show-EditUploadProfileScreen -Console $console
+        $uploadProfile = Show-EditUploadProfileScreen -Console $console
+
+    .EXAMPLE
+        $existing = Get-LWASUploadProfile -Name 'my-profile'
+        $console  = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
+        $updated  = Show-EditUploadProfileScreen -Console $console -ExistingProfile $existing
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [Spectre.Console.IAnsiConsole]$Console
+        [Spectre.Console.IAnsiConsole]$Console,
+
+        [Parameter()]
+        [PSCustomObject]$ExistingProfile = $null
     )
 
-    # ── Name ─────────────────────────────────────────────────────────────────
+    $isEditing = $null -ne $ExistingProfile
+
+    # Name
 
     $profileName = $null
     while ($null -eq $profileName) {
-        $namePrompt            = [Spectre.Console.TextPrompt[string]]::new('Upload profile name:')
-        $namePrompt.AllowEmpty = $false
+        $namePromptText        = if ($isEditing) {
+            "Upload profile name [[$($ExistingProfile.name)]]:"
+        } else {
+            'Upload profile name:'
+        }
+        $namePrompt            = [Spectre.Console.TextPrompt[string]]::new($namePromptText)
+        $namePrompt.AllowEmpty = $isEditing
         $rawName               = $namePrompt.Show($Console)
 
         if ([string]::IsNullOrEmpty($rawName)) {
+            if ($isEditing) {
+                $profileName = $ExistingProfile.name
+                break
+            }
             continue
         }
 
@@ -64,25 +92,37 @@ function Show-EditUploadProfileScreen {
             continue
         }
 
-        $existing = Get-UploadProfile -Name $nameResult.SanitisedName
-        if ($null -ne $existing) {
-            $safeName = [Spectre.Console.Markup]::Escape($nameResult.SanitisedName)
-            $Console.Write([Spectre.Console.Markup]::new("[red]An upload profile named '$safeName' already exists. Choose a different name.[/]`n"))
-            continue
+        # Uniqueness check: skip when editing and the name has not changed
+        if (-not ($isEditing -and ($nameResult.SanitisedName -eq $ExistingProfile.name))) {
+            $existing = Get-UploadProfile -Name $nameResult.SanitisedName
+            if ($null -ne $existing) {
+                $safeName = [Spectre.Console.Markup]::Escape($nameResult.SanitisedName)
+                $Console.Write([Spectre.Console.Markup]::new("[red]An upload profile named '$safeName' already exists. Choose a different name.[/]`n"))
+                continue
+            }
         }
 
         $profileName = $nameResult.SanitisedName
     }
 
-    # ── Azure account name ────────────────────────────────────────────────────
+    # Azure account name
 
     $accountName = $null
     while ($null -eq $accountName) {
-        $accountPrompt            = [Spectre.Console.TextPrompt[string]]::new('Azure storage account name:')
-        $accountPrompt.AllowEmpty = $false
+        $accountPromptText        = if ($isEditing) {
+            "Azure storage account name [[$($ExistingProfile.accountName)]]:"
+        } else {
+            'Azure storage account name:'
+        }
+        $accountPrompt            = [Spectre.Console.TextPrompt[string]]::new($accountPromptText)
+        $accountPrompt.AllowEmpty = $isEditing
         $rawAccount               = $accountPrompt.Show($Console)
 
         if ([string]::IsNullOrEmpty($rawAccount)) {
+            if ($isEditing) {
+                $accountName = $ExistingProfile.accountName
+                break
+            }
             $Console.Write([Spectre.Console.Markup]::new("[red]Account name cannot be empty.[/]`n"))
             continue
         }
@@ -90,15 +130,49 @@ function Show-EditUploadProfileScreen {
         $accountName = $rawAccount.Trim()
     }
 
-    # ── Container name ────────────────────────────────────────────────────────
+    # Azure resource group name
+
+    $resourceGroupName = $null
+    while ($null -eq $resourceGroupName) {
+        $resourceGroupPromptText        = if ($isEditing) {
+            "Azure resource group name [[$($ExistingProfile.resourceGroupName)]]:"
+        } else {
+            'Azure resource group name:'
+        }
+        $resourceGroupPrompt            = [Spectre.Console.TextPrompt[string]]::new($resourceGroupPromptText)
+        $resourceGroupPrompt.AllowEmpty = $isEditing
+        $rawResourceGroup               = $resourceGroupPrompt.Show($Console)
+
+        if ([string]::IsNullOrEmpty($rawResourceGroup)) {
+            if ($isEditing) {
+                $resourceGroupName = $ExistingProfile.resourceGroupName
+                break
+            }
+            $Console.Write([Spectre.Console.Markup]::new("[red]Resource group name cannot be empty.[/]`n"))
+            continue
+        }
+
+        $resourceGroupName = $rawResourceGroup.Trim()
+    }
+
+    # Container name
 
     $containerName = $null
     while ($null -eq $containerName) {
-        $containerPrompt            = [Spectre.Console.TextPrompt[string]]::new('Blob container name:')
-        $containerPrompt.AllowEmpty = $false
+        $containerPromptText        = if ($isEditing) {
+            "Blob container name [[$($ExistingProfile.containerName)]]:"
+        } else {
+            'Blob container name:'
+        }
+        $containerPrompt            = [Spectre.Console.TextPrompt[string]]::new($containerPromptText)
+        $containerPrompt.AllowEmpty = $isEditing
         $rawContainer               = $containerPrompt.Show($Console)
 
         if ([string]::IsNullOrEmpty($rawContainer)) {
+            if ($isEditing) {
+                $containerName = $ExistingProfile.containerName
+                break
+            }
             $Console.Write([Spectre.Console.Markup]::new("[red]Container name cannot be empty.[/]`n"))
             continue
         }
@@ -106,46 +180,90 @@ function Show-EditUploadProfileScreen {
         $containerName = $rawContainer.Trim()
     }
 
-    # ── SAS token environment variable ───────────────────────────────────────
+    # SAS token environment variable
 
-    $sasTokenEnvVar = $null
+    $sasTokenEnvVar   = $null
+    $existingVarNames = @(Get-LWASSASToken | Select-Object -ExpandProperty Name)
+
+    if ($isEditing) {
+        $keepCurrentLabel = "Keep current ($($ExistingProfile.sasTokenEnvVar))"
+        $sasEditPrompt    = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+            'SAS token environment variable:',
+            @($keepCurrentLabel, 'Change')
+        )
+        $sasEditChoice = $sasEditPrompt.Show($Console)
+        if ($sasEditChoice -eq $keepCurrentLabel) {
+            $sasTokenEnvVar = $ExistingProfile.sasTokenEnvVar
+        }
+        # else: fall through to the existing var selection / create-new logic below
+    }
+
+    if ($null -eq $sasTokenEnvVar) {
+        if ($existingVarNames.Count -eq 0) {
+            $infoPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                'No LWAS_SAS_* environment variables found. A new one will be created.',
+                'SAS Token'
+            )
+            $Console.Write($infoPanel)
+        } else {
+            $sasVarPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                'Select SAS token environment variable:',
+                [string[]]($existingVarNames + @('Create new'))
+            )
+            $sasVarChoice = $sasVarPrompt.Show($Console)
+            if ($sasVarChoice -ne 'Create new') {
+                $sasTokenEnvVar = $sasVarChoice
+            }
+        }
+    }
+
     while ($null -eq $sasTokenEnvVar) {
-        $sasPrompt            = [Spectre.Console.TextPrompt[string]]::new('SAS token environment variable name:')
-        $sasPrompt.AllowEmpty = $false
-        $rawSas               = $sasPrompt.Show($Console)
+        $suffixPrompt            = [Spectre.Console.TextPrompt[string]]::new('Enter a unique suffix for the new SAS token variable (will become LWAS_SAS_{SUFFIX}):')
+        $suffixPrompt.AllowEmpty = $false
+        $rawSuffix               = $suffixPrompt.Show($Console)
 
-        if ($rawSas -notmatch '^[A-Z0-9_a-z]+$') {
-            $Console.Write([Spectre.Console.Markup]::new("[red]Environment variable name must contain only letters, digits, and underscores.[/]`n"))
+        # If the user typed the full variable name (e.g. LWAS_SAS_TOKEN instead of TOKEN),
+        # strip the prefix so it is not duplicated when we prepend it below.
+        if ($rawSuffix -imatch '^LWAS_SAS_(.+)$') {
+            $rawSuffix = $Matches[1]
+        }
+
+        if ($rawSuffix -notmatch '^[A-Za-z0-9_]{1,30}$') {
+            $Console.Write([Spectre.Console.Markup]::new("[red]Suffix must be 1–30 characters and contain only letters, digits, and underscores.[/]`n"))
             continue
         }
 
-        $sasTokenEnvVar = $rawSas
+        $candidateName = "LWAS_SAS_$($rawSuffix.ToUpper())"
+        $safeName      = [Spectre.Console.Markup]::Escape($candidateName)
+
+        $existingToken = Get-LWASSASToken -Name $candidateName | Select-Object -First 1
+        if ($null -ne $existingToken) {
+            $Console.Write([Spectre.Console.Markup]::new("[red]Environment variable '$safeName' already exists. Choose a different suffix.[/]`n"))
+            continue
+        }
+
+        $sasTokenEnvVar = $candidateName
     }
 
-    # Show env var guidance panel
-    $safeSasVar   = [Spectre.Console.Markup]::Escape($sasTokenEnvVar)
-    $guidanceText = "Set the env var before running uploads:`n  Temporary:   `$env:$safeSasVar = 'sv=...'`n  Persistent:  [[Environment]]::SetEnvironmentVariable('$safeSasVar', 'sv=...', 'User')"
-    $guidancePanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel($guidanceText, 'SAS Token Setup')
-    $Console.Write($guidancePanel)
+    # Blob path pattern
 
-    # ── Blob path pattern ─────────────────────────────────────────────────────
-
-    $defaultBlobPattern  = '{MacroName}/{Date}/{Filename}'
-    $blobPrompt          = [Spectre.Console.TextPrompt[string]]::new("Blob path pattern [[$defaultBlobPattern]]:")
+    $defaultBlobPattern    = if ($isEditing) { $ExistingProfile.blobPathPattern } else { '{MacroName}/{Date}/{Filename}' }
+    $blobPrompt            = [Spectre.Console.TextPrompt[string]]::new("Blob path pattern [[$defaultBlobPattern]]:")
     $blobPrompt.AllowEmpty = $true
-    $rawBlobPattern      = $blobPrompt.Show($Console)
-    $blobPathPattern     = if ([string]::IsNullOrEmpty($rawBlobPattern)) { $defaultBlobPattern } else { $rawBlobPattern }
+    $rawBlobPattern        = $blobPrompt.Show($Console)
+    $blobPathPattern       = if ([string]::IsNullOrEmpty($rawBlobPattern)) { $defaultBlobPattern } else { $rawBlobPattern }
 
-    # ── Max retry attempts ────────────────────────────────────────────────────
+    # Max retry attempts
 
     $maxRetryAttempts = $null
     while ($null -eq $maxRetryAttempts) {
-        $retryPrompt            = [Spectre.Console.TextPrompt[string]]::new('Max retry attempts (1-10) [[3]]:')
+        $defaultRetry           = if ($isEditing) { $ExistingProfile.maxRetryAttempts } else { 3 }
+        $retryPrompt            = [Spectre.Console.TextPrompt[string]]::new("Max retry attempts (1-10) [[$defaultRetry]]:")
         $retryPrompt.AllowEmpty = $true
         $rawRetry               = $retryPrompt.Show($Console)
 
         if ([string]::IsNullOrEmpty($rawRetry)) {
-            $maxRetryAttempts = 3
+            $maxRetryAttempts = $defaultRetry
         } else {
             $parsedRetry = 0
             if (-not [int]::TryParse($rawRetry, [ref]$parsedRetry) -or $parsedRetry -lt 1 -or $parsedRetry -gt 10) {
@@ -156,16 +274,17 @@ function Show-EditUploadProfileScreen {
         }
     }
 
-    # ── Retry base delay (ms) ─────────────────────────────────────────────────
+    # Retry base delay (ms)
 
     $retryBaseDelayMs = $null
     while ($null -eq $retryBaseDelayMs) {
-        $delayPrompt            = [Spectre.Console.TextPrompt[string]]::new('Retry base delay in milliseconds (100-60000) [[500]]:')
+        $defaultDelay           = if ($isEditing) { $ExistingProfile.retryBaseDelayMs } else { 500 }
+        $delayPrompt            = [Spectre.Console.TextPrompt[string]]::new("Retry base delay in milliseconds (100-60000) [[$defaultDelay]]:")
         $delayPrompt.AllowEmpty = $true
         $rawDelay               = $delayPrompt.Show($Console)
 
         if ([string]::IsNullOrEmpty($rawDelay)) {
-            $retryBaseDelayMs = 500
+            $retryBaseDelayMs = $defaultDelay
         } else {
             $parsedDelay = 0
             if (-not [int]::TryParse($rawDelay, [ref]$parsedDelay) -or $parsedDelay -lt 100 -or $parsedDelay -gt 60000) {
@@ -176,23 +295,29 @@ function Show-EditUploadProfileScreen {
         }
     }
 
-    # ── Delete local after upload ─────────────────────────────────────────────
+    # Delete local after upload
 
-    $deleteLocalPrompt            = [Spectre.Console.TextPrompt[string]]::new('Delete local file after successful upload? (Y/N) [[N]]:')
+    $defaultDeleteLocal           = if ($isEditing -and $ExistingProfile.deleteLocalAfterUpload) { 'Y' } else { 'N' }
+    $deleteLocalPrompt            = [Spectre.Console.TextPrompt[string]]::new("Delete local file after successful upload? (Y/N) [[$defaultDeleteLocal]]:")
     $deleteLocalPrompt.AllowEmpty = $true
     $deleteLocalInput             = $deleteLocalPrompt.Show($Console)
-    $deleteLocalAfterUpload       = ($deleteLocalInput -match '^[Yy]')
+    $deleteLocalAfterUpload       = if ([string]::IsNullOrEmpty($deleteLocalInput)) {
+        $isEditing -and $ExistingProfile.deleteLocalAfterUpload
+    } else {
+        $deleteLocalInput -match '^[Yy]'
+    }
 
-    # ── Delete local after days ───────────────────────────────────────────────
+    # Delete local after days
 
     $deleteLocalAfterDays = $null
     while ($null -eq $deleteLocalAfterDays) {
-        $daysPrompt            = [Spectre.Console.TextPrompt[string]]::new('Delete local files older than N days (0-3650) [[30]]:')
+        $defaultDays           = if ($isEditing) { $ExistingProfile.deleteLocalAfterDays } else { 30 }
+        $daysPrompt            = [Spectre.Console.TextPrompt[string]]::new("Delete local files older than N days (0-3650) [[$defaultDays]]:")
         $daysPrompt.AllowEmpty = $true
         $rawDays               = $daysPrompt.Show($Console)
 
         if ([string]::IsNullOrEmpty($rawDays)) {
-            $deleteLocalAfterDays = 30
+            $deleteLocalAfterDays = $defaultDays
         } else {
             $parsedDays = 0
             if (-not [int]::TryParse($rawDays, [ref]$parsedDays) -or $parsedDays -lt 0 -or $parsedDays -gt 3650) {
@@ -203,27 +328,34 @@ function Show-EditUploadProfileScreen {
         }
     }
 
-    # ── Summary panel ─────────────────────────────────────────────────────────
+    # Summary panel
+
+    $tokenInfo         = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
+    $currentToken      = if ($null -ne $tokenInfo) { $tokenInfo.Value } else { $null }
+    $tokenIsValid      = Test-LWASSASTokenIsValid -SasToken $currentToken
+    $validityIndicator = if ($tokenIsValid) { ' [green](Valid)[/]' } else { ' [yellow](Will be requested on save)[/]' }
 
     $deleteLocalStr = if ($deleteLocalAfterUpload) { 'Yes' } else { 'No' }
     $summaryLines   = @(
         "Name:                 $([Spectre.Console.Markup]::Escape($profileName))"
+        "Resource Group:       $([Spectre.Console.Markup]::Escape($resourceGroupName))"
         "Account:              $([Spectre.Console.Markup]::Escape($accountName))"
         "Container:            $([Spectre.Console.Markup]::Escape($containerName))"
-        "SAS Token Env Var:    $([Spectre.Console.Markup]::Escape($sasTokenEnvVar))"
+        "SAS Token Env Var:    $([Spectre.Console.Markup]::Escape($sasTokenEnvVar))$validityIndicator"
         "Blob Path Pattern:    $([Spectre.Console.Markup]::Escape($blobPathPattern))"
         "Max Retry Attempts:   $maxRetryAttempts"
         "Retry Base Delay ms:  $retryBaseDelayMs"
         "Delete After Upload:  $deleteLocalStr"
         "Delete After Days:    $deleteLocalAfterDays"
     )
+    $panelTitle   = if ($isEditing) { 'Edit Profile Summary' } else { 'Profile Summary' }
     $summaryPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
         ($summaryLines -join "`n"),
-        'Profile Summary'
+        $panelTitle
     )
     $Console.Write($summaryPanel)
 
-    # ── Confirmation ──────────────────────────────────────────────────────────
+    # Confirmation
 
     $confirmPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
         'Save this profile?', @('Yes', 'Cancel')
@@ -235,9 +367,11 @@ function Show-EditUploadProfileScreen {
     }
 
     $nowUtc  = [datetime]::UtcNow.ToString('o')
-    $profile = [PSCustomObject]@{
+    $uploadProfile = [PSCustomObject]@{
         name                   = $profileName
         provider               = 'AzureBlobStorage'
+        cloudProvider          = 'azure'
+        resourceGroupName      = $resourceGroupName
         accountName            = $accountName
         containerName          = $containerName
         sasTokenEnvVar         = $sasTokenEnvVar
@@ -246,14 +380,40 @@ function Show-EditUploadProfileScreen {
         retryBaseDelayMs       = $retryBaseDelayMs
         deleteLocalAfterUpload = $deleteLocalAfterUpload
         deleteLocalAfterDays   = $deleteLocalAfterDays
-        createdUtc             = $nowUtc
+        createdUtc             = if ($isEditing) { $ExistingProfile.createdUtc } else { $nowUtc }
         modifiedUtc            = $nowUtc
     }
 
-    Save-UploadProfileFile -Profile $profile
+    # When editing and the name has changed, rename the old profile file first
+    if ($isEditing -and ($profileName -ne $ExistingProfile.name)) {
+        Rename-LWASUploadProfile -Name $ExistingProfile.name -NewName $profileName
+    }
+
+    Save-UploadProfileFile -UploadProfile $uploadProfile
 
     $safeProfileName = [Spectre.Console.Markup]::Escape($profileName)
-    $Console.Write([Spectre.Console.Markup]::new("[green]Upload profile '$safeProfileName' saved successfully.[/]`n"))
+    $safeSasVar      = [Spectre.Console.Markup]::Escape($sasTokenEnvVar)
+    $savedTokenInfo  = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
+    $savedToken      = if ($null -ne $savedTokenInfo) { $savedTokenInfo.Value } else { $null }
+    if (-not (Test-LWASSASTokenIsValid -SasToken $savedToken)) {
+        $tokenUpdated = Update-LWASSASToken -Name $sasTokenEnvVar -UploadProfile $uploadProfile.name
+        if ($tokenUpdated) {
+            $Console.Write([Spectre.Console.Markup]::new("[green]SAS token updated and stored in '$safeSasVar'.[/]`n"))
+        } else {
+            $warningPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                'Profile saved, but SAS token could not be updated automatically. Run Update-LWASSASToken after connecting to Azure (Connect-AzAccount).',
+                'SAS Token Warning'
+            )
+            $Console.Write($warningPanel)
+        }
+    }
 
-    return $profile
+    $actionWord = if ($isEditing) { 'updated' } else { 'saved' }
+    $Console.Write([Spectre.Console.Markup]::new("[green]Upload profile '$safeProfileName' $actionWord successfully.[/]`n"))
+
+    Write-LastWarLog -Level Info `
+        -Message "Upload profile '$profileName' $actionWord." `
+        -FunctionName 'Show-EditUploadProfileScreen'
+
+    return $uploadProfile
 }

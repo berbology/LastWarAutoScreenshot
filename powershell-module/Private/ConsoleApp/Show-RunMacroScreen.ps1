@@ -238,6 +238,50 @@ function Show-RunMacroScreen {
             }
         }
 
+        # ── Pre-flight: SAS token check for UploadScreenshots actions ────────────
+        $uploadActions = @($macro.Data.sequence | Where-Object { $_.type -eq 'UploadScreenshots' })
+        if ($uploadActions.Count -gt 0) {
+            $sasTokensReady      = $true
+            $uniqueProfileNames  = @($uploadActions | ForEach-Object { $_.uploadProfileName } | Sort-Object -Unique)
+            foreach ($profileName in $uniqueProfileNames) {
+                if (-not $sasTokensReady) { break }
+                $uploadProfile = Get-UploadProfile -Name $profileName
+                if ($null -eq $uploadProfile) { continue }
+                if ([string]::IsNullOrEmpty($uploadProfile.sasTokenEnvVar)) { continue }
+
+                $currentToken = [Environment]::GetEnvironmentVariable($uploadProfile.sasTokenEnvVar)
+                if (Test-LWASSASTokenIsValid -SasToken $currentToken) { continue }
+
+                $sasWarningPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                    "Upload profile '$profileName' requires a valid SAS token in '$($uploadProfile.sasTokenEnvVar)', but none is set or it has expired. Attempting to connect to Azure and generate a new token.",
+                    '[yellow]SAS Token Required[/]'
+                )
+                $Console.Write($sasWarningPanel)
+
+                $tokenUpdated = Update-LWASSASToken -Name $uploadProfile.sasTokenEnvVar -UploadProfile $uploadProfile.name
+                if (-not $tokenUpdated) {
+                    $sasFailPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
+                        "Could not generate a SAS token for upload profile '$profileName'. Connect to Azure (Connect-AzAccount) and run Update-LWASSASToken, or continue without uploading.",
+                        '[yellow]Warning: SAS Token Unavailable[/]'
+                    )
+                    $Console.Write($sasFailPanel)
+
+                    $sasPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
+                        'How would you like to proceed?',
+                        @('Continue (uploads may fail)', 'Cancel')
+                    )
+                    $sasChoice = $sasPrompt.Show($Console)
+                    if ($sasChoice -ieq 'Cancel') {
+                        $sasTokensReady = $false
+                    }
+                }
+            }
+
+            if (-not $sasTokensReady) {
+                continue
+            }
+        }
+
         # ── Step 5: Confirm and execute ───────────────────────────────────────────
         $runPrompt  = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
             'Run this macro?',

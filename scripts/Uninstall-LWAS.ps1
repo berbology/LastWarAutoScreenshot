@@ -35,7 +35,10 @@
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [switch]$RemoveAppData
+    [switch]$RemoveAppData,
+    # Internal use: the invoking user's AppData path, passed in when self-elevating so the
+    # elevated process (which runs as Administrator) can still locate the correct directory.
+    [string]$CallerAppData = ''
 )
 
 # Self-elevation: re-launch as Administrator if not already elevated
@@ -50,7 +53,7 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     if ($PSBoundParameters.ContainsKey('ErrorAction'))             { $elevateArgs.Add("-ErrorAction $($PSBoundParameters['ErrorAction'])") }
     if ($PSBoundParameters.ContainsKey('WarningAction'))           { $elevateArgs.Add("-WarningAction $($PSBoundParameters['WarningAction'])") }
     if ($PSBoundParameters.ContainsKey('InformationAction'))       { $elevateArgs.Add("-InformationAction $($PSBoundParameters['InformationAction'])") }
-    Start-Process pwsh -Verb RunAs -ArgumentList $elevateArgs
+    Start-Process pwsh -Verb RunAs -ArgumentList ($elevateArgs -join ' ')
     exit
 }
 
@@ -130,7 +133,8 @@ catch {
 }
 
 # Handle AppData directory removal
-$appDataPath = Join-Path $env:APPDATA 'LastWarAutoScreenshot'
+# Use the Shell API rather than $env:APPDATA — the env var can be empty in an elevated session
+$appDataPath = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'LastWarAutoScreenshot'
 if (-not (Test-Path $appDataPath)) {
     Write-Output 'LastWarAutoScreenshot user directory not found, skipping.'
 }
@@ -140,7 +144,7 @@ else {
         $shouldRemove = $true
     }
     else {
-        $answer = Read-Host "Remove config, macro, upload profile, and scheduler files at $appDataPath? [Y/N]"
+        $answer = Read-Host "Remove config, macro, upload profile, and scheduler files at ${appDataPath}? [y/n] (n)"
         if ($answer -match '^(y|yes)$') {
             $shouldRemove = $true
         }

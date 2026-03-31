@@ -6,38 +6,42 @@ function Save-UploadProfileFile {
     .DESCRIPTION
         Creates the profiles directory if it does not exist, sets modifiedUtc to the
         current UTC time, serialises the profile as JSON (depth 3), and writes to
-        {ProfilesDirectory}\{Profile.name}.json with UTF-8 encoding.
+        {ProfileDirectory}\{Profile.name}.json with UTF-8 encoding.
 
     .PARAMETER Profile
         The PSCustomObject representing the upload profile to save.
 
-    .PARAMETER ProfilesDirectory
+    .PARAMETER ProfileDirectory
         Directory to write the profile JSON file into. Defaults to
         $env:APPDATA\LastWarAutoScreenshot\UploadProfiles.
+
+    .NOTES
+        All profile fields — including cloudProvider — are serialised automatically by
+        ConvertTo-Json. No explicit handling of cloudProvider is required here.
 
     .OUTPUTS
         None
 
     .EXAMPLE
-        Save-UploadProfileFile -Profile $profile
+        Save-UploadProfileFile -UploadProfile $uploadProfile
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [PSCustomObject]$Profile,
+        [PSCustomObject]$UploadProfile,
 
         [Parameter()]
-        [string]$ProfilesDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
+        [string]$ProfileDirectory = (Join-Path $env:APPDATA 'LastWarAutoScreenshot\UploadProfiles')
     )
 
-    New-Item -Path $ProfilesDirectory -ItemType Directory -Force | Out-Null
+    New-Item -Path $ProfileDirectory -ItemType Directory -Force | Out-Null
 
-    $Profile.modifiedUtc = [datetime]::UtcNow.ToString('o')
+    $UploadProfile.modifiedUtc = [datetime]::UtcNow.ToString('o')
 
-    $filePath = Join-Path $ProfilesDirectory "$($Profile.name).json"
-    $Profile | ConvertTo-Json -Depth 3 | Set-Content -Path $filePath -Encoding UTF8
+    $filePath = Join-Path $ProfileDirectory "$($UploadProfile.name).json"
+    $UploadProfile | ConvertTo-Json -Depth 3 | Set-Content -Path $filePath -Encoding UTF8
 
     Write-LastWarLog -Level Info `
-        -Message "Upload profile '$($Profile.name)' saved to '$filePath'." `
+        -Message "Upload profile '$($UploadProfile.name)' saved to '$filePath'." `
         -FunctionName 'Save-UploadProfileFile'
 }
