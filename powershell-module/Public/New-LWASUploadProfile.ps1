@@ -18,6 +18,10 @@ function New-LWASUploadProfile {
         Name for the upload profile. Must match the macro naming rules: 1–50
         characters, letters, digits, hyphens, and underscores only.
 
+    .PARAMETER ResourceGroupName
+        Azure Resource Group that contains the storage account (e.g. 'my-resource-group').
+        Required to retrieve the storage account key when generating SAS tokens.
+
     .PARAMETER AccountName
         Azure Storage account name (e.g. 'mystorageaccount').
 
@@ -79,6 +83,9 @@ function New-LWASUploadProfile {
     param(
         [Parameter(Mandatory)]
         [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string]$ResourceGroupName,
 
         [Parameter(Mandatory)]
         [string]$AccountName,
@@ -161,6 +168,7 @@ function New-LWASUploadProfile {
         name                   = $Name
         provider               = 'AzureBlobStorage'
         cloudProvider          = $CloudProvider.ToLower()
+        resourceGroupName      = $ResourceGroupName
         accountName            = $AccountName
         containerName          = $ContainerName
         sasTokenEnvVar         = $SasTokenEnvVar
@@ -177,7 +185,7 @@ function New-LWASUploadProfile {
 
     $currentToken = [Environment]::GetEnvironmentVariable($SasTokenEnvVar)
     if (-not (Test-LWASSASTokenIsValid -SasToken $currentToken)) {
-        $tokenUpdated = Update-LWASSASToken -UploadProfile $uploadProfile
+        $tokenUpdated = Update-LWASSASToken -Name $SasTokenEnvVar -UploadProfile $Name
         if (-not $tokenUpdated) {
             Write-Warning "Profile '$Name' saved, but SAS token could not be updated automatically. Run Update-LWASSASToken after connecting to Azure (Connect-AzAccount)."
         } else {

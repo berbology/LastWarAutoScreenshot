@@ -211,7 +211,7 @@ Describe 'New-LWASUploadProfile — cloudProvider' -Tag 'Unit' {
 
     It '9b.1.5.3: New-LWASUploadProfile with no -CloudProvider saves profile with cloudProvider = azure' {
         InModuleScope LastWarAutoScreenshot {
-            New-LWASUploadProfile -Name 'p1' -AccountName 'acct' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN'
+            New-LWASUploadProfile -Name 'p1' -AccountName 'acct' -ResourceGroupName 'my-rg' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN'
 
             Should -Invoke Save-UploadProfileFile -Times 1 -ParameterFilter {
                 $uploadProfile.cloudProvider -eq 'azure'
@@ -223,7 +223,7 @@ Describe 'New-LWASUploadProfile — cloudProvider' -Tag 'Unit' {
         InModuleScope LastWarAutoScreenshot {
             Mock Write-Error {}
 
-            New-LWASUploadProfile -Name 'p2' -AccountName 'acct' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN' -CloudProvider 'gcp'
+            New-LWASUploadProfile -Name 'p2' -AccountName 'acct' -ResourceGroupName 'my-rg' -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TOKEN' -CloudProvider 'gcp'
 
             Should -Invoke Write-Error -Times 1
             Should -Invoke Save-UploadProfileFile -Times 0

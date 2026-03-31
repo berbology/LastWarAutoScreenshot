@@ -84,7 +84,7 @@ function Show-UploadProfilesScreen {
 
         # Build and render the profiles table
         $profileTable = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateTable(
-            @('Name', 'Account', 'Container', 'Env Var', 'Token Valid', 'Blob Pattern', 'Delete After (days)')
+            @('Name', 'Resource Group', 'Account', 'Container', 'Env Var', 'Token Valid', 'Blob Pattern', 'Delete After (days)')
         )
 
         foreach ($userProfile in $profiles) {
@@ -95,6 +95,7 @@ function Show-UploadProfilesScreen {
                 $profileTable,
                 [string[]]@(
                     [Spectre.Console.Markup]::Escape($userProfile.name),
+                    [Spectre.Console.Markup]::Escape($userProfile.resourceGroupName),
                     [Spectre.Console.Markup]::Escape($userProfile.accountName),
                     [Spectre.Console.Markup]::Escape($userProfile.containerName),
                     [Spectre.Console.Markup]::Escape($userProfile.sasTokenEnvVar),
@@ -189,7 +190,7 @@ function Show-UploadProfilesScreen {
                     foreach ($p in $profiles) {
                         $safeName     = [Spectre.Console.Markup]::Escape($p.name)
                         $safeSasVar   = [Spectre.Console.Markup]::Escape($p.sasTokenEnvVar)
-                        $tokenUpdated = Update-LWASSASToken -UploadProfile $p
+                        $tokenUpdated = Update-LWASSASToken -Name $p.sasTokenEnvVar -UploadProfile $p.name
 
                         if ($tokenUpdated) {
                             $successCount++
@@ -221,7 +222,7 @@ function Show-UploadProfilesScreen {
                     if ($null -ne $matchedProfile) {
                         $safeName     = [Spectre.Console.Markup]::Escape($matchedProfile.name)
                         $safeSasVar   = [Spectre.Console.Markup]::Escape($matchedProfile.sasTokenEnvVar)
-                        $tokenUpdated = Update-LWASSASToken -UploadProfile $matchedProfile
+                        $tokenUpdated = Update-LWASSASToken -Name $matchedProfile.sasTokenEnvVar -UploadProfile $matchedProfile.name
 
                         if ($tokenUpdated) {
                             $Console.Write([Spectre.Console.Markup]::new("[green]SAS token for '$safeName' updated and stored in '$safeSasVar'.[/]`n"))

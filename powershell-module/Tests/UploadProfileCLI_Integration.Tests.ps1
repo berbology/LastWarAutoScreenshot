@@ -44,6 +44,7 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
     It 'New-LWASUploadProfile -> Get-LWASUploadProfile -> Remove-LWASUploadProfile round-trip' {
         InModuleScope LastWarAutoScreenshot {
             New-LWASUploadProfile -Name 'cli-test-1' -AccountName 'myaccount' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_CLI_INT'
 
             $profiles = @(Get-LWASUploadProfile)
@@ -60,6 +61,7 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
     It 'New-LWASUploadProfile followed by Get-LWASUploadProfile -Name returns correct profile with all fields intact after JSON serialisation' {
         InModuleScope LastWarAutoScreenshot {
             New-LWASUploadProfile -Name 'cli-test-2' -AccountName 'storageacct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'mycontainer' -SasTokenEnvVar 'LWAS_SAS_CLI_INT' `
                 -BlobPathPattern '{MacroName}/{Date}/{Filename}' `
                 -MaxRetryAttempts 5 -RetryBaseDelayMs 750 `
@@ -84,6 +86,7 @@ Describe 'UploadProfileCLI Integration' -Tag 'Integration' {
     It 'Remove-LWASUploadProfile -Force removes the file; subsequent Get-LWASUploadProfile -Name returns $null' {
         InModuleScope LastWarAutoScreenshot {
             New-LWASUploadProfile -Name 'cli-test-3' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_CLI_INT'
 
             $before = Get-LWASUploadProfile -Name 'cli-test-3'

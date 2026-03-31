@@ -33,6 +33,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Save-UploadProfileFile { $script:capturedProfile = $UploadProfile } -Verifiable
 
             New-LWASUploadProfile -Name 'my-profile' -AccountName 'myaccount' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'screenshots' -SasTokenEnvVar 'LWAS_SAS_TEST' -Verbose 4>&1 | Out-Null
 
             $script:capturedProfile | Should -Not -BeNull
@@ -57,6 +58,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Save-UploadProfileFile { $script:capturedProfile = $UploadProfile }
 
             New-LWASUploadProfile -Name 'defaults-test' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
             $script:capturedProfile.blobPathPattern        | Should -Be '{MacroName}/{Date}/{Filename}'
@@ -77,6 +79,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name '!bad name!' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'ENV'
 
             Should -Invoke Write-Error -Times 1
@@ -92,6 +95,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name 'existing-profile' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'ENV'
 
             Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*already exists*' }
@@ -104,6 +108,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name 'my-profile' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_INVALID NAME'
 
             Should -Invoke Write-Error -Times 1 -ParameterFilter { $Message -like '*invalid characters*' }
@@ -118,6 +123,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Warning {}
 
             New-LWASUploadProfile -Name 'warn-test' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
             Should -Invoke Update-LWASSASToken -Times 1
@@ -136,6 +142,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name 'range-test' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST' `
                 -MaxRetryAttempts $MaxAttempts
 
@@ -156,6 +163,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name 'days-test' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST' `
                 -DeleteLocalAfterDays $DaysValue
 
@@ -174,6 +182,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Save-UploadProfileFile { $script:capturedProfile = $UploadProfile }
 
             New-LWASUploadProfile -Name 'cloud-default' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
             $script:capturedProfile.cloudProvider | Should -Be 'azure'
@@ -187,6 +196,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name 'gcp-test' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST' -CloudProvider 'gcp'
 
             Should -Invoke Write-Error -Times 1
@@ -200,6 +210,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Test-LWASSASTokenIsValid { $true }
 
             New-LWASUploadProfile -Name 'prefix-test' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'MY_TOKEN'
 
             Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like "*LWAS_SAS_*" }
@@ -214,6 +225,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Error {}
 
             New-LWASUploadProfile -Name 'valid-prefix' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_MY_TOKEN'
 
             Should -Invoke Write-Error -Times 0 -ParameterFilter { $Message -like "*LWAS_SAS_*" }
@@ -226,6 +238,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Test-LWASSASTokenIsValid { $true }
 
             New-LWASUploadProfile -Name 'valid-token' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
             Should -Invoke Update-LWASSASToken -Times 0
@@ -238,6 +251,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Update-LWASSASToken { $true }
 
             New-LWASUploadProfile -Name 'expired-token' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
             Should -Invoke Update-LWASSASToken -Times 1
@@ -251,6 +265,7 @@ Describe 'New-LWASUploadProfile' -Tag 'Unit' {
             Mock Write-Warning {}
 
             New-LWASUploadProfile -Name 'update-fails' -AccountName 'acct' `
+                -ResourceGroupName 'my-rg' `
                 -ContainerName 'c' -SasTokenEnvVar 'LWAS_SAS_TEST'
 
             Should -Invoke Write-Warning -Times 1

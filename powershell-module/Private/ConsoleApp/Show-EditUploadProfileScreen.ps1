@@ -15,6 +15,7 @@ function Show-EditUploadProfileScreen {
           - Name                   : validated via Get-ValidMacroName and uniqueness check
                                      (uniqueness check skipped when name is unchanged in edit mode)
           - Azure account name     : non-empty string
+          - Azure resource group   : non-empty string; required for storage account key retrieval
           - Container name         : non-empty string
           - SAS token env var      : in edit mode, prompts to keep current or change;
                                      in add mode, selected from existing LWAS_SAS_* variables
@@ -127,6 +128,31 @@ function Show-EditUploadProfileScreen {
         }
 
         $accountName = $rawAccount.Trim()
+    }
+
+    # Azure resource group name
+
+    $resourceGroupName = $null
+    while ($null -eq $resourceGroupName) {
+        $resourceGroupPromptText        = if ($isEditing) {
+            "Azure resource group name [[$($ExistingProfile.resourceGroupName)]]:"
+        } else {
+            'Azure resource group name:'
+        }
+        $resourceGroupPrompt            = [Spectre.Console.TextPrompt[string]]::new($resourceGroupPromptText)
+        $resourceGroupPrompt.AllowEmpty = $isEditing
+        $rawResourceGroup               = $resourceGroupPrompt.Show($Console)
+
+        if ([string]::IsNullOrEmpty($rawResourceGroup)) {
+            if ($isEditing) {
+                $resourceGroupName = $ExistingProfile.resourceGroupName
+                break
+            }
+            $Console.Write([Spectre.Console.Markup]::new("[red]Resource group name cannot be empty.[/]`n"))
+            continue
+        }
+
+        $resourceGroupName = $rawResourceGroup.Trim()
     }
 
     # Container name
@@ -312,6 +338,7 @@ function Show-EditUploadProfileScreen {
     $deleteLocalStr = if ($deleteLocalAfterUpload) { 'Yes' } else { 'No' }
     $summaryLines   = @(
         "Name:                 $([Spectre.Console.Markup]::Escape($profileName))"
+        "Resource Group:       $([Spectre.Console.Markup]::Escape($resourceGroupName))"
         "Account:              $([Spectre.Console.Markup]::Escape($accountName))"
         "Container:            $([Spectre.Console.Markup]::Escape($containerName))"
         "SAS Token Env Var:    $([Spectre.Console.Markup]::Escape($sasTokenEnvVar))$validityIndicator"
@@ -344,6 +371,7 @@ function Show-EditUploadProfileScreen {
         name                   = $profileName
         provider               = 'AzureBlobStorage'
         cloudProvider          = 'azure'
+        resourceGroupName      = $resourceGroupName
         accountName            = $accountName
         containerName          = $containerName
         sasTokenEnvVar         = $sasTokenEnvVar
@@ -368,7 +396,7 @@ function Show-EditUploadProfileScreen {
     $savedTokenInfo  = Get-LWASSASToken -Name $sasTokenEnvVar | Select-Object -First 1
     $savedToken      = if ($null -ne $savedTokenInfo) { $savedTokenInfo.Value } else { $null }
     if (-not (Test-LWASSASTokenIsValid -SasToken $savedToken)) {
-        $tokenUpdated = Update-LWASSASToken -UploadProfile $uploadProfile
+        $tokenUpdated = Update-LWASSASToken -Name $sasTokenEnvVar -UploadProfile $uploadProfile.name
         if ($tokenUpdated) {
             $Console.Write([Spectre.Console.Markup]::new("[green]SAS token updated and stored in '$safeSasVar'.[/]`n"))
         } else {
