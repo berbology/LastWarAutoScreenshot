@@ -82,11 +82,11 @@ app — no JSON editing required.
 
 ### Recording a macro — step by step
 
-1. **Select a target window** first (main menu → "Select target window").
-   The game window must be visible and **not** running in exclusive
-   fullscreen mode — windowed or borderless-windowed mode is required so the
-   module can read the window bounds.
-2. From the main menu select **"Record macro"**.
+1. From the main menu select **"Record macro"**. Window selection is the
+   first step inside the recording flow. The game window must be visible and
+   **not** running in exclusive fullscreen mode — windowed or
+   borderless-windowed mode is required so the module can read the window
+   bounds.
 3. Enter a name for the macro. Names may contain letters, digits, hyphens,
    and underscores only (`[a-zA-Z0-9_-]`, 1–50 characters). Spaces are
    auto-converted to hyphens with your confirmation.

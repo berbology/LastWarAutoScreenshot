@@ -19,54 +19,25 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
         }
-
-        # All tests in this Describe assume a target window has been configured unless
-        # overridden inside a specific Context/It block.
-        InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-            Mock Get-ModuleConfiguration -MockWith {
-                [PSCustomObject]@{
-                    ProcessName   = 'LastWar'
-                    WindowTitle   = 'Last War: Survival'
-                    Logging       = [PSCustomObject]@{}
-                    MouseControl  = [PSCustomObject]@{}
-                    EmergencyStop = [PSCustomObject]@{}
-                    Screenshots   = [PSCustomObject]@{}
-                    CodeEditor    = ''
-                }
-            }
-        }
     }
 
     Context 'When no macros are present (macro folder absent or empty)' {
 
-        It 'Returns SelectWindow when the first choice (Select target window) is confirmed' {
+        It 'Returns Configure when the first choice (Configure module) is confirmed' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)  # Confirm first highlighted item
 
                 $result = Show-MainMenu -Console $tc
-                $result | Should -Be 'SelectWindow'
-            }
-        }
-
-        It 'Returns Configure when Configure module is selected' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                $result = Show-MainMenu -Console $tc
                 $result | Should -Be 'Configure'
             }
         }
 
-        It 'Returns RecordMacro when Record macro is selected' {
+        It 'Returns RecordMacro when Record macro is selected (1 DownArrow)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
@@ -75,14 +46,13 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with 5 DownArrows when no macros present' {
+        It 'Returns Exit when Exit is selected with 4 DownArrows when no macros present' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
-                # Selectable order (no macros, Manage macros not in list):
-                # [0] Select target window, [1] Configure module, [2] Record macro,
-                # [3] Manage schedules, [4] Storage info, [5] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order (no macros):
+                # [0] Configure module, [1] Record macro, [2] Manage schedules,
+                # [3] Storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -105,19 +75,40 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
+        It 'Output does not contain Select target window' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Not -Match 'Select target window'
+            }
+        }
+
+        It 'Output always contains Record macro' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
+                $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Match 'Record macro'
+            }
+        }
+
     }
 
     Context 'When macros are present' {
 
-        It 'Returns RunMacro when Run macro is selected' {
+        It 'Returns RunMacro when Run macro is selected (2 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
                 Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
 
                 $tc = $script:tc
-                # Selectable order: [0] Select window, [1] Configure, [2] Record macro, [3] Run macro, [4] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order: [0] Configure module, [1] Record macro, [2] Run macro, ...
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -127,17 +118,15 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns Exit when Exit is selected with macros present (7 DownArrows)' {
+        It 'Returns Exit when Exit is selected with macros present (6 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
                 Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
 
                 $tc = $script:tc
-                # Selectable order (macros present): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] Manage schedules,
-                # [6] Storage info, [7] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order (macros present): [0] Configure module, [1] Record macro,
+                # [2] Run macro, [3] Manage macros, [4] Manage schedules, [5] Storage info, [6] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -158,10 +147,20 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
                 Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-MainMenu -Console $tc | Out-Null
+                $tc.Output | Should -Match 'Run macro'
+            }
+        }
+
+        It 'Run macro is shown even without a target window configured in the session' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
+                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
+                Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
+
+                $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::Enter)
 
                 Show-MainMenu -Console $tc | Out-Null
@@ -200,14 +199,12 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
 
     Context 'When the user selects Storage info' {
 
-        It 'Returns StorageInfo when Storage info is selected with no macros present (4 DownArrows)' {
+        It 'Returns StorageInfo when Storage info is selected with no macros present (3 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
-                # Manage macros is not added to the list when no macros exist.
-                # Selectable order (no macros): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Manage schedules, [4] Storage info, [5] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order (no macros): [0] Configure module, [1] Record macro,
+                # [2] Manage schedules, [3] Storage info, [4] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -218,17 +215,15 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Returns StorageInfo when Storage info is selected with macros present (6 DownArrows)' {
+        It 'Returns StorageInfo when Storage info is selected with macros present (5 DownArrows)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
                 Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
 
                 $tc = $script:tc
-                # Selectable order (macros present): [0] Select target window, [1] Configure module,
-                # [2] Record macro, [3] Run macro, [4] Manage macros, [5] Manage schedules,
-                # [6] Storage info, [7] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order (macros present): [0] Configure module, [1] Record macro,
+                # [2] Run macro, [3] Manage macros, [4] Manage schedules, [5] Storage info, [6] Exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -266,13 +261,12 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
 
-        It 'Navigating to Manage schedules renders the item and returns ManageSchedules (3 DownArrows, has window, no macros)' {
+        It 'Navigating to Manage schedules renders the item and returns ManageSchedules (2 DownArrows, no macros)' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
                 $tc = $script:tc
-                # Selectable order (has window, no macros): [0] Select target window,
-                # [1] Configure module, [2] Record macro, [3] Manage schedules, ...
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                # Selectable order (no macros): [0] Configure module, [1] Record macro,
+                # [2] Manage schedules, ...
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -283,80 +277,4 @@ Describe 'Show-MainMenu' -Tag 'Unit' {
             }
         }
     }
-
-    Context 'When no target window has been configured' {
-
-        BeforeEach {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                # Override the Describe-level mock: return a settings-only config (no ProcessName)
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{
-                        Logging       = [PSCustomObject]@{}
-                        MouseControl  = [PSCustomObject]@{}
-                        EmergencyStop = [PSCustomObject]@{}
-                        Screenshots   = [PSCustomObject]@{}
-                        CodeEditor    = ''
-                    }
-                }
-            }
-        }
-
-        It 'Does not include Record macro in the menu' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-MainMenu -Console $tc | Out-Null
-                $tc.Output | Should -Not -Match 'Record macro'
-            }
-        }
-
-        It 'Does not include Run macro in the menu even when macros exist' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                $mockFile = [PSCustomObject]@{ Name = '20260101_120000_TestMacro.json' }
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $true }
-                Mock Get-ChildItem -ParameterFilter { $Filter -eq '*.json' } -MockWith { @($mockFile) }
-                $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-MainMenu -Console $tc | Out-Null
-                $tc.Output | Should -Not -Match 'Run macro'
-            }
-        }
-
-        It 'Returns StorageInfo at 3 DownArrows when no macros and no target window' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $tc = $script:tc
-                # Selectable order (no window, no macros): [0] Select target window,
-                # [1] Configure module, [2] Manage schedules, [3] Storage info, [4] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                $result = Show-MainMenu -Console $tc
-                $result | Should -Be 'StorageInfo'
-            }
-        }
-
-        It 'Returns Exit at 4 DownArrows when no macros and no target window' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Test-Path -ParameterFilter { $Path -like '*Macros*' } -MockWith { $false }
-                $tc = $script:tc
-                # Selectable order (no window, no macros): [0] Select target window,
-                # [1] Configure module, [2] Manage schedules, [3] Storage info, [4] Exit
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                $result = Show-MainMenu -Console $tc
-                $result | Should -Be 'Exit'
-            }
-        }
-    }
 }
-

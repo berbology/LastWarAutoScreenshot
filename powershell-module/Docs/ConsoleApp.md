@@ -21,7 +21,6 @@ issues are shown in a panel before the menu loads.
 
 ```
 Main Menu
-├── Select target window    → enumerate windows, sort, pick, save
 ├── Configure module
 │   ├── Logging settings
 │   ├── Mouse control settings
@@ -29,10 +28,11 @@ Main Menu
 │   ├── Screenshot settings
 │   ├── Set default code editor
 │   └── Edit module configuration
-├── Record macro            → build a macro action by action; save
-│                             (only shown when a target window is configured)
-├── Run macro               → select and execute a saved macro
-│                             (only shown when a window is configured and macros exist)
+├── Record macro            → select target window (step 1), then build a
+│                             macro action by action and save
+├── Run macro               → select and execute a saved macro; window is
+│                             located automatically from the macro file
+│                             (only shown when macros exist)
 ├── Manage macros           → view, edit, and delete saved macros
 │                             (only shown when macros exist)
 ├── Manage schedules        → view, create, and remove Windows Scheduled Tasks
@@ -61,8 +61,9 @@ and is also created on first macro save if it does not already exist.
 
 Example: `20260310_143022_OpenAllianceShop.json`
 
-The `Run macro` menu option is only shown when both a target window is
-configured and `*.json` files exist in the macros folder. See
+The `Run macro` menu option is only shown when `*.json` files exist in the
+macros folder. The target window is located automatically at run time using
+the processName and windowTitle stored inside the macro file. See
 [MacroFormat.md](MacroFormat.md) for the full JSON schema and action type
 reference.
 

@@ -9,8 +9,9 @@ function Show-RunMacroScreen {
         1.  List and select macro - shows all saved macros; user picks one or goes back.
         2.  Load and validate macro - reads the macro file and checks schema validity.
         3.  Display macro summary - shows metadata panel and full action sequence table.
-        4.  Validate target window - confirms the target window is open and warns if the
-            recorded process name differs from the current target window.  Also runs a
+        4.  Validate target window - locates the window using the processName and windowTitle
+            stored in the macro file via Get-LWASTargetWindow.  If no matching window is
+            found an error panel is shown and the screen loops back to step 1.  Also runs a
             pre-flight check: if the macro contains Screenshot actions and no storage
             path is configured, a warning panel is shown and the user may continue
             (screenshots will be skipped) or cancel (returns to the macro list).
@@ -38,14 +39,10 @@ function Show-RunMacroScreen {
         is routed through this interface so Pester tests can inject a TestConsole and assert
         on its Output property without requiring a live terminal.
 
-        Window handle reconstruction: the module config stores WindowHandleInt64 (an Int64
-        representation of the IntPtr).  Use [IntPtr]::new($config.WindowHandleInt64) to
-        reconstruct the handle before passing it to Test-WindowHandleValid or
-        Invoke-MacroSequence.
-
-        Get-ModuleConfiguration is wrapped in try/catch; any exception or a missing/empty
-        ProcessName is treated as 'no window configured' and results in the window-not-open
-        error panel.
+        Target window lookup: Get-LWASTargetWindow is called with the processName and
+        windowTitle from the macro file and -First to select the first match.  A
+        try/catch with -ErrorAction Stop converts Write-Error calls to terminating errors;
+        any failure results in the window-not-found error panel.
 
         Emergency stop detection: after Invoke-MacroSequence returns,
         $script:EmergencyStopRequested is checked to distinguish an emergency-stop halt
@@ -166,59 +163,38 @@ function Show-RunMacroScreen {
         $Console.Write($seqTable)
 
         # ── Step 4: Validate target window ────────────────────────────────────────
-        $config       = $null
         $windowHandle = $null
-        $windowValid  = $false
 
         try {
-            $config = Get-ModuleConfiguration
+            $targetWindow = Get-LWASTargetWindow `
+                -ProcessName $macro.Data.targetWindow.processName `
+                -WindowTitle $macro.Data.targetWindow.windowTitle `
+                -First `
+                -ErrorAction Stop
+            $windowHandle = $targetWindow.WindowHandle
         } catch {
             Write-LastWarLog -Level Warning `
-                -Message "Get-ModuleConfiguration threw an exception in Show-RunMacroScreen: $_" `
+                -Message "Get-LWASTargetWindow threw an exception in Show-RunMacroScreen: $_" `
                 -FunctionName 'Show-RunMacroScreen'
         }
 
-        if ($null -ne $config -and
-            -not [string]::IsNullOrWhiteSpace($config.ProcessName) -and
-            $null -ne $config.WindowHandleInt64 -and
-            $config.WindowHandleInt64 -ne 0) {
-            $windowHandle = [IntPtr]::new($config.WindowHandleInt64)
-            $windowValid  = Test-WindowHandleValid -WindowHandle $windowHandle
-        }
-
-        if (-not $windowValid) {
+        if ($null -eq $windowHandle) {
             $windowErrorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                'Target window is not open. Please select a target window from the main menu before running a macro.',
+                "Target window is not open. The window for process '$($macro.Data.targetWindow.processName)' could not be found.",
                 '[red]Error[/]'
             )
             $Console.Write($windowErrorPanel)
             continue
         }
 
-        # Warn if the macro was recorded for a different process
-        if ($config.ProcessName -ine $macro.Data.targetWindow.processName) {
-            $warnPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-                "This macro was recorded for process '$($macro.Data.targetWindow.processName)' but the current target window is '$($config.ProcessName)'. The macro may not work correctly.",
-                '[yellow]Warning[/]'
-            )
-            $Console.Write($warnPanel)
-
-            $mismatchPrompt = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateSelectionPrompt(
-                'Continue with this macro?',
-                @('Continue anyway', 'Cancel')
-            )
-            $mismatchChoice = $mismatchPrompt.Show($Console)
-            if ($mismatchChoice -ieq 'Cancel') {
-                continue
-            }
-        }
-
         # ── Pre-flight: Screenshot storage check ──────────────────────────────────
         $hasScreenshots = @($macro.Data.sequence | Where-Object { $_.type -eq 'Screenshot' }).Count -gt 0
+        $storageConfig = $null
+        try { $storageConfig = Get-ModuleConfiguration } catch {}
         $storagePathConfigured = (
-            $null -ne $config -and
-            $null -ne $config.Screenshots -and
-            -not [string]::IsNullOrEmpty($config.Screenshots.StoragePath)
+            $null -ne $storageConfig -and
+            $null -ne $storageConfig.Screenshots -and
+            -not [string]::IsNullOrEmpty($storageConfig.Screenshots.StoragePath)
         )
 
         if ($hasScreenshots -and -not $storagePathConfigured) {

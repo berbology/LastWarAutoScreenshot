@@ -6216,7 +6216,7 @@ for renewal).
    - [x] 7.3: Update `CLAUDE.md` — change "Current status" line from
      `Phase 9 (Azure Integration)` to `Phase 9b (Automated SAS Token Management)`.
 
-8. [ ] Final validation
+8. [x] Final validation
 
    - [x] 8.1: Run the complete, unfiltered Pester suite:
      (`Invoke-Pester -Path .\powershell-module\Tests -Output Detailed`)
@@ -6238,7 +6238,7 @@ for renewal).
       - Connected to Azure → token generated and env var set; verify with
         `[Environment]::GetEnvironmentVariable('LWAS_SAS_TEST', 'User')`
 
-   - [ ] 8.4: Manually smoke-test the console `Show-EditUploadProfileScreen` flow:
+   - [x]] 8.4: Manually smoke-test the console `Show-EditUploadProfileScreen` flow:
       - Launch `Start-LWASConsole` → Config → Upload profiles → Add profile
       - If no `LWAS_SAS_*` vars exist: verify info panel is shown and suffix prompt is presented
       - If `LWAS_SAS_*` vars exist: verify selection prompt lists them plus `"Create new"`
@@ -6250,7 +6250,7 @@ for renewal).
       - Confirm save (not connected to Azure) → verify warning panel with `Connect-AzAccount` hint
       - Inspect the saved profile JSON → verify `cloudProvider = "azure"` is present
 
-   - [ ] 8.5: Manually smoke-test `New-LWASUploadProfile` command-line auto-token path:
+   - [x] 8.5: Manually smoke-test `New-LWASUploadProfile` command-line auto-token path:
       - `New-LWASUploadProfile -Name 'test-auto' -AccountName 'myaccount' -ContainerName 'shots' -SasTokenEnvVar 'LWAS_SAS_TEST'`
         (with no `LWAS_SAS_TEST` env var set and connected to Azure) → token generated; verbose
         message shown

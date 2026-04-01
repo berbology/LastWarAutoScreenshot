@@ -76,10 +76,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
@@ -114,10 +116,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                     })
                 }
                 Mock Get-MacroFile -MockWith { $null }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
@@ -160,10 +164,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         Data     = [PSCustomObject]@{}
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
@@ -225,10 +231,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game Window'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game Window' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 2; TotalActions = 2; Message = '' }
                 }
@@ -249,9 +257,9 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Target window not open
+    # Context: Target window not found
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the target window handle is not valid' {
+    Context 'When Get-LWASTargetWindow cannot find the target window' {
 
         It 'Displays the "not open" error panel and does not call Invoke-MacroSequence' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
@@ -282,10 +290,10 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
+                Mock Get-LWASTargetWindow -MockWith { throw 'No window found matching the specified criteria.' }
                 Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
                 }
-                Mock Test-WindowHandleValid -MockWith { $false }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
@@ -298,114 +306,6 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
 
                 Show-RunMacroScreen -Console $tc
                 $tc.Output | Should -Match 'not open'
-                Should -Invoke Invoke-MacroSequence -Times 0 -Exactly
-            }
-        }
-    }
-
-    # ════════════════════════════════════════════════════════════════════════
-    # Context: Process name mismatch
-    # ════════════════════════════════════════════════════════════════════════
-    Context 'When the macro process name differs from the current target window' {
-
-        It 'Displays the warning and calls Invoke-MacroSequence when the user selects Continue anyway' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-LWASMacro -MockWith {
-                    @([PSCustomObject]@{
-                        FileName    = '20240101_120000_test-macro.json'
-                        FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
-                        Name        = 'test-macro'
-                        CreatedUtc  = '2024-01-01T12:00:00Z'
-                        DisplayDate = '01/01/24 12:00:00'
-                        ActionCount = 1
-                        Valid       = $true
-                    })
-                }
-                Mock Get-MacroFile -MockWith {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version  = '1.0'
-                            metadata = [PSCustomObject]@{
-                                name        = 'test-macro'
-                                createdUtc  = '2024-01-01T12:00:00Z'
-                                modifiedUtc = '2024-01-01T12:00:00Z'
-                            }
-                            targetWindow = [PSCustomObject]@{ processName = 'original.exe'; windowTitle = 'Original' }
-                            sequence     = @([PSCustomObject]@{ type = 'LeftClick' })
-                        }
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'other.exe'; WindowTitle = 'Other'; WindowHandleInt64 = 12345 }
-                }
-                Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Invoke-MacroSequence -MockWith {
-                    [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
-                }
-                Mock Write-LastWarLog {}
-
-                $tc = $script:tc
-                # Select macro → Continue anyway at mismatch → Yes, run now → dismiss pause prompt
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-RunMacroScreen -Console $tc
-                $tc.Output | Should -Match 'may not work correctly'
-                Should -Invoke Invoke-MacroSequence -Times 1 -Exactly
-            }
-        }
-
-        It 'Does not call Invoke-MacroSequence when the user selects Cancel at the mismatch prompt' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-LWASMacro -MockWith {
-                    @([PSCustomObject]@{
-                        FileName    = '20240101_120000_test-macro.json'
-                        FilePath    = 'C:\test\Macros\20240101_120000_test-macro.json'
-                        Name        = 'test-macro'
-                        CreatedUtc  = '2024-01-01T12:00:00Z'
-                        DisplayDate = '01/01/24 12:00:00'
-                        ActionCount = 1
-                        Valid       = $true
-                    })
-                }
-                Mock Get-MacroFile -MockWith {
-                    [PSCustomObject]@{
-                        Valid    = $true
-                        Messages = @()
-                        Data     = [PSCustomObject]@{
-                            version  = '1.0'
-                            metadata = [PSCustomObject]@{
-                                name        = 'test-macro'
-                                createdUtc  = '2024-01-01T12:00:00Z'
-                                modifiedUtc = '2024-01-01T12:00:00Z'
-                            }
-                            targetWindow = [PSCustomObject]@{ processName = 'original.exe'; windowTitle = 'Original' }
-                            sequence     = @([PSCustomObject]@{ type = 'LeftClick' })
-                        }
-                    }
-                }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'other.exe'; WindowTitle = 'Other'; WindowHandleInt64 = 12345 }
-                }
-                Mock Test-WindowHandleValid -MockWith { $true }
-                Mock Invoke-MacroSequence {}
-                Mock Write-LastWarLog {}
-
-                $tc = $script:tc
-                # First pass: select macro → Cancel at mismatch → loop back
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Mismatch prompt: select Cancel (index 1, down from default Continue)
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Second pass: Back to main menu
-                $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
-
-                Show-RunMacroScreen -Console $tc
                 Should -Invoke Invoke-MacroSequence -Times 0 -Exactly
             }
         }
@@ -445,10 +345,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 5; TotalActions = 5; Message = '' }
                 }
@@ -498,10 +400,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $false; CompletedActions = 2; TotalActions = 5; Message = 'Action failed' }
                 }
@@ -560,15 +464,14 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
-                        ProcessName       = 'game.exe'
-                        WindowTitle       = 'Game'
-                        WindowHandleInt64 = 12345
-                        Screenshots       = [PSCustomObject]@{ StoragePath = '' }
+                        Screenshots = [PSCustomObject]@{ StoragePath = '' }
                     }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
                 }
@@ -621,15 +524,14 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
-                        ProcessName       = 'game.exe'
-                        WindowTitle       = 'Game'
-                        WindowHandleInt64 = 12345
-                        Screenshots       = [PSCustomObject]@{ StoragePath = '' }
+                        Screenshots = [PSCustomObject]@{ StoragePath = '' }
                     }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
                 }
@@ -682,15 +584,14 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
-                        ProcessName       = 'game.exe'
-                        WindowTitle       = 'Game'
-                        WindowHandleInt64 = 12345
-                        Screenshots       = [PSCustomObject]@{ StoragePath = '' }
+                        Screenshots = [PSCustomObject]@{ StoragePath = '' }
                     }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 
@@ -742,15 +643,14 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
-                        ProcessName       = 'game.exe'
-                        WindowTitle       = 'Game'
-                        WindowHandleInt64 = 12345
-                        Screenshots       = [PSCustomObject]@{ StoragePath = 'C:\Screenshots' }
+                        Screenshots = [PSCustomObject]@{ StoragePath = 'C:\Screenshots' }
                     }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
                 }
@@ -797,15 +697,14 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{
-                        ProcessName       = 'game.exe'
-                        WindowTitle       = 'Game'
-                        WindowHandleInt64 = 12345
-                        Screenshots       = [PSCustomObject]@{ StoragePath = '' }
+                        Screenshots = [PSCustomObject]@{ StoragePath = '' }
                     }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
                 }
@@ -861,10 +760,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Get-UploadProfile -MockWith {
                     [PSCustomObject]@{
                         name           = 'test-profile'
@@ -927,10 +828,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Get-UploadProfile -MockWith {
                     [PSCustomObject]@{
                         name           = 'test-profile'
@@ -989,10 +892,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Update-LWASSASToken {}
                 Mock Invoke-MacroSequence -MockWith {
                     [PSCustomObject]@{ Success = $true; CompletedActions = 1; TotalActions = 1; Message = '' }
@@ -1046,10 +951,12 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
                         }
                     }
                 }
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
+                Mock Get-LWASTargetWindow -MockWith {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::new(12345); ProcessName = 'game.exe'; WindowTitle = 'Game' }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
+                Mock Get-ModuleConfiguration -MockWith {
+                    [PSCustomObject]@{ Screenshots = [PSCustomObject]@{ StoragePath = '' } }
+                }
                 Mock Invoke-MacroSequence {}
                 Mock Write-LastWarLog {}
 

@@ -27,33 +27,22 @@ The interactive console app loads and presents the main menu.
 
 ---
 
-## Step 1 — Select a target window
+## Step 1 — Record a simple macro
 
-The module needs to know which game window to interact with. Without a selected
-window, mouse-control and screenshot actions cannot run.
-
-1. From the main menu select **"Select target window"**.
-2. The app enumerates all visible windows and displays them as a list.
-3. Use the arrow keys to highlight the Last War: Survival window, then press
-   **Enter**.
-
-The selected window handle is saved to config and persists across sessions.
-
----
-
-## Step 2 — Record a simple macro
-
-1. From the main menu select **"Record macro"**.
-2. Enter a name for the macro (letters, digits, hyphens, and underscores only;
+1. From the main menu select **"Record macro"**. Window selection is the first
+   step inside the recording flow.
+2. The app enumerates all visible windows. Use the arrow keys to highlight the
+   Last War: Survival window, then press **Enter** and confirm to save.
+3. Enter a name for the macro (letters, digits, hyphens, and underscores only;
    spaces are auto-converted to hyphens with your confirmation).
-3. Add a simple sequence using the action menu. For a click-and-wait example:
+4. Add a simple sequence using the action menu. For a click-and-wait example:
    - **Move to point** — position your mouse cursor over the target in the game
      window and press **Enter** to capture the position; then **Accept**.
    - **Left-click** — no position capture required; confirms immediately.
    - **Delay** — enter a duration in seconds (e.g. `2`).
    - **Move to point** — capture a second position.
    - **Left-click** — confirm.
-4. Select **"Save macro"** to write the file to disk.
+5. Select **"Save macro"** to write the file to disk.
 
 > **Tip:** The console must keep keyboard focus while you capture positions.
 > Move the mouse over the game window, then click back on the console and press
@@ -61,7 +50,7 @@ The selected window handle is saved to config and persists across sessions.
 
 ---
 
-## Step 3 — Run the macro
+## Step 2 — Run the macro
 
 1. From the main menu select **"Run macro"**.
 2. Choose the macro from the list.
@@ -72,7 +61,7 @@ see a progress indicator as each action executes.
 
 ---
 
-## Step 4 — Emergency stop
+## Step 3 — Emergency stop
 
 Two mechanisms are available at any time during execution:
 

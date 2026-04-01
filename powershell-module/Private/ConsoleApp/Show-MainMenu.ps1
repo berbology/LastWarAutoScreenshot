@@ -5,25 +5,23 @@ function Show-MainMenu {
 
     .DESCRIPTION
         Renders a Spectre.Console SelectionPrompt with the following choices:
-          - Select target window
           - Configure module
-          - Record macro        (only shown when a target window has been configured)
-          - Run macro           (only shown when a target window is configured AND *.json
-                                 files exist in $env:APPDATA\LastWarAutoScreenshot\Macros)
+          - Record macro        (always shown; window selection is the first step inside Record Macro)
+          - Run macro           (only shown when *.json files exist in
+                                 $env:APPDATA\LastWarAutoScreenshot\Macros; uses the target window
+                                 stored in each macro file to locate the window at run time)
           - Manage macros       (only shown when *.json files exist in
                                  $env:APPDATA\LastWarAutoScreenshot\Macros)
           - Manage schedules
           - Storage info
           - Exit
 
-        The function calls Get-ModuleConfiguration to determine whether a target window has
-        been configured (ProcessName is non-empty).  It also checks the macros directory
-        ($env:APPDATA\LastWarAutoScreenshot\Macros) for saved macro files before building
-        the prompt.  A macro is any file matching *.json in that folder
+        Checks the macros directory ($env:APPDATA\LastWarAutoScreenshot\Macros) for saved macro
+        files before building the prompt.  A macro is any file matching *.json in that folder
         (naming convention: yyyyMMdd_HHmmss_<name>.json).
 
         Returns a string identifier corresponding to the user's selection:
-          'SelectWindow' | 'Configure' | 'RecordMacro' | 'RunMacro' | 'ManageMacros' |
+          'Configure' | 'RecordMacro' | 'RunMacro' | 'ManageMacros' |
           'ManageSchedules' | 'StorageInfo' | 'Exit'
 
     .PARAMETER Console
@@ -33,14 +31,14 @@ function Show-MainMenu {
 
     .OUTPUTS
         String
-        One of: 'SelectWindow', 'Configure', 'RecordMacro', 'RunMacro', 'ManageMacros', 'ManageSchedules', 'StorageInfo', 'Exit'
+        One of: 'Configure', 'RecordMacro', 'RunMacro', 'ManageMacros', 'ManageSchedules', 'StorageInfo', 'Exit'
 
     .EXAMPLE
         $console = [LastWarAutoScreenshot.ConsoleAppBridge]::CreateConsole()
         $choice  = Show-MainMenu -Console $console
         switch ($choice) {
-            'SelectWindow' { Show-WindowSelectionScreen -Console $console }
-            'Exit'         { return }
+            'RecordMacro' { Show-RecordMacroScreen -Console $console }
+            'Exit'        { return }
         }
 
     .NOTES
@@ -50,8 +48,12 @@ function Show-MainMenu {
 
         Macro detection: the macros directory is not created automatically by this
         function.  If the directory does not exist, Get-ChildItem returns nothing and the
-        'Run macro' option is rendered as disabled.  The directory is created when the
-        first macro is recorded.
+        'Run macro' option is not shown.  The directory is created when the first macro is
+        recorded.
+
+        Target window selection is no longer a main-menu option.  It is now the first step
+        inside Show-RecordMacroScreen, and Show-RunMacroScreen locates the window
+        automatically using the processName and windowTitle stored in the macro file.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -59,11 +61,6 @@ function Show-MainMenu {
         [Parameter(Mandatory)]
         [Spectre.Console.IAnsiConsole]$Console
     )
-
-    # Detect whether a target window has been configured for this session
-    $config = Get-ModuleConfiguration
-    $hasTargetWindow = $config.PSObject.Properties['ProcessName'] -and
-                       -not [string]::IsNullOrEmpty($config.ProcessName)
 
     # Detect saved macros
     $macroFolder = $script:MacrosPath
@@ -75,14 +72,10 @@ function Show-MainMenu {
 
     # Build the SelectionPrompt
     $choices = [System.Collections.Generic.List[string]]::new()
-    $choices.Add('Select target window')
     $choices.Add('Configure module')
+    $choices.Add('Record macro')
 
-    if ($hasTargetWindow) {
-        $choices.Add('Record macro')
-    }
-
-    if ($hasTargetWindow -and $hasMacros) {
+    if ($hasMacros) {
         $choices.Add('Run macro')
     }
 
@@ -99,14 +92,13 @@ function Show-MainMenu {
     $selection  = $prompt.Show($Console)
 
     switch ($selection) {
-        'Select target window' { return 'SelectWindow'  }
         'Configure module'     { return 'Configure'     }
         'Record macro'         { return 'RecordMacro'   }
         'Run macro'            { return 'RunMacro'      }
-        'Manage macros'            { return 'ManageMacros'     }
-        'Manage schedules'         { return 'ManageSchedules'  }
-        'Storage info'             { return 'StorageInfo'      }
-        default                    { return 'Exit'             }
+        'Manage macros'        { return 'ManageMacros'     }
+        'Manage schedules'     { return 'ManageSchedules'  }
+        'Storage info'         { return 'StorageInfo'      }
+        default                { return 'Exit'             }
     }
 }
 

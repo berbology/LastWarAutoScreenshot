@@ -6,16 +6,19 @@ BeforeAll {
 
 AfterAll {
     [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+    [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
 }
 
 Describe 'Remove-LWASSasToken' -Tag 'Unit' {
 
     BeforeEach {
         [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
     }
 
     AfterEach {
         [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
     }
 
     It 'Writes an error and continues when the variable name contains invalid characters' {

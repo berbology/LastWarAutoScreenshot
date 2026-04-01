@@ -15,16 +15,17 @@ function Start-LWASConsole {
              'Configure Module' (opens the configuration screen) or 'Exit' (exits the app).
              If 'Exit' is selected, the function returns immediately. If 'Configure Module' is
              selected, the config menu is shown.
-          2. Clears window-target fields from the saved configuration so the user must
-             select a fresh target window on each invocation.
+          2. Clears window-target fields from the saved configuration so that stale window
+             handles from a previous session do not persist.
           3. Once validation is complete (or config is updated and validated), enters an
              infinite loop rendering the main menu via Show-MainMenu.
           3. Dispatches each selection to the relevant screen function:
-               SelectWindow     → Show-WindowSelectionScreen   (Phase 1)
                Configure        → Show-ConfigMenuScreen         (Phase 3)
                StorageInfo      → Show-StorageInfoScreen        (Phase 3, inline)
-               RecordMacro      → Show-RecordMacroScreen        (Phase 4)
-               RunMacro         → Show-RunMacroScreen           (Phase 4)
+               RecordMacro      → Show-RecordMacroScreen        (Phase 4; window selection
+                                  is the first step inside the screen)
+               RunMacro         → Show-RunMacroScreen           (Phase 4; window located
+                                  automatically from the macro's stored processName)
                ManageMacros     → Show-ManageMacrosScreen       (Phase 4)
                ManageSchedules  → Show-ScheduleScreen           (Phase 6)
                Exit             → breaks the loop and returns
@@ -176,10 +177,6 @@ Until this is resolved, logs will be written to file instead.
             $choice = Show-MainMenu -Console $Console
 
             switch ($choice) {
-
-                'SelectWindow' {
-                    Show-WindowSelectionScreen -Console $Console
-                }
 
                 'Configure' {
                     $screenBlock = {

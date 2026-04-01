@@ -24,41 +24,20 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
     }
 
     # ════════════════════════════════════════════════════════════════════════
-    # Context: Config validation failures
+    # Context: Window selection cancelled
     # ════════════════════════════════════════════════════════════════════════
-    Context 'When the config has no ProcessName' {
+    Context 'When the user cancels window selection' {
 
-        It 'Returns $null and output contains "No target window configured"' {
+        It 'Returns $null without displaying any recording prompts' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
-                }
+                Mock Show-WindowSelectionScreen -MockWith { $null }
                 Mock Write-LastWarLog {}
 
                 $tc = $script:tc
 
                 $result = Show-RecordMacroScreen -Console $tc
                 $result | Should -BeNullOrEmpty
-                $tc.Output | Should -Match 'No target window configured'
-            }
-        }
-    }
-
-    Context 'When the target window handle is no longer valid' {
-
-        It 'Returns $null and output contains "no longer open"' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Get-ModuleConfiguration -MockWith {
-                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
-                }
-                Mock Test-WindowHandleValid -MockWith { $false }
-                Mock Write-LastWarLog {}
-
-                $tc = $script:tc
-
-                $result = Show-RecordMacroScreen -Console $tc
-                $result | Should -BeNullOrEmpty
-                $tc.Output | Should -Match 'no longer open'
+                $tc.Output | Should -Not -Match 'Enter a name for this macro'
             }
         }
     }
@@ -70,10 +49,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Save-MacroFile and returns $null' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Save-MacroFile -MockWith { @{ Success = $true; FilePath = 'C:\dummy.json' } }
                 Mock Write-LastWarLog {}
@@ -106,10 +87,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile with sequence[0].type = MoveToPoint and the captured relative coordinates' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -152,10 +135,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile with region.type = Box and positive relativeWidth and relativeHeight' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -203,10 +188,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile with relativeRadius = sqrt(dx^2+dy^2) rounded to 4 decimal places' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -253,10 +240,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Does not call Invoke-CaptureMousePosition and saves type = LeftClick' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -295,10 +284,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile with type = DragClick and correct start and end positions' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -345,10 +336,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Saves type = Screenshot with correct region coordinates' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -402,10 +395,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'The resulting Screenshot action has no maskRegions property' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -449,10 +444,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'The Screenshot action has maskRegions with one element containing the correct coordinates' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -508,10 +505,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'The Screenshot action has maskRegions with two elements' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -565,10 +564,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'No mask region is added and the loop exits cleanly' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -615,10 +616,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'A warning is written and no mask region is added' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -669,10 +672,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'The no-overlap warning is written but the mask IS added to the action' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -723,10 +728,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Step detail for a Screenshot action with two mask regions contains "2 mask(s)"' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -773,10 +780,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Step detail for a Screenshot action with no maskRegions does not contain "mask"' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -818,10 +827,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Calls Save-MacroFile with type = Delay and seconds = 5' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -863,10 +874,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Saves a Loop action with the selected actionNames and correct iteration count' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -935,10 +948,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Does not show "Create loop" option when no named non-Loop actions exist' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -967,10 +982,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Shows "Create loop" option in the action menu after a named action is recorded' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1005,10 +1022,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Does not show "Save macro" in the action menu when the sequence is empty' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1035,10 +1054,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Shows "Are you sure" confirmation and returns $null when user confirms discard' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1068,10 +1089,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Continues recording when the user declines discard' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1112,10 +1135,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Shows a sanitised name confirmation and saves using the sanitised name' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1161,10 +1186,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Displays the error message and allows the user to discard and exit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1207,10 +1234,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'Writes a "Saved" panel containing "saved successfully" to the console' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1241,10 +1270,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It 'The "Saved" panel output contains the macro name' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1282,10 +1313,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.1: Upload screenshots option appears in the action menu output' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Write-LastWarLog {}
                 Mock Get-ValidMacroName -MockWith {
@@ -1311,10 +1344,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.2: Selecting Upload screenshots when no profiles exist shows warning; no action added' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1350,10 +1385,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.3: Selecting Upload screenshots with profiles, scope MacroSequence — action added with correct fields' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1397,10 +1434,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.4: Selecting Upload screenshots, scope NamedStep with existing Screenshot — action added with scope=NamedStep and screenshotActionName set' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1466,10 +1505,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.5: Selecting Upload screenshots, scope NamedStep with no Screenshot actions — warning shown; no action added' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1512,10 +1553,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.6: Save with UploadScreenshots as last step — no warning shown; save proceeds' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}
@@ -1553,10 +1596,12 @@ Describe 'Show-RecordMacroScreen' -Tag 'Unit' {
 
         It '10.4.7: Save with UploadScreenshots NOT as last step — warning shown; user confirms Save anyway — save proceeds' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                Mock Show-WindowSelectionScreen -MockWith {
+                    [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandle = [IntPtr]::new(12345) }
+                }
                 Mock Get-ModuleConfiguration -MockWith {
                     [PSCustomObject]@{ ProcessName = 'game.exe'; WindowTitle = 'Game'; WindowHandleInt64 = 12345 }
                 }
-                Mock Test-WindowHandleValid -MockWith { $true }
                 Mock Get-LWASMacro -MockWith { @() }
                 Mock Test-MacroFile -MockWith { @{ Valid = $true; Messages = @() } }
                 Mock Write-LastWarLog {}

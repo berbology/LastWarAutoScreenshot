@@ -37,6 +37,17 @@ Describe 'Start-LWASAutomationSequence' -Tag 'Unit' {
                 )
             }
         }
+
+        # Helper that returns a mock upload profile
+        function New-MockUploadProfile {
+            param([string]$Name = 'azure-1', [string]$EnvVar = 'LWAS_SAS_TEST')
+            return [PSCustomObject]@{
+                name           = $Name
+                sasTokenEnvVar = $EnvVar
+                accountName    = 'mystorageaccount'
+                containerName  = 'screenshots'
+            }
+        }
     }
 
     BeforeEach {
@@ -50,6 +61,7 @@ Describe 'Start-LWASAutomationSequence' -Tag 'Unit' {
             }
             Mock Invoke-IsIconic { $false }
             Mock Set-WindowState { $true }
+            Mock Set-WindowActive { $true }
             Mock Get-LWASMacro {
                 [PSCustomObject]@{
                     Name     = 'test-macro'
@@ -60,6 +72,9 @@ Describe 'Start-LWASAutomationSequence' -Tag 'Unit' {
                     Valid    = $true
                 }
             }
+            Mock Get-UploadProfile { $null }
+            Mock Test-LWASSASTokenIsValid { $true }
+            Mock Update-LWASSASToken { $true }
             Mock Invoke-MacroSequence {
                 [PSCustomObject]@{
                     Success          = $true
@@ -102,6 +117,19 @@ Describe 'Start-LWASAutomationSequence' -Tag 'Unit' {
                 }
                 $result = $window | Start-LWASAutomationSequence -MacroName 'test-macro'
                 $result.WindowTitle | Should -Be 'My Game Window'
+            }
+        }
+
+        It 'Calls Set-WindowActive once for a normal window' {
+            InModuleScope LastWarAutoScreenshot {
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $window | Start-LWASAutomationSequence -MacroName 'test-macro' | Out-Null
+                Should -Invoke Set-WindowActive -Times 1
             }
         }
     }
@@ -172,6 +200,20 @@ Describe 'Start-LWASAutomationSequence' -Tag 'Unit' {
                 Should -Invoke Write-LastWarLog -ParameterFilter { $Level -eq 'Info' } -Times 1
             }
         }
+
+        It 'Calls Set-WindowActive after restoring a minimised window' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Invoke-IsIconic { $true }
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Minimised Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Minimised'
+                }
+                $window | Start-LWASAutomationSequence -MacroName 'test-macro' | Out-Null
+                Should -Invoke Set-WindowActive -Times 1
+            }
+        }
     }
 
     Context 'Non-minimised window' {
@@ -233,6 +275,170 @@ Describe 'Start-LWASAutomationSequence' -Tag 'Unit' {
                 $results = @($windows | Start-LWASAutomationSequence -MacroName 'test-macro')
                 Should -Invoke Invoke-MacroSequence -Times 2
                 $results.Count | Should -Be 2
+            }
+        }
+    }
+
+    Context 'SAS token preflight — no UploadScreenshots actions' {
+        It 'Does not call Test-LWASSASTokenIsValid when the macro has no UploadScreenshots actions' {
+            InModuleScope LastWarAutoScreenshot {
+                # Default macro mock has only Delay actions — no UploadScreenshots
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $window | Start-LWASAutomationSequence -MacroName 'test-macro' | Out-Null
+                Should -Invoke Test-LWASSASTokenIsValid -Times 0
+                Should -Invoke Update-LWASSASToken -Times 0
+            }
+        }
+    }
+
+    Context 'SAS token preflight — valid token' {
+        It 'Does not call Update-LWASSASToken when the SAS token is already valid' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-LWASMacro {
+                    [PSCustomObject]@{
+                        Name     = 'upload-macro'
+                        Metadata = [PSCustomObject]@{ name = 'upload-macro'; createdUtc = '2026-01-01T12:00:00Z' }
+                        Sequence = @(
+                            [PSCustomObject]@{ type = 'UploadScreenshots'; name = 'upload-step'; uploadProfileName = 'azure-1'; scope = 'MacroSequence' }
+                        )
+                        Valid    = $true
+                    }
+                }
+                Mock Get-UploadProfile {
+                    [PSCustomObject]@{ name = 'azure-1'; sasTokenEnvVar = 'LWAS_SAS_TEST' }
+                }
+                Mock Test-LWASSASTokenIsValid { $true }
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $window | Start-LWASAutomationSequence -MacroName 'upload-macro' | Out-Null
+                Should -Invoke Test-LWASSASTokenIsValid -Times 1
+                Should -Invoke Update-LWASSASToken -Times 0
+            }
+        }
+    }
+
+    Context 'SAS token preflight — invalid/absent token' {
+        It 'Calls Update-LWASSASToken with the correct env var name and profile name when token is invalid' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-LWASMacro {
+                    [PSCustomObject]@{
+                        Name     = 'upload-macro'
+                        Metadata = [PSCustomObject]@{ name = 'upload-macro'; createdUtc = '2026-01-01T12:00:00Z' }
+                        Sequence = @(
+                            [PSCustomObject]@{ type = 'UploadScreenshots'; name = 'upload-step'; uploadProfileName = 'azure-1'; scope = 'MacroSequence' }
+                        )
+                        Valid    = $true
+                    }
+                }
+                Mock Get-UploadProfile {
+                    [PSCustomObject]@{ name = 'azure-1'; sasTokenEnvVar = 'LWAS_SAS_TEST' }
+                }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASSASToken { $true }
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $window | Start-LWASAutomationSequence -MacroName 'upload-macro' | Out-Null
+                Should -Invoke Update-LWASSASToken -ParameterFilter { $Name -eq 'LWAS_SAS_TEST' -and $UploadProfile -eq 'azure-1' } -Times 1
+            }
+        }
+
+        It 'Refreshes each distinct upload profile only once even when referenced multiple times' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-LWASMacro {
+                    [PSCustomObject]@{
+                        Name     = 'upload-macro'
+                        Metadata = [PSCustomObject]@{ name = 'upload-macro'; createdUtc = '2026-01-01T12:00:00Z' }
+                        Sequence = @(
+                            [PSCustomObject]@{ type = 'UploadScreenshots'; name = 'upload-1'; uploadProfileName = 'azure-1'; scope = 'MacroSequence' },
+                            [PSCustomObject]@{ type = 'UploadScreenshots'; name = 'upload-2'; uploadProfileName = 'azure-1'; scope = 'MacroSequence' }
+                        )
+                        Valid    = $true
+                    }
+                }
+                Mock Get-UploadProfile {
+                    [PSCustomObject]@{ name = 'azure-1'; sasTokenEnvVar = 'LWAS_SAS_TEST' }
+                }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASSASToken { $true }
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $window | Start-LWASAutomationSequence -MacroName 'upload-macro' | Out-Null
+                Should -Invoke Update-LWASSASToken -Times 1
+            }
+        }
+    }
+
+    Context 'SAS token preflight — upload profile not found' {
+        It 'Returns Success = false and does not execute macro when upload profile is missing' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-LWASMacro {
+                    [PSCustomObject]@{
+                        Name     = 'upload-macro'
+                        Metadata = [PSCustomObject]@{ name = 'upload-macro'; createdUtc = '2026-01-01T12:00:00Z' }
+                        Sequence = @(
+                            [PSCustomObject]@{ type = 'UploadScreenshots'; name = 'upload-step'; uploadProfileName = 'missing-profile'; scope = 'MacroSequence' }
+                        )
+                        Valid    = $true
+                    }
+                }
+                Mock Get-UploadProfile { $null }
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $result = $window | Start-LWASAutomationSequence -MacroName 'upload-macro' -ErrorAction SilentlyContinue
+                Should -Invoke Invoke-MacroSequence -Times 0
+                $result.Success | Should -BeFalse
+            }
+        }
+    }
+
+    Context 'SAS token preflight — token renewal fails' {
+        It 'Returns Success = false and does not execute macro when Update-LWASSASToken returns false' {
+            InModuleScope LastWarAutoScreenshot {
+                Mock Get-LWASMacro {
+                    [PSCustomObject]@{
+                        Name     = 'upload-macro'
+                        Metadata = [PSCustomObject]@{ name = 'upload-macro'; createdUtc = '2026-01-01T12:00:00Z' }
+                        Sequence = @(
+                            [PSCustomObject]@{ type = 'UploadScreenshots'; name = 'upload-step'; uploadProfileName = 'azure-1'; scope = 'MacroSequence' }
+                        )
+                        Valid    = $true
+                    }
+                }
+                Mock Get-UploadProfile {
+                    [PSCustomObject]@{ name = 'azure-1'; sasTokenEnvVar = 'LWAS_SAS_TEST' }
+                }
+                Mock Test-LWASSASTokenIsValid { $false }
+                Mock Update-LWASSASToken { $false }
+                $window = [PSCustomObject]@{
+                    ProcessName  = 'lastwar.exe'
+                    WindowTitle  = 'Test Window'
+                    WindowHandle = [IntPtr]12345
+                    WindowState  = 'Normal'
+                }
+                $result = $window | Start-LWASAutomationSequence -MacroName 'upload-macro' -ErrorAction SilentlyContinue
+                Should -Invoke Invoke-MacroSequence -Times 0
+                $result.Success | Should -BeFalse
             }
         }
     }

@@ -6,8 +6,10 @@ function Show-RecordMacroScreen {
     .DESCRIPTION
         Full recording workflow:
 
-        Step 1 — Validates the target window: loads config, checks ProcessName is set, and that the
-        window handle is still valid via Test-WindowHandleValid.
+        Step 1 — Window selection: calls Show-WindowSelectionScreen so the user picks the target
+        application window.  If the user cancels (returns $null), the function returns $null
+        immediately.  After a successful selection the config is read to obtain ProcessName,
+        WindowTitle, and WindowHandleInt64.
 
         Step 2 — Prompts for a macro name. Sanitises input via Get-ValidMacroName -AutoFix, confirms
         any auto-fix with the user, and re-prompts on invalid names.
@@ -52,39 +54,16 @@ function Show-RecordMacroScreen {
         [Spectre.Console.IAnsiConsole]$Console
     )
 
-    # ── Step 1: Validate target window ────────────────────────────────────────
+    # ── Step 1: Window selection ──────────────────────────────────────────────
 
-    $config = $null
-    try {
-        $config = Get-ModuleConfiguration
-    } catch {
-        $errorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-            'No target window configured. Please select a target window from the main menu first.',
-            '[red]Error[/]'
-        )
-        $Console.Write($errorPanel)
+    $selectedWindow = Show-WindowSelectionScreen -Console $Console
+
+    if ($null -eq $selectedWindow) {
         return $null
     }
 
-    if (-not $config.PSObject.Properties['ProcessName'] -or [string]::IsNullOrEmpty($config.ProcessName)) {
-        $errorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-            'No target window configured. Please select a target window from the main menu first.',
-            '[red]Error[/]'
-        )
-        $Console.Write($errorPanel)
-        return $null
-    }
-
+    $config       = Get-ModuleConfiguration
     $windowHandle = [IntPtr]::new($config.WindowHandleInt64)
-
-    if (-not (Test-WindowHandleValid -WindowHandle $windowHandle)) {
-        $errorPanel = [LastWarAutoScreenshot.ConsoleAppBridge]::CreatePanel(
-            'Target window is no longer open. Please select a new target window.',
-            '[red]Error[/]'
-        )
-        $Console.Write($errorPanel)
-        return $null
-    }
 
     # ── Step 2: Prompt for macro name ────────────────────────────────────────
 

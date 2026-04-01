@@ -181,30 +181,7 @@ Describe 'Start-LWASConsole' -Tag 'Unit' {
 
     Context 'Screen dispatch' {
 
-        It 'Calls Show-WindowSelectionScreen exactly once when Show-MainMenu returns SelectWindow then Exit' {
-            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
-                Mock Invoke-InAlternateScreen -MockWith {
-                    param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)
-                    & $Action $Console
-                }
-                Mock Invoke-StartupConfigValidation -MockWith {
-                    [PSCustomObject]@{ HasErrors = $false; Messages = @() }
-                }
-                Mock Show-WindowSelectionScreen -MockWith { $null }
-                $script:_menuCallCount = 0
-                Mock Show-MainMenu -MockWith {
-                    $script:_menuCallCount++
-                    if ($script:_menuCallCount -eq 1) { 'SelectWindow' } else { 'Exit' }
-                }
-
-                $tc = [Spectre.Console.Testing.TestConsole]::new()
-                Start-LWASConsole -Console $tc
-
-                Should -Invoke Show-WindowSelectionScreen -Exactly 1
-            }
-        }
-
-        It 'Does not call Show-WindowSelectionScreen when Show-MainMenu returns Exit immediately' {
+        It 'Does not call Show-WindowSelectionScreen from the main dispatch loop when Show-MainMenu returns Exit' {
             InModuleScope -ModuleName 'LastWarAutoScreenshot' {
                 Mock Invoke-InAlternateScreen -MockWith {
                     param([Spectre.Console.IAnsiConsole]$Console, [scriptblock]$Action)

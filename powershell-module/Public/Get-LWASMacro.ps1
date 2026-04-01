@@ -34,6 +34,8 @@ function Get-LWASMacro {
           DisplayDate [string]   — CreatedUtc converted to local time, formatted 'dd/MM/yy HH:mm:ss'
           ActionCount [int]      — number of actions in the sequence
           Valid       [bool]     — whether the macro passed schema validation
+          Version     [string]   — schema version from the macro JSON
+          TargetWindow [object]  — target window definition from the macro JSON
           Metadata    [object]   — full metadata object from the macro JSON
           Sequence    [object[]] — full sequence array from the macro JSON
 
@@ -139,6 +141,8 @@ function Get-LWASMacro {
                 DisplayDate = $displayDate
                 ActionCount = $actionCount
                 Valid       = $macroResult.Valid
+                Version     = $macroResult.Data.version
+                TargetWindow = $macroResult.Data.targetWindow
                 Metadata    = $macroResult.Data.metadata
                 Sequence    = if ($null -ne $macroResult.Data.sequence) { @($macroResult.Data.sequence) } else { @() }
             })

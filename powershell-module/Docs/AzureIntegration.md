@@ -173,8 +173,12 @@ not need to track expiry dates or regenerate tokens manually.
 
 ### How automatic renewal works
 
-1. After a profile is saved (via the console app or `New-LWASUploadProfile`), the module
-   reads the token from the `sasTokenEnvVar` environment variable.
+Tokens are checked and renewed in two situations:
+
+**When saving a profile** (via the console app or `New-LWASUploadProfile`):
+
+1. After the profile is saved the module reads the token from the `sasTokenEnvVar`
+   environment variable.
 2. `Test-LWASSASTokenIsValid` checks the `se=` (signed expiry) field in the token. A
    five-minute safety buffer is applied — a token expiring within five minutes is treated
    as expired.
@@ -184,6 +188,20 @@ not need to track expiry dates or regenerate tokens manually.
    (available immediately without restarting PowerShell).
 4. In the console app, a success or warning message is displayed inline before returning
    to the upload profiles list — no separate command is required.
+
+**Before each macro run** (`Start-LWASAutomationSequence`):
+
+1. Before executing any steps, the macro sequence is scanned for `UploadScreenshots`
+   actions.
+2. For each distinct upload profile referenced, the corresponding SAS token environment
+   variable is read and validated with `Test-LWASSASTokenIsValid`.
+3. If the token is absent or within the five-minute safety buffer, `Update-LWASSASToken`
+   is called automatically. If renewal fails, macro execution is aborted with an error.
+4. Each profile is checked at most once per macro run, even if the same profile appears
+   in multiple upload steps.
+
+This means macros that upload screenshots can run unattended in scheduled tasks without
+manually tracking SAS token expiry.
 
 ### LWAS_SAS_ naming convention
 
@@ -363,6 +381,8 @@ without retrying, as these indicate a configuration error rather than a transien
 
 | Symptom | Likely cause | Resolution |
 |---------|-------------|------------|
+| `Failed to refresh SAS token for upload profile 'xyz'` | `Update-LWASSASToken` returned `$false` during the pre-run preflight | Ensure `Az.Storage` is installed, run `Connect-AzAccount`, then retry the macro |
+| `Upload profile 'xyz' referenced in macro 'abc' was not found` | An `UploadScreenshots` step names a profile that no longer exists | Re-create the profile with `New-LWASUploadProfile` or remove/update the macro step |
 | `Environment variable 'LWAS_SAS_PROD' is not set` | The SAS token env var is missing or the variable name in the profile is wrong | Save the profile again to trigger auto-renewal, or run `Update-LWASSASToken` manually after connecting to Azure |
 | Upload fails with HTTP 403 | SAS token has expired or was generated with insufficient permissions | Run `Update-LWASSASToken -Name 'LWAS_SAS_PROD'` to renew; ensure the token has Write+List permissions |
 | Upload fails with HTTP 404 | Container name or storage account name is wrong | Verify `accountName` and `containerName` in the profile match the Azure portal exactly; container names are lowercase |
