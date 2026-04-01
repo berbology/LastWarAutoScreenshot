@@ -23,7 +23,7 @@ function Save-ModuleSettings {
     .PARAMETER ConfigurationPath
         Optional path to the configuration file.  Defaults to the same path used by
         Get-ModuleConfiguration:
-            $env:APPDATA\LastWarAutoScreenshot\WindowConfig.json
+            $env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc
 
     .OUTPUTS
         Boolean
@@ -67,7 +67,7 @@ function Save-ModuleSettings {
 
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
             $defaultConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot'
-            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'WindowConfig.json'
+            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'ModuleConfig.jsonc'
             Write-Verbose "Using default configuration path: $ConfigurationPath"
         }
     }

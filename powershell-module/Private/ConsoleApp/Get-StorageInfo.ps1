@@ -47,9 +47,8 @@ function Get-StorageInfo {
         MaxStorageGB is sourced from Screenshots.MaxStorageGB.
 
         Log file size is computed from all files matching 'LastWarAutoScreenshot.log*' in
-        $script:ModuleRootPath (the folder containing LastWarAutoScreenshot.psm1).  This
-        covers both the active log file and any size/age rollover archives produced by
-        FileLogBackend.
+        $script:LogDir ($env:APPDATA\LastWarAutoScreenshot).  This covers both the active
+        log file and any size/age rollover archives produced by FileLogBackend.
 
         UsedPercent may exceed 100.0 when actual usage surpasses the configured limit.
     #>
@@ -86,11 +85,11 @@ function Get-StorageInfo {
         return $emptyResult
     }
 
-    # Compute log file folder size from module root
+    # Compute log file folder size from the APPDATA log directory
     # Covers: LastWarAutoScreenshot.log  +  LastWarAutoScreenshot.log.<timestamp> rollover archives
     $logFileSizeGB = 0.0
     try {
-        $logBytes = (Get-ChildItem -Path $script:ModuleRootPath -Filter 'LastWarAutoScreenshot.log*' -ErrorAction SilentlyContinue |
+        $logBytes = (Get-ChildItem -Path $script:LogDir -Filter 'LastWarAutoScreenshot.log*' -ErrorAction SilentlyContinue |
             Measure-Object -Property Length -Sum).Sum
         if ($null -ne $logBytes) {
             $logFileSizeGB = [double]($logBytes / 1GB)

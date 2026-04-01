@@ -4866,7 +4866,7 @@ All design questions have been resolved. The decisions below are recorded for re
 - **Upload profiles stored as individual JSON files in `UploadProfiles\` subdirectory:** Mirrors the
   `Macros\` pattern — each named profile is a separate file at
   `$env:APPDATA\LastWarAutoScreenshot\UploadProfiles\{name}.json`. This makes individual
-  profiles easy to inspect, back up, or delete, and avoids growing `WindowConfig.json` further.
+  profiles easy to inspect, back up, or delete, and avoids growing `ModuleConfig.jsonc` further.
 
 - **Credentials stored via environment variable reference only — never written to disk:** The
   profile JSON stores only the *name* of the environment variable holding the SAS token (e.g.

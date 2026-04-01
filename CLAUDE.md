@@ -73,7 +73,7 @@ powershell-module/
 └── Docs/                        # Architecture and phase documentation
 ```
 
-Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc`. Macros are stored at `$env:APPDATA\LastWarAutoScreenshot\Macros\`.
+Config is stored at `$env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc` (user settings, window target, and logging configuration). Macros are stored at `$env:APPDATA\LastWarAutoScreenshot\Macros\`.
 
 ## Architecture
 

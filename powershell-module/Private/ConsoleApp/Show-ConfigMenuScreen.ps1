@@ -102,7 +102,7 @@ function Show-ConfigMenuScreen {
             }
 
             'Edit module configuration' {
-                $configPath = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot\WindowConfig.json'
+                $configPath = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot\ModuleConfig.jsonc'
                 $editorConfig = Get-ModuleConfiguration
                 $editorExe = $editorConfig.CodeEditor
                 if ($editorExe -and (Test-Path -Path $editorExe -PathType Leaf)) {

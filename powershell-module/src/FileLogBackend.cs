@@ -26,34 +26,10 @@ namespace LastWarAutoScreenshot
                 throw new InvalidOperationException("Log directory or base name cannot be null or empty.");
             }
 
-            // Default settings
+            // Default settings (loaded via Get-ModuleConfiguration in PowerShell layer)
             _maxSizeMB = 50;
             _maxAgeDays = 30;
             _maxLogFileCount = 500;
-
-            // Load settings from configuration file if available
-            string configPath = Path.Combine(_logDir, "ModuleConfig.jsonc");
-            if (File.Exists(configPath))
-            {
-                try
-                {
-                    var config = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(File.ReadAllText(configPath));
-                    if (config != null && config.ContainsKey("Logging") && config["Logging"] is Dictionary<string, object> loggingConfig && loggingConfig.ContainsKey("FileBackend"))
-                    {
-                        var fileBackend = loggingConfig["FileBackend"] as Dictionary<string, object>;
-                        if (fileBackend != null)
-                        {
-                            _maxSizeMB = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxSizeMB", _maxSizeMB));
-                            _maxAgeDays = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxAgeDays", _maxAgeDays));
-                            _maxLogFileCount = Convert.ToInt32(fileBackend.GetValueOrDefault("MaxLogFileCount", _maxLogFileCount));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Warning: Failed to load file backend config: {ex.Message}");
-                }
-            }
         }
 
         public override void Log(string message, string level, string functionName, string context, string logStackTrace)

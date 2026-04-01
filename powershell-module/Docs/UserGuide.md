@@ -87,17 +87,17 @@ app — no JSON editing required.
    **not** running in exclusive fullscreen mode — windowed or
    borderless-windowed mode is required so the module can read the window
    bounds.
-3. Enter a name for the macro. Names may contain letters, digits, hyphens,
+2. Enter a name for the macro. Names may contain letters, digits, hyphens,
    and underscores only (`[a-zA-Z0-9_-]`, 1–50 characters). Spaces are
    auto-converted to hyphens with your confirmation.
-4. Add actions one at a time from the action menu. For actions that require
+3. Add actions one at a time from the action menu. For actions that require
    a position, move your mouse to the target location over the game window
    and press **Enter** in the console (the console must keep keyboard
    focus throughout recording).
-5. After each coordinate capture you are offered **Accept / Redo / Cancel**.
+4. After each coordinate capture you are offered **Accept / Redo / Cancel**.
    Accept confirms the position; Redo lets you re-capture; Cancel returns
    to the action menu.
-6. Once you have added all the actions you want, select **"Save macro"** to
+5. Once you have added all the actions you want, select **"Save macro"** to
    write the file to disk.
 
 ### Coordinate capture workflow
@@ -332,7 +332,7 @@ end of a scroll list is the intended outcome.
 
 ## Managing Macros
 
-From the main menu select **"Manage macros"** (always visible).
+From the main menu select **"Manage macros"** (only shown when at least one saved macro exists).
 
 ### Available operations
 
@@ -372,8 +372,7 @@ and action type reference.
 
 ## Roadmap
 
-See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 7 complete.
-Phase 8 (Documentation & Examples) in progress.
+See [ProjectPlan.md](ProjectPlan.md). Current status: Phase 9b (Automated SAS Token Management).
 
 ## License
 

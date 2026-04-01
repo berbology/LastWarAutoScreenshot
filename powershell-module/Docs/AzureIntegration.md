@@ -1,6 +1,6 @@
 # Azure Blob Storage Integration
 
-This document covers screenshot upload to Azure Blob Storage — what the feature does,
+This document covers screenshot upload to Azure Blob Storage: what the feature does,
 how to set it up, and how to troubleshoot common problems.
 
 ---
@@ -13,9 +13,9 @@ token is never written to disk.
 
 Two upload paths are available:
 
-- **Inline macro step** — add an `UploadScreenshots` action to a macro so screenshots are
+- **Inline macro step**: add an `UploadScreenshots` action to a macro so screenshots are
   uploaded immediately after they are captured, without any additional steps.
-- **Command-line batch upload** — run `Send-LWASScreenshots` after a macro has finished to
+- **Command-line batch upload**: run `Send-LWASScreenshots` after a macro has finished to
   push all PNG files from the screenshots folder.
 
 Both paths use the same upload profile and retry engine.
@@ -28,12 +28,17 @@ Before creating an upload profile you need:
 
 1. **Azure Storage account** — create one in the Azure portal if you do not have one.
 2. **Blob container** — create a container inside the storage account (e.g. `screenshots`).
-3. **SAS token** — generate a Shared Access Signature with at minimum **Write** and **List**
-   permissions scoped to the container. Set an expiry date that covers your expected usage period.
+3. **SAS token access** — the module generates a 7-day Account SAS token automatically
+   when you save a profile, provided the Az.Storage module is installed and you have an
+   active Azure session (see [Automated SAS Token Management](#automated-sas-token-management)).
+   If you prefer to supply the token yourself, see
+   [Setting the SAS Token Environment Variable](#setting-the-sas-token-environment-variable).
+   Note that an Account SAS is required; container-scoped SAS tokens are not supported for
+   individual blob uploads.
 
 > **Security note:** The SAS token grants write access to your container. Treat it like a
-> password. The module never stores the token on disk — it reads it from an environment
-> variable at upload time.
+> password. The module never writes the token to disk; it is stored as a Windows User-scope
+> environment variable and read from that variable at upload time.
 
 ---
 
@@ -44,17 +49,17 @@ Before creating an upload profile you need:
 1. Launch the app: `Start-LWASConsole`
 2. Navigate to **Configure module → Upload profiles → Add profile**.
 3. Fill in the fields when prompted:
-   - **Profile name** — letters, digits, hyphens, and underscores; 1–50 characters.
-   - **Storage account name** — the Azure account name (e.g. `mystorageaccount`).
-   - **Resource group name** — the Azure Resource Group that contains the storage account
+   - **Profile name**: letters, digits, hyphens, and underscores; 1–50 characters.
+   - **Storage account name**: the Azure account name (e.g. `mystorageaccount`).
+   - **Resource group name**: the Azure Resource Group that contains the storage account
      (e.g. `my-resource-group`). Required so the module can retrieve the storage account
      key when generating SAS tokens automatically.
-   - **Container name** — the blob container (e.g. `screenshots`).
-   - **SAS token environment variable** — select an existing `LWAS_SAS_*` variable or
+   - **Container name**: the blob container (e.g. `screenshots`).
+   - **SAS token environment variable**: select an existing `LWAS_SAS_*` variable or
      create a new one by entering a suffix (the `LWAS_SAS_` prefix is added automatically).
 4. After saving, the module checks whether the configured SAS token environment variable
    holds a valid token. If the token is absent or expired, a new one is requested from
-   Azure automatically — a success or warning message is shown before returning to the
+   Azure automatically and a success or warning message is shown before returning to the
    upload profiles screen.
 5. The profile is saved to `%APPDATA%\LastWarAutoScreenshot\UploadProfiles\{name}.json`.
 
@@ -117,11 +122,12 @@ Remove-LWASUploadProfile -Name 'azure-1' -WhatIf  # dry run
 
 When you save a profile through the console app or `New-LWASUploadProfile`, the module
 checks the configured environment variable automatically. If the token is absent or within
-five minutes of expiry, a new one-year SAS token is generated and stored for you — no
+five minutes of expiry, a new 7-day SAS token is generated and stored for you, so no
 manual step is required.
 
 If you prefer to set the token manually (for example, using a token generated outside this
-module), you can still do so:
+module), you can do so. The token must be an Account SAS with sufficient permissions;
+container-scoped SAS tokens are not supported for individual blob uploads.
 
 ### Temporary (current session only)
 
@@ -180,14 +186,14 @@ Tokens are checked and renewed in two situations:
 1. After the profile is saved the module reads the token from the `sasTokenEnvVar`
    environment variable.
 2. `Test-LWASSASTokenIsValid` checks the `se=` (signed expiry) field in the token. A
-   five-minute safety buffer is applied — a token expiring within five minutes is treated
+   five-minute safety buffer is applied; a token expiring within five minutes is treated
    as expired.
-3. If the token is absent or within the buffer period, `Update-LWASSASToken`
-   generates a new token with a 7-day expiry using `Az.Storage` and stores it at
-   Windows User scope (persists across sessions) and in the current process scope
-   (available immediately without restarting PowerShell).
+3. If the token is absent or within the buffer period, `Update-LWASSASToken` generates a
+   new 7-day Account SAS token using `Az.Storage` and stores it at Windows User scope
+   (persists across sessions) and in the current process scope (available immediately
+   without restarting PowerShell).
 4. In the console app, a success or warning message is displayed inline before returning
-   to the upload profiles list — no separate command is required.
+   to the upload profiles list.
 
 **Before each macro run** (`Start-LWASAutomationSequence`):
 
@@ -205,9 +211,9 @@ manually tracking SAS token expiry.
 
 ### LWAS_SAS_ naming convention
 
-All `sasTokenEnvVar` values must begin with `LWAS_SAS_` followed by a suffix of 1–30
-letters, digits, or underscores (e.g. `LWAS_SAS_PROD`). The full name is uppercased on
-save. This convention:
+All `sasTokenEnvVar` values must begin with `LWAS_SAS_` followed by a suffix containing
+only letters, digits, or underscores (e.g. `LWAS_SAS_PROD`). When entering a suffix through
+the console app, it is uppercased automatically. This convention:
 
 - Prevents collisions with unrelated environment variables.
 - Makes all module-managed token variables discoverable via `Get-LWASSASToken`.
@@ -234,14 +240,28 @@ Update-LWASSASToken -Name 'LWAS_SAS_PROD', 'LWAS_SAS_STAGING'
 [PSCustomObject]@{ Name = 'LWAS_SAS_PROD' } | Update-LWASSASToken
 ```
 
+You can also update tokens from the console app: navigate to **Configure module →
+Upload profiles**, then select **Update Azure profile SAS tokens** to refresh a single
+profile's token or all tokens at once.
+
 ### Checking a token
 
 ```powershell
+# Local validity check (no network call)
 Test-LWASSASTokenIsValid -SasToken $env:LWAS_SAS_PROD
 ```
 
 Returns `$true` if the token is present and has more than five minutes remaining; `$false`
-otherwise. No network call is made — only the `se=` field in the token string is inspected.
+otherwise. No network call is made; only the `se=` field in the token string is inspected.
+
+To list all `LWAS_SAS_*` environment variables with their current validity status, or to
+verify a token against the live Azure endpoint:
+
+```powershell
+Get-LWASSASToken                         # list all tokens with local validity
+Get-LWASSASToken -VerifyOnline           # also test each token with a live HTTP request
+Get-LWASSASToken -Name 'LWAS_SAS_PROD'  # filter to a specific token
+```
 
 ---
 
@@ -362,13 +382,13 @@ Each file upload is retried automatically on failure using exponential backoff w
 delay = min(baseDelayMs × 2^(attempt − 1) + random(0, baseDelayMs), 30 000 ms)
 ```
 
-With the default `RetryBaseDelayMs = 500` and `MaxRetryAttempts = 3`:
+With the default `RetryBaseDelayMs = 500` and `MaxRetryAttempts = 3`, there are at most
+two retries. The delay before each retry is:
 
-| Attempt | Approximate max delay |
-|---------|-----------------------|
-| 1       | 500 ms |
-| 2       | 1 000 ms + jitter |
-| 3       | 2 000 ms + jitter |
+| After attempt | Delay before next attempt |
+|---------------|---------------------------|
+| 1             | 500–999 ms                |
+| 2             | 1 000–1 499 ms            |
 
 **Retryable HTTP status codes:** 429, 500, 502, 503, 504
 
@@ -384,12 +404,12 @@ without retrying, as these indicate a configuration error rather than a transien
 | `Failed to refresh SAS token for upload profile 'xyz'` | `Update-LWASSASToken` returned `$false` during the pre-run preflight | Ensure `Az.Storage` is installed, run `Connect-AzAccount`, then retry the macro |
 | `Upload profile 'xyz' referenced in macro 'abc' was not found` | An `UploadScreenshots` step names a profile that no longer exists | Re-create the profile with `New-LWASUploadProfile` or remove/update the macro step |
 | `Environment variable 'LWAS_SAS_PROD' is not set` | The SAS token env var is missing or the variable name in the profile is wrong | Save the profile again to trigger auto-renewal, or run `Update-LWASSASToken` manually after connecting to Azure |
-| Upload fails with HTTP 403 | SAS token has expired or was generated with insufficient permissions | Run `Update-LWASSASToken -Name 'LWAS_SAS_PROD'` to renew; ensure the token has Write+List permissions |
+| Upload fails with HTTP 403 | SAS token has expired or is invalid | Run `Update-LWASSASToken -Name 'LWAS_SAS_PROD'` to generate a fresh token. If you supplied the token manually, ensure it is an Account SAS with sufficient permissions; container-scoped SAS tokens are not supported |
 | Upload fails with HTTP 404 | Container name or storage account name is wrong | Verify `accountName` and `containerName` in the profile match the Azure portal exactly; container names are lowercase |
 | Some files upload but others fail | Transient Azure errors or network interruption | Check the log for details; re-run `Send-LWASScreenshots` — already-uploaded blobs will be overwritten (idempotent PUT) |
 | `Upload profile 'xyz' not found` | Profile name was misspelled or the profile file was deleted | Run `Get-LWASUploadProfile` to list available profiles |
 | No files uploaded, no error | `StoragePath` folder is empty or contains no PNG files | Confirm the folder contains screenshots; check `Screenshots.StoragePath` in the module config |
 | `Az.Storage` module not found | `Az.Storage` is not installed | Run `Install-Module Az.Storage -Scope CurrentUser` then retry |
 | `Connect-AzAccount` not authenticated | Azure session has expired or was never started | Run `Connect-AzAccount` to authenticate, then retry the operation |
-| `Test-LWASSASTokenIsValid` returns `$false` for a token with time remaining | The token expires within the five-minute safety buffer | This is expected behaviour — the module treats tokens expiring within five minutes as expired to avoid race conditions. Renew early by running `Update-LWASSASToken` |
+| `Test-LWASSASTokenIsValid` returns `$false` for a token with time remaining | The token expires within the five-minute safety buffer | This is expected; the module treats tokens expiring within five minutes as expired to avoid race conditions. Run `Update-LWASSASToken` to renew early |
 | `SasTokenEnvVar must begin with 'LWAS_SAS_'` | The supplied env var name does not follow the required naming convention | Use a name beginning with `LWAS_SAS_` (e.g. `LWAS_SAS_PROD`). This prefix is required for all profiles managed by this module |

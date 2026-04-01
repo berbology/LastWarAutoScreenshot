@@ -17,7 +17,7 @@ function Write-LastWarLog {
         Stack trace if error (LogStackTrace avoids conflict with PowerShell's automatic variable).
     .PARAMETER ForceLog
         Forces the log entry to be written regardless of the MinimumLogLevel setting
-        configured in ModuleConfig.jsonc. Without this switch, entries whose Level is
+        configured in the module configuration. Without this switch, entries whose Level is
         below MinimumLogLevel are silently discarded.
     #>
     [CmdletBinding()]
@@ -55,7 +55,10 @@ function Write-LastWarLog {
 
     $wroteToAny = $false
 
-    $moduleRootLogFile = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+    if (-not (Test-Path $script:LogDir -PathType Container)) {
+        New-Item -Path $script:LogDir -ItemType Directory -Force | Out-Null
+    }
+    $moduleRootLogFile = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
     $userConfiguredLogFile = $null
     if ($backendNames -contains 'File') {
         # Try user-configured file location if set in config, else use module root

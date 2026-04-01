@@ -20,6 +20,10 @@ Describe 'Show-RunMacroScreen' -Tag 'Unit' {
             $script:tc.Profile.Width  = $script:TestConsoleWidth
             $script:tc.Profile.Height = $script:TestConsoleHeight
             $script:tc.Profile.Capabilities.Interactive = $true
+
+            # Default mocks for Win32 window activation helpers; individual tests may override.
+            Mock Invoke-IsIconic { $false }
+            Mock Set-WindowActive {}
         }
     }
 

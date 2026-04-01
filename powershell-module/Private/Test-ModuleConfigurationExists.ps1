@@ -9,7 +9,7 @@ function Test-ModuleConfigurationExists {
 
     .PARAMETER ConfigurationPath
         Optional path to the configuration file. If not specified, checks the default location:
-            $env:APPDATA\LastWarAutoScreenshot\WindowConfig.json
+            $env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc
 
     .OUTPUTS
         System.Boolean
@@ -45,7 +45,7 @@ function Test-ModuleConfigurationExists {
         # Set default configuration path if not specified
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
             $defaultConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot'
-            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'WindowConfig.json'
+            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'ModuleConfig.jsonc'
             Write-Verbose "Using default configuration path: $ConfigurationPath"
         }
         else {

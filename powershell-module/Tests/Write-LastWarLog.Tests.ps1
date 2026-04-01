@@ -17,18 +17,18 @@ Describe 'Write-LastWarLog ModuleRootPath initialisation' -Tag 'Unit' {
 Describe 'Write-LastWarLog' -Tag 'Unit' {
     BeforeAll {
         # Redirect the module's log output to a unique temp directory so tests
-        # never write into the module source tree.
+        # never write into the user's APPDATA directory.
         InModuleScope LastWarAutoScreenshot {
-            $script:_savedModuleRootPath = $script:ModuleRootPath
-            $script:ModuleRootPath = Join-Path $env:TEMP ("LastWarAutoScreenshot_Tests_" + [guid]::NewGuid().ToString())
-            New-Item -Path $script:ModuleRootPath -ItemType Directory -Force | Out-Null
+            $script:_savedLogDir = $script:LogDir
+            $script:LogDir = Join-Path $env:TEMP ("LastWarAutoScreenshot_Tests_" + [guid]::NewGuid().ToString())
+            New-Item -Path $script:LogDir -ItemType Directory -Force | Out-Null
         }
     }
 
     Context 'Log entry format' {
         It 'Should write a log entry with all required fields' {
             InModuleScope LastWarAutoScreenshot {
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Test error' -Level 'Error' -FunctionName 'TestFunc' -Context 'UnitTest' -LogStackTrace 'Stack info' -ForceLog -BackendNames File
                 Test-Path $logFilePath | Should -Be $true
@@ -45,7 +45,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
     Context 'Multiple log entries' {
         It 'Should append multiple log entries' {
             InModuleScope LastWarAutoScreenshot {
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Test error' -Level 'Error' -FunctionName 'TestFunc' -Context 'UnitTest' -LogStackTrace 'Stack info' -ForceLog -BackendNames File
                 Write-LastWarLog -Message 'First' -Level 'Info' -FunctionName 'Func1' -ForceLog -BackendNames File
@@ -70,7 +70,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
         It 'Should suppress an Info entry when MinimumLogLevel is Warning' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Get-MinimumLogLevel { 'Warning' }
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Suppressed info' -Level 'Info' -BackendNames File
                 # No log file should exist because the entry was suppressed before any backend ran
@@ -81,7 +81,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
         It 'Should write an Info entry when -ForceLog bypasses MinimumLogLevel Warning' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Get-MinimumLogLevel { 'Warning' }
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Forced info' -Level 'Info' -ForceLog -BackendNames File
                 Test-Path $logFilePath | Should -Be $true
@@ -93,7 +93,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
         It 'Should write a Warning entry when MinimumLogLevel is Warning' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Get-MinimumLogLevel { 'Warning' }
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Allowed warning' -Level 'Warning' -BackendNames File
                 Test-Path $logFilePath | Should -Be $true
@@ -105,7 +105,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
         It 'Should suppress a Warning entry when MinimumLogLevel is Error' {
             InModuleScope LastWarAutoScreenshot {
                 Mock Get-MinimumLogLevel { 'Error' }
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Suppressed warning' -Level 'Warning' -BackendNames File
                 (Test-Path $logFilePath) | Should -Be $false
@@ -120,7 +120,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
                 Mock Test-EventLogSourceExists { $true }
                 Mock Write-EventLog { throw 'Simulated EventLog failure' }
                 Mock Write-Warning {}
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'EventLog fallback test' -Level 'Info' -FunctionName 'TestFunc' -ForceLog -BackendNames 'EventLog'
                 Test-Path $logFilePath | Should -Be $true
@@ -133,7 +133,7 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
             InModuleScope LastWarAutoScreenshot {
                 # Passing an empty BackendNames means neither File nor EventLog branch runs,
                 # leaving $wroteToAny = $false and triggering the final catch-all fallback.
-                $logFilePath = Join-Path $script:ModuleRootPath 'LastWarAutoScreenshot.log'
+                $logFilePath = Join-Path $script:LogDir 'LastWarAutoScreenshot.log'
                 if (Test-Path $logFilePath) { Remove-Item $logFilePath -Force }
                 Write-LastWarLog -Message 'Final fallback test' -Level 'Info' -FunctionName 'TestFunc' -ForceLog -BackendNames @()
                 Test-Path $logFilePath | Should -Be $true
@@ -145,8 +145,8 @@ Describe 'Write-LastWarLog' -Tag 'Unit' {
 
     AfterAll {
         InModuleScope LastWarAutoScreenshot {
-            if (Test-Path $script:ModuleRootPath) { Remove-Item $script:ModuleRootPath -Recurse -Force }
-            $script:ModuleRootPath = $script:_savedModuleRootPath
+            if (Test-Path $script:LogDir) { Remove-Item $script:LogDir -Recurse -Force }
+            $script:LogDir = $script:_savedLogDir
         }
     }
 }

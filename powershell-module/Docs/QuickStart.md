@@ -69,8 +69,8 @@ Two mechanisms are available at any time during execution:
 |--------|----------------|
 | **Keyboard hotkey** (configurable) | Hold `Ctrl+Alt+Q` simultaneously |
 
-Either trigger halts the current action at the next safe checkpoint, reports
-how many actions completed, and exits cleanly. To change the hotkey, go to
+The hotkey halts the current action at the next safe checkpoint, reports
+how many actions completed, and exits cleanly. To change it, go to
 **Configure module → Emergency stop settings** in the app.
 
 ---

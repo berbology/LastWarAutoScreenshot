@@ -35,7 +35,7 @@ production-style runs; `Verbose` when debugging a problem.
 
 ### Log file details
 
-- **Location:** Module directory (same folder as the `.psm1`)
+- **Location:** `$env:APPDATA\LastWarAutoScreenshot\`
 - **Filename:** `LastWarAutoScreenshot.log`
 - **Format:** JSON — one entry per line, easy to parse or `grep`
 - **Rollover:** A new file is created when the current file reaches `MaxSizeMB` or `MaxAgeDays`.

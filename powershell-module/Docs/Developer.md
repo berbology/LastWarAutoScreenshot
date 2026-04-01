@@ -92,6 +92,7 @@ powershell-module/
 │   ├── FileLogBackend.cs
 │   ├── WindowEnumerationAPI.cs
 │   ├── MouseControlAPI.cs
+│   ├── ScreenCaptureAPI.cs      # PrintWindow P/Invoke wrapper
 │   └── ConsoleAppBridge.cs      # Spectre.Console factory helpers;
 │                                # references Spectre.Console.dll
 ├── lib/
@@ -119,13 +120,17 @@ On import, `LastWarAutoScreenshot.psm1`:
 1. Verifies all C# source files and `lib/Spectre.Console.dll` exist.
 2. Checks whether the C# types are already loaded (to survive `-Force`
    re-imports without duplicate-type errors).
-3. Compiles and loads C# types via `Add-Type`. `ConsoleAppBridge.cs` is
-   compiled separately because it references `Spectre.Console.dll`.
-4. Dot-sources in order:
+3. Compiles and loads C# types via `Add-Type`. The core source files are
+   compiled in a single pass so `ScreenCaptureAPI.cs` can reference types
+   from `MouseControlAPI.cs`. `ConsoleAppBridge.cs` is compiled separately
+   afterwards because it references `Spectre.Console.dll`.
+4. Loads `System.Drawing.Common` so screenshot helper functions can use
+   `System.Drawing.Bitmap` at runtime without a C# compile step.
+5. Dot-sources in order:
+   - `Public/*.ps1`
    - `Private/LastWarAutoScreenshotHelpers.ps1`
    - All other `Private/*.ps1`
    - `Private/ConsoleApp/*.ps1`
-   - `Public/*.ps1`
 
 ---
 

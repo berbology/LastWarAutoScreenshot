@@ -10,7 +10,7 @@ function Get-ModuleConfiguration {
 
     .PARAMETER ConfigurationPath
         Optional path to the configuration file. If not specified, defaults to:
-            $env:APPDATA\LastWarAutoScreenshot\WindowConfig.json
+            $env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc
 
     .OUTPUTS
         PSCustomObject
@@ -62,7 +62,7 @@ function Get-ModuleConfiguration {
         # Set default configuration path if not specified
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
             $defaultConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot'
-            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'WindowConfig.json'
+            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'ModuleConfig.jsonc'
             Write-Verbose "Using default configuration path: $ConfigurationPath"
         }
         else {
@@ -116,7 +116,9 @@ function Get-ModuleConfiguration {
                 Write-LastWarLog -Level Info `
                     -Message "Default module configuration created at: $ConfigurationPath" `
                     -FunctionName 'Get-ModuleConfiguration' `
-                    -Context "Path: $ConfigurationPath"
+                    -Context "Path: $ConfigurationPath" `
+                    -ForceLog `
+                    -BackendNames @('File')
                 Write-Verbose "Default module configuration created at: $ConfigurationPath"
 
                 return $defaultConfig
@@ -163,12 +165,16 @@ function Get-ModuleConfiguration {
                     $configData.EmergencyStop | Add-Member -MemberType NoteProperty -Name HotkeyKeyNames -Value $migratedKeyNames
                     Write-LastWarLog -Level Info `
                         -Message "Migrated HotkeyVKeyCodes @($($oldCodes -join ', ')) to HotkeyKeyNames '$migratedKeyNames'." `
-                        -FunctionName 'Get-ModuleConfiguration'
+                        -FunctionName 'Get-ModuleConfiguration' `
+                        -ForceLog `
+                        -BackendNames @('File')
                 }
                 catch {
                     Write-LastWarLog -Level Warning `
                         -Message "Could not migrate HotkeyVKeyCodes to HotkeyKeyNames: $_. Using default '$($defaults.EmergencyStop.HotkeyKeyNames)'." `
-                        -FunctionName 'Get-ModuleConfiguration'
+                        -FunctionName 'Get-ModuleConfiguration' `
+                        -ForceLog `
+                        -BackendNames @('File')
                     $configData.EmergencyStop | Add-Member -MemberType NoteProperty -Name HotkeyKeyNames -Value $defaults.EmergencyStop.HotkeyKeyNames
                 }
             }
@@ -251,16 +257,16 @@ function Get-ModuleConfiguration {
                 $missingProperties = $windowProperties | Where-Object { -not $configData.PSObject.Properties[$_] }
                 $errorMsg = "Configuration file is missing required properties: $($missingProperties -join ', ')"
                 Write-Error "Error: $errorMsg"
-                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
+                Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_ -ForceLog -BackendNames @('File')
                 throw $errorMsg
             }
 
             if ($presentCount -eq $windowProperties.Count) {
                 Write-Verbose "Configuration loaded successfully: ProcessName=$($configData.ProcessName), WindowTitle=$($configData.WindowTitle)"
-                Write-LastWarLog -Level Info -Message "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -FunctionName 'Get-ModuleConfiguration'
+                Write-LastWarLog -Level Info -Message "Loaded window configuration: $($configData.ProcessName) - $($configData.WindowTitle)" -FunctionName 'Get-ModuleConfiguration' -ForceLog -BackendNames @('File')
             } else {
                 Write-Verbose 'Configuration loaded (settings only — no window target configured)'
-                Write-LastWarLog -Level Info -Message 'Loaded settings-only configuration (no window target)' -FunctionName 'Get-ModuleConfiguration'
+                Write-LastWarLog -Level Info -Message 'Loaded settings-only configuration (no window target)' -FunctionName 'Get-ModuleConfiguration' -ForceLog -BackendNames @('File')
             }
 
             # Return configuration object
@@ -269,19 +275,19 @@ function Get-ModuleConfiguration {
         catch [System.IO.IOException] {
             $errorMsg = "Failed to read configuration file: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_ -ForceLog -BackendNames @('File')
             throw
         }
         catch [System.ArgumentException] {
             $errorMsg = "Invalid JSON format in configuration file: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_ -ForceLog -BackendNames @('File')
             throw
         }
         catch {
             $errorMsg = "Unexpected error loading window configuration: $_"
             Write-Error "Error: $errorMsg"
-            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_
+            Write-LastWarLog -Message $errorMsg -Level Error -FunctionName 'Get-ModuleConfiguration' -Context "Path: $ConfigurationPath" -LogStackTrace $_ -ForceLog -BackendNames @('File')
             throw
         }
     }

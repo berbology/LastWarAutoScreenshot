@@ -34,9 +34,11 @@ function Show-StorageInfoScreen {
 
         Navigation:
           '[[Back]]'                           -> returns to the calling screen.
-          'Open log folder in Explorer'        -> launches Explorer at the module root log
+          'Open log folder in Explorer'        -> launches Explorer at the APPDATA log
                                                  folder (only shown when Logging.Backend
                                                  includes 'File').
+          'Open macro folder in Explorer'      -> launches Explorer at the macro folder
+                                                 (only shown when IsConfigured = $true).
           'Open screenshot folder in Explorer' -> launches Explorer at the storage path
                                                  (only shown when IsConfigured = $true).
 
@@ -205,6 +207,7 @@ function Show-StorageInfoScreen {
 
     # ── Navigation ────────────────────────────────────────────────────────────
     $storePath  = $config.Screenshots.StoragePath
+    $macroPath  = Join-Path $env:APPDATA 'LastWarAutoScreenshot\Macros'
 
     $navChoices = [System.Collections.Generic.List[string]]::new()
     $navChoices.Add('[[Back]]')
@@ -212,6 +215,7 @@ function Show-StorageInfoScreen {
         $navChoices.Add('Open log folder in Explorer')
     }
     if ($storageInfo.IsConfigured) {
+        $navChoices.Add('Open macro folder in Explorer')
         $navChoices.Add('Open screenshot folder in Explorer')
     }
 
@@ -223,8 +227,12 @@ function Show-StorageInfoScreen {
 
     switch ($navChoice) {
         'Open log folder in Explorer' {
-            Start-Process -FilePath 'explorer.exe' -ArgumentList $script:ModuleRootPath
+            Start-Process -FilePath 'explorer.exe' -ArgumentList $script:LogDir
             $Console.Write([Spectre.Console.Markup]::new("[green]Opening log folder in Explorer...`n[/]"))
+        }
+        'Open macro folder in Explorer' {
+            Start-Process -FilePath 'explorer.exe' -ArgumentList $macroPath
+            $Console.Write([Spectre.Console.Markup]::new("[green]Opening macro folder in Explorer...`n[/]"))
         }
         'Open screenshot folder in Explorer' {
             Start-Process -FilePath 'explorer.exe' -ArgumentList $storePath

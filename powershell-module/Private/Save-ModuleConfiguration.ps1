@@ -16,7 +16,7 @@ function Save-ModuleConfiguration {
 
         .PARAMETER ConfigurationPath
             Optional path to save the configuration file. If not specified, defaults to:
-            $env:APPDATA\LastWarAutoScreenshot\WindowConfig.json
+            $env:APPDATA\LastWarAutoScreenshot\ModuleConfig.jsonc
 
     .PARAMETER Force
         Skip confirmation prompt when overwriting an existing configuration file.
@@ -71,7 +71,7 @@ function Save-ModuleConfiguration {
         # Set default configuration path if not specified
         if (-not $PSBoundParameters.ContainsKey('ConfigurationPath')) {
             $defaultConfigDir = Join-Path -Path $env:APPDATA -ChildPath 'LastWarAutoScreenshot'
-            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'WindowConfig.json'
+            $ConfigurationPath = Join-Path -Path $defaultConfigDir -ChildPath 'ModuleConfig.jsonc'
             Write-Verbose "Using default configuration path: $ConfigurationPath"
         }
         else {
@@ -113,7 +113,7 @@ function Save-ModuleConfiguration {
             $parentDir = Split-Path -Path $ConfigurationPath -Parent
             if (-not (Test-Path -Path $parentDir -PathType Container)) {
                 Write-Verbose "Creating configuration directory: $parentDir"
-                New-Item -Path $parentDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
+                [System.IO.Directory]::CreateDirectory($parentDir) | Out-Null
             }
 
             # Load existing configuration to preserve module settings (MouseControl, EmergencyStop, Logging)

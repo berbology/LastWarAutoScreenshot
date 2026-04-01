@@ -27,7 +27,8 @@ Main Menu
 │   ├── Emergency stop settings
 │   ├── Screenshot settings
 │   ├── Set default code editor
-│   └── Edit module configuration
+│   ├── Edit module configuration
+│   └── Upload profiles
 ├── Record macro            → select target window (step 1), then build a
 │                             macro action by action and save
 ├── Run macro               → select and execute a saved macro; window is

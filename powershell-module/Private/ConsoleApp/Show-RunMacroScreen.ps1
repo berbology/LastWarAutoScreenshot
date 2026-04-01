@@ -268,6 +268,16 @@ function Show-RunMacroScreen {
             continue
         }
 
+        # Restore if minimised, then bring to foreground
+        if (Invoke-IsIconic -WindowHandle $windowHandle) {
+            Set-WindowState -WindowHandle $windowHandle -State 'Restore' | Out-Null
+            Write-LastWarLog -Level Info `
+                -Message "Restored minimised window '$($macro.Data.targetWindow.windowTitle)' before macro execution." `
+                -FunctionName 'Show-RunMacroScreen'
+            Start-Sleep -Milliseconds $storageConfig.MacroExecution.WindowRestoreDelayMs
+        }
+        Set-WindowActive -WindowHandle $windowHandle | Out-Null
+
         $result = Invoke-MacroSequence -MacroData $macro.Data -WindowHandle $windowHandle -Console $Console
 
         if ($result.Success) {
