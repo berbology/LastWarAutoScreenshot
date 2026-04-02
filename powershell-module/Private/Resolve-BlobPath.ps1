@@ -25,7 +25,7 @@ function Resolve-BlobPath {
 
     .PARAMETER UploadTime
         The timestamp to use for {Date} and {Time} substitutions. Defaults to
-        [datetime]::UtcNow when not supplied.
+        [datetime]::Now (local time) when not supplied.
 
     .OUTPUTS
         System.String
@@ -49,7 +49,7 @@ function Resolve-BlobPath {
         [string]$Filename,
 
         [Parameter()]
-        [datetime]$UploadTime = [datetime]::UtcNow
+        [datetime]$UploadTime = [datetime]::Now
     )
 
     $knownPlaceholders = @('{MacroName}', '{Date}', '{Time}', '{Filename}')
