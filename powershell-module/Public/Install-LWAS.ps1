@@ -33,9 +33,14 @@ function Install-LWAS {
            exists.
         6. Macros directory creation — ensures '$env:APPDATA\LastWarAutoScreenshot\Macros\'
            exists.
-        7. Dependency verification — checks that the bundled Spectre.Console DLLs
+        7. Config file creation — writes a default ModuleConfig.jsonc to
+           '$env:APPDATA\LastWarAutoScreenshot\' if it does not exist.  If a file
+           already exists the user is prompted before overwriting (default: no);
+           -Force skips the prompt.  In either case the existing file is renamed to
+           'moduleconfig_<ddMMyyHHmmss>.bak' before the new default is written.
+        8. Dependency verification — checks that the bundled Spectre.Console DLLs
            are present. Downloads from NuGet as a repair step if either is missing.
-        8. Test dependencies (when -IncludeTests) — ensures Pester is installed and
+        9. Test dependencies (when -IncludeTests) — ensures Pester is installed and
            that Spectre.Console.Testing.dll is present in the installed module.
 
         Must be run in an elevated (Administrator) PowerShell window.
@@ -194,6 +199,52 @@ function Install-LWAS {
     }
     else {
         Write-Verbose 'Upload profiles directory already exists, skipping.'
+    }
+
+    # Step 9 — Create default ModuleConfig.jsonc
+    $configPath   = Join-Path $appDataPath 'ModuleConfig.jsonc'
+    $configExists = Test-Path -Path $configPath -PathType Leaf
+
+    $writeConfig = $false
+    if (-not $configExists) {
+        $writeConfig = $true
+        Write-Verbose 'No existing config file found; writing defaults.'
+    }
+    elseif ($Force) {
+        $writeConfig = $true
+        Write-Verbose 'Config file exists — overwriting as requested (-Force).'
+    }
+    else {
+        $answer = Read-Host "A config file already exists at '$configPath'. Overwrite with defaults? [y/N]"
+        if ($answer -match '^[Yy]$') {
+            $writeConfig = $true
+        }
+        else {
+            Write-Verbose 'Config file overwrite skipped by user.'
+        }
+    }
+
+    if ($writeConfig -and $configExists) {
+        $timestamp  = Get-Date -Format 'ddMMyyHHmmss'
+        $backupName = "moduleconfig_$timestamp.bak"
+        $backupPath = Join-Path $appDataPath $backupName
+        Move-Item -Path $configPath -Destination $backupPath -Force
+        Write-Host "Existing config backed up to: $backupPath"
+    }
+
+    if ($writeConfig) {
+        $defaults      = Get-DefaultModuleSettings
+        $defaultConfig = [PSCustomObject]@{
+            Logging        = $defaults.Logging
+            MouseControl   = $defaults.MouseControl
+            EmergencyStop  = $defaults.EmergencyStop
+            Screenshots    = $defaults.Screenshots
+            CodeEditor     = $defaults.CodeEditor
+            MacroExecution = $defaults.MacroExecution
+        }
+        $jsonContent = Get-ModuleConfigJsoncContent -Config $defaultConfig
+        Set-Content -Path $configPath -Value $jsonContent -Encoding UTF8 -Force
+        Write-Host "Default config written to: $configPath"
     }
 
     # --- Dependency verification ---
