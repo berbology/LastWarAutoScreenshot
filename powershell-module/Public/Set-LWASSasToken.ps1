@@ -44,10 +44,10 @@ function Set-LWASSasToken {
     }
 
     # Persist at User scope so new sessions inherit the value automatically.
-    [Environment]::SetEnvironmentVariable($Name, $Token, [EnvironmentVariableTarget]::User)
+    Set-EnvironmentVariable -Name $Name -Value $Token -Target ([EnvironmentVariableTarget]::User)
 
     # Apply immediately to the current session so callers can use the value without restarting.
-    [Environment]::SetEnvironmentVariable($Name, $Token, [EnvironmentVariableTarget]::Process)
+    Set-EnvironmentVariable -Name $Name -Value $Token -Target ([EnvironmentVariableTarget]::Process)
 
     Write-Verbose "SAS token saved to User environment variable '$Name'."
 }
