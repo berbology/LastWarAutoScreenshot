@@ -80,8 +80,8 @@ function Save-ModuleSettings {
                 Write-Verbose "Created configuration directory: $parentDir"
             }
 
-            $Config | ConvertTo-Json -Depth 5 |
-                Set-Content -Path $ConfigurationPath -Encoding UTF8 -Force -ErrorAction Stop
+            $jsonContent = Get-ModuleConfigJsoncContent -Config $Config
+            Set-Content -Path $ConfigurationPath -Value $jsonContent -Encoding UTF8 -Force -ErrorAction Stop
 
             Write-LastWarLog -Level Info `
                 -Message "Module settings saved to: $ConfigurationPath" `

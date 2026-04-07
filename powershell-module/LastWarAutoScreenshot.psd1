@@ -34,7 +34,7 @@ Description = 'Automates the task of taking screenshots within the game.
 Useful for capturing alliance strength, VS rankings etc.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '7.0'
+PowerShellVersion = '7.6'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''

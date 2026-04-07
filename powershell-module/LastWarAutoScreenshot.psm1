@@ -32,21 +32,21 @@ if ($global:LastWarAutoScreenshot_LoggingInitFailed) {
 }
 
 # Dependency checks before loading C# types
-# Check .NET 9 runtime using environment/version info (avoids type loading issues)
+# Check .NET 10 runtime using environment/version info (avoids type loading issues)
 $dotNetOk = $false
 $currentRuntime = "Unknown"
 
 try {
-    # Try to detect .NET 9 from $PSHOME path or PSVersionTable
-    if ($PSHOME -like "*9*" -or $PSVersionTable.PSVersion.Major -ge 7) {
-        # For PS 7.4+, check if we can access System.Runtime
+    # Try to detect .NET 10 from $PSHOME path or PSVersionTable
+    if ($PSHOME -like "*10*" -or $PSVersionTable.PSVersion.Major -ge 7) {
+        # For PS 7.6+, check if we can access System.Runtime
         $dotNetOk = $true
         try {
             # Load System.Runtime to get accurate version info
             Add-Type -AssemblyName 'System.Runtime'
             $runtimeInfo = [System.Runtime.RuntimeInformation]::FrameworkDescription
             $currentRuntime = $runtimeInfo
-            $dotNetOk = $runtimeInfo -like "*.NET 9*"
+            $dotNetOk = $runtimeInfo -like "*.NET 10*"
         } catch {
             # If we can't load the type, assume we're on a compatible runtime
             $currentRuntime = "PowerShell $($PSVersionTable.PSVersion)"
@@ -60,7 +60,7 @@ try {
 
 if (-not $dotNetOk) {
     $errorMsg = @"
-Missing dependency: .NET 9 or Spectre.Console.dll
+Missing dependency: .NET 10 or Spectre.Console.dll
 Run Install-LastWarAutoScreenshot to fix.
 Current runtime: $currentRuntime
 "@
@@ -71,7 +71,7 @@ Current runtime: $currentRuntime
 
 # Check Spectre.Console.dll exists
 if (-not (Test-Path $spectreConsolePath)) {
-    Write-Error "Missing dependency: .NET 9 or Spectre.Console.dll. Run Install-LastWarAutoScreenshot to fix."
+    Write-Error "Missing dependency: .NET 10 or Spectre.Console.dll. Run Install-LastWarAutoScreenshot to fix."
     $global:LastWarAutoScreenshot_LoggingInitFailed = $true
     return
 }
@@ -110,15 +110,15 @@ if ($alreadyLoaded.Count -gt 0) {
     #    ScreenCaptureAPI.cs contains only the PrintWindow P/Invoke — bitmap creation,
     #    cropping, and PNG saving are done in PowerShell using System.Drawing at runtime
     #    to avoid compiling against System.Drawing.Common here (System.Private.CoreLib
-    #    and System.Private.Windows.Core have empty or runtime-only locations in .NET 9
+    #    and System.Private.Windows.Core have empty or runtime-only locations in .NET 10
     #    and cannot be reliably resolved via -ReferencedAssemblies).
     #    ConsoleAppBridge references Spectre.Console and is compiled separately below.
     Add-Type -Path $logBackendSourcecodePath, $fileLogBackendSourcecodePath, $windowEnumerationAPISourcecodePath, $mouseControlAPISourcecodePath, $screenCaptureApiPath
     Add-Type -Path $consoleAppBridgePath -ReferencedAssemblies $spectreConsolePath
 }
 
-# Load System.Drawing.Common so the screenshot PowerShell wrapper functions can use
-# System.Drawing.Bitmap, Graphics, ImageFormat, etc. at runtime without a C# compile step.
+# Load System.Drawing.Common for .NET 10 runtime so the screenshot PowerShell wrapper functions
+# can use System.Drawing.Bitmap, Graphics, ImageFormat, etc. at runtime without a C# compile step.
 # This is idempotent — safe to call even if the assembly is already loaded.
 Add-Type -AssemblyName 'System.Drawing.Common'
 

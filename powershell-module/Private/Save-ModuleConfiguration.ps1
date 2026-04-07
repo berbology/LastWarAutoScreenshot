@@ -194,14 +194,14 @@ function Save-ModuleConfiguration {
                 Screenshots         = $screenshotsConfig
             }
 
-            Write-Verbose "Serializing configuration to JSON format"
-            
-            # Serialize to JSON with formatting
-            $jsonContent = $configData | ConvertTo-Json -Depth 5
-            
+            Write-Verbose "Serializing configuration to JSONC format"
+
+            # Serialise to JSONC (JSON with embedded comments for user guidance)
+            $jsonContent = Get-ModuleConfigJsoncContent -Config $configData
+
             # Save to file
             Write-Verbose "Writing configuration to file: $ConfigurationPath"
-            $jsonContent | Set-Content -Path $ConfigurationPath -Encoding UTF8 -ErrorAction Stop -Force
+            Set-Content -Path $ConfigurationPath -Value $jsonContent -Encoding UTF8 -ErrorAction Stop -Force
             
             # Get FileInfo object for return
             $savedFile = Get-Item -Path $ConfigurationPath -ErrorAction Stop

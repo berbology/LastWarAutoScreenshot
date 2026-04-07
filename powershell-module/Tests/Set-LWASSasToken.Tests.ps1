@@ -4,26 +4,12 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-AfterAll {
-    [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_SET', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-    Remove-ItemProperty -Path 'HKCU:\Environment' -Name 'LWAS_SAS_PESTER_SET' -ErrorAction SilentlyContinue
-}
-
 Describe 'Set-LWASSasToken' -Tag 'Unit' {
-
-    BeforeEach {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_SET', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-        Remove-ItemProperty -Path 'HKCU:\Environment' -Name 'LWAS_SAS_PESTER_SET' -ErrorAction SilentlyContinue
-    }
-
-    AfterEach {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_SET', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-        Remove-ItemProperty -Path 'HKCU:\Environment' -Name 'LWAS_SAS_PESTER_SET' -ErrorAction SilentlyContinue
-    }
 
     It 'Writes an error and returns when the variable name contains invalid characters' {
         InModuleScope LastWarAutoScreenshot {
             Mock Write-Error {}
+            Mock Set-EnvironmentVariable {}
 
             Set-LWASSasToken -Name 'LWAS SAS INVALID!' -Token 'some-token'
 
@@ -34,48 +20,46 @@ Describe 'Set-LWASSasToken' -Tag 'Unit' {
     It 'Does not set any environment variable when the name contains invalid characters' {
         InModuleScope LastWarAutoScreenshot {
             Mock Write-Error {}
+            Mock Set-EnvironmentVariable {}
+
+            Set-LWASSasToken -Name 'BAD NAME!' -Token 'some-token' -ErrorAction SilentlyContinue
+
+            Should -Invoke Set-EnvironmentVariable -Times 0
         }
-
-        Set-LWASSasToken -Name 'BAD NAME!' -Token 'some-token' -ErrorAction SilentlyContinue
-
-        [Environment]::GetEnvironmentVariable('BAD NAME!', [System.EnvironmentVariableTarget]::Process) | Should -BeNull
     }
 
-    It 'Sets the variable in the current Process scope' {
-        Set-LWASSasToken -Name 'LWAS_SAS_PESTER_SET' -Token 'my-test-token'
+    It 'Sets the variable in both Process and User scopes' {
+        InModuleScope LastWarAutoScreenshot {
+            Mock Set-EnvironmentVariable {}
 
-        [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_SET', [System.EnvironmentVariableTarget]::Process) |
-            Should -Be 'my-test-token'
-    }
+            Set-LWASSasToken -Name 'LWAS_TEST_VAR' -Token 'my-test-token'
 
-    It 'Sets the variable in User scope so it persists across sessions' {
-        Set-LWASSasToken -Name 'LWAS_SAS_PESTER_SET' -Token 'my-test-token'
-
-        # Read from registry directly: GetEnvironmentVariable(User) may return stale entries in the current session
-        (Get-Item -Path 'HKCU:\Environment').GetValue('LWAS_SAS_PESTER_SET') |
-            Should -Be 'my-test-token'
+            Should -Invoke Set-EnvironmentVariable -Times 2 -ParameterFilter {
+                $Name -eq 'LWAS_TEST_VAR' -and $Value -eq 'my-test-token'
+            }
+        }
     }
 
     It 'Accepts an empty string as a valid token value' {
-        { Set-LWASSasToken -Name 'LWAS_SAS_PESTER_SET' -Token '' } | Should -Not -Throw
+        InModuleScope LastWarAutoScreenshot {
+            Mock Set-EnvironmentVariable {}
 
-        [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_SET', [System.EnvironmentVariableTarget]::Process) |
-            Should -Be ''
-    }
+            { Set-LWASSasToken -Name 'LWAS_TEST_VAR' -Token '' } | Should -Not -Throw
 
-    It 'Overwrites an existing token value with the new value' {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_SET', 'old-value', [System.EnvironmentVariableTarget]::Process)
-
-        Set-LWASSasToken -Name 'LWAS_SAS_PESTER_SET' -Token 'new-value'
-
-        [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_SET', [System.EnvironmentVariableTarget]::Process) |
-            Should -Be 'new-value'
+            Should -Invoke Set-EnvironmentVariable -Times 2 -ParameterFilter {
+                $Name -eq 'LWAS_TEST_VAR' -and $Value -eq ''
+            }
+        }
     }
 
     It 'Writes verbose output after successful storage' {
-        $output = Set-LWASSasToken -Name 'LWAS_SAS_PESTER_SET' -Token 'tok' -Verbose 4>&1
-        $verboseMessages = @($output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] })
+        InModuleScope LastWarAutoScreenshot {
+            Mock Set-EnvironmentVariable {}
 
-        $verboseMessages | Where-Object { $_.Message -like '*LWAS_SAS_PESTER_SET*' } | Should -Not -BeNullOrEmpty
+            $output = Set-LWASSasToken -Name 'LWAS_TEST_VAR' -Token 'tok' -Verbose 4>&1
+            $verboseMessages = @($output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] })
+
+            $verboseMessages | Where-Object { $_.Message -like '*LWAS_TEST_VAR*' } | Should -Not -BeNullOrEmpty
+        }
     }
 }

@@ -4,22 +4,7 @@ BeforeAll {
     Import-Module $moduleManifest -Force
 }
 
-AfterAll {
-    [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-    [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-}
-
 Describe 'Remove-LWASSasToken' -Tag 'Unit' {
-
-    BeforeEach {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-    }
-
-    AfterEach {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
-    }
 
     It 'Writes an error and continues when the variable name contains invalid characters' {
         InModuleScope LastWarAutoScreenshot {
@@ -43,51 +28,71 @@ Describe 'Remove-LWASSasToken' -Tag 'Unit' {
     }
 
     It 'Removes a variable that exists in Process scope' {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', 'test-token', [System.EnvironmentVariableTarget]::Process)
+        $varName = "LWAS_RM_PESTER_$([System.Guid]::NewGuid().ToString('N').Substring(0, 8))"
+        [Environment]::SetEnvironmentVariable($varName, 'test-token', [System.EnvironmentVariableTarget]::Process)
 
-        Remove-LWASSasToken -Name 'LWAS_SAS_PESTER_RM'
+        try {
+            Remove-LWASSasToken -Name $varName
 
-        [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM', [System.EnvironmentVariableTarget]::Process) |
-            Should -BeNull
+            [Environment]::GetEnvironmentVariable($varName, [System.EnvironmentVariableTarget]::Process) |
+                Should -BeNull
+        } finally {
+            [Environment]::SetEnvironmentVariable($varName, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+        }
     }
 
     It 'Processes multiple names supplied as an array' {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM',  'val1', [System.EnvironmentVariableTarget]::Process)
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', 'val2', [System.EnvironmentVariableTarget]::Process)
+        $suffix = [System.Guid]::NewGuid().ToString('N').Substring(0, 8)
+        $var1 = "LWAS_RM_PESTER_1_$suffix"
+        $var2 = "LWAS_RM_PESTER_2_$suffix"
+
+        [Environment]::SetEnvironmentVariable($var1, 'val1', [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable($var2, 'val2', [System.EnvironmentVariableTarget]::Process)
 
         try {
-            Remove-LWASSasToken -Name 'LWAS_SAS_PESTER_RM', 'LWAS_SAS_PESTER_RM2'
+            Remove-LWASSasToken -Name $var1, $var2
 
-            [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM',  [System.EnvironmentVariableTarget]::Process) | Should -BeNull
-            [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [System.EnvironmentVariableTarget]::Process) | Should -BeNull
+            [Environment]::GetEnvironmentVariable($var1, [System.EnvironmentVariableTarget]::Process) | Should -BeNull
+            [Environment]::GetEnvironmentVariable($var2, [System.EnvironmentVariableTarget]::Process) | Should -BeNull
         } finally {
-            [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+            [Environment]::SetEnvironmentVariable($var1, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+            [Environment]::SetEnvironmentVariable($var2, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
         }
     }
 
     It 'Pipeline: accepts objects with a Name property and removes each token' {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM',  'val1', [System.EnvironmentVariableTarget]::Process)
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', 'val2', [System.EnvironmentVariableTarget]::Process)
+        $suffix = [System.Guid]::NewGuid().ToString('N').Substring(0, 8)
+        $var1 = "LWAS_RM_PESTER_1_$suffix"
+        $var2 = "LWAS_RM_PESTER_2_$suffix"
+
+        [Environment]::SetEnvironmentVariable($var1, 'val1', [System.EnvironmentVariableTarget]::Process)
+        [Environment]::SetEnvironmentVariable($var2, 'val2', [System.EnvironmentVariableTarget]::Process)
 
         try {
             @(
-                [PSCustomObject]@{ Name = 'LWAS_SAS_PESTER_RM'  }
-                [PSCustomObject]@{ Name = 'LWAS_SAS_PESTER_RM2' }
+                [PSCustomObject]@{ Name = $var1 }
+                [PSCustomObject]@{ Name = $var2 }
             ) | Remove-LWASSasToken
 
-            [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM',  [System.EnvironmentVariableTarget]::Process) | Should -BeNull
-            [Environment]::GetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [System.EnvironmentVariableTarget]::Process) | Should -BeNull
+            [Environment]::GetEnvironmentVariable($var1, [System.EnvironmentVariableTarget]::Process) | Should -BeNull
+            [Environment]::GetEnvironmentVariable($var2, [System.EnvironmentVariableTarget]::Process) | Should -BeNull
         } finally {
-            [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM2', [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+            [Environment]::SetEnvironmentVariable($var1, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+            [Environment]::SetEnvironmentVariable($var2, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
         }
     }
 
     It 'Writes verbose output after successful removal' {
-        [Environment]::SetEnvironmentVariable('LWAS_SAS_PESTER_RM', 'test-token', [System.EnvironmentVariableTarget]::Process)
+        $varName = "LWAS_RM_PESTER_$([System.Guid]::NewGuid().ToString('N').Substring(0, 8))"
+        [Environment]::SetEnvironmentVariable($varName, 'test-token', [System.EnvironmentVariableTarget]::Process)
 
-        $output = Remove-LWASSasToken -Name 'LWAS_SAS_PESTER_RM' -Verbose 4>&1
-        $verboseMessages = @($output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] })
+        try {
+            $output = Remove-LWASSasToken -Name $varName -Verbose 4>&1
+            $verboseMessages = @($output | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] })
 
-        $verboseMessages | Where-Object { $_.Message -like '*LWAS_SAS_PESTER_RM*' } | Should -Not -BeNullOrEmpty
+            $verboseMessages | Where-Object { $_.Message -like "*$varName*" } | Should -Not -BeNullOrEmpty
+        } finally {
+            [Environment]::SetEnvironmentVariable($varName, [NullString]::Value, [System.EnvironmentVariableTarget]::Process)
+        }
     }
 }
