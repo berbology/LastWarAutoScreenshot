@@ -54,8 +54,9 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile -MockWith $mockMacroData
 
                 $tc = $script:tc
-                # Edit menu (no changes): [0]Rename macro [1]Edit steps [2][[Back]]
-                # Navigate to [Back] (index 2)
+                # Edit menu (no changes): [0]Add steps [1]Rename macro [2]Edit steps [3][[Back]]
+                # Navigate to [Back] (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -83,12 +84,14 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
                 $tc = $script:tc
-                # Select 'Rename macro' (index 0)
+                # Select 'Rename macro' (index 1)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Provide new name
                 $tc.Input.PushTextWithEnter('new-name')
-                # Edit menu now shows changes: [0]Rename [1]Edit steps [2]Save changes [3]Discard
-                # Navigate to 'Save changes' (index 2)
+                # Edit menu now shows changes: [0]Add steps [1]Rename [2]Edit steps [3]Save changes [4]Discard
+                # Navigate to 'Save changes' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -115,11 +118,13 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')         # enter new name
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -136,11 +141,13 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile   { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_new-name.json'; Message = '' } }
 
                 $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -162,12 +169,14 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile   {}
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # empty input — keep current
-                # No changes: [0]Rename [1]Edit steps [2][[Back]]
+                # No changes: [0]Add steps [1]Rename [2]Edit steps [3][[Back]]
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back]'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back]' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -182,11 +191,13 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile {}
 
                 $tc = $script:tc
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # empty input
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back]'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back]' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -207,7 +218,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
                 $tc = $script:tc
-                # Navigate to 'Edit steps' (index 1)
+                # Navigate to 'Edit steps' (index 2)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Step list: [0]#1: MoveToPoint [[action-a]]  [1]#2: LeftClick  [2]#3: Loop [[my-loop]]  [3][[Back to edit menu]]
@@ -221,8 +233,9 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Edit menu with changes: [0]Rename [1]Edit steps [2]Save changes [3]Discard
-                # Select 'Save changes' (index 2)
+                # Edit menu with changes: [0]Add steps [1]Rename [2]Edit steps [3]Save changes [4]Discard
+                # Select 'Save changes' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -243,7 +256,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps' (index 2)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # select step 1 (#1: MoveToPoint)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename step'
                 $tc.Input.PushTextWithEnter('action-b')
@@ -253,7 +267,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back to edit menu]'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -271,7 +286,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps' (index 2)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # step 1
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename step'
                 $tc.Input.PushTextWithEnter('action-b')
@@ -281,7 +297,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back to edit menu]'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -302,7 +319,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
                 $tc = $script:tc
-                # Navigate to 'Edit steps' (index 1)
+                # Navigate to 'Edit steps' (index 2)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Step list: select '#2: LeftClick' (index 1)
@@ -316,7 +334,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Edit menu with changes: select 'Save changes' (index 2)
+                # Edit menu with changes: select 'Save changes' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -342,7 +361,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
                 $tc = $script:tc
-                # 'Edit steps'
+                # 'Edit steps' (index 2)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Select '#2: LeftClick' (index 1)
@@ -357,7 +377,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 'Save changes' (index 2)
+                # 'Save changes' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -383,7 +404,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
 
                 $tc = $script:tc
-                # 'Edit steps'
+                # 'Edit steps' (index 2)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Select '#1: MoveToPoint [[action-a]]' (index 0)
@@ -397,7 +419,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # 'Save changes' (index 2)
+                # 'Save changes' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -422,7 +445,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile -MockWith $mockMacroData
 
                 $tc = $script:tc
-                # 'Edit steps'
+                # 'Edit steps' (index 2)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Select first step (index 0)
@@ -437,7 +461,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Edit menu (no changes): '[Back]' (index 2)
+                # Edit menu (no changes): '[Back]' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -460,7 +485,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Get-MacroFile -MockWith $mockMacroData
 
                 $tc = $script:tc
-                # 'Edit steps'
+                # 'Edit steps' (index 2)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 # Select '#3: Loop [[my-loop]]' (index 2)
@@ -477,7 +503,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
-                # Edit menu (no changes): '[Back]' (index 2)
+                # Edit menu (no changes): '[Back]' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
@@ -503,7 +530,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc = $script:tc
                 # Make a step change (add name to LeftClick) then save
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps' (index 2)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '#2: LeftClick'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Add name to step'
@@ -514,7 +542,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back to edit menu]'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3)
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
@@ -537,7 +566,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc = $script:tc
                 # Make a step change then attempt save (which fails)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps' (index 2)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '#2: LeftClick'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Add name to step'
@@ -548,12 +578,14 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back to edit menu]'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' — fails
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3) — fails
                 # Still on edit menu with changes; discard to exit
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes' (index 4)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Yes, discard'
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
@@ -570,7 +602,8 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Edit steps' (index 2)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '#2: LeftClick'
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Add name to step'
@@ -581,11 +614,13 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # '[Back to edit menu]'
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' — fails
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save changes' (index 3) — fails
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes' (index 4)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Yes, discard'
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
@@ -610,13 +645,15 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 # Make a change (rename macro)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Rename macro'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
-                # Edit menu with changes: [0]Rename [1]Edit steps [2]Save changes [3]Discard changes
+                # Edit menu with changes: [0]Add steps [1]Rename [2]Edit steps [3]Save changes [4]Discard
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes' (index 4)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Yes, discard'
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
@@ -633,12 +670,14 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 Mock Rename-MacroFile {}
 
                 $tc = $script:tc
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes' (index 4)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Yes, discard'
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
@@ -662,9 +701,11 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
 
                 $tc = $script:tc
                 # Make a change (rename macro)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)      # 'Rename macro' (index 1)
                 $tc.Input.PushKey([ConsoleKey]::Enter)
                 $tc.Input.PushTextWithEnter('new-name')
-                # 'Discard changes' (index 3)
+                # 'Discard changes' (index 4)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
@@ -676,13 +717,214 @@ Describe 'Show-EditMacroScreen' -Tag 'Unit' {
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
                 $tc.Input.PushKey([ConsoleKey]::DownArrow)
-                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes'
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard changes' (index 4)
                 $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Yes, discard'
 
                 Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
 
                 $tc.Output | Should -Match 'No, keep editing'
                 Should -Not -Invoke Save-MacroFile
+            }
+        }
+    }
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Context: Add steps — happy path
+    # ════════════════════════════════════════════════════════════════════════
+    Context 'When the user adds a Delay step then chooses Save now' {
+
+        It 'Calls Save-MacroFile with the new step appended to the sequence' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockMacroData = $script:mockMacroData
+                Mock Get-MacroFile         -MockWith $mockMacroData
+                Mock Get-LWASTargetWindow {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::Zero; ProcessName = 'LastWar'; WindowTitle = 'Last War: Survival' }
+                }
+                Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
+
+                $tc = $script:tc
+                # Edit menu (no changes): [0]Add steps [1]Rename [2]Edit steps [3][[Back]]
+                # Select 'Add steps' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action menu (action-a exists so Create loop appears):
+                # [0]Move mouse to point [1]...(box) [2]...(circle) [3]Left-click [4]Drag-click
+                # [5]Screenshot region [6]Add delay [7]Upload screenshots [8]Create loop
+                # [9]Discard added steps
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Add delay' (index 6)
+                $tc.Input.PushTextWithEnter('1.5')              # delay value
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # skip naming (empty)
+                # Action menu now has 'Done adding steps':
+                # [0]...[6]Add delay [7]Upload [8]Create loop [9]Done adding steps [10]Discard
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Done adding steps' (index 9)
+                # Save prompt: [0]Save now [1]Return to edit menu
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Save now'
+
+                Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
+
+                Should -Invoke Save-MacroFile -Exactly 1 -ParameterFilter {
+                    $MacroData.sequence.Count -eq 4 -and
+                    $MacroData.sequence[3].type -eq 'Delay' -and
+                    $MacroData.sequence[3].seconds -eq 1.5
+                }
+            }
+        }
+    }
+
+    Context 'When the user adds a step then chooses Return to edit menu' {
+
+        It 'Shows Save changes in the edit menu and does not call Save-MacroFile yet' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockMacroData = $script:mockMacroData
+                Mock Get-MacroFile         -MockWith $mockMacroData
+                Mock Get-LWASTargetWindow {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::Zero; ProcessName = 'LastWar'; WindowTitle = 'Last War: Survival' }
+                }
+                Mock Save-MacroFile { [PSCustomObject]@{ Success = $true; FilePath = 'C:\fake\20260101_000000_test-macro.json'; Message = '' } }
+
+                $tc = $script:tc
+                # Select 'Add steps' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Add a Delay step (index 6)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Add delay'
+                $tc.Input.PushTextWithEnter('2.0')
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # skip naming
+                # Done adding steps (index 9: [0-7] actions, [8] Create loop, [9] Done, [10] Discard)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Done adding steps' (index 9)
+                # Save prompt: [0]Save now [1]Return to edit menu
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Return to edit menu'
+                # Edit menu (with changes): [0]Add steps [1]Rename [2]Edit steps [3]Save changes [4]Discard
+                # Select 'Save changes' (index 3) to exit cleanly
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
+
+                $tc.Output | Should -Match 'Save changes'
+                Should -Invoke Save-MacroFile -Exactly 1
+            }
+        }
+    }
+
+    Context 'When the user discards added steps before finishing' {
+
+        It 'Does not call Save-MacroFile' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockMacroData = $script:mockMacroData
+                Mock Get-MacroFile         -MockWith $mockMacroData
+                Mock Get-LWASTargetWindow {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::Zero; ProcessName = 'LastWar'; WindowTitle = 'Last War: Survival' }
+                }
+                Mock Save-MacroFile {}
+
+                $tc = $script:tc
+                # Select 'Add steps' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Add a Delay step (index 6)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Add delay'
+                $tc.Input.PushTextWithEnter('0.5')
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # skip naming
+                # Action menu: [0-7] actions, [8] Create loop, [9] Done adding steps, [10] Discard
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard added steps' (index 10)
+                # Confirm discard: [0]Yes, discard [1]No, continue adding
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Yes, discard'
+                # Returned to main edit menu (no changes): select '[Back]' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
+
+                Should -Not -Invoke Save-MacroFile
+            }
+        }
+    }
+
+    Context 'When the user selects Add steps with no steps added then discards immediately' {
+
+        It 'Returns to the edit menu without prompting for confirmation' {
+            InModuleScope -ModuleName 'LastWarAutoScreenshot' {
+                $mockMacroData = $script:mockMacroData
+                Mock Get-MacroFile         -MockWith $mockMacroData
+                Mock Get-LWASTargetWindow {
+                    [PSCustomObject]@{ WindowHandle = [IntPtr]::Zero; ProcessName = 'LastWar'; WindowTitle = 'Last War: Survival' }
+                }
+
+                $tc = $script:tc
+                # Select 'Add steps' (index 0)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+                # Action menu (no new steps, action-a exists so Create loop shown):
+                # [0]...[7]Upload screenshots [8]Create loop [9]Discard added steps
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)          # 'Discard added steps' (index 9; 0 steps — no confirm)
+                # Returned to main edit menu (no changes): select '[Back]' (index 3)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::DownArrow)
+                $tc.Input.PushKey([ConsoleKey]::Enter)
+
+                Show-EditMacroScreen -Console $tc -FilePath 'C:\fake\20260101_000000_test-macro.json'
+
+                # No confirm prompt means no 'Yes, discard' in output; test just completes
+                $tc.Output | Should -Not -Match 'Discard all'
             }
         }
     }

@@ -61,8 +61,13 @@ function Save-MacroFile {
     $macrosDir = $script:MacrosPath
     New-Item -Path $macrosDir -ItemType Directory -Force | Out-Null
 
-    $createdUtc = [datetime]::Parse($MacroData.metadata.createdUtc)
-    $dtPrefix   = $createdUtc.ToUniversalTime().ToString('yyyyMMdd_HHmmss')
+    $rawCreated = $MacroData.metadata.createdUtc
+    if ($rawCreated -is [datetime]) {
+        $createdUtc = $rawCreated.ToUniversalTime()
+    } else {
+        $createdUtc = [datetime]::Parse($rawCreated, $null, [System.Globalization.DateTimeStyles]::RoundtripKind).ToUniversalTime()
+    }
+    $dtPrefix = $createdUtc.ToString('yyyyMMdd_HHmmss')
 
     $nameResult = Get-ValidMacroName -Name $MacroData.metadata.name
     $safeName   = $nameResult.SanitisedName

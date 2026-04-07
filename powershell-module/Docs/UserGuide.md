@@ -337,8 +337,13 @@ From the main menu select **"Manage macros"** (only shown when at least one save
 ### Available operations
 
 - **View details** — display macro metadata and the full action sequence.
-- **Edit macro** — rename the macro, rename individual steps, or reorder
-  steps (move up / move down). Saving updates the JSON file on disk.
+- **Edit macro** — opens the edit screen with the following options:
+  - **Add steps** — append new actions to the end of the existing sequence using
+    the same recording flow as Record Macro (all action types supported).  When
+    finished, choose to save immediately or return to the edit menu.
+  - **Rename macro** — change the macro's name.
+  - **Edit steps** — rename individual steps or reorder them (move up / move down).
+  Saving updates the JSON file on disk.
 - **Delete macro** — permanently removes the JSON file after confirmation.
 
 ### File location and naming convention
