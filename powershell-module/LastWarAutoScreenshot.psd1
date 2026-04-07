@@ -12,7 +12,7 @@
 RootModule = 'LastWarAutoScreenshot.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.1'
+ModuleVersion = '1.2.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -111,7 +111,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'v1.0.1 — Test suite fix patch. Features: Remove duplicate tests, consolidate similar tests, improve test console usage, fix false test passes, remove redundant tests, mock console output functions to reduce test run output noise, rename poorly named tests.'
+        ReleaseNotes = 'v1.2.0 — v1.2.0 — Features: Azure screenshot upload, parallel runspace job support for Pester test suite, .jsonc module config files with comment support'
 
         # Prerelease string of this module
         # Prerelease = ''
